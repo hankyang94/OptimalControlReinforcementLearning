@@ -4,20 +4,20 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Chapter 9 Problem Sets | Optimal Control and Estimation</title>
-  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <title>Chapter 5 Problem Sets | Optimal Control and Reinforcement Learning</title>
+  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   <meta name="generator" content="bookdown 0.42 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Chapter 9 Problem Sets | Optimal Control and Estimation" />
+  <meta property="og:title" content="Chapter 5 Problem Sets | Optimal Control and Reinforcement Learning" />
   <meta property="og:type" content="book" />
   
-  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
-  <meta name="github-repo" content="hankyang94/OptimalControlEstimation" />
+  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  <meta name="github-repo" content="hankyang94/OptimalControlReinforcementLearning" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Chapter 9 Problem Sets | Optimal Control and Estimation" />
+  <meta name="twitter:title" content="Chapter 5 Problem Sets | Optimal Control and Reinforcement Learning" />
   
-  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   
 
 <meta name="author" content="Heng Yang" />
@@ -30,7 +30,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-<link rel="prev" href="adaptivecontrol.html"/>
+<link rel="prev" href="stability.html"/>
 <link rel="next" href="acknowledgement.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
@@ -160,10 +160,14 @@ div.csl-indent {
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">Optimal Control and Estimation</a></li>
+<li><a href="./">Optimal Control and Reinforcement Learning</a></li>
 
 <li class="divider"></li>
-<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#feedback"><i class="fa fa-check"></i>Feedback</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#offerings"><i class="fa fa-check"></i>Offerings</a></li>
+</ul></li>
 <li class="chapter" data-level="1" data-path="formulation.html"><a href="formulation.html"><i class="fa fa-check"></i><b>1</b> The Optimal Control Formulation</a>
 <ul>
 <li class="chapter" data-level="1.1" data-path="formulation.html"><a href="formulation.html#the-basic-problem"><i class="fa fa-check"></i><b>1.1</b> The Basic Problem</a></li>
@@ -214,102 +218,20 @@ div.csl-indent {
 </ul></li>
 <li class="chapter" data-level="3.4" data-path="approximatedp.html"><a href="approximatedp.html#policy-gradient"><i class="fa fa-check"></i><b>3.4</b> Policy Gradient</a></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html"><i class="fa fa-check"></i><b>4</b> Continuous-time Optimal Control</a>
+<li class="chapter" data-level="4" data-path="stability.html"><a href="stability.html"><i class="fa fa-check"></i><b>4</b> Stability Analysis</a>
 <ul>
-<li class="chapter" data-level="4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-basic-problem-1"><i class="fa fa-check"></i><b>4.1</b> The Basic Problem</a></li>
-<li class="chapter" data-level="4.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-hamilton-jacobi-bellman-equation"><i class="fa fa-check"></i><b>4.2</b> The Hamilton-Jacobi-Bellman Equation</a></li>
-<li class="chapter" data-level="4.3" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#linear-quadratic-regulator"><i class="fa fa-check"></i><b>4.3</b> Linear Quadratic Regulator</a>
+<li class="chapter" data-level="4.1" data-path="stability.html"><a href="stability.html#autonomous-systems"><i class="fa fa-check"></i><b>4.1</b> Autonomous Systems</a>
 <ul>
-<li class="chapter" data-level="4.3.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-tracking-1"><i class="fa fa-check"></i><b>4.3.1</b> LQR Trajectory Tracking</a></li>
-<li class="chapter" data-level="4.3.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-stabilization"><i class="fa fa-check"></i><b>4.3.2</b> LQR Trajectory Stabilization</a></li>
+<li class="chapter" data-level="4.1.1" data-path="stability.html"><a href="stability.html#concepts-of-stability"><i class="fa fa-check"></i><b>4.1.1</b> Concepts of Stability</a></li>
+<li class="chapter" data-level="4.1.2" data-path="stability.html"><a href="stability.html#stability-by-linearization"><i class="fa fa-check"></i><b>4.1.2</b> Stability by Linearization</a></li>
+<li class="chapter" data-level="4.1.3" data-path="stability.html"><a href="stability.html#lyapunov-analysis"><i class="fa fa-check"></i><b>4.1.3</b> Lyapunov Analysis</a></li>
+<li class="chapter" data-level="4.1.4" data-path="stability.html"><a href="stability.html#invariant-set-theorem"><i class="fa fa-check"></i><b>4.1.4</b> Invariant Set Theorem</a></li>
+<li class="chapter" data-level="4.1.5" data-path="stability.html"><a href="stability.html#computing-lyapunov-certificates"><i class="fa fa-check"></i><b>4.1.5</b> Computing Lyapunov Certificates</a></li>
 </ul></li>
-<li class="chapter" data-level="4.4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-pontryagin-minimum-principle"><i class="fa fa-check"></i><b>4.4</b> The Pontryagin Minimum Principle</a>
-<ul>
-<li class="chapter" data-level="4.4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#numerical-solution-of-the-tpbvp"><i class="fa fa-check"></i><b>4.4.1</b> Numerical Solution of the TPBVP</a></li>
+<li class="chapter" data-level="4.2" data-path="stability.html"><a href="stability.html#controlled-systems"><i class="fa fa-check"></i><b>4.2</b> Controlled Systems</a></li>
+<li class="chapter" data-level="4.3" data-path="stability.html"><a href="stability.html#non-autonomous-systems"><i class="fa fa-check"></i><b>4.3</b> Non-autonomous Systems</a></li>
 </ul></li>
-<li class="chapter" data-level="4.5" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#infinite-horizon-problems"><i class="fa fa-check"></i><b>4.5</b> Infinite-Horizon Problems</a>
-<ul>
-<li class="chapter" data-level="4.5.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#continuous-time-infinite-horizon-lqr"><i class="fa fa-check"></i><b>4.5.1</b> Infinite-Horizon LQR</a></li>
-</ul></li>
-<li class="chapter" data-level="4.6" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#viscosity-solution"><i class="fa fa-check"></i><b>4.6</b> Viscosity Solution</a></li>
-</ul></li>
-<li class="chapter" data-level="5" data-path="stability.html"><a href="stability.html"><i class="fa fa-check"></i><b>5</b> Stability Analysis</a>
-<ul>
-<li class="chapter" data-level="5.1" data-path="stability.html"><a href="stability.html#autonomous-systems"><i class="fa fa-check"></i><b>5.1</b> Autonomous Systems</a>
-<ul>
-<li class="chapter" data-level="5.1.1" data-path="stability.html"><a href="stability.html#concepts-of-stability"><i class="fa fa-check"></i><b>5.1.1</b> Concepts of Stability</a></li>
-<li class="chapter" data-level="5.1.2" data-path="stability.html"><a href="stability.html#stability-by-linearization"><i class="fa fa-check"></i><b>5.1.2</b> Stability by Linearization</a></li>
-<li class="chapter" data-level="5.1.3" data-path="stability.html"><a href="stability.html#lyapunov-analysis"><i class="fa fa-check"></i><b>5.1.3</b> Lyapunov Analysis</a></li>
-<li class="chapter" data-level="5.1.4" data-path="stability.html"><a href="stability.html#invariant-set-theorem"><i class="fa fa-check"></i><b>5.1.4</b> Invariant Set Theorem</a></li>
-<li class="chapter" data-level="5.1.5" data-path="stability.html"><a href="stability.html#computing-lyapunov-certificates"><i class="fa fa-check"></i><b>5.1.5</b> Computing Lyapunov Certificates</a></li>
-</ul></li>
-<li class="chapter" data-level="5.2" data-path="stability.html"><a href="stability.html#controlled-systems"><i class="fa fa-check"></i><b>5.2</b> Controlled Systems</a></li>
-<li class="chapter" data-level="5.3" data-path="stability.html"><a href="stability.html#non-autonomous-systems"><i class="fa fa-check"></i><b>5.3</b> Non-autonomous Systems</a></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="output-feedback.html"><a href="output-feedback.html"><i class="fa fa-check"></i><b>6</b> Output Feedback</a>
-<ul>
-<li class="chapter" data-level="6.1" data-path="output-feedback.html"><a href="output-feedback.html#least-squares-estimation"><i class="fa fa-check"></i><b>6.1</b> Least-Squares Estimation</a>
-<ul>
-<li class="chapter" data-level="6.1.1" data-path="output-feedback.html"><a href="output-feedback.html#linear-least-squares-estimation"><i class="fa fa-check"></i><b>6.1.1</b> Linear Least-Squares Estimation</a></li>
-</ul></li>
-<li class="chapter" data-level="6.2" data-path="output-feedback.html"><a href="output-feedback.html#kalman-filter"><i class="fa fa-check"></i><b>6.2</b> Kalman Filter</a>
-<ul>
-<li class="chapter" data-level="6.2.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-kalman-filter"><i class="fa fa-check"></i><b>6.2.1</b> Steady-State Kalman Filter</a></li>
-<li class="chapter" data-level="6.2.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-kalman-filter"><i class="fa fa-check"></i><b>6.2.2</b> Continuous-time Kalman Filter</a></li>
-</ul></li>
-<li class="chapter" data-level="6.3" data-path="output-feedback.html"><a href="output-feedback.html#linear-quadratic-gaussian-control"><i class="fa fa-check"></i><b>6.3</b> Linear Quadratic Gaussian Control</a>
-<ul>
-<li class="chapter" data-level="6.3.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-lqg"><i class="fa fa-check"></i><b>6.3.1</b> Steady-state LQG</a></li>
-<li class="chapter" data-level="6.3.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-lqg"><i class="fa fa-check"></i><b>6.3.2</b> Continuous-time LQG</a></li>
-</ul></li>
-<li class="chapter" data-level="6.4" data-path="output-feedback.html"><a href="output-feedback.html#nonlinear-filtering"><i class="fa fa-check"></i><b>6.4</b> Nonlinear Filtering</a>
-<ul>
-<li class="chapter" data-level="6.4.1" data-path="output-feedback.html"><a href="output-feedback.html#extended-kalman-filter"><i class="fa fa-check"></i><b>6.4.1</b> Extended Kalman Filter</a></li>
-<li class="chapter" data-level="6.4.2" data-path="output-feedback.html"><a href="output-feedback.html#unscented-kalman-filter"><i class="fa fa-check"></i><b>6.4.2</b> Unscented Kalman Filter</a></li>
-<li class="chapter" data-level="6.4.3" data-path="output-feedback.html"><a href="output-feedback.html#particle-filter"><i class="fa fa-check"></i><b>6.4.3</b> Particle Filter</a></li>
-<li class="chapter" data-level="6.4.4" data-path="output-feedback.html"><a href="output-feedback.html#feedback-particle-filter"><i class="fa fa-check"></i><b>6.4.4</b> Feedback Particle Filter</a></li>
-</ul></li>
-<li class="chapter" data-level="6.5" data-path="output-feedback.html"><a href="output-feedback.html#state-observer"><i class="fa fa-check"></i><b>6.5</b> State Observer</a>
-<ul>
-<li class="chapter" data-level="6.5.1" data-path="output-feedback.html"><a href="output-feedback.html#general-design-strategy"><i class="fa fa-check"></i><b>6.5.1</b> General Design Strategy</a></li>
-<li class="chapter" data-level="6.5.2" data-path="output-feedback.html"><a href="output-feedback.html#luenberger-template"><i class="fa fa-check"></i><b>6.5.2</b> Luenberger Template</a></li>
-<li class="chapter" data-level="6.5.3" data-path="output-feedback.html"><a href="output-feedback.html#state-affine-template"><i class="fa fa-check"></i><b>6.5.3</b> State-affine Template</a></li>
-<li class="chapter" data-level="6.5.4" data-path="output-feedback.html"><a href="output-feedback.html#kazantzis-kravaris-luenberger-kkl-template"><i class="fa fa-check"></i><b>6.5.4</b> Kazantzis-Kravaris-Luenberger (KKL) Template</a></li>
-<li class="chapter" data-level="6.5.5" data-path="output-feedback.html"><a href="output-feedback.html#triangular-template"><i class="fa fa-check"></i><b>6.5.5</b> Triangular Template</a></li>
-<li class="chapter" data-level="6.5.6" data-path="output-feedback.html"><a href="output-feedback.html#design-with-convex-optimization"><i class="fa fa-check"></i><b>6.5.6</b> Design with Convex Optimization</a></li>
-</ul></li>
-<li class="chapter" data-level="6.6" data-path="output-feedback.html"><a href="output-feedback.html#observer-feedback"><i class="fa fa-check"></i><b>6.6</b> Observer Feedback</a></li>
-</ul></li>
-<li class="chapter" data-level="7" data-path="geometric-vision.html"><a href="geometric-vision.html"><i class="fa fa-check"></i><b>7</b> Geometric Vision</a>
-<ul>
-<li class="chapter" data-level="7.1" data-path="geometric-vision.html"><a href="geometric-vision.html#d-rotations-and-poses"><i class="fa fa-check"></i><b>7.1</b> 3D Rotations and Poses</a>
-<ul>
-<li class="chapter" data-level="7.1.1" data-path="geometric-vision.html"><a href="geometric-vision.html#rotation-matrices"><i class="fa fa-check"></i><b>7.1.1</b> Rotation matrices</a></li>
-<li class="chapter" data-level="7.1.2" data-path="geometric-vision.html"><a href="geometric-vision.html#coordinate-frame"><i class="fa fa-check"></i><b>7.1.2</b> Coordinate Frame</a></li>
-<li class="chapter" data-level="7.1.3" data-path="geometric-vision.html"><a href="geometric-vision.html#representations-of-the-rotations"><i class="fa fa-check"></i><b>7.1.3</b> Representations of the rotations</a></li>
-<li class="chapter" data-level="7.1.4" data-path="geometric-vision.html"><a href="geometric-vision.html#miscellaneous-topics-on-rotations"><i class="fa fa-check"></i><b>7.1.4</b> Miscellaneous topics on rotations</a></li>
-</ul></li>
-<li class="chapter" data-level="7.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pinhole-camera-model"><i class="fa fa-check"></i><b>7.2</b> The Pinhole Camera Model</a></li>
-<li class="chapter" data-level="7.3" data-path="geometric-vision.html"><a href="geometric-vision.html#camera-pose-estimation"><i class="fa fa-check"></i><b>7.3</b> Camera Pose Estimation</a>
-<ul>
-<li class="chapter" data-level="7.3.1" data-path="geometric-vision.html"><a href="geometric-vision.html#the-p3p-problem"><i class="fa fa-check"></i><b>7.3.1</b> The P3P Problem</a></li>
-<li class="chapter" data-level="7.3.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pnp-problem"><i class="fa fa-check"></i><b>7.3.2</b> The PnP Problem</a></li>
-<li class="chapter" data-level="7.3.3" data-path="geometric-vision.html"><a href="geometric-vision.html#global-optimality"><i class="fa fa-check"></i><b>7.3.3</b> Global Optimality</a></li>
-<li class="chapter" data-level="7.3.4" data-path="geometric-vision.html"><a href="geometric-vision.html#handling-outliers"><i class="fa fa-check"></i><b>7.3.4</b> Handling Outliers</a></li>
-</ul></li>
-<li class="chapter" data-level="7.4" data-path="geometric-vision.html"><a href="geometric-vision.html#point-cloud-registration"><i class="fa fa-check"></i><b>7.4</b> Point Cloud Registration</a></li>
-</ul></li>
-<li class="chapter" data-level="8" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html"><i class="fa fa-check"></i><b>8</b> Adaptive Control</a>
-<ul>
-<li class="chapter" data-level="8.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#model-reference-adaptive-control"><i class="fa fa-check"></i><b>8.1</b> Model-Reference Adaptive Control</a>
-<ul>
-<li class="chapter" data-level="8.1.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#first-order-systems"><i class="fa fa-check"></i><b>8.1.1</b> First-Order Systems</a></li>
-<li class="chapter" data-level="8.1.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#high-order-systems"><i class="fa fa-check"></i><b>8.1.2</b> High-Order Systems</a></li>
-<li class="chapter" data-level="8.1.3" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#robotic-manipulator"><i class="fa fa-check"></i><b>8.1.3</b> Robotic Manipulator</a></li>
-</ul></li>
-<li class="chapter" data-level="8.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#certainty-equivalent-adaptive-control"><i class="fa fa-check"></i><b>8.2</b> Certainty-Equivalent Adaptive Control</a></li>
-</ul></li>
-<li class="chapter" data-level="9" data-path="psets.html"><a href="psets.html"><i class="fa fa-check"></i><b>9</b> Problem Sets</a></li>
+<li class="chapter" data-level="5" data-path="psets.html"><a href="psets.html"><i class="fa fa-check"></i><b>5</b> Problem Sets</a></li>
 <li class="chapter" data-level="" data-path="acknowledgement.html"><a href="acknowledgement.html"><i class="fa fa-check"></i>Acknowledgement</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html"><i class="fa fa-check"></i><b>A</b> Linear Algebra and Differential Equations</a>
@@ -392,7 +314,7 @@ div.csl-indent {
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Estimation</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Reinforcement Learning</a>
           </h1>
         </div>
 
@@ -400,16 +322,16 @@ div.csl-indent {
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="psets" class="section level1 hasAnchor" number="9">
-<h1><span class="header-section-number">Chapter 9</span> Problem Sets<a href="psets.html#psets" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<div id="psets" class="section level1 hasAnchor" number="5">
+<h1><span class="header-section-number">Chapter 5</span> Problem Sets<a href="psets.html#psets" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:polygoninsidecircle" class="exercise"><strong>Exercise 9.1  (Inscribed Polygon of Maximal Perimeter) </strong></span>In this exercise, we will use dynamic programming to solve a geometry problem, i.e., to find the <span class="math inline">\(N\)</span>-side polygon inscribed inside a circle with maximum perimeter. We will walk you through the key steps of formulating and solving the problem, while leaving a few mathematical details for you to fill in.</p>
-<p>Given a circle with radius <span class="math inline">\(1\)</span>, we can randomly choose <span class="math inline">\(N\)</span> distinct points on the circle to form a polygon with <span class="math inline">\(N\)</span> vertices and sides, as shown in Fig. <a href="psets.html#fig:inscribed-polygon">9.1</a> with <span class="math inline">\(N=3,4,5\)</span>.</p>
+<p><span id="exr:polygoninsidecircle" class="exercise"><strong>Exercise 5.1  (Inscribed Polygon of Maximal Perimeter) </strong></span>In this exercise, we will use dynamic programming to solve a geometry problem, i.e., to find the <span class="math inline">\(N\)</span>-side polygon inscribed inside a circle with maximum perimeter. We will walk you through the key steps of formulating and solving the problem, while leaving a few mathematical details for you to fill in.</p>
+<p>Given a circle with radius <span class="math inline">\(1\)</span>, we can randomly choose <span class="math inline">\(N\)</span> distinct points on the circle to form a polygon with <span class="math inline">\(N\)</span> vertices and sides, as shown in Fig. <a href="psets.html#fig:inscribed-polygon">5.1</a> with <span class="math inline">\(N=3,4,5\)</span>.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:inscribed-polygon"></span>
 <img src="images/polygon-inside-circle.png" alt="Polygons inscribed inside a circle" width="80%" />
 <p class="caption">
-Figure 9.1: Polygons inscribed inside a circle
+Figure 5.1: Polygons inscribed inside a circle
 </p>
 </div>
 <p>Once the <span class="math inline">\(N\)</span> points are chosen, the <span class="math inline">\(N\)</span>-polygon will have a perimeter, i.e., the sum of the lengths of its edges.</p>
@@ -419,12 +341,12 @@ Figure 9.1: Polygons inscribed inside a circle
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:sequential-placement-N-point"></span>
 <img src="images/sequential-placement-N-point.png" alt="Sequential placement of N points on the circle." width="50%" />
 <p class="caption">
-Figure 9.2: Sequential placement of N points on the circle.
+Figure 5.2: Sequential placement of N points on the circle.
 </p>
 </div>
 <p><strong>Dynamical system</strong>. We will use <span class="math inline">\(\{x_1,\dots,x_N \}\)</span> to denote the angular positions of the <span class="math inline">\(N\)</span> points to be placed on the circle (with slight abuse of notation, we will call each of those points <span class="math inline">\(x_k\)</span> as well). In particular,
-as shown in Fig. <a href="psets.html#fig:sequential-placement-N-point">9.2</a>, let us use <span class="math inline">\(x_k\)</span> to denote the angle between the line <span class="math inline">\(O-x_k\)</span> and the vertical line (<span class="math inline">\(O\)</span> is the center of the circle), with zero angle starting at <span class="math inline">\(12\)</span> O’clock and clockwise being positive. Without loss of generality, we assume <span class="math inline">\(x_1 = 0\)</span>. (if <span class="math inline">\(x_1\)</span> is nonzero, we can always rotate the entire circle so that <span class="math inline">\(x_1 = 0\)</span>).</p>
-<p>After the <span class="math inline">\(k\)</span>-th point is placed, we can “control” where the next point <span class="math inline">\(x_{k+1}\)</span> will be, by deciding the incremental angle between <span class="math inline">\(x_{k+1}\)</span> and <span class="math inline">\(x_k\)</span>, denoted as <span class="math inline">\(u_k &gt; 0\)</span> in Fig. <a href="psets.html#fig:sequential-placement-N-point">9.2</a>. This is simply saying the dynamics is
+as shown in Fig. <a href="psets.html#fig:sequential-placement-N-point">5.2</a>, let us use <span class="math inline">\(x_k\)</span> to denote the angle between the line <span class="math inline">\(O-x_k\)</span> and the vertical line (<span class="math inline">\(O\)</span> is the center of the circle), with zero angle starting at <span class="math inline">\(12\)</span> O’clock and clockwise being positive. Without loss of generality, we assume <span class="math inline">\(x_1 = 0\)</span>. (if <span class="math inline">\(x_1\)</span> is nonzero, we can always rotate the entire circle so that <span class="math inline">\(x_1 = 0\)</span>).</p>
+<p>After the <span class="math inline">\(k\)</span>-th point is placed, we can “control” where the next point <span class="math inline">\(x_{k+1}\)</span> will be, by deciding the incremental angle between <span class="math inline">\(x_{k+1}\)</span> and <span class="math inline">\(x_k\)</span>, denoted as <span class="math inline">\(u_k &gt; 0\)</span> in Fig. <a href="psets.html#fig:sequential-placement-N-point">5.2</a>. This is simply saying the dynamics is
 <span class="math display">\[
 x_{k+1} = x_k + u_k, \quad k=1,\dots,N-1, \quad x_1 = 0.
 \]</span></p>
@@ -436,7 +358,7 @@ with the terminal cost
 <span class="math display">\[
 g_N(x_N) = 2 \sin \left(  \frac{2\pi - x_N}{2} \right)
 \]</span>
-the distance between <span class="math inline">\(x_N\)</span> and <span class="math inline">\(x_1\)</span> (see Fig. <a href="psets.html#fig:sequential-placement-N-point">9.2</a>), and the running cost
+the distance between <span class="math inline">\(x_N\)</span> and <span class="math inline">\(x_1\)</span> (see Fig. <a href="psets.html#fig:sequential-placement-N-point">5.2</a>), and the running cost
 <span class="math display">\[
 g_k(x_k,u_k) = 2 \sin \left(  \frac{u_k}{2} \right)
 \]</span>
@@ -449,7 +371,7 @@ J_N(x_N) = g_N(x_N) = 2 \sin \left(  \frac{2\pi - x_N}{2} \right).
 We then compute <span class="math inline">\(J_{N-1}(x_{N-1})\)</span> as
 <span class="math display" id="eq:polygon-circle-N-1">\[\begin{equation}
 J_{N-1}(x_{N-1}) = \max_{0&lt; u_{N-1} &lt; 2\pi - x_{N-1}} \left\{ \underbrace{ 2 \sin \left(  \frac{u_{N-1}}{2} \right) + J_N(x_{N-1} + u_{N-1}) }_{Q_{N-1}(x_{N-1}, u_{N-1})} \right\},
-\tag{9.1}
+\tag{5.1}
 \end{equation}\]</span>
 where <span class="math inline">\(u_{N-1} &lt; 2\pi - x_{N-1}\)</span> because we do not want <span class="math inline">\(x_N\)</span> to cross <span class="math inline">\(2\pi\)</span>.</p>
 <ol style="list-style-type: lower-alpha">
@@ -462,7 +384,7 @@ and
 \frac{\partial Q_{N-1}(x_{N-1},u_{N-1})}{\partial u_{N-1}} = \cos \left(  \frac{u_{N-1}}{2} \right) -  \cos \left(  \frac{2\pi - x_{N-1} - u_{N-1} }{2} \right).
 \]</span></p></li>
 <li><p>Show that <span class="math inline">\(Q_{N-1}(x_{N-1},u_{N-1})\)</span> is concave (i.e., <span class="math inline">\(-Q_{N-1}(x_{N-1},u_{N-1})\)</span> is convex) in <span class="math inline">\(u_{N-1}\)</span> for every <span class="math inline">\(x_{N-1} \in (0, \pi)\)</span> and <span class="math inline">\(u_{N-1} \in (0, 2\pi - x_{N-1})\)</span>. (Hint: compute the second derivative of <span class="math inline">\(Q_{N-1}(x_{N-1},u_{N-1})\)</span> with respect to <span class="math inline">\(u_{N-1}\)</span> and use Proposition <a href="appconvex.html#prp:decidecvx">B.2</a>).</p></li>
-<li><p>With a and b, show that the optimal <span class="math inline">\(u_{N-1}\)</span> that solves <a href="psets.html#eq:polygon-circle-N-1">(9.1)</a> is
+<li><p>With a and b, show that the optimal <span class="math inline">\(u_{N-1}\)</span> that solves <a href="psets.html#eq:polygon-circle-N-1">(5.1)</a> is
 <span class="math display">\[
 u_{N-1}^\star = \frac{2\pi - x_{N-1}}{2},
 \]</span>
@@ -487,7 +409,7 @@ J_k(x_k) = 2(N-k+1)\sin\left( \frac{2\pi - x_k}{2(N-k+1)} \right).
 </ol>
 <p>Hopefully now you see why my original claim is true!</p>
 <p><strong>(Bonus)</strong> We are not yet done for this exercise. Since you have probably already spent quite some time on this exercise, I will leave the rest of the exercise a bonus. In case you found this simple geometric problem interesting, you should keep reading as we will use numerical techniques to prove the same claim.</p>
-<p>In Fig. <a href="psets.html#fig:sequential-placement-N-point">9.2</a>, by denoting
+<p>In Fig. <a href="psets.html#fig:sequential-placement-N-point">5.2</a>, by denoting
 <span class="math display">\[
 u_N = 2\pi - x_N = 2\pi - (u_1 + \dots + u_{N-1})
 \]</span>
@@ -502,16 +424,16 @@ Consequently, to maximize the perimeter, we can formulate the following optimiza
 \text{subject to} &amp;\quad u_k &gt; 0, k=1,\dots,N \\
 &amp;\quad u_1 + \dots + u_N = 2 \pi
 \end{split}
-\tag{9.2}
+\tag{5.2}
 \end{equation}\]</span>
 where <span class="math inline">\(u_k\)</span> can be seen as the angle spanned by the line <span class="math inline">\(x_k - x_{k+1}\)</span> with respect to the center <span class="math inline">\(O\)</span> so that they are positive and sum up to <span class="math inline">\(2\pi\)</span>.</p>
 <ol start="6" style="list-style-type: lower-alpha">
-<li>Show that the optimization <a href="psets.html#eq:polygon-circle-convexoptmization">(9.2)</a> is convex. (Hint: first show the feasible set is convex, and then show the objective function is concave over the feasible set.)</li>
+<li>Show that the optimization <a href="psets.html#eq:polygon-circle-convexoptmization">(5.2)</a> is convex. (Hint: first show the feasible set is convex, and then show the objective function is concave over the feasible set.)</li>
 </ol>
-<p>Now that we have shown <a href="psets.html#eq:polygon-circle-convexoptmization">(9.2)</a> is a convex optimization problem, we know that pretty much any numerical algorithm will guarantee convergence to the globally optimal solution.</p>
-<p>It is too much to ask you to implement a numerical algorithm on your own, as that can be a one-semester graduate-level course <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>. However, Matlab provides a nice interface, <a href="https://www.mathworks.com/help/optim/ug/fmincon.html"><code>fmincon</code></a>, to many such numerical algorithms, and let me show you how to use <code>fmincon</code> to solve <a href="psets.html#eq:polygon-circle-convexoptmization">(9.2)</a> so we can numerically prove our claim.</p>
+<p>Now that we have shown <a href="psets.html#eq:polygon-circle-convexoptmization">(5.2)</a> is a convex optimization problem, we know that pretty much any numerical algorithm will guarantee convergence to the globally optimal solution.</p>
+<p>It is too much to ask you to implement a numerical algorithm on your own, as that can be a one-semester graduate-level course <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>. However, Matlab provides a nice interface, <a href="https://www.mathworks.com/help/optim/ug/fmincon.html"><code>fmincon</code></a>, to many such numerical algorithms, and let me show you how to use <code>fmincon</code> to solve <a href="psets.html#eq:polygon-circle-convexoptmization">(5.2)</a> so we can numerically prove our claim.</p>
 <ol start="7" style="list-style-type: lower-alpha">
-<li>I have provided most of the code necessary for solving <a href="psets.html#eq:polygon-circle-convexoptmization">(9.2)</a> below. Please fill in the definition of the function <code>perimeter(u)</code>, and then run the code in Matlab. Show your results for <span class="math inline">\(N=3,10,100\)</span>. Do the solutions obtained from <code>fmincon</code> verify our claim?</li>
+<li>I have provided most of the code necessary for solving <a href="psets.html#eq:polygon-circle-convexoptmization">(5.2)</a> below. Please fill in the definition of the function <code>perimeter(u)</code>, and then run the code in Matlab. Show your results for <span class="math inline">\(N=3,10,100\)</span>. Do the solutions obtained from <code>fmincon</code> verify our claim?</li>
 </ol>
 <div class="sourceCode" id="cb11"><pre class="sourceCode matlab"><code class="sourceCode matlab"><span id="cb11-1"><a href="psets.html#cb11-1" tabindex="-1"></a><span class="va">clc</span><span class="op">;</span> <span class="va">clear</span><span class="op">;</span> <span class="va">close</span> <span class="va">all</span><span class="op">;</span></span>
 <span id="cb11-2"><a href="psets.html#cb11-2" tabindex="-1"></a><span class="co">% number of points to be placed</span></span>
@@ -555,7 +477,7 @@ where <span class="math inline">\(u_k\)</span> can be seen as the angle spanned 
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:lqrconstraints" class="exercise"><strong>Exercise 9.2  (LQR with Constraints) </strong></span>In class we worked on the LQR problem where the states and controls are unbounded. This is rarely the case in real life – you only have a limited amount of control power, and you want your states to be bounded (e.g., not entering some dangerous zones).</p>
+<p><span id="exr:lqrconstraints" class="exercise"><strong>Exercise 5.2  (LQR with Constraints) </strong></span>In class we worked on the LQR problem where the states and controls are unbounded. This is rarely the case in real life – you only have a limited amount of control power, and you want your states to be bounded (e.g., not entering some dangerous zones).</p>
 <p>For linear systems with convex constraints on the control and states, the seminal paper <span class="citation">(<a href="#ref-bemporad02automatica-explicit">Bemporad et al. 2002</a>)</span> investigates the landscape of the optimal cost-to-go and controller.</p>
 <p>In this exercise, let us use convex optimization to numerically study a toy problem.</p>
 <p>Consider a variant of the LQR problem <a href="exactdp.html#eq:lqr-formulation">(2.2)</a> where the controls are bounded between <span class="math inline">\([-u_{\max}, u_{\max}]\)</span>, the system matrices <span class="math inline">\(A_k, B_k\)</span> are constant, and the dynamics is deterministic:
@@ -564,32 +486,32 @@ where <span class="math inline">\(u_k\)</span> can be seen as the angle spanned 
 J(x_0) = \min_{u_{0},\dots,u_{N-1} \in [-u_{\max},u_{\max}]} &amp;\quad  x_N^T Q_N x_N + \sum_{k=0}^{N-1} (x_k^T Q_k x_k + u_k^T R_k u_k) \\
 \text{subject to} &amp;\quad  x_{k+1} = A x_k + B u_k,  k=0,\dots,N-1
 \end{split}
-\tag{9.3}
+\tag{5.3}
 \end{equation}\]</span>
 We assume <span class="math inline">\(Q_k\succeq 0\)</span> for <span class="math inline">\(k=0,\dots,N\)</span> and <span class="math inline">\(R_k \succ 0\)</span> for all <span class="math inline">\(k=0,\dots,N-1\)</span>.</p>
 <ol style="list-style-type: lower-alpha">
-<li><p>Show that Problem <a href="psets.html#eq:lqr-constraints">(9.3)</a>, when <span class="math inline">\(x_0\)</span> is given, is a convex optimization problem.</p></li>
+<li><p>Show that Problem <a href="psets.html#eq:lqr-constraints">(5.3)</a>, when <span class="math inline">\(x_0\)</span> is given, is a convex optimization problem.</p></li>
 <li><p>Discretize the continuous-time double integrator dynamics
 <span class="math display">\[
 \ddot{q} = u, \quad u \in [-1,1]
 \]</span>
 in the form of <span class="math inline">\(x_{k+1} = A x_k + B u_k\)</span> with a constant <span class="math inline">\(dt\)</span> time discretization. (Hint: take <span class="math inline">\(x = [q,\dot{q}]\)</span> as the state vector.)</p></li>
-<li><p>Fix <span class="math inline">\(N=50\)</span>, <span class="math inline">\(dt=0.1\)</span> and choose your favorite <span class="math inline">\(Q_k\)</span> and <span class="math inline">\(R_k\)</span>. Solve the convex optimization <a href="psets.html#eq:lqr-constraints">(9.3)</a> at a dense grid of <span class="math inline">\(x_0\)</span> (e.g., using CVX or cvxpy). Plot the optimal cost-to-go <span class="math inline">\(J(x_0)\)</span>, and the optimal controls <span class="math inline">\(u_0(x_0),\dots,u_{N-1}(x_0)\)</span>. For the optimal controls, you can just plot one of the controls such as <span class="math inline">\(u_0(x_0)\)</span>. You may want to use the Matlab function <a href="https://www.mathworks.com/help/matlab/ref/surf.html"><code>surf</code></a>. (Hint: you will most likely benefit from Appendix <a href="appconvex.html#appconvex-practice">B.2</a>.)</p></li>
+<li><p>Fix <span class="math inline">\(N=50\)</span>, <span class="math inline">\(dt=0.1\)</span> and choose your favorite <span class="math inline">\(Q_k\)</span> and <span class="math inline">\(R_k\)</span>. Solve the convex optimization <a href="psets.html#eq:lqr-constraints">(5.3)</a> at a dense grid of <span class="math inline">\(x_0\)</span> (e.g., using CVX or cvxpy). Plot the optimal cost-to-go <span class="math inline">\(J(x_0)\)</span>, and the optimal controls <span class="math inline">\(u_0(x_0),\dots,u_{N-1}(x_0)\)</span>. For the optimal controls, you can just plot one of the controls such as <span class="math inline">\(u_0(x_0)\)</span>. You may want to use the Matlab function <a href="https://www.mathworks.com/help/matlab/ref/surf.html"><code>surf</code></a>. (Hint: you will most likely benefit from Appendix <a href="appconvex.html#appconvex-practice">B.2</a>.)</p></li>
 <li><p>Increase <span class="math inline">\(N\)</span> and decrease <span class="math inline">\(dt\)</span>, repeat (c). Do you get more fine-grained plots of the optimal cost-to-go and controls? (When you increase <span class="math inline">\(N\)</span>, the convex optimization has more variables to optimize, so there is a limit at which the solver takes too much time.)</p></li>
 <li><p><strong>(Bonus)</strong> We only have constraints on the control so far. What if you add constraints to the states as well? For example, you can try limiting the velocity <span class="math inline">\(\dot{q}\)</span> to be at least <span class="math inline">\(0.1\)</span> by adding <span class="math inline">\(\dot{q}_k \geq 0.1\)</span> for some k. How will <span class="math inline">\(J\)</span> and <span class="math inline">\(u\)</span> change?</p></li>
-<li><p><strong>(Bonus)</strong> Can you write down the KKT optimality conditions of <a href="psets.html#eq:lqr-constraints">(9.3)</a> and explain what you have observed from the numerical experiments? (Hint: KKT optimality conditions can be found in Theorem <a href="appconvex.html#thm:KKT">B.2</a>.)</p></li>
+<li><p><strong>(Bonus)</strong> Can you write down the KKT optimality conditions of <a href="psets.html#eq:lqr-constraints">(5.3)</a> and explain what you have observed from the numerical experiments? (Hint: KKT optimality conditions can be found in Theorem <a href="appconvex.html#thm:KKT">B.2</a>.)</p></li>
 </ol>
 </div>
 </div>
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:cartpole" class="exercise"><strong>Exercise 9.3  (Cart Pole System) </strong></span>In this exercse, let us study the cart-pole system (we saw the video of human-controlled version in our first lecture), another interesting nonlinear control problem, and reinforce our knowledge about LQR.</p>
-<p>Our task is to balance a pendulum on a cart by horizontally moving the cart. Fig. <a href="psets.html#fig:cart-pole">9.3</a> gives an illustration of the system. See this <a href="https://www.youtube.com/watch?v=Bzq96V1yN5k">video</a> for an actual robotic implementation.</p>
+<p><span id="exr:cartpole" class="exercise"><strong>Exercise 5.3  (Cart Pole System) </strong></span>In this exercse, let us study the cart-pole system (we saw the video of human-controlled version in our first lecture), another interesting nonlinear control problem, and reinforce our knowledge about LQR.</p>
+<p>Our task is to balance a pendulum on a cart by horizontally moving the cart. Fig. <a href="psets.html#fig:cart-pole">5.3</a> gives an illustration of the system. See this <a href="https://www.youtube.com/watch?v=Bzq96V1yN5k">video</a> for an actual robotic implementation.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:cart-pole"></span>
 <img src="images/cartpole.png" alt="Illustration of cart-pole problem" width="60%" />
 <p class="caption">
-Figure 9.3: Illustration of cart-pole problem
+Figure 5.3: Illustration of cart-pole problem
 </p>
 </div>
 <p>With the above illustration, we parameterize the system with two scalars: <span class="math inline">\(x\)</span> represents the current location of the cart, while <span class="math inline">\(\theta\)</span> is the angle between current pole and the stable equilibrium. Therefore, our goal is to study the motion of the cart-pole system with a horizonal control <span class="math inline">\(f\)</span>. We assume hereafter the system is ideal such that there is no friction, and the mass of the pole concentrates at the free end point.</p>
@@ -598,11 +520,11 @@ Figure 9.3: Illustration of cart-pole problem
 Denote the mass of cart and pole as <span class="math inline">\(m_c\)</span> and <span class="math inline">\(m_p\)</span>, respectively. Derive the equations of motion:
 <span class="math display" id="eq:ex-cartpole-1">\[\begin{equation}
 \left(m_c+m_p\right) \ddot{x}+m_p l \ddot{\theta} \cos \theta-m_p l \dot{\theta}^2 \sin \theta=f,
-\tag{9.4}
+\tag{5.4}
 \end{equation}\]</span>
 <span class="math display" id="eq:ex-cartpole-2">\[\begin{equation}
 m_p l \ddot{x} \cos \theta+m_p l^2 \ddot{\theta}+m_p g l \sin \theta=0.
-\tag{9.5}
+\tag{5.5}
 \end{equation}\]</span>
 (Hints: compute the Lagrangian of the system and the corresponding Lagrangian equations. Analyzing the two objects separately also works.)
 <!--Hint2: https://en.wikipedia.org/wiki/Lagrangian_mechanics#Pendulum_on_a_movable_support--></li>
@@ -616,19 +538,19 @@ where $\mathbf{q}=\begin{bmatrix}x\\ \theta \end{bmatrix}$, $\mathbf{u}=\begin{b
 <li><p>Translate the equations in (a) into the basic state-space dynamics form
 <span class="math display" id="eq:ex-cartpole-3">\[\begin{equation}
 \dot{\mathbf{x}}=F(\mathbf{x}, \mathbf{u}).
-\tag{9.6}
+\tag{5.6}
 \end{equation}\]</span>
 What are <span class="math inline">\(\mathbf{x},\mathbf{u},F\)</span> here?
 (Hint: try <span class="math inline">\(\mathbf{x}=[x,\theta,\dot{x},\dot{\theta}]^\top\)</span>.)</p></li>
 <li><p>Linearize the dynamics in (b) around the unstable equilibrium where <span class="math inline">\(\theta^*=\pi\)</span> and <span class="math inline">\(x^*=\dot{x}^*=\dot{\theta}^*=0.\)</span> (i.e., the pole is in the upright position and the cart stay at zero.) The result should be in the form of
 <span class="math display" id="eq:ex-cartpole-4">\[\begin{equation}
 \dot{\Delta\mathbf{x}}=A\Delta\mathbf{x}+B\Delta\mathbf{u},
-\tag{9.7}
+\tag{5.7}
 \end{equation}\]</span>
 where <span class="math inline">\(\Delta\mathbf{x} = \mathbf{x}-\mathbf{x}^*\)</span> and <span class="math inline">\(\Delta\mathbf{u}=\mathbf{u}-\mathbf{u}^*\)</span>.</p></li>
-<li><p>Define the linearization error <span class="math inline">\(e(\mathbf{x}, \mathbf{u}):=\|F(\mathbf{x}, \mathbf{u}) - (A\Delta\mathbf{x}+B\Delta\mathbf{u})\|^2\)</span>. Simulate the original system <a href="psets.html#eq:ex-cartpole-3">(9.6)</a> and the linearized system <a href="psets.html#eq:ex-cartpole-4">(9.7)</a> with the same initial condition. How does the linearization error change over time? Provide at least three different initialization results.<br>
+<li><p>Define the linearization error <span class="math inline">\(e(\mathbf{x}, \mathbf{u}):=\|F(\mathbf{x}, \mathbf{u}) - (A\Delta\mathbf{x}+B\Delta\mathbf{u})\|^2\)</span>. Simulate the original system <a href="psets.html#eq:ex-cartpole-3">(5.6)</a> and the linearized system <a href="psets.html#eq:ex-cartpole-4">(5.7)</a> with the same initial condition. How does the linearization error change over time? Provide at least three different initialization results.<br>
 (Hints: (i) Sanity check: intuitively the error should not depend on the initial location <span class="math inline">\(x\)</span>, and it should have symmetry. Is that true in your simulation? <br>(ii) In the same unstable position, how does push/pull (positive/negative) force change the results?)</p></li>
-<li><p>Convert the continuous-time dynamics in <a href="psets.html#eq:ex-cartpole-4">(9.7)</a> to discrete-time with a fixed time-discretization. Then design an LQR controller to stabilize the cart-pole at the unstable equilibrium. Does the LQR controller succeed for all initial conditions you tested? (Hint: try several initial conditions where the end point of the pole is above or below the horizontal line.) You may want to take a look at the LQR example for the simple pendulum in Example <a href="exactdp.html#exm:lqr-pendulum-stabilization">2.1</a>.</p></li>
+<li><p>Convert the continuous-time dynamics in <a href="psets.html#eq:ex-cartpole-4">(5.7)</a> to discrete-time with a fixed time-discretization. Then design an LQR controller to stabilize the cart-pole at the unstable equilibrium. Does the LQR controller succeed for all initial conditions you tested? (Hint: try several initial conditions where the end point of the pole is above or below the horizontal line.) You may want to take a look at the LQR example for the simple pendulum in Example <a href="exactdp.html#exm:lqr-pendulum-stabilization">2.1</a>.</p></li>
 </ol>
 <!-- e. **(Bonus)** Will a linear controller (i.e., $f$ is linear in $\mathbf{x}$) be a good controller? Why or why not? The answer might depend on whether the end point of the pole is above the horizonal line. -->
 </div>
@@ -636,7 +558,7 @@ where <span class="math inline">\(\Delta\mathbf{x} = \mathbf{x}-\mathbf{x}^*\)</
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:shooting-and-collocation" class="exercise"><strong>Exercise 9.4  (Trajectory Optimization) </strong></span>Let us use this exercise to practice your skills in implementing trajectory optimization.</p>
+<p><span id="exr:shooting-and-collocation" class="exercise"><strong>Exercise 5.4  (Trajectory Optimization) </strong></span>Let us use this exercise to practice your skills in implementing trajectory optimization.</p>
 <p>Consider a dynamical system
 <span class="math display">\[
 x = \begin{bmatrix}
@@ -664,7 +586,7 @@ x_1
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:shortest-path" class="exercise"><strong>Exercise 9.5  (Policy Iteration of Shortest Path) </strong></span>In Example <a href="exactdp.html#exm:gridworld">2.2</a>, we used value iteration to solve the shortest path problem with obstacles. In this exercise, we will implement policy iteration. Instead of value iteration that updates the Q-function by <span class="math inline">\(Q^{(k+1)} = \mathcal{T}Q^{(k)}\)</span> where <span class="math inline">\(\mathcal{T}\)</span> is the Bellman optimality operator defined in <a href="exactdp.html#eq:bellman-optimality-operator">(2.27)</a>, we use a different update rule:</p>
+<p><span id="exr:shortest-path" class="exercise"><strong>Exercise 5.5  (Policy Iteration of Shortest Path) </strong></span>In Example <a href="exactdp.html#exm:gridworld">2.2</a>, we used value iteration to solve the shortest path problem with obstacles. In this exercise, we will implement policy iteration. Instead of value iteration that updates the Q-function by <span class="math inline">\(Q^{(k+1)} = \mathcal{T}Q^{(k)}\)</span> where <span class="math inline">\(\mathcal{T}\)</span> is the Bellman optimality operator defined in <a href="exactdp.html#eq:bellman-optimality-operator">(2.27)</a>, we use a different update rule:</p>
 <ol style="list-style-type: decimal">
 <li><p>Initialize the policy <span class="math inline">\(\pi_0\)</span>.</p></li>
 <li><p>For <span class="math inline">\(k=0,1,2,\ldots\)</span>, compute <span class="math inline">\(Q_{\pi_k}\)</span> via <a href="exactdp.html#eq:bellman-consistency-Qpi-linearsystem">(2.24)</a>. Then update policy by greedy method <span class="math inline">\(\pi_{k+1}=\pi_{Q^{\pi_k}}\)</span> (see <a href="exactdp.html#eq:def-pi-Q">(2.26)</a> for the definition of <span class="math inline">\(\pi_Q\)</span>).</p></li>
@@ -683,7 +605,7 @@ What can you find? (Hint: formulate the problem as a linear programming problem.
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:double-integrator-mpc" class="exercise"><strong>Exercise 9.6  (Verifying Control Lyapunov Function for the Double Integrator) </strong></span>Consider the following discrete-time double integrator dynamics
+<p><span id="exr:double-integrator-mpc" class="exercise"><strong>Exercise 5.6  (Verifying Control Lyapunov Function for the Double Integrator) </strong></span>Consider the following discrete-time double integrator dynamics
 <span class="math display">\[
 x_{t+1} = \underbrace{\begin{bmatrix} 1 &amp; 1 \\ 0 &amp; 1 \end{bmatrix}}_{A} x_t + \underbrace{\begin{bmatrix} 0 \\ 1 \end{bmatrix}}_{B} u_t,
 \]</span>
@@ -700,18 +622,18 @@ We do not enforce any state constraint on <span class="math inline">\(x\)</span>
 &amp; \quad x(k+1) = A x(k) + B u(k), \forall k = 0,\dots,N-1 \\
 &amp; \quad x(0) = x_t,
 \end{split}
-\tag{9.8}
+\tag{5.8}
 \end{equation}\]</span>
 where <span class="math inline">\(x_t\)</span> is the system state at time <span class="math inline">\(t\)</span>, and <span class="math inline">\(P,Q,R\)</span> matrices are designed as follows
 <span class="math display">\[
 Q = \begin{bmatrix} 1 &amp; 0 \\ 0 &amp; 0 \end{bmatrix}, \quad R = 1, \quad P = \begin{bmatrix} 0.1 &amp; 0 \\ 0 &amp; 0.1 \end{bmatrix}.
 \]</span></p>
 <ol style="list-style-type: lower-alpha">
-<li><p>Implement the RHC in <a href="psets.html#eq:double-integrator-rhc-exercise">(9.8)</a>, and run the RHC with initial system state <span class="math inline">\(x_0 = [2;1]\)</span>. Plot the system trajectory on a 2D plane like Fig. <a href="approximatedp.html#fig:double-integrator-mpc-two-initial-states">3.24</a>.</p></li>
+<li><p>Implement the RHC in <a href="psets.html#eq:double-integrator-rhc-exercise">(5.8)</a>, and run the RHC with initial system state <span class="math inline">\(x_0 = [2;1]\)</span>. Plot the system trajectory on a 2D plane like Fig. <a href="approximatedp.html#fig:double-integrator-mpc-two-initial-states">3.24</a>.</p></li>
 <li><p>From Theorem <a href="approximatedp.html#thm:mpc-stability">3.3</a>, we know that a sufficient condition for the stability of RHC is that the terminal cost, in our example is <span class="math inline">\(p(x) = x^T P x\)</span>, needs to satisfy <a href="approximatedp.html#eq:mpc-stability-lyapunov">(3.40)</a>. When <span class="math inline">\(p(x)\)</span> satisfies <a href="approximatedp.html#eq:mpc-stability-lyapunov">(3.40)</a>, we say <span class="math inline">\(p(x)\)</span> is a control Lyapunov function (CLF). Instantiating <a href="approximatedp.html#eq:mpc-stability-lyapunov">(3.40)</a> for this exercise, it becomes (recall that we do not have terminal constraint, i.e., <span class="math inline">\(\mathcal{X}_f = \mathbb{R}^2\)</span>):
 <span class="math display" id="eq:clf-double-integrator">\[\begin{equation}
 \rho = \min_{u \in \mathcal{U}} \ \ (Ax + Bu)^T P (Ax + Bu) - x^T P x + x^T Q x + u^T R u \leq 0, \quad \forall x \in \mathbb{R}^2.
-\tag{9.9}
+\tag{5.9}
 \end{equation}\]</span>
 Computing <span class="math inline">\(\rho\)</span> for all <span class="math inline">\(x\)</span> in <span class="math inline">\(\mathbb{R}^2\)</span> is difficult, so I will ask you to compute <span class="math inline">\(\rho\)</span> along the state trajectory generated by RHC in (a). Compute and plot the trajectory of <span class="math inline">\(\rho\)</span>.</p></li>
 <li><p>From Proposition <a href="exactdp.html#prp:infinitehorizonlqrsolution">2.2</a>, we know the optimal cost-to-go of the unconstrained infinite-horizon LQR problem with <span class="math inline">\(x(0) = x\)</span>
@@ -731,7 +653,7 @@ where <span class="math inline">\(S\)</span> can be computed by solving the alge
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:polyhedral" class="exercise"><strong>Exercise 9.7  (Polyhedral Controllable and Reachable Sets) </strong></span>In this exercise, we aim to compute controllable and reachable sets explicitly, rather than implementing MPT.</p>
+<p><span id="exr:polyhedral" class="exercise"><strong>Exercise 5.7  (Polyhedral Controllable and Reachable Sets) </strong></span>In this exercise, we aim to compute controllable and reachable sets explicitly, rather than implementing MPT.</p>
 <ol style="list-style-type: lower-alpha">
 <li><p>A bounded polyhedron in <span class="math inline">\(\mathbb{R}^n\)</span> can be expressed as the convex hull of a finite set of points (vertices) <span class="math inline">\(V = \{V_1, \ldots, V_k\}\subset \mathbb{R}^n\)</span>. Show that a linear transform of such a polyhedron is simply tranforming its vertices, namely, <span class="math display">\[A\text{conv}(V)+b = \text{conv}(AV)+b,\]</span> where <span class="math inline">\(A\in\mathbb{R}^{m\times n},\ b\in\mathbb{R}^m\)</span>.</p></li>
 <li><p>The exact definition of a (closed) polyhedron <span class="math inline">\(\mathcal{P}\)</span> is a set defined by finite number of linear inequalities <span class="math inline">\(\mathcal{P} = \{x\in\mathbb{R}^n\mid Hx\le h \}\)</span> where <span class="math inline">\(H\in\mathbb{R}^{m\times n},\ h\in\mathbb{R}^m\)</span>. Let <span class="math inline">\(A\in\mathbb{R}^{n\times n}\)</span> be an invertible matrix, <span class="math inline">\(b\in\mathbb{R}^n\)</span>. Suppose the linear transformed polyhedron <span class="math inline">\(A\mathcal{P}+b\)</span> has representation <span class="math display">\[\{y\in\mathbb{R}^n\mid H^\prime y\le h^\prime \}.\]</span> What are <span class="math inline">\(H^\prime\)</span> and <span class="math inline">\(h^\prime\)</span>?</p></li>
@@ -776,12 +698,12 @@ Mimic the computation of the successor set.)</p></li>
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:pendulum-lqr-clipped-roa" class="exercise"><strong>Exercise 9.8  (Certified Region of Attraction of Clipped LQR Controller) </strong></span>In this exercise, let us use the simple pendulum as an example to (i) recognize the difficulty of nonlinear control in the presence of control limits, and (ii) appreciate the power of Lyapunov analysis and Sums-of-Squares (SOS) programming.</p>
+<p><span id="exr:pendulum-lqr-clipped-roa" class="exercise"><strong>Exercise 5.8  (Certified Region of Attraction of Clipped LQR Controller) </strong></span>In this exercise, let us use the simple pendulum as an example to (i) recognize the difficulty of nonlinear control in the presence of control limits, and (ii) appreciate the power of Lyapunov analysis and Sums-of-Squares (SOS) programming.</p>
 <p>A starting script for this exercise can be found <a href="https://github.com/ComputationalRobotics/OptimalControlEstimation-Examples/blob/main/pendulum_saturated_control.m">here</a>, where you need to fill out some specific details to finish this exercise.</p>
 <p>Let us consider the continuous-time pendulum dynamics
 <span class="math display" id="eq:pendulum-lqr-clipped-roa-dynamics">\[\begin{equation}
 \dot{x} = \begin{bmatrix} x_2 \\ \frac{1}{ml^2} (u - b x_2 + mgl \sin x_1) \end{bmatrix}
-\tag{9.10}
+\tag{5.10}
 \end{equation}\]</span>
 where <span class="math inline">\(x_1\)</span> is the angular position of the pendulum, and <span class="math inline">\(x_2\)</span> is the angular velocity. Note that the dynamics above is written such that <span class="math inline">\(x=0\)</span> represents the upright position.</p>
 <p>In the case of no control saturation, i.e., <span class="math inline">\(u \in \mathbb{R}\)</span>, stabilizing the pendulum at <span class="math inline">\(x=0\)</span> is easy, we can linearize the dynamics at <span class="math inline">\(x=0\)</span> and obtain
@@ -792,26 +714,26 @@ We then solve an infinite-horizon LQR problem
 <span class="math display">\[
 \min \int_{t=0}^{\infty} x(t)^T Q x(t) + u(t)^T R u(t) dt, \quad \text{subject to} \quad x(0) = x_0.
 \]</span>
-The solution to this LQR problem can be written in closed form, see Section <a href="continuous-time-optimal-control.html#continuous-time-infinite-horizon-lqr">4.5.1</a>.
+The solution to this LQR problem can be written in closed form, see Section <a href="#continuous-time-infinite-horizon-lqr"><strong>??</strong></a>.
 Calling the Matlab <code>lqr</code> function (which is for continuous-time LQR), we can get a feedback controller
 <span class="math display" id="eq:pendulum-lqr-clipped-roa-lqr-control">\[\begin{equation}
 u(x) = - Kx,
-\tag{9.11}
+\tag{5.11}
 \end{equation}\]</span>
 with the optimal cost-to-go
 <span class="math display" id="eq:pendulum-lqr-clipped-roa-lqr-value">\[\begin{equation}
 J(x_0) = x_0^T S x_0,
-\tag{9.12}
+\tag{5.12}
 \end{equation}\]</span>
 with <span class="math inline">\(K\)</span> and <span class="math inline">\(S\)</span> constant matrices.</p>
 <p><strong>Control saturation</strong>. Assume now our control has hard bounds, i.e.,
 <span class="math display">\[
 u \in [-u_{\max}, u_{\max}].
 \]</span>
-We wish to keep using the LQR controller <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control">(9.11)</a>. Therefore, our saturated controller will be
+We wish to keep using the LQR controller <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control">(5.11)</a>. Therefore, our saturated controller will be
 <span class="math display" id="eq:pendulum-lqr-clipped-roa-lqr-control-saturated">\[\begin{equation}
 \bar{u}(x) = \text{clip}(u(x),-u_{\max},u_{\max}) = \text{clip}(-Kx,-u_{\max},u_{\max}),
-\tag{9.13}
+\tag{5.13}
 \end{equation}\]</span>
 where the <span class="math inline">\(\text{clip}\)</span> function is defined as
 <span class="math display">\[
@@ -821,60 +743,60 @@ u &amp; \text{if} \quad -u_{\max} \leq u \leq u_{\max} \\
 -u_{\max} &amp; \text{if} \quad u \leq - u_{\max}
 \end{cases}.
 \]</span></p>
-<p>A natural question is: can the saturated controller <span class="math inline">\(\bar{u}(t)\)</span> in <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control-saturated">(9.13)</a> still stabilize the pendulum?</p>
+<p>A natural question is: can the saturated controller <span class="math inline">\(\bar{u}(t)\)</span> in <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control-saturated">(5.13)</a> still stabilize the pendulum?</p>
 <p>Let’s simulate the pendulum and the controller to investigate this. We will use the parameter <span class="math inline">\(m=1,g=9.8,l=1,b=0.1\)</span>, and <span class="math inline">\(u_{\max} = 2\)</span>. For the LQR cost matrix, let us use <span class="math inline">\(Q = I\)</span> and <span class="math inline">\(R = 1\)</span>.</p>
 <ol style="list-style-type: lower-alpha">
-<li>Compute the LQR gain <span class="math inline">\(K\)</span> and implement the saturated controller <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control-saturated">(9.13)</a>. In a region <span class="math inline">\(\mathcal{X} = [-0.2\pi, 0.2\pi] \times [-0.2\pi, 0.2\pi]\)</span>, sample <span class="math inline">\(N=1000\)</span> initial states, and for each initial state, simulate the system under the saturated controller using <code>ode45</code> or <code>ode89</code>. There will be some initial states from which the pendulum gets stabilized and others from which the pendulum fails to be stabilized. Plot the stabilized initial states as “circles”, and the non-stabilized initial states as “squares” on a 2D plot. (Hint: you should get something like Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples">9.4</a>.)</li>
+<li>Compute the LQR gain <span class="math inline">\(K\)</span> and implement the saturated controller <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control-saturated">(5.13)</a>. In a region <span class="math inline">\(\mathcal{X} = [-0.2\pi, 0.2\pi] \times [-0.2\pi, 0.2\pi]\)</span>, sample <span class="math inline">\(N=1000\)</span> initial states, and for each initial state, simulate the system under the saturated controller using <code>ode45</code> or <code>ode89</code>. There will be some initial states from which the pendulum gets stabilized and others from which the pendulum fails to be stabilized. Plot the stabilized initial states as “circles”, and the non-stabilized initial states as “squares” on a 2D plot. (Hint: you should get something like Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples">5.4</a>.)</li>
 </ol>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-sat-control-random-samples"></span>
 <img src="images/pendulum_sat_random_samples.png" alt="Example of stabilized and non-stabilized initial states." width="80%" />
 <p class="caption">
-Figure 9.4: Example of stabilized and non-stabilized initial states.
+Figure 5.4: Example of stabilized and non-stabilized initial states.
 </p>
 </div>
-<p>The plot in Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples">9.4</a> intuitively makes sense: when the initial state is very close to <span class="math inline">\(0\)</span>, the saturated controller can still stabilize the pendulum.</p>
+<p>The plot in Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples">5.4</a> intuitively makes sense: when the initial state is very close to <span class="math inline">\(0\)</span>, the saturated controller can still stabilize the pendulum.</p>
 <p>Now our goal is to use Sums-of-Squares and Lyapunov analysis to get a <strong>certified region of stabilization</strong>, also known as the region of attraction (ROA), under the saturated control.</p>
-<p><strong>Approximate polynomial dynamics</strong>. The SOS tool requires the system dynamics to be polynomial. The dynamics in <a href="psets.html#eq:pendulum-lqr-clipped-roa-dynamics">(9.10)</a> is polynomial except the term <span class="math inline">\(\sin x_1\)</span>. Therefore, we perform a Taylor expansion of <span class="math inline">\(\sin x_1\)</span>
+<p><strong>Approximate polynomial dynamics</strong>. The SOS tool requires the system dynamics to be polynomial. The dynamics in <a href="psets.html#eq:pendulum-lqr-clipped-roa-dynamics">(5.10)</a> is polynomial except the term <span class="math inline">\(\sin x_1\)</span>. Therefore, we perform a Taylor expansion of <span class="math inline">\(\sin x_1\)</span>
 <span class="math display">\[
 \sin x_1 = x_1 - \frac{x_1^3}{3!} + \frac{x_1^5}{5!} + \dots,
 \]</span>
 leading to an approximate polynomial dynamics
 <span class="math display" id="eq:pendulum-lqr-clipped-roa-dynamics-polynomial">\[\begin{equation}
 \dot{x} = \bar{f}(x,u) = \begin{bmatrix} x_2 \\ \frac{1}{ml^2} \left(u - b x_2 + mgl \left(x_1 - \frac{x_1^3}{3!} + \frac{x_1^5}{5!} \right) \right) \end{bmatrix}.
-\tag{9.14}
+\tag{5.14}
 \end{equation}\]</span></p>
 <p><strong>Candidate ROA</strong>. We want to certify the following candidate ROA
 <span class="math display">\[
 \Omega_\rho = \{x \in \mathbb{R}^2 \mid J(x) :=x^T S x \leq \rho \}
 \]</span>
-for some <span class="math inline">\(\rho &gt; 0\)</span>, and <span class="math inline">\(S\)</span> is exactly the LQR cost-to-go in <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-value">(9.12)</a>. Since <span class="math inline">\(J(x)\)</span> is already positive definite (because <span class="math inline">\(S \succ 0\)</span>), <span class="math inline">\(\Omega_\rho\)</span> will look like an elliptical region around the origin. To certify all initial states inside <span class="math inline">\(\Omega_\rho\)</span> can be stabilized, we need <span class="math inline">\(\dot{J}(x)\)</span> to be negative definite on <span class="math inline">\(\Omega\)</span>, under the saturated LQR controller <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control-saturated">(9.13)</a> (according to Theorem <a href="stability.html#thm:lyapunovlocalstability">5.2</a>), that is to say
+for some <span class="math inline">\(\rho &gt; 0\)</span>, and <span class="math inline">\(S\)</span> is exactly the LQR cost-to-go in <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-value">(5.12)</a>. Since <span class="math inline">\(J(x)\)</span> is already positive definite (because <span class="math inline">\(S \succ 0\)</span>), <span class="math inline">\(\Omega_\rho\)</span> will look like an elliptical region around the origin. To certify all initial states inside <span class="math inline">\(\Omega_\rho\)</span> can be stabilized, we need <span class="math inline">\(\dot{J}(x)\)</span> to be negative definite on <span class="math inline">\(\Omega\)</span>, under the saturated LQR controller <a href="psets.html#eq:pendulum-lqr-clipped-roa-lqr-control-saturated">(5.13)</a> (according to Theorem <a href="stability.html#thm:lyapunovlocalstability">4.2</a>), that is to say
 <span class="math display">\[
 \dot{J}(x) = \frac{\partial J}{\partial x} \bar{f}(x, \bar{u}(x)) &lt; 0, \quad \forall x \in \Omega_\rho \backslash \{ 0 \}.
 \]</span>
 A sufficient condition for the above equation to hold is
 <span class="math display" id="eq:pendulum-lqr-clipped-roa-sos-condition-1">\[\begin{equation}
 - \frac{\partial J}{\partial x} \bar{f}(x, \bar{u}(x)) - \epsilon \Vert x \Vert^2 \quad \text{ is SOS on } \Omega_\rho.
-\tag{9.15}
+\tag{5.15}
 \end{equation}\]</span>
 for some <span class="math inline">\(\epsilon &gt; 0\)</span> (do you see this?).</p>
-<p>The condition <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-1">(9.15)</a> is almost ready for us to implement in SOSTOOLS. However, there is one last issue. The saturated controller <span class="math inline">\(\bar{u}(x)\)</span> is not a polynomial!</p>
-<p><strong>The last trick</strong>. Fortunately, we can use a trick here to save us. A closer look at <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-1">(9.15)</a> and the saturated controller <span class="math inline">\(\bar{u}(x)\)</span> shows that it is equivalent to asking
+<p>The condition <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-1">(5.15)</a> is almost ready for us to implement in SOSTOOLS. However, there is one last issue. The saturated controller <span class="math inline">\(\bar{u}(x)\)</span> is not a polynomial!</p>
+<p><strong>The last trick</strong>. Fortunately, we can use a trick here to save us. A closer look at <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-1">(5.15)</a> and the saturated controller <span class="math inline">\(\bar{u}(x)\)</span> shows that it is equivalent to asking
 <span class="math display" id="eq:pendulum-lqr-clipped-roa-sos-condition-2">\[\begin{equation}
 \begin{split}
 - \frac{\partial J}{\partial x} \bar{f}(x, u_{\max}) - \epsilon \Vert x \Vert^2 \quad \text{ is SOS on } \quad \Omega_\rho \cap \{ x \mid u(x) \geq u_{\max} \} \\
 - \frac{\partial J}{\partial x} \bar{f}(x, u(x)) - \epsilon \Vert x \Vert^2 \quad \text{ is SOS on } \quad \Omega_\rho \cap \{ x \mid -u_{\max} \leq u(x) \leq u_{\max} \} \\
 - \frac{\partial J}{\partial x} \bar{f}(x, - u_{\max}) - \epsilon \Vert x \Vert^2 \quad \text{ is SOS on } \quad \Omega_\rho \cap \{ x \mid u(x) \leq -u_{\max} \}.
 \end{split}
-\tag{9.16}
+\tag{5.16}
 \end{equation}\]</span>
-Essentially, <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-2">(9.16)</a> breaks the SOS condition into three cases, each corresponding to one case in the <span class="math inline">\(\text{clip}\)</span> function. (1) If <span class="math inline">\(u(x) \geq u_{\max}\)</span>, then the first equation takes <span class="math inline">\(u_{\max}\)</span> to be the controller, (2) If <span class="math inline">\(u(x) \leq -u_{\max}\)</span>, then the third equation takes <span class="math inline">\(-u_{\max}\)</span> to be the controller, (3) otherwise, the second equation takes <span class="math inline">\(u(x)=-Kx\)</span> to be the controller. Condition <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-2">(9.16)</a> has three SOS constraints and can be readily implemented using SOSTOOLS. We will use <span class="math inline">\(\epsilon = 0.01\)</span>.</p>
+Essentially, <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-2">(5.16)</a> breaks the SOS condition into three cases, each corresponding to one case in the <span class="math inline">\(\text{clip}\)</span> function. (1) If <span class="math inline">\(u(x) \geq u_{\max}\)</span>, then the first equation takes <span class="math inline">\(u_{\max}\)</span> to be the controller, (2) If <span class="math inline">\(u(x) \leq -u_{\max}\)</span>, then the third equation takes <span class="math inline">\(-u_{\max}\)</span> to be the controller, (3) otherwise, the second equation takes <span class="math inline">\(u(x)=-Kx\)</span> to be the controller. Condition <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-2">(5.16)</a> has three SOS constraints and can be readily implemented using SOSTOOLS. We will use <span class="math inline">\(\epsilon = 0.01\)</span>.</p>
 <ol start="2" style="list-style-type: lower-alpha">
-<li>Choose <span class="math inline">\(\rho = 1\)</span>, and implement the SOS conditions in <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-2">(9.16)</a> with a chosen relaxation order <span class="math inline">\(\kappa\)</span> (in the code I choose <span class="math inline">\(\kappa=4\)</span>). Is the SOS program feasible (i.e., does the SOS program produce a certificate)? If so, plot the boundary of <span class="math inline">\(\Omega_\rho\)</span> on top of the samples plot in Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples">9.4</a>. Does <span class="math inline">\(\Omega_\rho\)</span> agree with the samples? (Hint: you should see a plot similar to Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples-certificate">9.5</a>.)</li>
+<li>Choose <span class="math inline">\(\rho = 1\)</span>, and implement the SOS conditions in <a href="psets.html#eq:pendulum-lqr-clipped-roa-sos-condition-2">(5.16)</a> with a chosen relaxation order <span class="math inline">\(\kappa\)</span> (in the code I choose <span class="math inline">\(\kappa=4\)</span>). Is the SOS program feasible (i.e., does the SOS program produce a certificate)? If so, plot the boundary of <span class="math inline">\(\Omega_\rho\)</span> on top of the samples plot in Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples">5.4</a>. Does <span class="math inline">\(\Omega_\rho\)</span> agree with the samples? (Hint: you should see a plot similar to Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples-certificate">5.5</a>.)</li>
 </ol>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-sat-control-random-samples-certificate"></span>
 <img src="images/pendulum_sat_random_samples_cert.png" alt="Certified Region of Attraction." width="80%" />
 <p class="caption">
-Figure 9.5: Certified Region of Attraction.
+Figure 5.5: Certified Region of Attraction.
 </p>
 </div>
 <ol start="3" style="list-style-type: lower-alpha">
@@ -885,13 +807,13 @@ Figure 9.5: Certified Region of Attraction.
 <p> </p>
 <div class="exercisebox">
 <div class="exercise">
-<p><span id="exr:energy-pump" class="exercise"><strong>Exercise 9.9  (Energy pumping of Simple Pendulum) </strong></span>In Exercise <a href="psets.html#exr:pendulum-lqr-clipped-roa">9.8</a>, we have studied the region of attraction of the Clipped LQR Controller. The conclusion we got there is, once we enter the region of attraction <span class="math inline">\(\Omega_\rho\)</span> (the green elliptical region in Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples-certificate">9.5</a>), we can switch to the clipped LQR controller and it guarantees stabilization towards the upright position.</p>
+<p><span id="exr:energy-pump" class="exercise"><strong>Exercise 5.9  (Energy pumping of Simple Pendulum) </strong></span>In Exercise <a href="psets.html#exr:pendulum-lqr-clipped-roa">5.8</a>, we have studied the region of attraction of the Clipped LQR Controller. The conclusion we got there is, once we enter the region of attraction <span class="math inline">\(\Omega_\rho\)</span> (the green elliptical region in Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples-certificate">5.5</a>), we can switch to the clipped LQR controller and it guarantees stabilization towards the upright position.</p>
 <p>In this exercise, we are going to design a controller that can swing up the pendulum to enter the region of attraction.</p>
 <p>The total energy of the pendulum is given by
 <span class="math display">\[ E = \frac{1}{2} m l^2 x_2^2 + mgl\cos x_1,\]</span>
-where <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> are notations in <a href="psets.html#eq:pendulum-lqr-clipped-roa-dynamics">(9.10)</a>.</p>
+where <span class="math inline">\(x_1\)</span> and <span class="math inline">\(x_2\)</span> are notations in <a href="psets.html#eq:pendulum-lqr-clipped-roa-dynamics">(5.10)</a>.</p>
 <ol style="list-style-type: lower-alpha">
-<li><p>With the dynamics in <a href="psets.html#eq:pendulum-lqr-clipped-roa-dynamics">(9.10)</a>, one can obtain the change of energy over time:
+<li><p>With the dynamics in <a href="psets.html#eq:pendulum-lqr-clipped-roa-dynamics">(5.10)</a>, one can obtain the change of energy over time:
 <span class="math display">\[ \dot E = \color{red}{h(x,u)}\cdot x_2.\]</span>
 Find the expression of <span class="math inline">\(h(x,u)\)</span>.</p></li>
 <li><p>Our desired energy is the one with the upright equilibruim: <span class="math inline">\(E^d = mgl.\)</span> Define the energy of difference <span class="math display">\[\tilde{E} = E - E^d.\]</span> Find the expression of <span class="math inline">\(\dot{\tilde{E}}\)</span>.</p></li>
@@ -899,7 +821,7 @@ Find the expression of <span class="math inline">\(h(x,u)\)</span>.</p></li>
 <span class="math display">\[ u = -k x_2 \tilde{E} + b x_2.\]</span> Find the expression of <span class="math inline">\(\dot{\tilde{E}}\)</span>. (Bonus) Explain heuristically why the controller works.</p></li>
 <li><p>However, our controller has saturation as before:
 <span class="math display">\[\bar{u}(x) = \text{clip}(u(x),-u_{\max},u_{\max}).\]</span>
-Set the parameters the same as the previous exercise and <span class="math inline">\(k=1\)</span>. Simulate the system under the saturated controller with initial state <span class="math inline">\((x_1,x_2)=(\pi,1).\)</span> Will the state hit the candidate ROA <span class="math inline">\(\Omega_\rho\)</span> with <span class="math inline">\(\rho=2\)</span>? If yes, stop the system once it hits the region, and draw the trajectory on the Figure similar to Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples-certificate">9.5</a>. Try <span class="math inline">\(k=0.01, 0.1,1,10\)</span>, which one hits the region the fastest?</p></li>
+Set the parameters the same as the previous exercise and <span class="math inline">\(k=1\)</span>. Simulate the system under the saturated controller with initial state <span class="math inline">\((x_1,x_2)=(\pi,1).\)</span> Will the state hit the candidate ROA <span class="math inline">\(\Omega_\rho\)</span> with <span class="math inline">\(\rho=2\)</span>? If yes, stop the system once it hits the region, and draw the trajectory on the Figure similar to Fig. <a href="psets.html#fig:pendulum-sat-control-random-samples-certificate">5.5</a>. Try <span class="math inline">\(k=0.01, 0.1,1,10\)</span>, which one hits the region the fastest?</p></li>
 </ol>
 <p>Congrats! We have designed a full nonlinear controller (energy pumping + clipped LQR) that guarantees swing-up of the pendulum from any initial state to the upright position. Try the controller for yourself.</p>
 </div>
@@ -919,7 +841,7 @@ Nocedal, Jorge, and Stephen J Wright. 1999. <em>Numerical Optimization</em>. Spr
           </div>
         </div>
       </div>
-<a href="adaptivecontrol.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="stability.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
 <a href="acknowledgement.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
@@ -951,7 +873,7 @@ gitbook.start({
     "size": 2
   },
   "edit": {
-    "link": "https://github.com/hankyang94/OptimalControlEstimation/blob/main/10-problem-set.Rmd",
+    "link": "https://github.com/hankyang94/OptimalControlReinforcementLearning/blob/main/10-problem-set.Rmd",
     "text": "Edit"
   },
   "history": {
@@ -962,7 +884,7 @@ gitbook.start({
     "link": null,
     "text": null
   },
-  "download": ["optimal-control-estimation.pdf"],
+  "download": ["optimal-control-reinforcement-learning.pdf"],
   "search": {
     "engine": "fuse",
     "options": null

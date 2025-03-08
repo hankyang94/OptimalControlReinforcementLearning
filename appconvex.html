@@ -4,20 +4,20 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>B Convex Analysis and Optimization | Optimal Control and Estimation</title>
-  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <title>B Convex Analysis and Optimization | Optimal Control and Reinforcement Learning</title>
+  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   <meta name="generator" content="bookdown 0.42 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="B Convex Analysis and Optimization | Optimal Control and Estimation" />
+  <meta property="og:title" content="B Convex Analysis and Optimization | Optimal Control and Reinforcement Learning" />
   <meta property="og:type" content="book" />
   
-  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
-  <meta name="github-repo" content="hankyang94/OptimalControlEstimation" />
+  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  <meta name="github-repo" content="hankyang94/OptimalControlReinforcementLearning" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="B Convex Analysis and Optimization | Optimal Control and Estimation" />
+  <meta name="twitter:title" content="B Convex Analysis and Optimization | Optimal Control and Reinforcement Learning" />
   
-  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   
 
 <meta name="author" content="Heng Yang" />
@@ -160,10 +160,14 @@ div.csl-indent {
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">Optimal Control and Estimation</a></li>
+<li><a href="./">Optimal Control and Reinforcement Learning</a></li>
 
 <li class="divider"></li>
-<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#feedback"><i class="fa fa-check"></i>Feedback</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#offerings"><i class="fa fa-check"></i>Offerings</a></li>
+</ul></li>
 <li class="chapter" data-level="1" data-path="formulation.html"><a href="formulation.html"><i class="fa fa-check"></i><b>1</b> The Optimal Control Formulation</a>
 <ul>
 <li class="chapter" data-level="1.1" data-path="formulation.html"><a href="formulation.html#the-basic-problem"><i class="fa fa-check"></i><b>1.1</b> The Basic Problem</a></li>
@@ -214,102 +218,20 @@ div.csl-indent {
 </ul></li>
 <li class="chapter" data-level="3.4" data-path="approximatedp.html"><a href="approximatedp.html#policy-gradient"><i class="fa fa-check"></i><b>3.4</b> Policy Gradient</a></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html"><i class="fa fa-check"></i><b>4</b> Continuous-time Optimal Control</a>
+<li class="chapter" data-level="4" data-path="stability.html"><a href="stability.html"><i class="fa fa-check"></i><b>4</b> Stability Analysis</a>
 <ul>
-<li class="chapter" data-level="4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-basic-problem-1"><i class="fa fa-check"></i><b>4.1</b> The Basic Problem</a></li>
-<li class="chapter" data-level="4.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-hamilton-jacobi-bellman-equation"><i class="fa fa-check"></i><b>4.2</b> The Hamilton-Jacobi-Bellman Equation</a></li>
-<li class="chapter" data-level="4.3" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#linear-quadratic-regulator"><i class="fa fa-check"></i><b>4.3</b> Linear Quadratic Regulator</a>
+<li class="chapter" data-level="4.1" data-path="stability.html"><a href="stability.html#autonomous-systems"><i class="fa fa-check"></i><b>4.1</b> Autonomous Systems</a>
 <ul>
-<li class="chapter" data-level="4.3.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-tracking-1"><i class="fa fa-check"></i><b>4.3.1</b> LQR Trajectory Tracking</a></li>
-<li class="chapter" data-level="4.3.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-stabilization"><i class="fa fa-check"></i><b>4.3.2</b> LQR Trajectory Stabilization</a></li>
+<li class="chapter" data-level="4.1.1" data-path="stability.html"><a href="stability.html#concepts-of-stability"><i class="fa fa-check"></i><b>4.1.1</b> Concepts of Stability</a></li>
+<li class="chapter" data-level="4.1.2" data-path="stability.html"><a href="stability.html#stability-by-linearization"><i class="fa fa-check"></i><b>4.1.2</b> Stability by Linearization</a></li>
+<li class="chapter" data-level="4.1.3" data-path="stability.html"><a href="stability.html#lyapunov-analysis"><i class="fa fa-check"></i><b>4.1.3</b> Lyapunov Analysis</a></li>
+<li class="chapter" data-level="4.1.4" data-path="stability.html"><a href="stability.html#invariant-set-theorem"><i class="fa fa-check"></i><b>4.1.4</b> Invariant Set Theorem</a></li>
+<li class="chapter" data-level="4.1.5" data-path="stability.html"><a href="stability.html#computing-lyapunov-certificates"><i class="fa fa-check"></i><b>4.1.5</b> Computing Lyapunov Certificates</a></li>
 </ul></li>
-<li class="chapter" data-level="4.4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-pontryagin-minimum-principle"><i class="fa fa-check"></i><b>4.4</b> The Pontryagin Minimum Principle</a>
-<ul>
-<li class="chapter" data-level="4.4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#numerical-solution-of-the-tpbvp"><i class="fa fa-check"></i><b>4.4.1</b> Numerical Solution of the TPBVP</a></li>
+<li class="chapter" data-level="4.2" data-path="stability.html"><a href="stability.html#controlled-systems"><i class="fa fa-check"></i><b>4.2</b> Controlled Systems</a></li>
+<li class="chapter" data-level="4.3" data-path="stability.html"><a href="stability.html#non-autonomous-systems"><i class="fa fa-check"></i><b>4.3</b> Non-autonomous Systems</a></li>
 </ul></li>
-<li class="chapter" data-level="4.5" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#infinite-horizon-problems"><i class="fa fa-check"></i><b>4.5</b> Infinite-Horizon Problems</a>
-<ul>
-<li class="chapter" data-level="4.5.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#continuous-time-infinite-horizon-lqr"><i class="fa fa-check"></i><b>4.5.1</b> Infinite-Horizon LQR</a></li>
-</ul></li>
-<li class="chapter" data-level="4.6" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#viscosity-solution"><i class="fa fa-check"></i><b>4.6</b> Viscosity Solution</a></li>
-</ul></li>
-<li class="chapter" data-level="5" data-path="stability.html"><a href="stability.html"><i class="fa fa-check"></i><b>5</b> Stability Analysis</a>
-<ul>
-<li class="chapter" data-level="5.1" data-path="stability.html"><a href="stability.html#autonomous-systems"><i class="fa fa-check"></i><b>5.1</b> Autonomous Systems</a>
-<ul>
-<li class="chapter" data-level="5.1.1" data-path="stability.html"><a href="stability.html#concepts-of-stability"><i class="fa fa-check"></i><b>5.1.1</b> Concepts of Stability</a></li>
-<li class="chapter" data-level="5.1.2" data-path="stability.html"><a href="stability.html#stability-by-linearization"><i class="fa fa-check"></i><b>5.1.2</b> Stability by Linearization</a></li>
-<li class="chapter" data-level="5.1.3" data-path="stability.html"><a href="stability.html#lyapunov-analysis"><i class="fa fa-check"></i><b>5.1.3</b> Lyapunov Analysis</a></li>
-<li class="chapter" data-level="5.1.4" data-path="stability.html"><a href="stability.html#invariant-set-theorem"><i class="fa fa-check"></i><b>5.1.4</b> Invariant Set Theorem</a></li>
-<li class="chapter" data-level="5.1.5" data-path="stability.html"><a href="stability.html#computing-lyapunov-certificates"><i class="fa fa-check"></i><b>5.1.5</b> Computing Lyapunov Certificates</a></li>
-</ul></li>
-<li class="chapter" data-level="5.2" data-path="stability.html"><a href="stability.html#controlled-systems"><i class="fa fa-check"></i><b>5.2</b> Controlled Systems</a></li>
-<li class="chapter" data-level="5.3" data-path="stability.html"><a href="stability.html#non-autonomous-systems"><i class="fa fa-check"></i><b>5.3</b> Non-autonomous Systems</a></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="output-feedback.html"><a href="output-feedback.html"><i class="fa fa-check"></i><b>6</b> Output Feedback</a>
-<ul>
-<li class="chapter" data-level="6.1" data-path="output-feedback.html"><a href="output-feedback.html#least-squares-estimation"><i class="fa fa-check"></i><b>6.1</b> Least-Squares Estimation</a>
-<ul>
-<li class="chapter" data-level="6.1.1" data-path="output-feedback.html"><a href="output-feedback.html#linear-least-squares-estimation"><i class="fa fa-check"></i><b>6.1.1</b> Linear Least-Squares Estimation</a></li>
-</ul></li>
-<li class="chapter" data-level="6.2" data-path="output-feedback.html"><a href="output-feedback.html#kalman-filter"><i class="fa fa-check"></i><b>6.2</b> Kalman Filter</a>
-<ul>
-<li class="chapter" data-level="6.2.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-kalman-filter"><i class="fa fa-check"></i><b>6.2.1</b> Steady-State Kalman Filter</a></li>
-<li class="chapter" data-level="6.2.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-kalman-filter"><i class="fa fa-check"></i><b>6.2.2</b> Continuous-time Kalman Filter</a></li>
-</ul></li>
-<li class="chapter" data-level="6.3" data-path="output-feedback.html"><a href="output-feedback.html#linear-quadratic-gaussian-control"><i class="fa fa-check"></i><b>6.3</b> Linear Quadratic Gaussian Control</a>
-<ul>
-<li class="chapter" data-level="6.3.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-lqg"><i class="fa fa-check"></i><b>6.3.1</b> Steady-state LQG</a></li>
-<li class="chapter" data-level="6.3.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-lqg"><i class="fa fa-check"></i><b>6.3.2</b> Continuous-time LQG</a></li>
-</ul></li>
-<li class="chapter" data-level="6.4" data-path="output-feedback.html"><a href="output-feedback.html#nonlinear-filtering"><i class="fa fa-check"></i><b>6.4</b> Nonlinear Filtering</a>
-<ul>
-<li class="chapter" data-level="6.4.1" data-path="output-feedback.html"><a href="output-feedback.html#extended-kalman-filter"><i class="fa fa-check"></i><b>6.4.1</b> Extended Kalman Filter</a></li>
-<li class="chapter" data-level="6.4.2" data-path="output-feedback.html"><a href="output-feedback.html#unscented-kalman-filter"><i class="fa fa-check"></i><b>6.4.2</b> Unscented Kalman Filter</a></li>
-<li class="chapter" data-level="6.4.3" data-path="output-feedback.html"><a href="output-feedback.html#particle-filter"><i class="fa fa-check"></i><b>6.4.3</b> Particle Filter</a></li>
-<li class="chapter" data-level="6.4.4" data-path="output-feedback.html"><a href="output-feedback.html#feedback-particle-filter"><i class="fa fa-check"></i><b>6.4.4</b> Feedback Particle Filter</a></li>
-</ul></li>
-<li class="chapter" data-level="6.5" data-path="output-feedback.html"><a href="output-feedback.html#state-observer"><i class="fa fa-check"></i><b>6.5</b> State Observer</a>
-<ul>
-<li class="chapter" data-level="6.5.1" data-path="output-feedback.html"><a href="output-feedback.html#general-design-strategy"><i class="fa fa-check"></i><b>6.5.1</b> General Design Strategy</a></li>
-<li class="chapter" data-level="6.5.2" data-path="output-feedback.html"><a href="output-feedback.html#luenberger-template"><i class="fa fa-check"></i><b>6.5.2</b> Luenberger Template</a></li>
-<li class="chapter" data-level="6.5.3" data-path="output-feedback.html"><a href="output-feedback.html#state-affine-template"><i class="fa fa-check"></i><b>6.5.3</b> State-affine Template</a></li>
-<li class="chapter" data-level="6.5.4" data-path="output-feedback.html"><a href="output-feedback.html#kazantzis-kravaris-luenberger-kkl-template"><i class="fa fa-check"></i><b>6.5.4</b> Kazantzis-Kravaris-Luenberger (KKL) Template</a></li>
-<li class="chapter" data-level="6.5.5" data-path="output-feedback.html"><a href="output-feedback.html#triangular-template"><i class="fa fa-check"></i><b>6.5.5</b> Triangular Template</a></li>
-<li class="chapter" data-level="6.5.6" data-path="output-feedback.html"><a href="output-feedback.html#design-with-convex-optimization"><i class="fa fa-check"></i><b>6.5.6</b> Design with Convex Optimization</a></li>
-</ul></li>
-<li class="chapter" data-level="6.6" data-path="output-feedback.html"><a href="output-feedback.html#observer-feedback"><i class="fa fa-check"></i><b>6.6</b> Observer Feedback</a></li>
-</ul></li>
-<li class="chapter" data-level="7" data-path="geometric-vision.html"><a href="geometric-vision.html"><i class="fa fa-check"></i><b>7</b> Geometric Vision</a>
-<ul>
-<li class="chapter" data-level="7.1" data-path="geometric-vision.html"><a href="geometric-vision.html#d-rotations-and-poses"><i class="fa fa-check"></i><b>7.1</b> 3D Rotations and Poses</a>
-<ul>
-<li class="chapter" data-level="7.1.1" data-path="geometric-vision.html"><a href="geometric-vision.html#rotation-matrices"><i class="fa fa-check"></i><b>7.1.1</b> Rotation matrices</a></li>
-<li class="chapter" data-level="7.1.2" data-path="geometric-vision.html"><a href="geometric-vision.html#coordinate-frame"><i class="fa fa-check"></i><b>7.1.2</b> Coordinate Frame</a></li>
-<li class="chapter" data-level="7.1.3" data-path="geometric-vision.html"><a href="geometric-vision.html#representations-of-the-rotations"><i class="fa fa-check"></i><b>7.1.3</b> Representations of the rotations</a></li>
-<li class="chapter" data-level="7.1.4" data-path="geometric-vision.html"><a href="geometric-vision.html#miscellaneous-topics-on-rotations"><i class="fa fa-check"></i><b>7.1.4</b> Miscellaneous topics on rotations</a></li>
-</ul></li>
-<li class="chapter" data-level="7.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pinhole-camera-model"><i class="fa fa-check"></i><b>7.2</b> The Pinhole Camera Model</a></li>
-<li class="chapter" data-level="7.3" data-path="geometric-vision.html"><a href="geometric-vision.html#camera-pose-estimation"><i class="fa fa-check"></i><b>7.3</b> Camera Pose Estimation</a>
-<ul>
-<li class="chapter" data-level="7.3.1" data-path="geometric-vision.html"><a href="geometric-vision.html#the-p3p-problem"><i class="fa fa-check"></i><b>7.3.1</b> The P3P Problem</a></li>
-<li class="chapter" data-level="7.3.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pnp-problem"><i class="fa fa-check"></i><b>7.3.2</b> The PnP Problem</a></li>
-<li class="chapter" data-level="7.3.3" data-path="geometric-vision.html"><a href="geometric-vision.html#global-optimality"><i class="fa fa-check"></i><b>7.3.3</b> Global Optimality</a></li>
-<li class="chapter" data-level="7.3.4" data-path="geometric-vision.html"><a href="geometric-vision.html#handling-outliers"><i class="fa fa-check"></i><b>7.3.4</b> Handling Outliers</a></li>
-</ul></li>
-<li class="chapter" data-level="7.4" data-path="geometric-vision.html"><a href="geometric-vision.html#point-cloud-registration"><i class="fa fa-check"></i><b>7.4</b> Point Cloud Registration</a></li>
-</ul></li>
-<li class="chapter" data-level="8" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html"><i class="fa fa-check"></i><b>8</b> Adaptive Control</a>
-<ul>
-<li class="chapter" data-level="8.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#model-reference-adaptive-control"><i class="fa fa-check"></i><b>8.1</b> Model-Reference Adaptive Control</a>
-<ul>
-<li class="chapter" data-level="8.1.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#first-order-systems"><i class="fa fa-check"></i><b>8.1.1</b> First-Order Systems</a></li>
-<li class="chapter" data-level="8.1.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#high-order-systems"><i class="fa fa-check"></i><b>8.1.2</b> High-Order Systems</a></li>
-<li class="chapter" data-level="8.1.3" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#robotic-manipulator"><i class="fa fa-check"></i><b>8.1.3</b> Robotic Manipulator</a></li>
-</ul></li>
-<li class="chapter" data-level="8.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#certainty-equivalent-adaptive-control"><i class="fa fa-check"></i><b>8.2</b> Certainty-Equivalent Adaptive Control</a></li>
-</ul></li>
-<li class="chapter" data-level="9" data-path="psets.html"><a href="psets.html"><i class="fa fa-check"></i><b>9</b> Problem Sets</a></li>
+<li class="chapter" data-level="5" data-path="psets.html"><a href="psets.html"><i class="fa fa-check"></i><b>5</b> Problem Sets</a></li>
 <li class="chapter" data-level="" data-path="acknowledgement.html"><a href="acknowledgement.html"><i class="fa fa-check"></i>Acknowledgement</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html"><i class="fa fa-check"></i><b>A</b> Linear Algebra and Differential Equations</a>
@@ -392,7 +314,7 @@ div.csl-indent {
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Estimation</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Reinforcement Learning</a>
           </h1>
         </div>
 
@@ -400,11 +322,11 @@ div.csl-indent {
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="appconvex" class="section level1 hasAnchor" number="11">
+<div id="appconvex" class="section level1 hasAnchor" number="7">
 <h1><span class="header-section-number">B</span> Convex Analysis and Optimization<a href="appconvex.html#appconvex" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<div id="appconvex-theory" class="section level2 hasAnchor" number="11.1">
+<div id="appconvex-theory" class="section level2 hasAnchor" number="7.1">
 <h2><span class="header-section-number">B.1</span> Theory<a href="appconvex.html#appconvex-theory" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div id="sets" class="section level3 hasAnchor" number="11.1.1">
+<div id="sets" class="section level3 hasAnchor" number="7.1.1">
 <h3><span class="header-section-number">B.1.1</span> Sets<a href="appconvex.html#sets" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Convex set is one of the most important concepts in convex optimization. Checking convexity of sets is crucial to determining whether a problem is a convex problem. Here we will present some definitions of some set notations in convex optimization.</p>
 <div class="definitionbox">
@@ -510,7 +432,7 @@ where <span class="math inline">\(N_\epsilon(x)\)</span> is a ball of radius <sp
 </div>
 </div>
 </div>
-<div id="appconvex-theory-convexfunction" class="section level3 hasAnchor" number="11.1.2">
+<div id="appconvex-theory-convexfunction" class="section level3 hasAnchor" number="7.1.2">
 <h3><span class="header-section-number">B.1.2</span> Convex function<a href="appconvex.html#appconvex-theory-convexfunction" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>In this section, let’s define convex functions:</p>
 <div class="definitionbox">
@@ -538,7 +460,7 @@ The function is <strong>strictly convex</strong> if the inequality holds wheneve
 </div>
 </div>
 </div>
-<div id="lagrange-dual" class="section level3 hasAnchor" number="11.1.3">
+<div id="lagrange-dual" class="section level3 hasAnchor" number="7.1.3">
 <h3><span class="header-section-number">B.1.3</span> Lagrange dual<a href="appconvex.html#lagrange-dual" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>We consider an optimization problem in the standard form (without assuming convexity of anything):
 <span class="math display">\[\begin{equation}
@@ -584,7 +506,7 @@ And the linear inequalities do not need to hold with strict inequality.</p>
 </div>
 </div>
 </div>
-<div id="appconvex-theory-kkt" class="section level3 hasAnchor" number="11.1.4">
+<div id="appconvex-theory-kkt" class="section level3 hasAnchor" number="7.1.4">
 <h3><span class="header-section-number">B.1.4</span> KKT condition<a href="appconvex.html#appconvex-theory-kkt" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Note that if strong duality holds, denote <span class="math inline">\(x^*\)</span> to be primal optimal, and <span class="math inline">\((\lambda^*,\nu^*)\)</span> to be dual optimal. Then:</p>
 <p><span class="math display">\[\begin{equation}
@@ -612,9 +534,9 @@ And the linear inequalities do not need to hold with strict inequality.</p>
 <p>In general, <span class="math inline">\(f_i,h_i\)</span> may not be differentiable. There are also KKT conditions for them, which will include knowledge of subdifferential and will not be included here.</p>
 </div>
 </div>
-<div id="appconvex-practice" class="section level2 hasAnchor" number="11.2">
+<div id="appconvex-practice" class="section level2 hasAnchor" number="7.2">
 <h2><span class="header-section-number">B.2</span> Practice<a href="appconvex.html#appconvex-practice" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div id="cvx-introduction" class="section level3 hasAnchor" number="11.2.1">
+<div id="cvx-introduction" class="section level3 hasAnchor" number="7.2.1">
 <h3><span class="header-section-number">B.2.1</span> CVX Introduction<a href="appconvex.html#cvx-introduction" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>In the last section, we have learned basic concepts and theorems in convex optimization. In this section, on the other hand, we will introduce you how to model basic convex optimization problems with CVX, an easy-to-use MATLAB package. To install CVX, please refer to this <a href="http://cvxr.com/cvx/doc/install.html">page</a>. Note that every time you what to use the CVX package, you should add it to your MATLAB path. For example, if I install CVX package in the parent directory of my current directory with default directory name <code>cvx</code>, the following line should be added before your CVX codes:</p>
 <div class="sourceCode" id="cb12"><pre class="sourceCode matlab"><code class="sourceCode matlab"><span id="cb12-1"><a href="appconvex.html#cb12-1" tabindex="-1"></a><span class="va">addpath</span>(<span class="va">genpath</span>(<span class="st">&quot;../cvx/&quot;</span>))<span class="op">;</span></span></code></pre></div>
@@ -630,7 +552,7 @@ And the linear inequalities do not need to hold with strict inequality.</p>
    \text{LP} &lt; \text{QP} &lt; \text{QCQP} &lt; \text{SOCP} &lt; \text{SDP}
 \end{equation*}\]</span></p>
 </div>
-<div id="linear-programming-lp" class="section level3 hasAnchor" number="11.2.2">
+<div id="linear-programming-lp" class="section level3 hasAnchor" number="7.2.2">
 <h3><span class="header-section-number">B.2.2</span> Linear Programming (LP)<a href="appconvex.html#linear-programming-lp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><strong>Definition.</strong> An LP has the following form:
 <span class="math display" id="eq:app-lpdef">\[\begin{equation}
@@ -677,7 +599,7 @@ where <span class="math inline">\(x\)</span> is the variable, <span class="math 
 <span id="cb13-16"><a href="appconvex.html#cb13-16" tabindex="-1"></a>        <span class="va">A</span> <span class="op">*</span> <span class="va">x</span> <span class="op">&lt;=</span> <span class="va">b</span><span class="op">;</span> <span class="co">% define the linear constraint</span></span>
 <span id="cb13-17"><a href="appconvex.html#cb13-17" tabindex="-1"></a><span class="va">cvx_end</span></span></code></pre></div>
 </div>
-<div id="quadratic-programming-qp" class="section level3 hasAnchor" number="11.2.3">
+<div id="quadratic-programming-qp" class="section level3 hasAnchor" number="7.2.3">
 <h3><span class="header-section-number">B.2.3</span> Quadratic Programming (QP)<a href="appconvex.html#quadratic-programming-qp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><strong>Definition.</strong> A QP has the following form:
 <span class="math display" id="eq:app-qpdef">\[\begin{align}
@@ -741,7 +663,7 @@ Same as in the LP example, <span class="math inline">\(G\)</span> and <span clas
 <span id="cb14-28"><a href="appconvex.html#cb14-28" tabindex="-1"></a>        <span class="va">G</span> <span class="op">*</span> <span class="va">x</span> <span class="op">&lt;=</span> <span class="va">h</span><span class="op">;</span> <span class="co">% define the linear constraint</span></span>
 <span id="cb14-29"><a href="appconvex.html#cb14-29" tabindex="-1"></a><span class="va">cvx_end</span></span></code></pre></div>
 </div>
-<div id="quadratically-constrained-quadratic-programming-qcqp" class="section level3 hasAnchor" number="11.2.4">
+<div id="quadratically-constrained-quadratic-programming-qcqp" class="section level3 hasAnchor" number="7.2.4">
 <h3><span class="header-section-number">B.2.4</span> Quadratically Constrained Quadratic Programming (QCQP)<a href="appconvex.html#quadratically-constrained-quadratic-programming-qcqp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><strong>Definition.</strong> An (convex) QCQP has the following form:
 <span class="math display" id="eq:app-qcqpdef">\[\begin{align}
@@ -847,7 +769,7 @@ With these two assumptions, we want to minimize:
 <span id="cb15-37"><a href="appconvex.html#cb15-37" tabindex="-1"></a>    <span class="va">flag</span> <span class="op">=</span> (<span class="va">radius_square</span> <span class="op">&gt;</span> <span class="fl">0</span>)<span class="op">;</span></span>
 <span id="cb15-38"><a href="appconvex.html#cb15-38" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div>
 </div>
-<div id="second-order-cone-programming-socp" class="section level3 hasAnchor" number="11.2.5">
+<div id="second-order-cone-programming-socp" class="section level3 hasAnchor" number="7.2.5">
 <h3><span class="header-section-number">B.2.5</span> Second-Order Cone Programming (SOCP)<a href="appconvex.html#second-order-cone-programming-socp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><strong>Definition.</strong> An SOCP has the following form:
 <span class="math display" id="eq:app-socpdef">\[\begin{align}
@@ -912,7 +834,7 @@ which is exactly the same as inequality constraints in SOCP formulation. (You ca
 <span id="cb16-23"><a href="appconvex.html#cb16-23" tabindex="-1"></a>        <span class="va">sigma</span><span class="op">*</span><span class="va">Phi_inv</span> <span class="op">*</span> <span class="va">norm</span>(<span class="va">x</span>) <span class="op">&lt;=</span> <span class="va">b4</span> <span class="op">-</span> <span class="va">bar_a4</span><span class="op">&#39;</span> <span class="op">*</span> <span class="va">x</span><span class="op">;</span></span>
 <span id="cb16-24"><a href="appconvex.html#cb16-24" tabindex="-1"></a><span class="va">cvx_end</span></span></code></pre></div>
 </div>
-<div id="semidefinite-programming-sdp" class="section level3 hasAnchor" number="11.2.6">
+<div id="semidefinite-programming-sdp" class="section level3 hasAnchor" number="7.2.6">
 <h3><span class="header-section-number">B.2.6</span> Semidefinite Programming (SDP)<a href="appconvex.html#semidefinite-programming-sdp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><strong>Definition.</strong> An SDP has the following form:
 <span class="math display" id="eq:app-sdpdef">\[\begin{align}
@@ -993,7 +915,7 @@ Seems tedious? Fortunately, CVX provides a high-level API to handle these linear
 <span id="cb18-25"><a href="appconvex.html#cb18-25" tabindex="-1"></a>    <span class="va">S</span> <span class="op">=</span>  <span class="va">Q</span> <span class="op">*</span> <span class="va">D</span> <span class="op">*</span> <span class="va">Q</span><span class="op">&#39;;</span></span>
 <span id="cb18-26"><a href="appconvex.html#cb18-26" tabindex="-1"></a><span class="kw">end</span></span></code></pre></div>
 </div>
-<div id="cvxpy-introduction-and-examples" class="section level3 hasAnchor" number="11.2.7">
+<div id="cvxpy-introduction-and-examples" class="section level3 hasAnchor" number="7.2.7">
 <h3><span class="header-section-number">B.2.7</span> CVXPY Introduction and Examples<a href="appconvex.html#cvxpy-introduction-and-examples" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Apart from CVX MATLAB, we also have a Python package called CVXPY, which functions almost the same as CVX MATLAB. To define and solve a convex optimization problem CVXPY, basically, there are three steps (apart from importing necessary packages):</p>
 <ul>
@@ -1002,7 +924,7 @@ Seems tedious? Fortunately, CVX provides a high-level API to handle these linear
 <li><p>Step 3: Solve the problem and get the results.</p></li>
 </ul>
 <p>Here we provide the CVXPY codes for the above five convex optimization examples.</p>
-<div id="lp" class="section level4 hasAnchor" number="11.2.7.1">
+<div id="lp" class="section level4 hasAnchor" number="7.2.7.1">
 <h4><span class="header-section-number">B.2.7.1</span> LP<a href="appconvex.html#lp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb19"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb19-1"><a href="appconvex.html#cb19-1" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb19-2"><a href="appconvex.html#cb19-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -1031,7 +953,7 @@ Seems tedious? Fortunately, CVX provides a high-level API to handle these linear
 <span id="cb19-25"><a href="appconvex.html#cb19-25" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal value: &quot;</span>, prob.value) <span class="co"># optimal objective</span></span>
 <span id="cb19-26"><a href="appconvex.html#cb19-26" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal solution: &quot;</span>, x.value) <span class="co"># optimal x</span></span></code></pre></div>
 </div>
-<div id="qp" class="section level4 hasAnchor" number="11.2.7.2">
+<div id="qp" class="section level4 hasAnchor" number="7.2.7.2">
 <h4><span class="header-section-number">B.2.7.2</span> QP<a href="appconvex.html#qp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb20"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb20-1"><a href="appconvex.html#cb20-1" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb20-2"><a href="appconvex.html#cb20-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -1069,7 +991,7 @@ Seems tedious? Fortunately, CVX provides a high-level API to handle these linear
 <span id="cb20-34"><a href="appconvex.html#cb20-34" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal value: &quot;</span>, prob.value) <span class="co"># optimal objective</span></span>
 <span id="cb20-35"><a href="appconvex.html#cb20-35" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal solution: &quot;</span>, x.value) <span class="co"># optimal x</span></span></code></pre></div>
 </div>
-<div id="qcqp" class="section level4 hasAnchor" number="11.2.7.3">
+<div id="qcqp" class="section level4 hasAnchor" number="7.2.7.3">
 <h4><span class="header-section-number">B.2.7.3</span> QCQP<a href="appconvex.html#qcqp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb21"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb21-1"><a href="appconvex.html#cb21-1" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb21-2"><a href="appconvex.html#cb21-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -1117,7 +1039,7 @@ Seems tedious? Fortunately, CVX provides a high-level API to handle these linear
 <span id="cb21-44"><a href="appconvex.html#cb21-44" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal value: &quot;</span>, prob.value) <span class="co"># optimal objective</span></span>
 <span id="cb21-45"><a href="appconvex.html#cb21-45" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal solution: &quot;</span>, x.value) <span class="co"># optimal x</span></span></code></pre></div>
 </div>
-<div id="socp" class="section level4 hasAnchor" number="11.2.7.4">
+<div id="socp" class="section level4 hasAnchor" number="7.2.7.4">
 <h4><span class="header-section-number">B.2.7.4</span> SOCP<a href="appconvex.html#socp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb22"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="appconvex.html#cb22-1" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb22-2"><a href="appconvex.html#cb22-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -1158,7 +1080,7 @@ Seems tedious? Fortunately, CVX provides a high-level API to handle these linear
 <span id="cb22-37"><a href="appconvex.html#cb22-37" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal value: &quot;</span>, prob.value) <span class="co"># optimal objective</span></span>
 <span id="cb22-38"><a href="appconvex.html#cb22-38" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal solution: &quot;</span>, x.value) <span class="co"># optimal x</span></span></code></pre></div>
 </div>
-<div id="sdp" class="section level4 hasAnchor" number="11.2.7.5">
+<div id="sdp" class="section level4 hasAnchor" number="7.2.7.5">
 <h4><span class="header-section-number">B.2.7.5</span> SDP<a href="appconvex.html#sdp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb23"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb23-1"><a href="appconvex.html#cb23-1" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb23-2"><a href="appconvex.html#cb23-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
@@ -1248,7 +1170,7 @@ gitbook.start({
     "size": 2
   },
   "edit": {
-    "link": "https://github.com/hankyang94/OptimalControlEstimation/blob/main/11-2-appendix-convex.Rmd",
+    "link": "https://github.com/hankyang94/OptimalControlReinforcementLearning/blob/main/11-2-appendix-convex.Rmd",
     "text": "Edit"
   },
   "history": {
@@ -1259,7 +1181,7 @@ gitbook.start({
     "link": null,
     "text": null
   },
-  "download": ["optimal-control-estimation.pdf"],
+  "download": ["optimal-control-reinforcement-learning.pdf"],
   "search": {
     "engine": "fuse",
     "options": null

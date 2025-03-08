@@ -4,20 +4,20 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Chapter 3 Approximate Optimal Control | Optimal Control and Estimation</title>
-  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <title>Chapter 3 Approximate Optimal Control | Optimal Control and Reinforcement Learning</title>
+  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   <meta name="generator" content="bookdown 0.42 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Chapter 3 Approximate Optimal Control | Optimal Control and Estimation" />
+  <meta property="og:title" content="Chapter 3 Approximate Optimal Control | Optimal Control and Reinforcement Learning" />
   <meta property="og:type" content="book" />
   
-  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
-  <meta name="github-repo" content="hankyang94/OptimalControlEstimation" />
+  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  <meta name="github-repo" content="hankyang94/OptimalControlReinforcementLearning" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Chapter 3 Approximate Optimal Control | Optimal Control and Estimation" />
+  <meta name="twitter:title" content="Chapter 3 Approximate Optimal Control | Optimal Control and Reinforcement Learning" />
   
-  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   
 
 <meta name="author" content="Heng Yang" />
@@ -31,7 +31,7 @@
   
   
 <link rel="prev" href="exactdp.html"/>
-<link rel="next" href="continuous-time-optimal-control.html"/>
+<link rel="next" href="stability.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -160,10 +160,14 @@ div.csl-indent {
       <nav role="navigation">
 
 <ul class="summary">
-<li><a href="./">Optimal Control and Estimation</a></li>
+<li><a href="./">Optimal Control and Reinforcement Learning</a></li>
 
 <li class="divider"></li>
-<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#feedback"><i class="fa fa-check"></i>Feedback</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#offerings"><i class="fa fa-check"></i>Offerings</a></li>
+</ul></li>
 <li class="chapter" data-level="1" data-path="formulation.html"><a href="formulation.html"><i class="fa fa-check"></i><b>1</b> The Optimal Control Formulation</a>
 <ul>
 <li class="chapter" data-level="1.1" data-path="formulation.html"><a href="formulation.html#the-basic-problem"><i class="fa fa-check"></i><b>1.1</b> The Basic Problem</a></li>
@@ -214,102 +218,20 @@ div.csl-indent {
 </ul></li>
 <li class="chapter" data-level="3.4" data-path="approximatedp.html"><a href="approximatedp.html#policy-gradient"><i class="fa fa-check"></i><b>3.4</b> Policy Gradient</a></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html"><i class="fa fa-check"></i><b>4</b> Continuous-time Optimal Control</a>
+<li class="chapter" data-level="4" data-path="stability.html"><a href="stability.html"><i class="fa fa-check"></i><b>4</b> Stability Analysis</a>
 <ul>
-<li class="chapter" data-level="4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-basic-problem-1"><i class="fa fa-check"></i><b>4.1</b> The Basic Problem</a></li>
-<li class="chapter" data-level="4.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-hamilton-jacobi-bellman-equation"><i class="fa fa-check"></i><b>4.2</b> The Hamilton-Jacobi-Bellman Equation</a></li>
-<li class="chapter" data-level="4.3" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#linear-quadratic-regulator"><i class="fa fa-check"></i><b>4.3</b> Linear Quadratic Regulator</a>
+<li class="chapter" data-level="4.1" data-path="stability.html"><a href="stability.html#autonomous-systems"><i class="fa fa-check"></i><b>4.1</b> Autonomous Systems</a>
 <ul>
-<li class="chapter" data-level="4.3.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-tracking-1"><i class="fa fa-check"></i><b>4.3.1</b> LQR Trajectory Tracking</a></li>
-<li class="chapter" data-level="4.3.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-stabilization"><i class="fa fa-check"></i><b>4.3.2</b> LQR Trajectory Stabilization</a></li>
+<li class="chapter" data-level="4.1.1" data-path="stability.html"><a href="stability.html#concepts-of-stability"><i class="fa fa-check"></i><b>4.1.1</b> Concepts of Stability</a></li>
+<li class="chapter" data-level="4.1.2" data-path="stability.html"><a href="stability.html#stability-by-linearization"><i class="fa fa-check"></i><b>4.1.2</b> Stability by Linearization</a></li>
+<li class="chapter" data-level="4.1.3" data-path="stability.html"><a href="stability.html#lyapunov-analysis"><i class="fa fa-check"></i><b>4.1.3</b> Lyapunov Analysis</a></li>
+<li class="chapter" data-level="4.1.4" data-path="stability.html"><a href="stability.html#invariant-set-theorem"><i class="fa fa-check"></i><b>4.1.4</b> Invariant Set Theorem</a></li>
+<li class="chapter" data-level="4.1.5" data-path="stability.html"><a href="stability.html#computing-lyapunov-certificates"><i class="fa fa-check"></i><b>4.1.5</b> Computing Lyapunov Certificates</a></li>
 </ul></li>
-<li class="chapter" data-level="4.4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-pontryagin-minimum-principle"><i class="fa fa-check"></i><b>4.4</b> The Pontryagin Minimum Principle</a>
-<ul>
-<li class="chapter" data-level="4.4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#numerical-solution-of-the-tpbvp"><i class="fa fa-check"></i><b>4.4.1</b> Numerical Solution of the TPBVP</a></li>
+<li class="chapter" data-level="4.2" data-path="stability.html"><a href="stability.html#controlled-systems"><i class="fa fa-check"></i><b>4.2</b> Controlled Systems</a></li>
+<li class="chapter" data-level="4.3" data-path="stability.html"><a href="stability.html#non-autonomous-systems"><i class="fa fa-check"></i><b>4.3</b> Non-autonomous Systems</a></li>
 </ul></li>
-<li class="chapter" data-level="4.5" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#infinite-horizon-problems"><i class="fa fa-check"></i><b>4.5</b> Infinite-Horizon Problems</a>
-<ul>
-<li class="chapter" data-level="4.5.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#continuous-time-infinite-horizon-lqr"><i class="fa fa-check"></i><b>4.5.1</b> Infinite-Horizon LQR</a></li>
-</ul></li>
-<li class="chapter" data-level="4.6" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#viscosity-solution"><i class="fa fa-check"></i><b>4.6</b> Viscosity Solution</a></li>
-</ul></li>
-<li class="chapter" data-level="5" data-path="stability.html"><a href="stability.html"><i class="fa fa-check"></i><b>5</b> Stability Analysis</a>
-<ul>
-<li class="chapter" data-level="5.1" data-path="stability.html"><a href="stability.html#autonomous-systems"><i class="fa fa-check"></i><b>5.1</b> Autonomous Systems</a>
-<ul>
-<li class="chapter" data-level="5.1.1" data-path="stability.html"><a href="stability.html#concepts-of-stability"><i class="fa fa-check"></i><b>5.1.1</b> Concepts of Stability</a></li>
-<li class="chapter" data-level="5.1.2" data-path="stability.html"><a href="stability.html#stability-by-linearization"><i class="fa fa-check"></i><b>5.1.2</b> Stability by Linearization</a></li>
-<li class="chapter" data-level="5.1.3" data-path="stability.html"><a href="stability.html#lyapunov-analysis"><i class="fa fa-check"></i><b>5.1.3</b> Lyapunov Analysis</a></li>
-<li class="chapter" data-level="5.1.4" data-path="stability.html"><a href="stability.html#invariant-set-theorem"><i class="fa fa-check"></i><b>5.1.4</b> Invariant Set Theorem</a></li>
-<li class="chapter" data-level="5.1.5" data-path="stability.html"><a href="stability.html#computing-lyapunov-certificates"><i class="fa fa-check"></i><b>5.1.5</b> Computing Lyapunov Certificates</a></li>
-</ul></li>
-<li class="chapter" data-level="5.2" data-path="stability.html"><a href="stability.html#controlled-systems"><i class="fa fa-check"></i><b>5.2</b> Controlled Systems</a></li>
-<li class="chapter" data-level="5.3" data-path="stability.html"><a href="stability.html#non-autonomous-systems"><i class="fa fa-check"></i><b>5.3</b> Non-autonomous Systems</a></li>
-</ul></li>
-<li class="chapter" data-level="6" data-path="output-feedback.html"><a href="output-feedback.html"><i class="fa fa-check"></i><b>6</b> Output Feedback</a>
-<ul>
-<li class="chapter" data-level="6.1" data-path="output-feedback.html"><a href="output-feedback.html#least-squares-estimation"><i class="fa fa-check"></i><b>6.1</b> Least-Squares Estimation</a>
-<ul>
-<li class="chapter" data-level="6.1.1" data-path="output-feedback.html"><a href="output-feedback.html#linear-least-squares-estimation"><i class="fa fa-check"></i><b>6.1.1</b> Linear Least-Squares Estimation</a></li>
-</ul></li>
-<li class="chapter" data-level="6.2" data-path="output-feedback.html"><a href="output-feedback.html#kalman-filter"><i class="fa fa-check"></i><b>6.2</b> Kalman Filter</a>
-<ul>
-<li class="chapter" data-level="6.2.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-kalman-filter"><i class="fa fa-check"></i><b>6.2.1</b> Steady-State Kalman Filter</a></li>
-<li class="chapter" data-level="6.2.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-kalman-filter"><i class="fa fa-check"></i><b>6.2.2</b> Continuous-time Kalman Filter</a></li>
-</ul></li>
-<li class="chapter" data-level="6.3" data-path="output-feedback.html"><a href="output-feedback.html#linear-quadratic-gaussian-control"><i class="fa fa-check"></i><b>6.3</b> Linear Quadratic Gaussian Control</a>
-<ul>
-<li class="chapter" data-level="6.3.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-lqg"><i class="fa fa-check"></i><b>6.3.1</b> Steady-state LQG</a></li>
-<li class="chapter" data-level="6.3.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-lqg"><i class="fa fa-check"></i><b>6.3.2</b> Continuous-time LQG</a></li>
-</ul></li>
-<li class="chapter" data-level="6.4" data-path="output-feedback.html"><a href="output-feedback.html#nonlinear-filtering"><i class="fa fa-check"></i><b>6.4</b> Nonlinear Filtering</a>
-<ul>
-<li class="chapter" data-level="6.4.1" data-path="output-feedback.html"><a href="output-feedback.html#extended-kalman-filter"><i class="fa fa-check"></i><b>6.4.1</b> Extended Kalman Filter</a></li>
-<li class="chapter" data-level="6.4.2" data-path="output-feedback.html"><a href="output-feedback.html#unscented-kalman-filter"><i class="fa fa-check"></i><b>6.4.2</b> Unscented Kalman Filter</a></li>
-<li class="chapter" data-level="6.4.3" data-path="output-feedback.html"><a href="output-feedback.html#particle-filter"><i class="fa fa-check"></i><b>6.4.3</b> Particle Filter</a></li>
-<li class="chapter" data-level="6.4.4" data-path="output-feedback.html"><a href="output-feedback.html#feedback-particle-filter"><i class="fa fa-check"></i><b>6.4.4</b> Feedback Particle Filter</a></li>
-</ul></li>
-<li class="chapter" data-level="6.5" data-path="output-feedback.html"><a href="output-feedback.html#state-observer"><i class="fa fa-check"></i><b>6.5</b> State Observer</a>
-<ul>
-<li class="chapter" data-level="6.5.1" data-path="output-feedback.html"><a href="output-feedback.html#general-design-strategy"><i class="fa fa-check"></i><b>6.5.1</b> General Design Strategy</a></li>
-<li class="chapter" data-level="6.5.2" data-path="output-feedback.html"><a href="output-feedback.html#luenberger-template"><i class="fa fa-check"></i><b>6.5.2</b> Luenberger Template</a></li>
-<li class="chapter" data-level="6.5.3" data-path="output-feedback.html"><a href="output-feedback.html#state-affine-template"><i class="fa fa-check"></i><b>6.5.3</b> State-affine Template</a></li>
-<li class="chapter" data-level="6.5.4" data-path="output-feedback.html"><a href="output-feedback.html#kazantzis-kravaris-luenberger-kkl-template"><i class="fa fa-check"></i><b>6.5.4</b> Kazantzis-Kravaris-Luenberger (KKL) Template</a></li>
-<li class="chapter" data-level="6.5.5" data-path="output-feedback.html"><a href="output-feedback.html#triangular-template"><i class="fa fa-check"></i><b>6.5.5</b> Triangular Template</a></li>
-<li class="chapter" data-level="6.5.6" data-path="output-feedback.html"><a href="output-feedback.html#design-with-convex-optimization"><i class="fa fa-check"></i><b>6.5.6</b> Design with Convex Optimization</a></li>
-</ul></li>
-<li class="chapter" data-level="6.6" data-path="output-feedback.html"><a href="output-feedback.html#observer-feedback"><i class="fa fa-check"></i><b>6.6</b> Observer Feedback</a></li>
-</ul></li>
-<li class="chapter" data-level="7" data-path="geometric-vision.html"><a href="geometric-vision.html"><i class="fa fa-check"></i><b>7</b> Geometric Vision</a>
-<ul>
-<li class="chapter" data-level="7.1" data-path="geometric-vision.html"><a href="geometric-vision.html#d-rotations-and-poses"><i class="fa fa-check"></i><b>7.1</b> 3D Rotations and Poses</a>
-<ul>
-<li class="chapter" data-level="7.1.1" data-path="geometric-vision.html"><a href="geometric-vision.html#rotation-matrices"><i class="fa fa-check"></i><b>7.1.1</b> Rotation matrices</a></li>
-<li class="chapter" data-level="7.1.2" data-path="geometric-vision.html"><a href="geometric-vision.html#coordinate-frame"><i class="fa fa-check"></i><b>7.1.2</b> Coordinate Frame</a></li>
-<li class="chapter" data-level="7.1.3" data-path="geometric-vision.html"><a href="geometric-vision.html#representations-of-the-rotations"><i class="fa fa-check"></i><b>7.1.3</b> Representations of the rotations</a></li>
-<li class="chapter" data-level="7.1.4" data-path="geometric-vision.html"><a href="geometric-vision.html#miscellaneous-topics-on-rotations"><i class="fa fa-check"></i><b>7.1.4</b> Miscellaneous topics on rotations</a></li>
-</ul></li>
-<li class="chapter" data-level="7.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pinhole-camera-model"><i class="fa fa-check"></i><b>7.2</b> The Pinhole Camera Model</a></li>
-<li class="chapter" data-level="7.3" data-path="geometric-vision.html"><a href="geometric-vision.html#camera-pose-estimation"><i class="fa fa-check"></i><b>7.3</b> Camera Pose Estimation</a>
-<ul>
-<li class="chapter" data-level="7.3.1" data-path="geometric-vision.html"><a href="geometric-vision.html#the-p3p-problem"><i class="fa fa-check"></i><b>7.3.1</b> The P3P Problem</a></li>
-<li class="chapter" data-level="7.3.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pnp-problem"><i class="fa fa-check"></i><b>7.3.2</b> The PnP Problem</a></li>
-<li class="chapter" data-level="7.3.3" data-path="geometric-vision.html"><a href="geometric-vision.html#global-optimality"><i class="fa fa-check"></i><b>7.3.3</b> Global Optimality</a></li>
-<li class="chapter" data-level="7.3.4" data-path="geometric-vision.html"><a href="geometric-vision.html#handling-outliers"><i class="fa fa-check"></i><b>7.3.4</b> Handling Outliers</a></li>
-</ul></li>
-<li class="chapter" data-level="7.4" data-path="geometric-vision.html"><a href="geometric-vision.html#point-cloud-registration"><i class="fa fa-check"></i><b>7.4</b> Point Cloud Registration</a></li>
-</ul></li>
-<li class="chapter" data-level="8" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html"><i class="fa fa-check"></i><b>8</b> Adaptive Control</a>
-<ul>
-<li class="chapter" data-level="8.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#model-reference-adaptive-control"><i class="fa fa-check"></i><b>8.1</b> Model-Reference Adaptive Control</a>
-<ul>
-<li class="chapter" data-level="8.1.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#first-order-systems"><i class="fa fa-check"></i><b>8.1.1</b> First-Order Systems</a></li>
-<li class="chapter" data-level="8.1.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#high-order-systems"><i class="fa fa-check"></i><b>8.1.2</b> High-Order Systems</a></li>
-<li class="chapter" data-level="8.1.3" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#robotic-manipulator"><i class="fa fa-check"></i><b>8.1.3</b> Robotic Manipulator</a></li>
-</ul></li>
-<li class="chapter" data-level="8.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#certainty-equivalent-adaptive-control"><i class="fa fa-check"></i><b>8.2</b> Certainty-Equivalent Adaptive Control</a></li>
-</ul></li>
-<li class="chapter" data-level="9" data-path="psets.html"><a href="psets.html"><i class="fa fa-check"></i><b>9</b> Problem Sets</a></li>
+<li class="chapter" data-level="5" data-path="psets.html"><a href="psets.html"><i class="fa fa-check"></i><b>5</b> Problem Sets</a></li>
 <li class="chapter" data-level="" data-path="acknowledgement.html"><a href="acknowledgement.html"><i class="fa fa-check"></i>Acknowledgement</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html"><i class="fa fa-check"></i><b>A</b> Linear Algebra and Differential Equations</a>
@@ -392,7 +314,7 @@ div.csl-indent {
       <div class="body-inner">
         <div class="book-header" role="navigation">
           <h1>
-            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Estimation</a>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Reinforcement Learning</a>
           </h1>
         </div>
 
@@ -694,7 +616,7 @@ Assume that all functions are differentiable.</p>
 \end{split}
 \tag{3.10}
 \end{equation}\]</span>
-where <span class="math inline">\(v\)</span> is a finite-dimensional vector variable to be optimized, <span class="math inline">\(c, c_{\text{eq},i}, c_{\text{ineq},i}\)</span> are (continuously differentiable) objective and constraint functions. Once we have done the transcription from <a href="approximatedp.html#eq:constrained-optimal-control">(3.9)</a> to <a href="approximatedp.html#eq:ocp-nonlinear-programming">(3.10)</a>, then we have a good number of numerical optimization algorithms at our disposal. For example, the Matlab <a href="https://www.mathworks.com/help/optim/ug/fmincon.html"><code>fmincon</code></a> provides a nice interface to many such algorithms, e.g., interior-point method and sequential quadratic programming. You have already played with a simple example of <code>fmincon</code> in Exercise <a href="psets.html#exr:polygoninsidecircle">9.1</a>. Other well-implemented NLP algorithms include <a href="https://github.com/coin-or/Ipopt">IPOPT</a> and <a href="http://www.sbsi-sol-optimize.com/asp/sol_product_snopt.htm">SNOPT</a>. However, usually the Matlab <code>fmincon</code> gives a decent start point for trying out different algorithms before moving to commercial solvers such as SNOPT. For a more comprehensive understanding about how NLP algoithms work under the hood, I suggest reading <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p>
+where <span class="math inline">\(v\)</span> is a finite-dimensional vector variable to be optimized, <span class="math inline">\(c, c_{\text{eq},i}, c_{\text{ineq},i}\)</span> are (continuously differentiable) objective and constraint functions. Once we have done the transcription from <a href="approximatedp.html#eq:constrained-optimal-control">(3.9)</a> to <a href="approximatedp.html#eq:ocp-nonlinear-programming">(3.10)</a>, then we have a good number of numerical optimization algorithms at our disposal. For example, the Matlab <a href="https://www.mathworks.com/help/optim/ug/fmincon.html"><code>fmincon</code></a> provides a nice interface to many such algorithms, e.g., interior-point method and sequential quadratic programming. You have already played with a simple example of <code>fmincon</code> in Exercise <a href="psets.html#exr:polygoninsidecircle">5.1</a>. Other well-implemented NLP algorithms include <a href="https://github.com/coin-or/Ipopt">IPOPT</a> and <a href="http://www.sbsi-sol-optimize.com/asp/sol_product_snopt.htm">SNOPT</a>. However, usually the Matlab <code>fmincon</code> gives a decent start point for trying out different algorithms before moving to commercial solvers such as SNOPT. For a more comprehensive understanding about how NLP algoithms work under the hood, I suggest reading <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p>
 <p>Before we talk about how to transcribe the OCP into an NLP, let us use a simple example to get a taste of <code>fmincon</code>.</p>
 <div class="examplebox">
 <div class="example">
@@ -909,7 +831,7 @@ i.e., the current state and the next state satisfy the dynamics constraint. This
 <p>Let us try direct multiple shooting on the double integrator.</p>
 <div class="examplebox">
 <div class="example">
-<p><span id="exm:multiple-shooting-double-integrator" class="example"><strong>Example 3.6  (Direct Multiple Shooting for Minimum-Time Double Integrator) </strong></span>The double integrator has continuous-time dynamics (which you have already seen in Exercise <a href="psets.html#exr:lqrconstraints">9.2</a>):
+<p><span id="exm:multiple-shooting-double-integrator" class="example"><strong>Example 3.6  (Direct Multiple Shooting for Minimum-Time Double Integrator) </strong></span>The double integrator has continuous-time dynamics (which you have already seen in Exercise <a href="psets.html#exr:lqrconstraints">5.2</a>):
 <span class="math display">\[
 \ddot{q} = u.
 \]</span>
@@ -1703,7 +1625,7 @@ J^\star(x_0) = \min_{u_t,t=0,\dots} &amp; \quad \sum_{t=0}^{\infty} x_t^T Q x_t 
 \end{equation}\]</span>
 with <span class="math inline">\(Q \succeq 0, R \succ 0\)</span>.
 Had we not included the constraints <span class="math inline">\((u_t,x_t) \in \mathcal{U} \times \mathcal{X}\)</span>, then problem <a href="approximatedp.html#eq:infinite-horizon-lqr-constraints">(3.34)</a> is exactly the infinite-horizon LQR problem in Section <a href="exactdp.html#infinite-horizon-lqr">2.1.1</a>, for which we know the optimal controller is <span class="math inline">\(u_t = - K x_t\)</span> with <span class="math inline">\(K\)</span> computed in closed-form as <a href="exactdp.html#eq:infinite-horizon-lqr-control">(2.12)</a>.</p>
-<p>However, in the presence of constraints, problem <a href="approximatedp.html#eq:infinite-horizon-lqr-constraints">(3.34)</a> does not admit a simple closed-form solution. In fact, problem <a href="approximatedp.html#eq:infinite-horizon-lqr-constraints">(3.34)</a> is commonly referred to as the <em>contrained LQR</em> (CLQR) problem and it is known that the optimal controller is <em>piece-wise affine</em>, see Theorem 11.4 in <span class="citation">(<a href="#ref-borrelli17book-mpc">Borrelli, Bemporad, and Morari 2017</a>)</span>. We have asked you to numerically play with a toy example of CLQR in Exercise <a href="psets.html#exr:lqrconstraints">9.2</a>.</p>
+<p>However, in the presence of constraints, problem <a href="approximatedp.html#eq:infinite-horizon-lqr-constraints">(3.34)</a> does not admit a simple closed-form solution. In fact, problem <a href="approximatedp.html#eq:infinite-horizon-lqr-constraints">(3.34)</a> is commonly referred to as the <em>contrained LQR</em> (CLQR) problem and it is known that the optimal controller is <em>piece-wise affine</em>, see Theorem 11.4 in <span class="citation">(<a href="#ref-borrelli17book-mpc">Borrelli, Bemporad, and Morari 2017</a>)</span>. We have asked you to numerically play with a toy example of CLQR in Exercise <a href="psets.html#exr:lqrconstraints">5.2</a>.</p>
 <p><strong>Receding horizon control</strong>. Leveraging the receding horizon control framework, we can approach problem <a href="approximatedp.html#eq:infinite-horizon-lqr-constraints">(3.34)</a> by online solving convex optimization problems.</p>
 <p>At time <span class="math inline">\(t\)</span>, suppose we can measure the current state of the system <span class="math inline">\(x_t\)</span>, then we solve the following optimal control problem with a finite horizon <span class="math inline">\(N\)</span>
 <span class="math display" id="eq:linear-mpc-subroutine">\[\begin{equation}
@@ -1785,7 +1707,7 @@ Figure 3.23: Feasible sets of the double integrator receding horizon controller 
 <p>The code for this example can be found <a href="https://github.com/ComputationalRobotics/OptimalControlEstimation-Examples/blob/main/mpt_examples/double_integrator_feasible_sets.m">here</a>.</p>
 </div>
 </div>
-<p><strong>Algorithm</strong>. Above all, problem <a href="approximatedp.html#eq:linear-mpc-subroutine">(3.35)</a> is a convex optimization problem that we know how to solve efficiently (you have solved such convex optimization problems in Exercise <a href="psets.html#exr:lqrconstraints">9.2</a>).</p>
+<p><strong>Algorithm</strong>. Above all, problem <a href="approximatedp.html#eq:linear-mpc-subroutine">(3.35)</a> is a convex optimization problem that we know how to solve efficiently (you have solved such convex optimization problems in Exercise <a href="psets.html#exr:lqrconstraints">5.2</a>).</p>
 <p>Let <span class="math inline">\(u^\star(0),\dots,u^\star(N-1)\)</span> be the optimal solution of problem <a href="approximatedp.html#eq:linear-mpc-subroutine">(3.35)</a> when it is feasible, the RHS framework will only apply the first control <span class="math inline">\(u^\star(0)\)</span> to the system, and hence the closed-loop system is
 <span class="math display" id="eq:mpc-closed-loop">\[\begin{equation}
 x_{t+1} = A x_t + u^\star_{x_t}(0) = f_{\mathrm{cl}}(x_t),
@@ -1972,7 +1894,7 @@ This shows <span class="math inline">\(\mathcal{X}_i\)</span> is control invaria
 </div>
 </div>
 <p>Let us interpret Theorem <a href="approximatedp.html#thm:mpc-stability">3.3</a> before proving it. It should be clear that the first three assumptions are easy to satisfy. For example, if we choose <span class="math inline">\(p(x) = x^T P x\)</span> and <span class="math inline">\(q(x,u) = x^T Q x + u^T R u\)</span> with <span class="math inline">\(P, Q, R \succ 0\)</span>, then assumption 1 is satisfied. Usually <span class="math inline">\(\mathcal{X}\)</span> and <span class="math inline">\(\mathcal{U}\)</span> are both polyhedral sets containing the origin in the interior, so assumption 2 also holds naturally. Finding a control invariant set <span class="math inline">\(\mathcal{X}_f\)</span> is not a trivial task but there exists numerical algorithms for this task (e.g., using the algorithms introduced in Section <a href="approximatedp.html#mpc-compute-control-invariant-set">3.3.2.4</a>). After we find a control invariant <span class="math inline">\(\mathcal{X}_f\)</span>, by Theorem <a href="approximatedp.html#thm:sufficient-feasibility-terminal">3.2</a>, we know persistent feasibility will hold.</p>
-<p>We now prove the theorem by showing that Assumption 4 guarantees stability. Before we show the proof, we need the concept of a <em>Lyapunov function</em>. Below we introduce Lyapunov function for a discrete-time dynamical system, but we will study more details of Lyapunov function for continuous-time dynamical systems in Chapter <a href="stability.html#stability">5</a>.</p>
+<p>We now prove the theorem by showing that Assumption 4 guarantees stability. Before we show the proof, we need the concept of a <em>Lyapunov function</em>. Below we introduce Lyapunov function for a discrete-time dynamical system, but we will study more details of Lyapunov function for continuous-time dynamical systems in Chapter <a href="stability.html#stability">4</a>.</p>
 <div class="theorembox">
 <div class="lemma">
 <p><span id="lem:lyapunov-stability-discrete-time" class="lemma"><strong>Lemma 3.3  (Discrete-time Lyapunov Function) </strong></span>Consider the discrete-time autonomous system <a href="approximatedp.html#eq:mpc-autonomous-system">(3.27)</a>, restated below for convenience:
@@ -2054,7 +1976,7 @@ for any <span class="math inline">\(x(0) \in \mathcal{X}_f\)</span>.</p>
 <span class="math display">\[
 \min_{u \in \mathcal{U}, Ax + Bu \in \mathcal{X}_f} x^T Q x + u^T R u + (Ax + Bu)^T P (Ax + Bu) - x^T P x
 \]</span>
-is non-positive for any possible <span class="math inline">\(x \in \mathcal{X}_f\)</span>. Although for each possible <span class="math inline">\(x\)</span>, the above problem is a convex optimization problem, there are an infinite number of points in the set <span class="math inline">\(\mathcal{X}_f\)</span> and enumerating over all points is a daunting task. We will see in Chapter <a href="stability.html#stability">5</a> that convex relaxations, in particular <a href="https://hankyang.seas.harvard.edu/Semidefinite/">semidefinite relaxations</a>, can help us partially solve these hard problems.</p>
+is non-positive for any possible <span class="math inline">\(x \in \mathcal{X}_f\)</span>. Although for each possible <span class="math inline">\(x\)</span>, the above problem is a convex optimization problem, there are an infinite number of points in the set <span class="math inline">\(\mathcal{X}_f\)</span> and enumerating over all points is a daunting task. We will see in Chapter <a href="stability.html#stability">4</a> that convex relaxations, in particular <a href="https://hankyang.seas.harvard.edu/Semidefinite/">semidefinite relaxations</a>, can help us partially solve these hard problems.</p>
 <p><strong>A simple control lyapunov function</strong>. One can solve the infinite-horizon unconstrained LQR problem
 <span class="math display">\[
 \min_{u_t} \sum_{t=0}^{\infty}x_t ^T Q x_t + u_t^T R u_t,
@@ -2382,7 +2304,7 @@ Yang, Alan, and Stephen Boyd. 2023. <span>“Value-Gradient Iteration with Quadr
         </div>
       </div>
 <a href="exactdp.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="continuous-time-optimal-control.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="stability.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -2413,7 +2335,7 @@ gitbook.start({
     "size": 2
   },
   "edit": {
-    "link": "https://github.com/hankyang94/OptimalControlEstimation/blob/main/03-approximate-dp.Rmd",
+    "link": "https://github.com/hankyang94/OptimalControlReinforcementLearning/blob/main/03-approximate-dp.Rmd",
     "text": "Edit"
   },
   "history": {
@@ -2424,7 +2346,7 @@ gitbook.start({
     "link": null,
     "text": null
   },
-  "download": ["optimal-control-estimation.pdf"],
+  "download": ["optimal-control-reinforcement-learning.pdf"],
   "search": {
     "engine": "fuse",
     "options": null
