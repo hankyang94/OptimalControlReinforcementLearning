@@ -1,6 +1,6 @@
-# Optimal Control and Estimation
+# Optimal Control and Reinforcement Learning
 
-Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation
+Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning
 
 ## How to contribute
 
