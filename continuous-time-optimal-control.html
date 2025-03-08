@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 4 Continuous-time Optimal Control | Optimal Control and Estimation</title>
+  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <meta name="generator" content="bookdown 0.42 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 4 Continuous-time Optimal Control | Optimal Control and Estimation" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  <meta name="github-repo" content="hankyang94/OptimalControlEstimation" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 4 Continuous-time Optimal Control | Optimal Control and Estimation" />
+  
+  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Estimation." />
+  
+
+<meta name="author" content="Heng Yang" />
+
+
+<meta name="date" content="2025-03-08" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="approximatedp.html"/>
+<link rel="next" href="stability.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Optimal Control and Estimation</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a></li>
+<li class="chapter" data-level="1" data-path="formulation.html"><a href="formulation.html"><i class="fa fa-check"></i><b>1</b> The Optimal Control Formulation</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="formulation.html"><a href="formulation.html#the-basic-problem"><i class="fa fa-check"></i><b>1.1</b> The Basic Problem</a></li>
+<li class="chapter" data-level="1.2" data-path="formulation.html"><a href="formulation.html#dynamic-programming-and-principle-of-optimality"><i class="fa fa-check"></i><b>1.2</b> Dynamic Programming and Principle of Optimality</a></li>
+<li class="chapter" data-level="1.3" data-path="formulation.html"><a href="formulation.html#infinite-horizon"><i class="fa fa-check"></i><b>1.3</b> Infinite-horizon Formulation</a></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="exactdp.html"><a href="exactdp.html"><i class="fa fa-check"></i><b>2</b> Exact Dynamic Programming</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="exactdp.html"><a href="exactdp.html#lqr"><i class="fa fa-check"></i><b>2.1</b> Linear Quadratic Regulator</a>
+<ul>
+<li class="chapter" data-level="2.1.1" data-path="exactdp.html"><a href="exactdp.html#infinite-horizon-lqr"><i class="fa fa-check"></i><b>2.1.1</b> Infinite-Horizon LQR</a></li>
+<li class="chapter" data-level="2.1.2" data-path="exactdp.html"><a href="exactdp.html#lqr-with-constraints"><i class="fa fa-check"></i><b>2.1.2</b> LQR with Constraints</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="exactdp.html"><a href="exactdp.html#mdp-exact-dp"><i class="fa fa-check"></i><b>2.2</b> Markov Decision Process</a>
+<ul>
+<li class="chapter" data-level="2.2.1" data-path="exactdp.html"><a href="exactdp.html#bellman-optimality-equations"><i class="fa fa-check"></i><b>2.2.1</b> Bellman Optimality Equations</a></li>
+<li class="chapter" data-level="2.2.2" data-path="exactdp.html"><a href="exactdp.html#value-iteration"><i class="fa fa-check"></i><b>2.2.2</b> Value Iteration</a></li>
+<li class="chapter" data-level="2.2.3" data-path="exactdp.html"><a href="exactdp.html#value-iteration-with-barycentric-interpolation"><i class="fa fa-check"></i><b>2.2.3</b> Value Iteration with Barycentric Interpolation</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="approximatedp.html"><a href="approximatedp.html"><i class="fa fa-check"></i><b>3</b> Approximate Optimal Control</a>
+<ul>
+<li class="chapter" data-level="3.1" data-path="approximatedp.html"><a href="approximatedp.html#fitted-value-iteration"><i class="fa fa-check"></i><b>3.1</b> Fitted Value Iteration</a>
+<ul>
+<li class="chapter" data-level="3.1.1" data-path="approximatedp.html"><a href="approximatedp.html#linear-features"><i class="fa fa-check"></i><b>3.1.1</b> Linear Features</a></li>
+<li class="chapter" data-level="3.1.2" data-path="approximatedp.html"><a href="approximatedp.html#neural-network-features"><i class="fa fa-check"></i><b>3.1.2</b> Neural Network Features</a></li>
+<li class="chapter" data-level="3.1.3" data-path="approximatedp.html"><a href="approximatedp.html#fitted-q-value-iteration"><i class="fa fa-check"></i><b>3.1.3</b> Fitted Q-value Iteration</a></li>
+<li class="chapter" data-level="3.1.4" data-path="approximatedp.html"><a href="approximatedp.html#deep-q-network"><i class="fa fa-check"></i><b>3.1.4</b> Deep Q Network</a></li>
+<li class="chapter" data-level="3.1.5" data-path="approximatedp.html"><a href="approximatedp.html#deep-shallow"><i class="fa fa-check"></i><b>3.1.5</b> Deep + Shallow</a></li>
+</ul></li>
+<li class="chapter" data-level="3.2" data-path="approximatedp.html"><a href="approximatedp.html#trajectory-optimization"><i class="fa fa-check"></i><b>3.2</b> Trajectory Optimization</a>
+<ul>
+<li class="chapter" data-level="3.2.1" data-path="approximatedp.html"><a href="approximatedp.html#direct-single-shooting"><i class="fa fa-check"></i><b>3.2.1</b> Direct Single Shooting</a></li>
+<li class="chapter" data-level="3.2.2" data-path="approximatedp.html"><a href="approximatedp.html#direct-multiple-shooting"><i class="fa fa-check"></i><b>3.2.2</b> Direct Multiple Shooting</a></li>
+<li class="chapter" data-level="3.2.3" data-path="approximatedp.html"><a href="approximatedp.html#direct-collocation"><i class="fa fa-check"></i><b>3.2.3</b> Direct Collocation</a></li>
+<li class="chapter" data-level="3.2.4" data-path="approximatedp.html"><a href="approximatedp.html#direct-orthogonal-collocation"><i class="fa fa-check"></i><b>3.2.4</b> Direct Orthogonal Collocation</a></li>
+<li class="chapter" data-level="3.2.5" data-path="approximatedp.html"><a href="approximatedp.html#failure-of-open-loop-control"><i class="fa fa-check"></i><b>3.2.5</b> Failure of Open-Loop Control</a></li>
+<li class="chapter" data-level="3.2.6" data-path="approximatedp.html"><a href="approximatedp.html#lqr-trajectory-tracking"><i class="fa fa-check"></i><b>3.2.6</b> LQR Trajectory Tracking</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="approximatedp.html"><a href="approximatedp.html#model-predictive-control"><i class="fa fa-check"></i><b>3.3</b> Model Predictive Control</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="approximatedp.html"><a href="approximatedp.html#turn-trajectory-optimization-into-feedback-control"><i class="fa fa-check"></i><b>3.3.1</b> Turn Trajectory Optimization into Feedback Control</a></li>
+<li class="chapter" data-level="3.3.2" data-path="approximatedp.html"><a href="approximatedp.html#controllability-reachability-and-invariance"><i class="fa fa-check"></i><b>3.3.2</b> Controllability, Reachability, and Invariance</a></li>
+<li class="chapter" data-level="3.3.3" data-path="approximatedp.html"><a href="approximatedp.html#basic-formulation-for-linear-systems"><i class="fa fa-check"></i><b>3.3.3</b> Basic Formulation for Linear Systems</a></li>
+<li class="chapter" data-level="3.3.4" data-path="approximatedp.html"><a href="approximatedp.html#persistent-feasibility"><i class="fa fa-check"></i><b>3.3.4</b> Persistent Feasibility</a></li>
+<li class="chapter" data-level="3.3.5" data-path="approximatedp.html"><a href="approximatedp.html#mpc-stability"><i class="fa fa-check"></i><b>3.3.5</b> Stability</a></li>
+<li class="chapter" data-level="3.3.6" data-path="approximatedp.html"><a href="approximatedp.html#explicit-mpc"><i class="fa fa-check"></i><b>3.3.6</b> Explicit MPC</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="approximatedp.html"><a href="approximatedp.html#policy-gradient"><i class="fa fa-check"></i><b>3.4</b> Policy Gradient</a></li>
+</ul></li>
+<li class="chapter" data-level="4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html"><i class="fa fa-check"></i><b>4</b> Continuous-time Optimal Control</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-basic-problem-1"><i class="fa fa-check"></i><b>4.1</b> The Basic Problem</a></li>
+<li class="chapter" data-level="4.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-hamilton-jacobi-bellman-equation"><i class="fa fa-check"></i><b>4.2</b> The Hamilton-Jacobi-Bellman Equation</a></li>
+<li class="chapter" data-level="4.3" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#linear-quadratic-regulator"><i class="fa fa-check"></i><b>4.3</b> Linear Quadratic Regulator</a>
+<ul>
+<li class="chapter" data-level="4.3.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-tracking-1"><i class="fa fa-check"></i><b>4.3.1</b> LQR Trajectory Tracking</a></li>
+<li class="chapter" data-level="4.3.2" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#lqr-trajectory-stabilization"><i class="fa fa-check"></i><b>4.3.2</b> LQR Trajectory Stabilization</a></li>
+</ul></li>
+<li class="chapter" data-level="4.4" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#the-pontryagin-minimum-principle"><i class="fa fa-check"></i><b>4.4</b> The Pontryagin Minimum Principle</a>
+<ul>
+<li class="chapter" data-level="4.4.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#numerical-solution-of-the-tpbvp"><i class="fa fa-check"></i><b>4.4.1</b> Numerical Solution of the TPBVP</a></li>
+</ul></li>
+<li class="chapter" data-level="4.5" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#infinite-horizon-problems"><i class="fa fa-check"></i><b>4.5</b> Infinite-Horizon Problems</a>
+<ul>
+<li class="chapter" data-level="4.5.1" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#continuous-time-infinite-horizon-lqr"><i class="fa fa-check"></i><b>4.5.1</b> Infinite-Horizon LQR</a></li>
+</ul></li>
+<li class="chapter" data-level="4.6" data-path="continuous-time-optimal-control.html"><a href="continuous-time-optimal-control.html#viscosity-solution"><i class="fa fa-check"></i><b>4.6</b> Viscosity Solution</a></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="stability.html"><a href="stability.html"><i class="fa fa-check"></i><b>5</b> Stability Analysis</a>
+<ul>
+<li class="chapter" data-level="5.1" data-path="stability.html"><a href="stability.html#autonomous-systems"><i class="fa fa-check"></i><b>5.1</b> Autonomous Systems</a>
+<ul>
+<li class="chapter" data-level="5.1.1" data-path="stability.html"><a href="stability.html#concepts-of-stability"><i class="fa fa-check"></i><b>5.1.1</b> Concepts of Stability</a></li>
+<li class="chapter" data-level="5.1.2" data-path="stability.html"><a href="stability.html#stability-by-linearization"><i class="fa fa-check"></i><b>5.1.2</b> Stability by Linearization</a></li>
+<li class="chapter" data-level="5.1.3" data-path="stability.html"><a href="stability.html#lyapunov-analysis"><i class="fa fa-check"></i><b>5.1.3</b> Lyapunov Analysis</a></li>
+<li class="chapter" data-level="5.1.4" data-path="stability.html"><a href="stability.html#invariant-set-theorem"><i class="fa fa-check"></i><b>5.1.4</b> Invariant Set Theorem</a></li>
+<li class="chapter" data-level="5.1.5" data-path="stability.html"><a href="stability.html#computing-lyapunov-certificates"><i class="fa fa-check"></i><b>5.1.5</b> Computing Lyapunov Certificates</a></li>
+</ul></li>
+<li class="chapter" data-level="5.2" data-path="stability.html"><a href="stability.html#controlled-systems"><i class="fa fa-check"></i><b>5.2</b> Controlled Systems</a></li>
+<li class="chapter" data-level="5.3" data-path="stability.html"><a href="stability.html#non-autonomous-systems"><i class="fa fa-check"></i><b>5.3</b> Non-autonomous Systems</a></li>
+</ul></li>
+<li class="chapter" data-level="6" data-path="output-feedback.html"><a href="output-feedback.html"><i class="fa fa-check"></i><b>6</b> Output Feedback</a>
+<ul>
+<li class="chapter" data-level="6.1" data-path="output-feedback.html"><a href="output-feedback.html#least-squares-estimation"><i class="fa fa-check"></i><b>6.1</b> Least-Squares Estimation</a>
+<ul>
+<li class="chapter" data-level="6.1.1" data-path="output-feedback.html"><a href="output-feedback.html#linear-least-squares-estimation"><i class="fa fa-check"></i><b>6.1.1</b> Linear Least-Squares Estimation</a></li>
+</ul></li>
+<li class="chapter" data-level="6.2" data-path="output-feedback.html"><a href="output-feedback.html#kalman-filter"><i class="fa fa-check"></i><b>6.2</b> Kalman Filter</a>
+<ul>
+<li class="chapter" data-level="6.2.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-kalman-filter"><i class="fa fa-check"></i><b>6.2.1</b> Steady-State Kalman Filter</a></li>
+<li class="chapter" data-level="6.2.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-kalman-filter"><i class="fa fa-check"></i><b>6.2.2</b> Continuous-time Kalman Filter</a></li>
+</ul></li>
+<li class="chapter" data-level="6.3" data-path="output-feedback.html"><a href="output-feedback.html#linear-quadratic-gaussian-control"><i class="fa fa-check"></i><b>6.3</b> Linear Quadratic Gaussian Control</a>
+<ul>
+<li class="chapter" data-level="6.3.1" data-path="output-feedback.html"><a href="output-feedback.html#steady-state-lqg"><i class="fa fa-check"></i><b>6.3.1</b> Steady-state LQG</a></li>
+<li class="chapter" data-level="6.3.2" data-path="output-feedback.html"><a href="output-feedback.html#continuous-time-lqg"><i class="fa fa-check"></i><b>6.3.2</b> Continuous-time LQG</a></li>
+</ul></li>
+<li class="chapter" data-level="6.4" data-path="output-feedback.html"><a href="output-feedback.html#nonlinear-filtering"><i class="fa fa-check"></i><b>6.4</b> Nonlinear Filtering</a>
+<ul>
+<li class="chapter" data-level="6.4.1" data-path="output-feedback.html"><a href="output-feedback.html#extended-kalman-filter"><i class="fa fa-check"></i><b>6.4.1</b> Extended Kalman Filter</a></li>
+<li class="chapter" data-level="6.4.2" data-path="output-feedback.html"><a href="output-feedback.html#unscented-kalman-filter"><i class="fa fa-check"></i><b>6.4.2</b> Unscented Kalman Filter</a></li>
+<li class="chapter" data-level="6.4.3" data-path="output-feedback.html"><a href="output-feedback.html#particle-filter"><i class="fa fa-check"></i><b>6.4.3</b> Particle Filter</a></li>
+<li class="chapter" data-level="6.4.4" data-path="output-feedback.html"><a href="output-feedback.html#feedback-particle-filter"><i class="fa fa-check"></i><b>6.4.4</b> Feedback Particle Filter</a></li>
+</ul></li>
+<li class="chapter" data-level="6.5" data-path="output-feedback.html"><a href="output-feedback.html#state-observer"><i class="fa fa-check"></i><b>6.5</b> State Observer</a>
+<ul>
+<li class="chapter" data-level="6.5.1" data-path="output-feedback.html"><a href="output-feedback.html#general-design-strategy"><i class="fa fa-check"></i><b>6.5.1</b> General Design Strategy</a></li>
+<li class="chapter" data-level="6.5.2" data-path="output-feedback.html"><a href="output-feedback.html#luenberger-template"><i class="fa fa-check"></i><b>6.5.2</b> Luenberger Template</a></li>
+<li class="chapter" data-level="6.5.3" data-path="output-feedback.html"><a href="output-feedback.html#state-affine-template"><i class="fa fa-check"></i><b>6.5.3</b> State-affine Template</a></li>
+<li class="chapter" data-level="6.5.4" data-path="output-feedback.html"><a href="output-feedback.html#kazantzis-kravaris-luenberger-kkl-template"><i class="fa fa-check"></i><b>6.5.4</b> Kazantzis-Kravaris-Luenberger (KKL) Template</a></li>
+<li class="chapter" data-level="6.5.5" data-path="output-feedback.html"><a href="output-feedback.html#triangular-template"><i class="fa fa-check"></i><b>6.5.5</b> Triangular Template</a></li>
+<li class="chapter" data-level="6.5.6" data-path="output-feedback.html"><a href="output-feedback.html#design-with-convex-optimization"><i class="fa fa-check"></i><b>6.5.6</b> Design with Convex Optimization</a></li>
+</ul></li>
+<li class="chapter" data-level="6.6" data-path="output-feedback.html"><a href="output-feedback.html#observer-feedback"><i class="fa fa-check"></i><b>6.6</b> Observer Feedback</a></li>
+</ul></li>
+<li class="chapter" data-level="7" data-path="geometric-vision.html"><a href="geometric-vision.html"><i class="fa fa-check"></i><b>7</b> Geometric Vision</a>
+<ul>
+<li class="chapter" data-level="7.1" data-path="geometric-vision.html"><a href="geometric-vision.html#d-rotations-and-poses"><i class="fa fa-check"></i><b>7.1</b> 3D Rotations and Poses</a>
+<ul>
+<li class="chapter" data-level="7.1.1" data-path="geometric-vision.html"><a href="geometric-vision.html#rotation-matrices"><i class="fa fa-check"></i><b>7.1.1</b> Rotation matrices</a></li>
+<li class="chapter" data-level="7.1.2" data-path="geometric-vision.html"><a href="geometric-vision.html#coordinate-frame"><i class="fa fa-check"></i><b>7.1.2</b> Coordinate Frame</a></li>
+<li class="chapter" data-level="7.1.3" data-path="geometric-vision.html"><a href="geometric-vision.html#representations-of-the-rotations"><i class="fa fa-check"></i><b>7.1.3</b> Representations of the rotations</a></li>
+<li class="chapter" data-level="7.1.4" data-path="geometric-vision.html"><a href="geometric-vision.html#miscellaneous-topics-on-rotations"><i class="fa fa-check"></i><b>7.1.4</b> Miscellaneous topics on rotations</a></li>
+</ul></li>
+<li class="chapter" data-level="7.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pinhole-camera-model"><i class="fa fa-check"></i><b>7.2</b> The Pinhole Camera Model</a></li>
+<li class="chapter" data-level="7.3" data-path="geometric-vision.html"><a href="geometric-vision.html#camera-pose-estimation"><i class="fa fa-check"></i><b>7.3</b> Camera Pose Estimation</a>
+<ul>
+<li class="chapter" data-level="7.3.1" data-path="geometric-vision.html"><a href="geometric-vision.html#the-p3p-problem"><i class="fa fa-check"></i><b>7.3.1</b> The P3P Problem</a></li>
+<li class="chapter" data-level="7.3.2" data-path="geometric-vision.html"><a href="geometric-vision.html#the-pnp-problem"><i class="fa fa-check"></i><b>7.3.2</b> The PnP Problem</a></li>
+<li class="chapter" data-level="7.3.3" data-path="geometric-vision.html"><a href="geometric-vision.html#global-optimality"><i class="fa fa-check"></i><b>7.3.3</b> Global Optimality</a></li>
+<li class="chapter" data-level="7.3.4" data-path="geometric-vision.html"><a href="geometric-vision.html#handling-outliers"><i class="fa fa-check"></i><b>7.3.4</b> Handling Outliers</a></li>
+</ul></li>
+<li class="chapter" data-level="7.4" data-path="geometric-vision.html"><a href="geometric-vision.html#point-cloud-registration"><i class="fa fa-check"></i><b>7.4</b> Point Cloud Registration</a></li>
+</ul></li>
+<li class="chapter" data-level="8" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html"><i class="fa fa-check"></i><b>8</b> Adaptive Control</a>
+<ul>
+<li class="chapter" data-level="8.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#model-reference-adaptive-control"><i class="fa fa-check"></i><b>8.1</b> Model-Reference Adaptive Control</a>
+<ul>
+<li class="chapter" data-level="8.1.1" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#first-order-systems"><i class="fa fa-check"></i><b>8.1.1</b> First-Order Systems</a></li>
+<li class="chapter" data-level="8.1.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#high-order-systems"><i class="fa fa-check"></i><b>8.1.2</b> High-Order Systems</a></li>
+<li class="chapter" data-level="8.1.3" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#robotic-manipulator"><i class="fa fa-check"></i><b>8.1.3</b> Robotic Manipulator</a></li>
+</ul></li>
+<li class="chapter" data-level="8.2" data-path="adaptivecontrol.html"><a href="adaptivecontrol.html#certainty-equivalent-adaptive-control"><i class="fa fa-check"></i><b>8.2</b> Certainty-Equivalent Adaptive Control</a></li>
+</ul></li>
+<li class="chapter" data-level="9" data-path="psets.html"><a href="psets.html"><i class="fa fa-check"></i><b>9</b> Problem Sets</a></li>
+<li class="chapter" data-level="" data-path="acknowledgement.html"><a href="acknowledgement.html"><i class="fa fa-check"></i>Acknowledgement</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html"><i class="fa fa-check"></i><b>A</b> Linear Algebra and Differential Equations</a>
+<ul>
+<li class="chapter" data-level="A.1" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#linear-algebra"><i class="fa fa-check"></i><b>A.1</b> Linear Algebra</a>
+<ul>
+<li class="chapter" data-level="A.1.1" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#matrix-exponential"><i class="fa fa-check"></i><b>A.1.1</b> Matrix Exponential</a></li>
+<li class="chapter" data-level="A.1.2" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#gradients"><i class="fa fa-check"></i><b>A.1.2</b> Gradients</a></li>
+</ul></li>
+<li class="chapter" data-level="A.2" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#solving-an-ordinary-differential-equation"><i class="fa fa-check"></i><b>A.2</b> Solving an Ordinary Differential Equation</a>
+<ul>
+<li class="chapter" data-level="A.2.1" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#separation-of-variables"><i class="fa fa-check"></i><b>A.2.1</b> Separation of Variables</a></li>
+<li class="chapter" data-level="A.2.2" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#first-order-linear-ode"><i class="fa fa-check"></i><b>A.2.2</b> First-order Linear ODE</a></li>
+<li class="chapter" data-level="A.2.3" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#gronwall-inequality"><i class="fa fa-check"></i><b>A.2.3</b> Gronwall Inequality</a></li>
+<li class="chapter" data-level="A.2.4" data-path="linear-algebra-and-differential-equations.html"><a href="linear-algebra-and-differential-equations.html#matlab"><i class="fa fa-check"></i><b>A.2.4</b> Matlab</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="B" data-path="appconvex.html"><a href="appconvex.html"><i class="fa fa-check"></i><b>B</b> Convex Analysis and Optimization</a>
+<ul>
+<li class="chapter" data-level="B.1" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory"><i class="fa fa-check"></i><b>B.1</b> Theory</a>
+<ul>
+<li class="chapter" data-level="B.1.1" data-path="appconvex.html"><a href="appconvex.html#sets"><i class="fa fa-check"></i><b>B.1.1</b> Sets</a></li>
+<li class="chapter" data-level="B.1.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-convexfunction"><i class="fa fa-check"></i><b>B.1.2</b> Convex function</a></li>
+<li class="chapter" data-level="B.1.3" data-path="appconvex.html"><a href="appconvex.html#lagrange-dual"><i class="fa fa-check"></i><b>B.1.3</b> Lagrange dual</a></li>
+<li class="chapter" data-level="B.1.4" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-kkt"><i class="fa fa-check"></i><b>B.1.4</b> KKT condition</a></li>
+</ul></li>
+<li class="chapter" data-level="B.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-practice"><i class="fa fa-check"></i><b>B.2</b> Practice</a>
+<ul>
+<li class="chapter" data-level="B.2.1" data-path="appconvex.html"><a href="appconvex.html#cvx-introduction"><i class="fa fa-check"></i><b>B.2.1</b> CVX Introduction</a></li>
+<li class="chapter" data-level="B.2.2" data-path="appconvex.html"><a href="appconvex.html#linear-programming-lp"><i class="fa fa-check"></i><b>B.2.2</b> Linear Programming (LP)</a></li>
+<li class="chapter" data-level="B.2.3" data-path="appconvex.html"><a href="appconvex.html#quadratic-programming-qp"><i class="fa fa-check"></i><b>B.2.3</b> Quadratic Programming (QP)</a></li>
+<li class="chapter" data-level="B.2.4" data-path="appconvex.html"><a href="appconvex.html#quadratically-constrained-quadratic-programming-qcqp"><i class="fa fa-check"></i><b>B.2.4</b> Quadratically Constrained Quadratic Programming (QCQP)</a></li>
+<li class="chapter" data-level="B.2.5" data-path="appconvex.html"><a href="appconvex.html#second-order-cone-programming-socp"><i class="fa fa-check"></i><b>B.2.5</b> Second-Order Cone Programming (SOCP)</a></li>
+<li class="chapter" data-level="B.2.6" data-path="appconvex.html"><a href="appconvex.html#semidefinite-programming-sdp"><i class="fa fa-check"></i><b>B.2.6</b> Semidefinite Programming (SDP)</a></li>
+<li class="chapter" data-level="B.2.7" data-path="appconvex.html"><a href="appconvex.html#cvxpy-introduction-and-examples"><i class="fa fa-check"></i><b>B.2.7</b> CVXPY Introduction and Examples</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="C" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html"><i class="fa fa-check"></i><b>C</b> Linear System Theory</a>
+<ul>
+<li class="chapter" data-level="C.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability"><i class="fa fa-check"></i><b>C.1</b> Stability</a>
+<ul>
+<li class="chapter" data-level="C.1.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability-ct"><i class="fa fa-check"></i><b>C.1.1</b> Continuous-Time Stability</a></li>
+<li class="chapter" data-level="C.1.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability-dt"><i class="fa fa-check"></i><b>C.1.2</b> Discrete-Time Stability</a></li>
+<li class="chapter" data-level="C.1.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#lyapunov-analysis-1"><i class="fa fa-check"></i><b>C.1.3</b> Lyapunov Analysis</a></li>
+</ul></li>
+<li class="chapter" data-level="C.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-controllable-observable"><i class="fa fa-check"></i><b>C.2</b> Controllability and Observability</a>
+<ul>
+<li class="chapter" data-level="C.2.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#cayley-hamilton-theorem"><i class="fa fa-check"></i><b>C.2.1</b> Cayley-Hamilton Theorem</a></li>
+<li class="chapter" data-level="C.2.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-controllability"><i class="fa fa-check"></i><b>C.2.2</b> Equivalent Statements for Controllability</a></li>
+<li class="chapter" data-level="C.2.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#duality"><i class="fa fa-check"></i><b>C.2.3</b> Duality</a></li>
+<li class="chapter" data-level="C.2.4" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-observability"><i class="fa fa-check"></i><b>C.2.4</b> Equivalent Statements for Observability</a></li>
+</ul></li>
+<li class="chapter" data-level="C.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#stabilizability-and-detectability"><i class="fa fa-check"></i><b>C.3</b> Stabilizability And Detectability</a>
+<ul>
+<li class="chapter" data-level="C.3.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-stabilizability"><i class="fa fa-check"></i><b>C.3.1</b> Equivalent Statements for Stabilizability</a></li>
+<li class="chapter" data-level="C.3.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-detectability"><i class="fa fa-check"></i><b>C.3.2</b> Equivalent Statements for Detectability</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="D" data-path="algebraic-techniques-and-sum-of-squares.html"><a href="algebraic-techniques-and-sum-of-squares.html"><i class="fa fa-check"></i><b>D</b> Algebraic Techniques and Sum-of-Squares</a>
+<ul>
+<li class="chapter" data-level="D.1" data-path="algebraic-techniques-and-sum-of-squares.html"><a href="algebraic-techniques-and-sum-of-squares.html#algebra"><i class="fa fa-check"></i><b>D.1</b> Algebra</a>
+<ul>
+<li class="chapter" data-level="D.1.1" data-path="algebraic-techniques-and-sum-of-squares.html"><a href="algebraic-techniques-and-sum-of-squares.html#polynomials"><i class="fa fa-check"></i><b>D.1.1</b> Polynomials</a></li>
+<li class="chapter" data-level="D.1.2" data-path="algebraic-techniques-and-sum-of-squares.html"><a href="algebraic-techniques-and-sum-of-squares.html#representation-of-nonnegative-polynomial-univariate-case"><i class="fa fa-check"></i><b>D.1.2</b> Representation of nonnegative polynomial: Univariate case</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="E" data-path="the-kalman-yakubovich-lemma.html"><a href="the-kalman-yakubovich-lemma.html"><i class="fa fa-check"></i><b>E</b> The Kalman-Yakubovich Lemma</a></li>
+<li class="chapter" data-level="F" data-path="feedbacklinearization.html"><a href="feedbacklinearization.html"><i class="fa fa-check"></i><b>F</b> Feedback Linearization</a></li>
+<li class="chapter" data-level="G" data-path="slidingcontrol.html"><a href="slidingcontrol.html"><i class="fa fa-check"></i><b>G</b> Sliding Control</a></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Estimation</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="continuous-time-optimal-control" class="section level1 hasAnchor" number="4">
+<h1><span class="header-section-number">Chapter 4</span> Continuous-time Optimal Control<a href="continuous-time-optimal-control.html#continuous-time-optimal-control" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>So far we have been focusing on stochastic and discrete-time optimal control problems. In this Chapter, we will switch gear to deterministic and continuous-time optimal control (still with continuous state and action space).</p>
+<p>The goal of a continuous-time introduction is threefold. (1) Real-world systems are natively continuous-time. (2) We will see the continuous-time analog of the Bellman principle of optimality in discrete-time (cf. Theorem <a href="formulation.html#thm:bellmanoptimality">1.1</a>). (3) The continuous-time setup is more natural and popular for stability analysis to be introduced in Chapter <a href="stability.html#stability">5</a>.</p>
+<div id="the-basic-problem-1" class="section level2 hasAnchor" number="4.1">
+<h2><span class="header-section-number">4.1</span> The Basic Problem<a href="continuous-time-optimal-control.html#the-basic-problem-1" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Consider a continuous-time dynamical system
+<span class="math display" id="eq:ct-optimal-control-system">\[\begin{equation}
+\dot{x}(t) = f(x(t),u(t)),\ t \in [0,T], \quad x(0) = x_0,
+\tag{4.1}
+\end{equation}\]</span>
+where</p>
+<ul>
+<li><p><span class="math inline">\(x(t) \in \mathbb{R}^n\)</span> is the state of the system,</p></li>
+<li><p><span class="math inline">\(u(t) \in \mathbb{U} \subseteq \mathbb{R}^m\)</span> is the control we wish to design,</p></li>
+<li><p><span class="math inline">\(f: \mathbb{R}^{n} \times \mathbb{R}^m \rightarrow \mathbb{R}^n\)</span> models the system dynamics, and</p></li>
+<li><p><span class="math inline">\(x_0 \in \mathbb{R}^n\)</span> is the initial state of the system.</p></li>
+</ul>
+<p>We assume the admissible control functions <span class="math inline">\(\{u(t) \mid u(t) \in \mathbb{U}, t\in [0,T] \}\)</span>, also called control trajectories, must be <em>piecewise continuous</em>.<a href="#fn4" class="footnote-ref" id="fnref4"><sup>4</sup></a> For any control trajectory, we assume the system <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-system">(4.1)</a> has a unique solution <span class="math inline">\(\{x(t)\mid t \in [0,T] \}\)</span>, called the state trajectory.</p>
+<p>We now state the continuous-time optimal control problem.</p>
+<div class="definitionbox">
+<div class="definition">
+<p><span id="def:continuoustimeoptimalcontrol" class="definition"><strong>Definition 4.1  (Continuous-time, Finite-horizon Optimal Control) </strong></span>Find the best admissible control trajectory <span class="math inline">\(\{u(t) \mid t \in [0,T] \}\)</span> that minimizes the cost function
+<span class="math display" id="eq:ct-optimal-control-definition">\[\begin{equation}
+J(0,x_0) = \min_{u(t) \in \mathbb{U}} h(x(T)) + \int_0^T g(x(t),u(t)) dt,
+\tag{4.2}
+\end{equation}\]</span>
+subject to <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-system">(4.1)</a>, where the functions <span class="math inline">\(g\)</span> and <span class="math inline">\(h\)</span> are continuously differentiable with respect to <span class="math inline">\(x\)</span>, and <span class="math inline">\(g\)</span> is continuous with respect to <span class="math inline">\(u\)</span>.</p>
+</div>
+</div>
+<p>The function <span class="math inline">\(J\)</span> in <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-definition">(4.2)</a> is called the <em>optimal cost-to-go</em>, or the <em>optimal value function</em>. Notice that the optimal cost-to-go is a function of both the state <span class="math inline">\(x\)</span> and the time <span class="math inline">\(t\)</span>, just as in the discrete-time case we used <span class="math inline">\(J_k\)</span> with a subscript <span class="math inline">\(k\)</span> to denote the optimal cost-to-go for the tail problem starting at timestep <span class="math inline">\(k\)</span> (cf. Theorem <a href="formulation.html#thm:dynamicprogramming">1.2</a>). Specifically, we should interpret
+<span class="math display">\[
+J(t,x_0) = \min_{u(t) \in \mathbb{U}} h(x(T)) + \int_t^T g(x(\tau),u(\tau)) d\tau, \quad x(t) = x_0,
+\]</span>
+as the optimal cost-to-go of the system starting from <span class="math inline">\(x_0\)</span> at time <span class="math inline">\(t\)</span> (i.e., the tail problem).
+We assume <span class="math inline">\(J(0,x_0)\)</span> is finite when <span class="math inline">\(x_0\)</span> is in some set <span class="math inline">\(\mathcal{X}_0\)</span>.</p>
+</div>
+<div id="the-hamilton-jacobi-bellman-equation" class="section level2 hasAnchor" number="4.2">
+<h2><span class="header-section-number">4.2</span> The Hamilton-Jacobi-Bellman Equation<a href="continuous-time-optimal-control.html#the-hamilton-jacobi-bellman-equation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Recall that in discrete-time, the dynamic programming (DP) algorithm in Theorem <a href="formulation.html#thm:dynamicprogramming">1.2</a> states that the optimal cost-to-go has to satisfy a recursive equation <a href="formulation.html#eq:dpbackwardrecursion">(1.5)</a>, i.e., the optimal cost-to-go at time <span class="math inline">\(k\)</span> can be calculated by choosing the best action that minimizes the stage cost at time <span class="math inline">\(k\)</span> plus the optimal cost-to-go at time <span class="math inline">\(k+1\)</span>. In the next, we will show a result of similar flavor to <a href="formulation.html#eq:dpbackwardrecursion">(1.5)</a>, but in the form of a partial differential equation (PDE), known as the Hamilton-Jacobi-Bellman (HJB) equation.</p>
+<p>Let us informally derive the HJB equation by applying the DP algorithm to a discrete-time approximation of the continuous-time optimal control problem. We divide the time horizon <span class="math inline">\([0,T]\)</span> into <span class="math inline">\(N\)</span> pieces of equal length <span class="math inline">\(\delta = T/N\)</span>, and denote
+<span class="math display">\[
+x_k = x(k\delta), \quad u_k = u(k \delta), \quad k = 0,1,\dots,N.
+\]</span>
+We then approximate the continuous-time dynamics <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-system">(4.1)</a> as
+<span class="math display">\[
+x_{k+1} = x_k + \dot{x}_k \cdot \delta = x_k + f(x_k,u_k) \cdot \delta,
+\]</span>
+and the cost function in <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-definition">(4.2)</a> as
+<span class="math display">\[
+h(x_N) + \sum_{k=0}^{N-1} g(x_k, u_k)\cdot \delta.
+\]</span>
+This problem now is in the form of a discrete-time, finite-horizon optimal control <a href="formulation.html#def:basicproblem">1.1</a>, for which we can apply dynamic programming.</p>
+<p>Let us use <span class="math inline">\(\tilde{J}(t,x)\)</span> (as opposed to <span class="math inline">\(J(t,x)\)</span>) to denote the optimal cost-to-go at time <span class="math inline">\(t\)</span> and state <span class="math inline">\(x\)</span> for the discrete-time approximation. According to <a href="formulation.html#eq:dpbackwardrecursion">(1.5)</a>, the DP backward recursion is
+<span class="math display" id="eq:ct-optimal-control-discrete-approx-dp">\[\begin{align}
+\tilde{J}(N\delta,x) = h(x), \\
+\tilde{J}(k\delta,x) = \min_{u \in \mathbb{U}} \left[ g(x,u)\cdot \delta + \tilde{J}((k+1)\delta,x + f(x,u)\cdot \delta)  \right], \quad k = N-1,\dots,0.
+\tag{4.3}
+\end{align}\]</span>
+Suppose <span class="math inline">\(\tilde{J}(t,x)\)</span> is differentiable, we can perform a Taylor-series expansion of <span class="math inline">\(\tilde{J}((k+1)\delta,x+f(x,u)\delta)\)</span> in <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-discrete-approx-dp">(4.3)</a> as follows
+<span class="math display">\[
+\tilde{J}((k+1)\delta,x+f(x,u)\delta) = \tilde{J}(k\delta,x) + \nabla_t \tilde{J} (k\delta,x) \cdot \delta + \nabla_x \tilde{J}(k\delta,x)^T f(x,u) \cdot \delta + o(\delta),
+\]</span>
+where <span class="math inline">\(o(\delta)\)</span> includes high-order terms that approach zero when <span class="math inline">\(\delta\)</span> tends to zero, <span class="math inline">\(\nabla_t \tilde{J}\)</span> and <span class="math inline">\(\nabla_x \tilde{J}\)</span> (a column vector) denote the partial derivates of <span class="math inline">\(\tilde{J}\)</span> with respect to <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span>, respectively. Plugging the first-order Taylor expansion into the DP recursion <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-discrete-approx-dp">(4.3)</a>, we obtain
+<span class="math display" id="eq:ct-optimal-control-discrete-approx-taylor">\[\begin{equation}
+\tilde{J}(k\delta,x) = \min_{u \in \mathbb{U}} \left[ g(x,u) \cdot \delta + \tilde{J}(k \delta,x) + \nabla_t \tilde{J}(k \delta,x) \delta + \nabla_x \tilde{J}(k\delta,x)^T f(x,u) \delta + o(\delta)  \right].
+\tag{4.4}
+\end{equation}\]</span>
+Cancelling <span class="math inline">\(\tilde{J}(k \delta,x)\)</span> from both sides, dividing both sides by <span class="math inline">\(\delta\)</span>, and assuming <span class="math inline">\(\tilde{J}\)</span> converges to <span class="math inline">\(J\)</span> uniformly in time and state, i.e.,
+<span class="math display">\[
+\lim_{\delta \rightarrow 0, k\delta = t} \tilde{J}(k\delta,x) = J(t,x), \quad \forall t,x,
+\]</span>
+we obtain from <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-discrete-approx-taylor">(4.4)</a> the following partial differential equation
+<span class="math display" id="eq:hjb-informal">\[\begin{equation}
+0 = \min_{u \in \mathbb{U}} \left[ g(x,u) + \nabla_t J(t,x) + \nabla_x J(t,x)^T f(x,u)  \right], \quad \forall t, x,
+\tag{4.5}
+\end{equation}\]</span>
+with the boundary condition <span class="math inline">\(J(T,x) = h(x)\)</span>. Equation <a href="continuous-time-optimal-control.html#eq:hjb-informal">(4.5)</a> is called the Hamilton-Jacobi-Bellman equation.</p>
+<p>Our derivation above is informal, let us formally state the HJB equation.</p>
+<div class="theorembox">
+<div class="theorem">
+<p><span id="thm:hjbsufficient" class="theorem"><strong>Theorem 4.1  (Hamilton-Jacobi-Bellman Equation as A Sufficient Condition for Optimality) </strong></span>Consider the optimal control problem <a href="continuous-time-optimal-control.html#def:continuoustimeoptimalcontrol">4.1</a> for system <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-system">(4.1)</a>. Suppose <span class="math inline">\(V(t,x)\)</span> is a solution to the Hamilton-Jacobi-Bellman equation, i.e., <span class="math inline">\(V(t,x)\)</span> is continuously differentiable and satisfies
+<span class="math display" id="eq:hjb-eqution-formal-1">\[\begin{align}
+\tag{4.6}
+0 = \min_{u \in \mathbb{U}} \left[ g(x,u) + \nabla_t V(t,x) + \nabla_x V(t,x)^T f(x,u)\right], \quad \forall t,x, \\
+V(T,x) = h(x), \quad \forall x.
+\end{align}\]</span>
+Suppose <span class="math inline">\(\mu^\star(t,x)\)</span> attains the minimum in <a href="continuous-time-optimal-control.html#eq:hjb-eqution-formal-1">(4.6)</a> for all <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span>. Let <span class="math inline">\(\{x^\star(t) \mid t \in [0,T] \}\)</span> be the state trajectory obtained from the given initial condition <span class="math inline">\(x(0)\)</span> when the control trajectory <span class="math inline">\(u^\star(t) = \mu^\star(t,x^\star(t))\)</span> is applied, i.e., <span class="math inline">\(x^\star(0) = x(0)\)</span> and for any <span class="math inline">\(t \in [0,T]\)</span>, <span class="math inline">\(\dot{x}^\star(t) = f(x^\star(t), \mu^\star(t,x^\star(t)))\)</span> and we assume this differential equation has a unique solution starting at any <span class="math inline">\((t,x)\)</span> and that the control trajectory <span class="math inline">\(\{ \mu^\star(t,x^\star(t)) \mid t \in [0,T] \}\)</span> is piecewise continuous as a function of <span class="math inline">\(t\)</span>.
+Then <span class="math inline">\(V(t,x)\)</span> is equal to the optimal cost-to-go <span class="math inline">\(J(t,x)\)</span> for all <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span>. Moreover, the control trajectory <span class="math inline">\(u^\star(t)\)</span> is optimal.</p>
+</div>
+</div>
+<div class="proofbox">
+<div class="proof">
+<p><span id="unlabeled-div-12" class="proof"><em>Proof</em>. </span>Let <span class="math inline">\(\{\hat{u}(t) \mid t \in [0,T] \}\)</span> be any admissible control trajectory and let <span class="math inline">\(\hat{x}(t)\)</span> be the resulting state trajectory. From the “<span class="math inline">\(\min\)</span>” in <a href="continuous-time-optimal-control.html#eq:hjb-eqution-formal-1">(4.6)</a>, we know
+<span class="math display">\[
+0 \leq g(\hat{x},\hat{u}) + \nabla_t V(t,\hat{x}) + \nabla_x V(t,\hat{x})^T f(\hat{x},\hat{u}) = g(\hat{x},\hat{u}) + \frac{d}{dt} V(t,\hat{x}).
+\]</span>
+Integrating the above inequality over <span class="math inline">\(t \in [0,T]\)</span>, we obtain
+<span class="math display">\[
+0 \leq \left( \int_{0}^T g(\hat{x}(t),\hat{u}(t))dt \right) + V(T,\hat{x}(T)) - V(0,\hat{x}(0)).
+\]</span>
+Using the terminal constraint <span class="math inline">\(V(T,x) = h(x)\)</span> for any <span class="math inline">\(x\)</span> and the initial condition <span class="math inline">\(\hat{x}(0) = x(0)\)</span>, we have
+<span class="math display">\[
+V(0,x(0)) \leq h(\hat{x}(T)) + \int_{0}^T g(\hat{x}(t),\hat{u}(t)) dt.
+\]</span>
+This shows that <span class="math inline">\(V(0,x(0))\)</span> is a lower bound to the optimal cost-to-go, because any admissible control trajectory <span class="math inline">\(\hat{u}(t)\)</span> leads to a cost no smaller than <span class="math inline">\(V(0,x(0))\)</span>.</p>
+<p>It remains to show that <span class="math inline">\(V(0,x(0))\)</span> is attainable. This is done by plugging the optimal control trajectory <span class="math inline">\(u^\star(t)\)</span> and state trajectory <span class="math inline">\(x^\star(t)\)</span> to the derivation above, leading to
+<span class="math display">\[
+V(0,x(0)) = h(x^\star(T)) + \int_0^T g(x^\star(t),u^\star(t)) dt.
+\]</span>
+This shows that <span class="math inline">\(V(0,x(0)) = J(0,x(0))\)</span>.</p>
+<p>The argument above is generic and holds for any initial time <span class="math inline">\(t \in [0,T]\)</span> and initial state <span class="math inline">\(x\)</span>. Therefore, <span class="math inline">\(V(t,x) = J(t,x)\)</span> is the optimal cost-to-go.</p>
+</div>
+</div>
+<p>Theorem <a href="continuous-time-optimal-control.html#thm:hjbsufficient">4.1</a> effectively turns the optimal control problem <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-definition">(4.2)</a> into finding a solution for the partial differential equation <a href="continuous-time-optimal-control.html#eq:hjb-eqution-formal-1">(4.6)</a>. Let us illustrate the theorem using a simple example.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:hjbequationsimpleexample" class="example"><strong>Example 4.1  (A Scalar System) </strong></span>Consider the following dynamical system
+<span class="math display">\[
+\dot{x}(t) = u(t), \quad t \in [0,T]
+\]</span>
+where <span class="math inline">\(x \in \mathbb{R}\)</span> is the state, and <span class="math inline">\(u \in \mathbb{U} = [-1,1]\)</span> is the control.</p>
+<p>We are interested in the following optimal control problem
+<span class="math display">\[
+\min_{u(t)} \frac{1}{2} \left( x(T) \right)^2,
+\]</span>
+where the goal is to move the initial state as close as possible to the origin <span class="math inline">\(0\)</span> at the terminal time <span class="math inline">\(T\)</span>.</p>
+<p>There is a simple optimal controller for this scalar system. We move the state as quickly as possible to the origin <span class="math inline">\(0\)</span>, using maximum control, and then maintain the state at the origin using zero control. Formally, this is
+<span class="math display">\[
+\mu^\star(t,x) = - \text{sgn}(x) = \begin{cases}
+1 &amp; \text{if } x &lt; 0 \\
+0 &amp; \text{if } x = 0 \\
+-1 &amp; \text{if } x &gt; 0
+\end{cases}.
+\]</span>
+With this controller, we know that if the system starts at <span class="math inline">\(x\)</span> at time <span class="math inline">\(t\)</span>, the terminal state will satisfy
+<span class="math display">\[
+\vert x(T) \vert = \begin{cases}
+|x| - (T - t) &amp; \text{if } T-t &lt; |x|  \\
+0 &amp; \text{otherwise}
+\end{cases}.
+\]</span>
+As a result, the optimal cost-to-go is
+<span class="math display" id="eq:scalar-system-optimal-value">\[\begin{equation}
+J(t,x) = \frac{1}{2} \left( \max\{0,  |x| - (T - t)\} \right)^2.
+\tag{4.7}
+\end{equation}\]</span></p>
+<p>Let us verify if this function satisfies the HJB equation.</p>
+<p><strong>Boundary condition</strong>. Clearly,
+<span class="math display">\[
+J(T,x) = \frac{1}{2}x^2
+\]</span>
+satisfies the boundary condition.</p>
+<strong>Differentiability</strong>. When viewed as a function of <span class="math inline">\(t\)</span>, <span class="math inline">\(J(t,x)\)</span> in <a href="continuous-time-optimal-control.html#eq:scalar-system-optimal-value">(4.7)</a> can be plotted as in Fig. <a href="continuous-time-optimal-control.html#fig:scalar-system-optimal-J-t">4.1</a>. We can see that <span class="math inline">\(J(t,x)\)</span> is differentiable in <span class="math inline">\(t\)</span> and
+<span class="math display" id="eq:scalar-system-partial-J-partial-t">\[\begin{equation}
+\nabla_t J(t,x) = \max\{ 0, |x| - (T-t) \}.
+\tag{4.8}
+\end{equation}\]</span>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:scalar-system-optimal-J-t"></span>
+<img src="images/scalar-system-optimal-J-t.png" alt="Optimal cost-to-go as a function of time." width="50%" />
+<p class="caption">
+Figure 4.1: Optimal cost-to-go as a function of time.
+</p>
+</div>
+<p>When viewed as a function of <span class="math inline">\(x\)</span>, <span class="math inline">\(J(t,x)\)</span> can be plotted as in Fig. <a href="continuous-time-optimal-control.html#fig:scalar-system-optimal-J-x">4.2</a>. We can see <span class="math inline">\(J(t,x)\)</span> is differentiable in <span class="math inline">\(x\)</span> and
+<span class="math display" id="eq:scalar-system-partial-J-partial-x">\[\begin{equation}
+\nabla_x J(t,x) = \text{sgn}(x) \cdot \max\{ 0,|x| - (T-t) \}.
+\tag{4.9}
+\end{equation}\]</span></p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:scalar-system-optimal-J-x"></span>
+<img src="images/scalar-system-optimal-J-x.png" alt="Optimal cost-to-go as a function of state." width="60%" />
+<p class="caption">
+Figure 4.2: Optimal cost-to-go as a function of state.
+</p>
+</div>
+<p><strong>PDE</strong>. Substituting <a href="continuous-time-optimal-control.html#eq:scalar-system-partial-J-partial-t">(4.8)</a> and <a href="continuous-time-optimal-control.html#eq:scalar-system-partial-J-partial-x">(4.9)</a> into the HJB equation <a href="continuous-time-optimal-control.html#eq:hjb-eqution-formal-1">(4.6)</a>, we need to verify that the followng equation holds for all <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span>
+<span class="math display" id="eq:scalar-system-hjb">\[\begin{equation}
+0 = \min_{u \in \mathbb{U}} (1 + \text{sgn}(x) \cdot u) \max\{0, |x| - (T-t) \}.
+\tag{4.10}
+\end{equation}\]</span>
+This is easy to verify as <span class="math inline">\(u = - \text{sgn}(x)\)</span> attains the minimum and sets the right-hand side equal to zero for any <span class="math inline">\((t,x)\)</span>.</p>
+<p>However, we can observe that the optimal controller need not be unique. For example, when <span class="math inline">\(|x| \leq T-t\)</span>, we have
+<span class="math display">\[
+\max\{0, |x| - (T-t) \} = 0,
+\]</span>
+and any <span class="math inline">\(u \in \mathbb{U}\)</span> would attain the minimum in <a href="continuous-time-optimal-control.html#eq:scalar-system-hjb">(4.10)</a> and hence be optimal.</p>
+</div>
+</div>
+<p>For simple systems, the HJB equation can be solved numerically.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:solve-scalar-system-numerically" class="example"><strong>Example 4.2  (Numerical HJB Solution of A Scalar System) </strong></span>Consider a scalar linear system
+<span class="math display">\[
+\dot{x} = x + u,
+\]</span>
+and the optimal control problem with quadratic costs and <span class="math inline">\(T=0.5\)</span>
+<span class="math display">\[
+\min_{u(t),t\in[0,T]} x(T)^T P x(T) + \int_{t=0}^T (x^T Q x + u^T R u ) dt
+\]</span>
+with <span class="math inline">\(P=Q=R=1\)</span>. Solve the HJB equation on a mesh <span class="math inline">\(x \in [-8,8]\)</span>, we obtain the optimal cost-to-go in Fig. <a href="continuous-time-optimal-control.html#fig:scalar-system-numerical-V">4.3</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:scalar-system-numerical-V"></span>
+<img src="images/finite_HJB_numerical_solution.png" alt="Numerical solution of the HJB equation." width="60%" />
+<p class="caption">
+Figure 4.3: Numerical solution of the HJB equation.
+</p>
+</div>
+<p>You can find code for this problem <a href="https://github.com/ComputationalRobotics/OptimalControlEstimation-Examples/blob/main/finite_HJ.m">here</a>.</p>
+</div>
+</div>
+</div>
+<div id="linear-quadratic-regulator" class="section level2 hasAnchor" number="4.3">
+<h2><span class="header-section-number">4.3</span> Linear Quadratic Regulator<a href="continuous-time-optimal-control.html#linear-quadratic-regulator" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Let us apply the HJB sufficiency Theorem <a href="continuous-time-optimal-control.html#thm:hjbsufficient">4.1</a> to the continuous-time linear quadratic regulator (LQR).</p>
+<p>Consider the linear system
+<span class="math display">\[
+\dot{x}(t) = A x(t) + B u(t),
+\]</span>
+with <span class="math inline">\(x \in \mathbb{R}^n\)</span>, <span class="math inline">\(u \in \mathbb{R}^m\)</span>, and the optimal control problem
+<span class="math display">\[
+\min_{u(t),t\in [0,T]} x(T)^T P x(T) + \int_{t=0}^T (x(t)^T Q x(t) + u(t)^T R u(t)) dt
+\]</span>
+where <span class="math inline">\(P,Q\succeq 0\)</span> and <span class="math inline">\(R \succ 0\)</span>.</p>
+<p>According to Theorem <a href="continuous-time-optimal-control.html#thm:hjbsufficient">4.1</a>, the HJB equation for this problem is
+<span class="math display" id="eq:hjb-finite-horizon-lqr">\[\begin{equation}
+\begin{split}
+0 = \min_{u \in \mathbb{R}^m } \left[ x^T Q x + u^T R u + \nabla_t V(t,x) + \nabla_x V(t,x)^T f(x,u) \right], \quad \forall t,x, \\
+V(T,x) = x^T P x, \quad \forall x.
+\end{split}
+\tag{4.11}
+\end{equation}\]</span></p>
+<p>Let us guess a solution of the following form,
+<span class="math display">\[
+V(t,x) = x^T S(t) x, \quad S(t) \in \mathbb{S}^n,
+\]</span>
+where <span class="math inline">\(\mathbb{S}^n\)</span> is the set of <span class="math inline">\(n \times n\)</span> symmetric matrices.</p>
+<p>The second equation in the HJB <a href="continuous-time-optimal-control.html#eq:hjb-finite-horizon-lqr">(4.11)</a> implies
+<span class="math display" id="eq:finite-horizon-lqr-optimal-value-terminal">\[\begin{equation}
+S(T) = P.
+\tag{4.12}
+\end{equation}\]</span>
+The first equation in the HJB <a href="continuous-time-optimal-control.html#eq:hjb-finite-horizon-lqr">(4.11)</a> requires
+<span class="math display" id="eq:hjb-finite-horizon-lqr-simplify">\[\begin{equation}
+0 = \min_{u \in \mathbb{R}^m} \left[ x^T Q x + u^T R u + x^T \dot{S}(t) x + 2x^T S(t) (A x + Bu)  \right].
+\tag{4.13}
+\end{equation}\]</span>
+The objective function to be minimized in <a href="continuous-time-optimal-control.html#eq:hjb-finite-horizon-lqr-simplify">(4.13)</a> is a convex quadratic function of <span class="math inline">\(u\)</span>, hence the optimal solution satisfies
+<span class="math display">\[
+2 R u^\star + 2B^T S(t) x = 0,
+\]</span>
+solving which yields
+<span class="math display" id="eq:finite-horizon-lqr-optimal-u">\[\begin{equation}
+u^\star = - R^{-1} B^T S(t) x.
+\tag{4.14}
+\end{equation}\]</span>
+Now plugging the solution <a href="continuous-time-optimal-control.html#eq:finite-horizon-lqr-optimal-u">(4.14)</a> back into <a href="continuous-time-optimal-control.html#eq:hjb-finite-horizon-lqr-simplify">(4.13)</a>, we obtain
+<span class="math display">\[
+0 = x^T \left[ \dot{S}(t) + S(t) A + A^T S(t) - S(t)B R^{-1} B^T S(t) + Q \right] x, \quad \forall (t,x),
+\]</span>
+which implies that <span class="math inline">\(\dot{S}(t)\)</span> must satisfy
+<span class="math display" id="eq:finite-horizon-lqr-optimal-value">\[\begin{equation}
+\dot{S}(t) = - S(t) A - A^T S(t) + S(t) B R^{-1} B^T S(t) - Q.
+\tag{4.15}
+\end{equation}\]</span>
+This is known as the <em>continuous-time differential Riccati equation</em>, with the terminal condition given in <a href="continuous-time-optimal-control.html#eq:finite-horizon-lqr-optimal-value-terminal">(4.12)</a>. You should compare <a href="continuous-time-optimal-control.html#eq:finite-horizon-lqr-optimal-value">(4.15)</a> with its discrete-time counterpart <a href="exactdp.html#eq:finite-discrete-lqr-riccati">(2.7)</a> and observable their similarities.</p>
+<div id="lqr-trajectory-tracking-1" class="section level3 hasAnchor" number="4.3.1">
+<h3><span class="header-section-number">4.3.1</span> LQR Trajectory Tracking<a href="continuous-time-optimal-control.html#lqr-trajectory-tracking-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>So far we have been talking about LQR in the context of regulating the system to a desired equilibrium point (usually the origin), you can in fact also use LQR for tracking a reference trajectory.</p>
+<p>Consider again the linear system
+<span class="math display">\[
+\dot{x}(t) = A x (t) + B u(t), \quad x \in \mathbb{R}^n, u \in \mathbb{R}^m.
+\]</span>
+Given a reference state-control trajectory <span class="math inline">\((x_r(t),u_r(t))_{t \in [0,T]}\)</span>, we consider the following optimal control problem to track the reference trajectory
+<span class="math display">\[
+\min_{u(t),t \in [0,T]} \Vert x(T) - x_r(T) \Vert_P^2 + \int_{t=0}^T \left( \Vert x(t) - x_r(t) \Vert_Q^2 + \Vert u(t) - u_r(t) \Vert_R^2  \right) dt
+\]</span>
+where <span class="math inline">\(\Vert v \Vert_A^2 := v^T A v\)</span>, <span class="math inline">\(P,Q\succeq 0\)</span> and <span class="math inline">\(R \succ 0\)</span>.</p>
+<p>Let us guess a solution to the HJB of the following form
+<span class="math display">\[
+V(t,x) = x^T S_{xx}(t) x + 2 x^T s_x(t) + s_0(t) = \begin{bmatrix} x \\ 1 \end{bmatrix}^T \underbrace{\begin{bmatrix} S_{xx}(t) &amp; s_x(t) \\ s_x^T(t) &amp; s_0(t) \end{bmatrix}}_{=: S(t)} \begin{bmatrix} x \\ 1 \end{bmatrix}, \quad S(t) \succ 0.
+\]</span>
+Differentiating <span class="math inline">\(V(t,x)\)</span> with respect to <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span> we obtain
+<span class="math display">\[\begin{equation}
+\begin{split}
+\nabla_t V(t,x) = x^T \dot{S}_{xx}(t) x + 2 x^T \dot{s}_x(t) + \dot{s}_0(t), \\
+\nabla_x V(t,x) = 2 S_{xx}(t) x + 2 s_x(t).
+\end{split}
+\end{equation}\]</span>
+Plugging the partial derivates into the HJB <a href="continuous-time-optimal-control.html#eq:hjb-eqution-formal-1">(4.6)</a>, we have
+<span class="math display">\[
+0 = \min_{u} \left[ \Vert x - x_r \Vert_Q^2 + \Vert u - u_r \Vert_R^2 +  \nabla_x V(t,x)^T (A x + Bu) + \nabla_t V(t,x) \right].
+\]</span>
+The objective to be minimized is convex in <span class="math inline">\(u\)</span>, leading to a closed-form solution
+<span class="math display" id="eq:lqr-trajectory-tracking-solution-u">\[\begin{equation}
+u^{\star}(t) = u_r(t) - R^{-1}B^T \left[ S_{xx}(t)x + s_x(t) \right].
+\tag{4.16}
+\end{equation}\]</span>
+With the solution of <span class="math inline">\(u\)</span> <a href="continuous-time-optimal-control.html#eq:lqr-trajectory-tracking-solution-u">(4.16)</a> plugged back into the HJB, we can find the differential equations that <span class="math inline">\(S_{xx}(t)\)</span>, <span class="math inline">\(s_x(t)\)</span> and <span class="math inline">\(s_0(t)\)</span> need to satisfy
+<span class="math display" id="eq:lqr-trajectory-tracking-solution-value">\[\begin{equation}
+\begin{split}
+-\dot{S}_{xx}(t) = Q - S_{xx}(t) B R^{-1} B^T S_{xx}(t) + S_{xx}(t)A + A^T S_{xx}(t) \\
+- \dot{s}_x(t) = -Q x_r(t) + [A^T - S_{xx}(t)B R^{-1} B^T]s_x(t) + S_{xx}(t) B u_r(t) \\
+- \dot{s}_0(t) = x_r(t)^T Q x_r(t) - s_x^T(t) B R^{-1} B^T s_x(t) + 2 s_x(t)^T B u_r(t),
+\end{split}
+\tag{4.17}
+\end{equation}\]</span>
+with the terminal conditions
+<span class="math display">\[\begin{equation}
+\begin{split}
+S_{xx}(T) = P \\
+s_x(T) = - P x_r(T) \\
+s_0(T) = x_r^T(T) P x_r(T).
+\end{split}
+\end{equation}\]</span>
+Notice that the differential equation of <span class="math inline">\(S_{xx}(t)\)</span> in <a href="continuous-time-optimal-control.html#eq:lqr-trajectory-tracking-solution-value">(4.17)</a> is the same as the differential equation in <a href="continuous-time-optimal-control.html#eq:finite-horizon-lqr-optimal-value">(4.15)</a>. Also notice the value of <span class="math inline">\(s_0(t)\)</span> does not affect the optimal control <a href="continuous-time-optimal-control.html#eq:lqr-trajectory-tracking-solution-u">(4.16)</a> and hence can often be ignored.</p>
+</div>
+<div id="lqr-trajectory-stabilization" class="section level3 hasAnchor" number="4.3.2">
+<h3><span class="header-section-number">4.3.2</span> LQR Trajectory Stabilization<a href="continuous-time-optimal-control.html#lqr-trajectory-stabilization" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Recall that in Example <a href="approximatedp.html#exm:pendulum-collocation-failure">3.8</a>, we have seen the failure of directly applying open-loop control obtained from trajectory optimization. We then used receding horizon control to turn open-loop trajectory optimization into a close-loop controller.</p>
+<p>Another way to stabilize the open-loop trajectory is to perform local LQR stabilization.</p>
+<p>Given the nonlinear system
+<span class="math display">\[
+\dot{x} = f(x,u),
+\]</span>
+suppose we have computed a nominal state-control reference trajectory <span class="math inline">\((x_r(t),u_r(t))_{t \in [0,T]}\)</span> (e.g., using trajectory optimization), then we can define a local coordinate system relative to the reference trajectory
+<span class="math display">\[
+\bar{x}(t) = x(t) - x_r(t), \quad \bar{u}(t) = u(t) - u_r(t).
+\]</span>
+The <span class="math inline">\(\bar{x}\)</span> coordinate satisfies the following dynamics
+<span class="math display" id="eq:lqr-traj-stabilization-error-dynamics">\[\begin{equation}
+\dot{\bar{x}} = \dot{x} - \dot{x}_r = f(x,u) - f(x_r, u_r).
+\tag{4.18}
+\end{equation}\]</span>
+We can perform a Taylor expansion of the dynamics in <a href="continuous-time-optimal-control.html#eq:lqr-traj-stabilization-error-dynamics">(4.18)</a>
+<span class="math display" id="eq:lqr-traj-stabilization-error-dynamics-linear">\[\begin{equation}
+\hspace{-10mm} \dot{\bar{x}} \approx f(x_r, u_r) + \frac{\partial f(x_r,u_r)}{\partial x} (x - x_r) + \frac{\partial f(x_r,u_r)}{\partial u} (u - u_r) - f(x_r, u_r) = A(t) \bar{x} + B(t) \bar{u},
+\tag{4.19}
+\end{equation}\]</span>
+where
+<span class="math display">\[
+A(t) = \frac{\partial f(x_r(t),u_r(t))}{\partial x}, \quad B(t) = \frac{\partial f(x_r(t),u_r(t))}{\partial u},
+\]</span>
+are time-varying linear matrices.</p>
+<p>We then formulate the LQR problem for the approximate linear time-varying system <a href="continuous-time-optimal-control.html#eq:lqr-traj-stabilization-error-dynamics-linear">(4.19)</a>
+<span class="math display" id="eq:lqr-traj-stabilization-ocp">\[\begin{equation}
+\min_{\bar{u}(t), t \in [0,T]} \bar{x}(T)^T P \bar{x}(T) + \int_{t=0}^T \left( \bar{x}(t)^T Q \bar{x}(t) + \bar{u}(t)^T R \bar{u}(t)  \right) dt
+\tag{4.20}
+\end{equation}\]</span>
+with <span class="math inline">\(P \succeq 0, Q \succeq 0, R \succ 0\)</span>. The solution to <a href="continuous-time-optimal-control.html#eq:lqr-traj-stabilization-ocp">(4.20)</a>, according to <a href="continuous-time-optimal-control.html#eq:finite-horizon-lqr-optimal-u">(4.14)</a> is
+<span class="math display">\[
+\bar{u}(t) = - R^{-1} B^T S(t) \bar{x},
+\]</span>
+which implies
+<span class="math display" id="eq:lqr-traj-stabilization-ocp-solution-u-abs">\[\begin{equation}
+u(t) = u_r(t) - R^{-1} B^T S(t) (x(t) - x_r(t))
+\tag{4.21}
+\end{equation}\]</span>
+in the original coordinates. Note that the controller in <a href="continuous-time-optimal-control.html#eq:lqr-traj-stabilization-ocp-solution-u-abs">(4.21)</a> is a feedback controller that “finetunes” the open-loop control.</p>
+</div>
+</div>
+<div id="the-pontryagin-minimum-principle" class="section level2 hasAnchor" number="4.4">
+<h2><span class="header-section-number">4.4</span> The Pontryagin Minimum Principle<a href="continuous-time-optimal-control.html#the-pontryagin-minimum-principle" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>The HJB equation in Theorem <a href="continuous-time-optimal-control.html#thm:hjbsufficient">4.1</a> provides a <em>sufficient</em> condition for the optimal cost-to-go. However, since the HJB equation is a sufficient condition, there do exist cases where the optimal cost-to-go does not satisfy the HJB equation but is still optimal (e.g., when the optimal cost-to-go is not continuously differentiable).</p>
+<p>We now introduce a <em>necessary</em> condition that any optimal control trajectory and state trajectory must satisfy. This condition is the celebrated Pontryagin minimum principle.</p>
+<p>A rigorous derivation of the Pontryagin minimum principle can be mathematically involving and is beyond the scope of this lecture notes (see Section 7.3.2 in <span class="citation">(<a href="#ref-bertsekas12book-dpocI">Bertsekas 2012</a>)</span> for a more rigorous treatment). In the following, we provide an informal derivation of the Pontryagin minimum principle.</p>
+<p>Recall the HJB equation in Theorem <a href="continuous-time-optimal-control.html#thm:hjbsufficient">4.1</a> states that, if a control trajectory <span class="math inline">\(u^\star(t)\)</span> and the associated state trajectory <span class="math inline">\(x^\star(t)\)</span> is optimal, then for all <span class="math inline">\(t \in [0,T]\)</span>, the following condition must hold
+<span class="math display" id="eq:pmp-intro-from-hjb">\[\begin{equation}
+u^\star(t) = \arg\min_{u \in \mathbb{U}} \left[ g(x^\star(t),u) + \nabla_x J(t,x^\star(t))^T f(x^\star(t),u)  \right]
+\tag{4.22}.
+\end{equation}\]</span>
+The above equation says, in order to compute the optimal control, we do not need to know the value of <span class="math inline">\(\nabla_x J\)</span> at <em>all</em> possible values of <span class="math inline">\(x\)</span> and <span class="math inline">\(t\)</span> (which is what the HJB equation tries to do), and we only need to know the value of <span class="math inline">\(\nabla_x J\)</span> along the <em>optimal</em> trajectory, i.e., to know only <span class="math inline">\(\nabla_x J(t,x^\star(t))\)</span>.</p>
+<p>The Pontryagin minimum principle builds upon this key observation, and it points out that <span class="math inline">\(\nabla_x J(t,x^\star(t))\)</span> (but not <span class="math inline">\(\nabla_x J(t,x)\)</span> for any <span class="math inline">\(x\)</span>) satisfies a certain differential equation called the <em>adjoint equation</em>.</p>
+<p>We now provide an informal derivation of the adjoint equation that is based on differentiating the HJB equation. Towards this goal, we first present the following lemma which is itself quite useful.</p>
+<div class="theorembox">
+<div class="lemma">
+<p><span id="lem:gradientofminimumfunctions" class="lemma"><strong>Lemma 4.1  (Differentiating Functions Involving Minimization) </strong></span>Let <span class="math inline">\(F(t,x,u)\)</span> be a continuously differentiable function of <span class="math inline">\(t \in \mathbb{R}\)</span>, <span class="math inline">\(x \in \mathbb{R}^n\)</span>, <span class="math inline">\(u \in \mathbb{R}^m\)</span>, and let <span class="math inline">\(\mathbb{U}\)</span> be a convex subset of <span class="math inline">\(\mathbb{R}^m\)</span>. Suppose <span class="math inline">\(\mu^\star(t,x)\)</span> is a continuously differentiable function such that
+<span class="math display">\[
+\mu^\star(t,x) = \arg\min_{u \in \mathbb{U}} F(t,x,u), \quad \forall t,x.
+\]</span>
+Then
+<span class="math display">\[\begin{align}
+\nabla_t \left\{ \min_{u \in \mathbb{U}} F(t,x,u) \right\} = \nabla_t F(t,x,\mu^\star(t,x)), \quad \forall t,x, \\
+\nabla_x \left\{ \min_{u \in \mathbb{U}} F(t,x,u) \right\} = \nabla_x F(t,x,\mu^\star(t,x)), \quad \forall t,x.
+\end{align}\]</span>
+In words, the partial derivates (with respect to <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span>) of “the minimum of <span class="math inline">\(F(t,x,u)\)</span> over <span class="math inline">\(u\)</span>” (commonly known in optimization as the value function <span class="math inline">\(\psi(t,x)\)</span> of <span class="math inline">\(F(t,x,u)\)</span>) are equal to the partial derivates of <span class="math inline">\(F(t,x,u)\)</span> (with respect to <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span>) after plugging in the optimizer <span class="math inline">\(\mu^\star(t,x)\)</span>.</p>
+</div>
+</div>
+<p>We now start with the HJB equation in <a href="continuous-time-optimal-control.html#eq:hjb-eqution-formal-1">(4.6)</a>, restated below with <span class="math inline">\(V(t,x)\)</span> replaced by the optimal <span class="math inline">\(J(t,x)\)</span> for the reader’s convenience
+<span class="math display" id="eq:hjb-equation-restate-for-pmp">\[\begin{equation}
+0 = \min_{u \in \mathbb{U}} \left[ g(x,u) + \nabla_t J(t,x) + \nabla_x J(t,x)^Tf(x,u)  \right].
+\tag{4.23}
+\end{equation}\]</span>
+Assume that <span class="math inline">\(\mu^\star(t,x)\)</span> attains the minimum in the equation above and it is also continuously differentiable. Note that we have made the restrictive assumption that <span class="math inline">\(\mathbb{U}\)</span> is convex and <span class="math inline">\(\mu^\star(t,x)\)</span> is continuously differentiable, which are not necessary in a more rigorous derivation of Pontryagin’s principle (cf. Section 7.3.2 in <span class="citation">(<a href="#ref-bertsekas12book-dpocI">Bertsekas 2012</a>)</span>).</p>
+<p>We differentiate both sides of <a href="continuous-time-optimal-control.html#eq:hjb-equation-restate-for-pmp">(4.23)</a> with respect to <span class="math inline">\(t\)</span> and <span class="math inline">\(x\)</span>. In particular, let
+<span class="math display">\[
+F(t,x,u) = g(x,u) + \nabla_t J(t,x) + \nabla_x J(t,x)^T f(x,u)
+\]</span>
+and invoke Lemma <a href="continuous-time-optimal-control.html#lem:gradientofminimumfunctions">4.1</a>, we can write
+<span class="math display" id="eq:hjb-equation-differentiation-t" id="eq:hjb-equation-differentiation-x">\[\begin{align}
+\tag{4.24}
+\hspace{-12mm}
+0 = \nabla_x g(x, \mu^\star(t,x)) + \nabla^2_{xt} J(t,x) + \nabla^2_{xx} J(t,x)f(x,\mu^\star(t,x)) + \nabla_x f(x,\mu^\star(t,x)) \nabla_x J(t,x).\\
+\hspace{-12mm} 0 = \nabla^2_{tt}J(t,x) + \nabla_{xt}^2 J(t,x)^T f(x,\mu^\star(t,x))
+\tag{4.25}
+\end{align}\]</span>
+where the first equation results from differentiation of <a href="continuous-time-optimal-control.html#eq:hjb-equation-restate-for-pmp">(4.23)</a> with respect to <span class="math inline">\(x\)</span>, and the second equation results from differentiation of <a href="continuous-time-optimal-control.html#eq:hjb-equation-restate-for-pmp">(4.23)</a> with respect to <span class="math inline">\(t\)</span>. In <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-x">(4.24)</a>, <span class="math inline">\(\nabla_x f(x,\mu^\star(t,x))\)</span> is
+<span class="math display">\[
+\nabla_f = \begin{bmatrix}
+\frac{\partial f_1}{\partial x_1} &amp; \cdots &amp; \frac{\partial f_n}{x_1} \\
+\vdots &amp; \ddots &amp; \vdots \\
+\frac{\partial f_1}{\partial x_n} &amp; \cdots &amp; \frac{\partial f_n}{\partial x_n}
+\end{bmatrix}
+\]</span>
+evaluated at <span class="math inline">\((x,\mu^\star(t,x))\)</span>.
+Equations <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-x">(4.24)</a> and <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-t">(4.25)</a> hold for any <span class="math inline">\((t,x)\)</span> (under the restrictive assumptions we have made).</p>
+<p>We then evaluate the equations <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-x">(4.24)</a> and <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-t">(4.25)</a> only along the optimal control and state trajectory <span class="math inline">\((u^\star(t),x^\star(t))\)</span> that satisfies
+<span class="math display" id="eq:pmp-optimal-system-dynamics">\[\begin{equation}
+\dot{x}^\star(t) = f(x^\star(t),u^\star(t)), \quad u^\star(t) = \mu^\star(t,x^\star(t)), \quad t \in [0,T].
+\tag{4.26}
+\end{equation}\]</span>
+Specifically, along the optimal trajectory, we have
+<span class="math display">\[
+\frac{d}{dt} \left( \nabla_x J(t,x^\star(t)) \right) = \nabla^2_{xt} J(t,x^\star(t)) + \nabla^2_{xx} J(t,x^\star(t))f(x^\star(t),u^\star(t)),
+\]</span>
+where the right-hand side contains terms in the right-hand side of <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-x">(4.24)</a> (when evaluted along the optimal trajectory). Similarly,
+<span class="math display">\[
+\frac{d}{dt} \left( \nabla_t J(t,x^\star(t)) \right) = \nabla^2_{tt} J(t,x^\star(t)) + \nabla^2_{xt} J(t,x^\star(t))^T f(x^\star(t),u^\star(t)),
+\]</span>
+where the right-hand side is exactly the right-hand side of <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-t">(4.25)</a> (when evaluted along the optimal trajectory). As a result, equations <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-x">(4.24)</a> and <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-t">(4.25)</a>, when evaluated along the optimal trajectory, are equivalent to
+<span class="math display" id="eq:hjb-equation-differentiation-along-optimal-t" id="eq:hjb-equation-differentiation-along-optimal-x">\[\begin{align}
+\tag{4.27}
+0 = \nabla_x g(x^\star(t), u^\star(t)) + \frac{d}{dt}\left( \nabla_x J(t,x^\star(t)) \right) + \nabla_x f(x^\star(t),u^\star(t)) \nabla_x J(t,x^\star(t)).\\
+0 = \frac{d}{dt}\left( \nabla_t J(t,x^\star(t)) \right).
+\tag{4.28}
+\end{align}\]</span>
+Therefore, if we denote
+<span class="math display">\[
+p(t) = \nabla_x J(t,x^\star(t)), \quad p_0(t) = \nabla_t J(t,x^\star(t)),
+\]</span>
+then equations <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-along-optimal-x">(4.27)</a> and <a href="continuous-time-optimal-control.html#eq:hjb-equation-differentiation-along-optimal-t">(4.28)</a> become
+<span class="math display" id="eq:adjoint-equation-p0" id="eq:adjoint-equation-p">\[\begin{align}
+\tag{4.29}
+\dot{p}(t) = - \nabla_x f(x^\star(t),u^\star(t)) p(t) - \nabla_x g(x^\star(t),u^\star(t)), \\
+\dot{p}_0(t) = 0.
+\tag{4.30}
+\end{align}\]</span>
+Equation <a href="continuous-time-optimal-control.html#eq:adjoint-equation-p">(4.29)</a>, which is a system of <span class="math inline">\(n\)</span> first-order differential equations, is known as the adjoint equation and it describes the evolution of <span class="math inline">\(p(t)\)</span>, known as the <em>costate</em>, along the optimal trajectory. To obtain a boundary condition for the adjoint equation <a href="continuous-time-optimal-control.html#eq:adjoint-equation-p">(4.29)</a>, we note that the boundary condition of the HJB equation
+<span class="math display">\[
+J(T,x) = h(x),\quad \forall x
+\]</span>
+implies
+<span class="math display">\[
+p(T) = \nabla h(x^\star(T)).
+\]</span></p>
+<p>This is basically the Pontryagin Minimum Principle.</p>
+<p><strong>The Hamiltonian formulation</strong>. It is usually more convenient to state the Pontryagin Principle using the concept of a <em>Hamiltonian</em>. Formally, we define the Hamiltonian function that maps the triplet <span class="math inline">\((x,u,p) \in \mathbb{R}^n \times \mathbb{R}^m \times \mathbb{R}^n\)</span> to real numbers given by
+<span class="math display">\[
+H(x,u,p) = g(x,u) + p^T f(x,u).
+\]</span>
+Note that the dynamics along the optimal trajectory <a href="continuous-time-optimal-control.html#eq:pmp-optimal-system-dynamics">(4.26)</a> can be conveniently written as
+<span class="math display">\[
+\dot{x}^\star(t) = \nabla_p H(x^\star(t),u^\star(t),p(t)),
+\]</span>
+and the adjoint equation <a href="continuous-time-optimal-control.html#eq:adjoint-equation-p">(4.29)</a> can be written as
+<span class="math display">\[
+\dot{p}(t) = - \nabla_x H(x^\star(t), u^\star(t), p(t)).
+\]</span>
+We are now ready to state the Pontryagin Minimum Principle.</p>
+<div class="theorembox">
+<div class="theorem">
+<p><span id="thm:pontryaginminimum" class="theorem"><strong>Theorem 4.2  (Pontryagin Minimum Principle as A Necessary Condition for Optimality) </strong></span>Let <span class="math inline">\((u^\star(t), x^\star(t)), t \in [0,T]\)</span> be a pair of optimal control and state trajectories satisfying
+<span class="math display">\[
+\dot{x}^\star(t) = f(x^\star(t),u^\star(t)), \quad x^\star(0) = x_0 \text{ given}.
+\]</span>
+Let <span class="math inline">\(p(t)\)</span> be the solution of the adjoint equation
+<span class="math display">\[
+\dot{p}(t) = - \nabla_x H(x^\star(t),u^\star(t),p(t)),
+\]</span>
+with the boundary condition
+<span class="math display">\[
+p(T) = \nabla h(x^\star(T)),
+\]</span>
+where <span class="math inline">\(h\)</span> is the terminal cost function. Then, for all <span class="math inline">\(t \in [0,T]\)</span>, we have
+<span class="math display">\[
+u^\star(t) = \arg\min_{u \in \mathbb{U}} H(x^\star(t),u,p(t)).
+\]</span>
+Moreover, there is a constant <span class="math inline">\(C\)</span> such that
+<span class="math display">\[
+H(x^\star(t),u^\star(t),p(t)) = C, \quad \forall t \in [0,T].
+\]</span></p>
+</div>
+</div>
+<p>To see why <span class="math inline">\(H(x^\star(t),u^\star(t),p(t))\)</span> is a constant along the optimal trajectory, we observe that from the HJB equation <a href="continuous-time-optimal-control.html#eq:hjb-equation-restate-for-pmp">(4.23)</a>, we obtain
+<span class="math display">\[\begin{align}
+g(x^\star,u^\star) + \nabla_t J(t,x^\star) + \nabla_x J(t,x^\star)^T f(x^\star, u^\star) = 0 \\
+\Longrightarrow \underbrace{g(x^\star,u^\star) + \nabla_x J(t,x^\star)^T f(x^\star, u^\star)}_{H(x^\star(t),u^\star(t),p(t))} = - \underbrace{\nabla_t J(t,x^\star)}_{p_0(t)}.
+\end{align}\]</span>
+From <a href="continuous-time-optimal-control.html#eq:adjoint-equation-p0">(4.30)</a>, we know <span class="math inline">\(p_0(t)\)</span> is a constant.</p>
+<p><strong>A necessary condition</strong>. It is important to recognize that the Pontryagin Minimum Principle in Theorem <a href="continuous-time-optimal-control.html#thm:pontryaginminimum">4.2</a> is a necessary condition for optimality, i.e., all optimal control and state trajectories must satisfy this condition, but <em>not all</em> trajectories satisfying the condition are optimal. Extra arguments are needed to guarantee optimality. One common strategy is to show that an optimal control trajectory exists, and then verify that there is only one control trajectory satisfying the conditions of the Minimum Principle (or that all trajectories verifying the Minimum Principle have equal costs). A setup where the Minimum Principle is both necessary is sufficient is when <span class="math inline">\(f(x,u)\)</span> is linear in <span class="math inline">\((x,u)\)</span>, the the constraint set <span class="math inline">\(U\)</span> is convex, and the cost functions <span class="math inline">\(h\)</span> and <span class="math inline">\(g\)</span> are convex.</p>
+<p><strong>Two-point boundary value problem</strong> (TPBVP). The Pontryagin Minimum Principle is particularly useful when
+<span class="math display" id="eq:pmp-solve-u-from-H">\[\begin{equation}
+u^\star = \arg\min_{u \in \mathbb{U}} H(x^\star,u,p) = \arg\min_{u \in \mathbb{U}} g(x^\star,u) + p^T f(x^\star,u)
+\tag{4.31}
+\end{equation}\]</span>
+can be solved analytically so that <span class="math inline">\(u^\star\)</span> becomes a function of <span class="math inline">\(x^\star\)</span> and <span class="math inline">\(p\)</span>. For example, this is possible when problem <a href="continuous-time-optimal-control.html#eq:pmp-solve-u-from-H">(4.31)</a> is a convex problem, for which one can invoke the KKT optimality conditions (cf. Appendix <a href="appconvex.html#appconvex-theory-kkt">B.1.4</a>). Once <span class="math inline">\(u^\star(t)\)</span> is expressed as a function of <span class="math inline">\(x^\star(t)\)</span> and <span class="math inline">\(p(t)\)</span>, we can merge the system equation <a href="continuous-time-optimal-control.html#eq:pmp-optimal-system-dynamics">(4.26)</a> and the adjoint equation <a href="continuous-time-optimal-control.html#eq:adjoint-equation-p">(4.29)</a> together and arrive at
+<span class="math display" id="eq:two-point-boundary-problem">\[\begin{equation}
+\begin{cases}
+\dot{x}^\star(t) = f(x^\star(t), u^\star(t)) \\
+\dot{p}(t) = - \nabla_x f(x^\star(t),u^\star(t)) p(t) - \nabla_x g(x^\star(t),u^\star(t))
+\end{cases},
+\tag{4.32}
+\end{equation}\]</span>
+which is a set of <span class="math inline">\(2n\)</span> first-order differential equations in <span class="math inline">\(x^\star(t)\)</span> and <span class="math inline">\(p(t)\)</span>. The boundary conditions are
+<span class="math display" id="eq:two-point-boundary-problem-boundary">\[\begin{equation}
+x^\star(0) = x_0, \quad p(T) = \nabla h(x^\star(T)).
+\tag{4.33}
+\end{equation}\]</span>
+The number of boundary conditions is also <span class="math inline">\(2n\)</span>, so generally we expect to be able to solve these differential equations numerically.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:shortest-line" class="example"><strong>Example 4.3  (Shortest Curve) </strong></span>In Fig. <a href="continuous-time-optimal-control.html#fig:shortest-curve">4.4</a>, consider any curve that starts at the point <span class="math inline">\((0,\alpha)\)</span> and lands on the vertical line that passes through <span class="math inline">\((T,0)\)</span>. What is the curve with minimum length?</p>
+<p>We all know the answer is a straight line.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:shortest-curve"></span>
+<img src="images/shortest_path.png" alt="Shortest curve between a point and a line." width="60%" />
+<p class="caption">
+Figure 4.4: Shortest curve between a point and a line.
+</p>
+</div>
+<p>Let us use Pontryagin’s minimum principle to prove this. The length of any curve satisfying our condition is
+<span class="math display">\[
+\int_{0}^{T} \sqrt{1 + (\dot{x}(t))^2} dt, \quad x(0) = \alpha.
+\]</span>
+To find the curve with minimum length, we can formulate an optimal control problem
+<span class="math display">\[
+\min_{u(t)} \int_{t=0}^T \sqrt{ 1 + u^2(t)} dt, \quad \text{subject to} \quad \dot{x}(t) = u(t), x(0) = \alpha.
+\]</span></p>
+<p>To apply Pontryagin’s minimum principle, we first formulate the Hamiltonian
+<span class="math display">\[
+H(x,u,p) = g(x,u) + p^T f(x,u) = \sqrt{1 + u^2} + pu.
+\]</span>
+The adjoint equation says
+<span class="math display">\[
+\dot{p}(t) = - \nabla_x H(x^\star(t),u^\star(t),p),
+\]</span>
+which simplifies, for our problem, to
+<span class="math display">\[
+\dot{p}(t) = 0.
+\]</span>
+The boundary condition of the adjoint equation is
+<span class="math display">\[
+p(T) = \nabla h(x^\star(T)) = 0.
+\]</span>
+We conclude that
+<span class="math display">\[
+p(t) = 0, \forall t \in [0,T].
+\]</span>
+The optimal controller thus becomes
+<span class="math display">\[
+u^\star(t) = \arg\min_u H(x^\star(t),u,p(t)) = \arg\min_u \sqrt{1 + u^2} = 0, \quad \forall t \in [0,T].
+\]</span>
+Therefore, we have <span class="math inline">\(\dot{x}^\star(t) = u^\star(t) = 0\)</span> for all <span class="math inline">\(t \in [0,T]\)</span>, and <span class="math inline">\(x^\star(t) = \alpha\)</span> for all time, which is a straight line.</p>
+</div>
+</div>
+<div id="numerical-solution-of-the-tpbvp" class="section level3 hasAnchor" number="4.4.1">
+<h3><span class="header-section-number">4.4.1</span> Numerical Solution of the TPBVP<a href="continuous-time-optimal-control.html#numerical-solution-of-the-tpbvp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>When the optimal control can be solved analytically, we obtain the two-point boundary value problem (TPBVP)
+<span class="math display" id="eq:two-point-boundary-value-problem">\[\begin{equation}
+\begin{cases}
+x^\star(0) = x_0 \\
+p(T) = \nabla h(x^\star(T)) \\
+\dot{x}^\star(t) = f(x^\star(t), u^\star(t)) \\
+\dot{p}(t) = - \nabla_x f(x^\star(t),u^\star(t))p(t) - \nabla_x g(x^\star(t),u^\star(t))
+\end{cases},
+\tag{4.34}
+\end{equation}\]</span>
+where <span class="math inline">\(u^\star(t)\)</span> is a function of <span class="math inline">\(x^\star(t)\)</span> and <span class="math inline">\(p(t)\)</span>. Calling
+<span class="math display">\[
+z(t) = \begin{bmatrix} x^\star(t) \\ p(t) \end{bmatrix},
+\]</span>
+we can compactly write <a href="continuous-time-optimal-control.html#eq:two-point-boundary-value-problem">(4.34)</a> as
+<span class="math display" id="eq:two-point-boundary-value-problem-simple">\[\begin{equation}
+\begin{cases}
+b(z(0),z(T),x_0) = 0 \\
+\dot{z}(t) - \phi(z(t)) = 0
+\end{cases},
+\tag{4.35}
+\end{equation}\]</span>
+which has <span class="math inline">\(2n\)</span> differential equations and <span class="math inline">\(2n\)</span> boundary conditions and usually well defined.</p>
+<div id="single-shooting" class="section level4 hasAnchor" number="4.4.1.1">
+<h4><span class="header-section-number">4.4.1.1</span> Single Shooting<a href="continuous-time-optimal-control.html#single-shooting" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>The idea of single shooting is straightforward: if <span class="math inline">\(p(0)\)</span> is known in <a href="continuous-time-optimal-control.html#eq:two-point-boundary-value-problem">(4.34)</a>, then (i) the entire trajectory of <span class="math inline">\(z\)</span> can be simulated forward in time, and (ii) we only need to enforce the terminal constraint of <span class="math inline">\(p(T) = \nabla h(x^\star(T))\)</span>.</p>
+<p>Therefore, in single shooting, we denote the terminal residual
+<span class="math display">\[
+r_T = p(T) - \nabla h(x^\star(T)) = r_T(p_0),
+\]</span>
+as a function of <span class="math inline">\(p(0) = p_0\)</span> (note that evaluating this function requires simulating <span class="math inline">\(\dot{z}(t) = \phi(z(t))\)</span>). Then we use <a href="https://en.wikipedia.org/wiki/Newton%27s_method">Newton’s method</a> to iteratively update <span class="math inline">\(p_0\)</span> via
+<span class="math display">\[
+p_0^{(k+1)} = p_0^{(k)} - \eta_k \left( \frac{\partial r_T}{\partial p_0}(p_0^{(k)}) \right)^{-1} r_T(p_0^{(k)}),
+\]</span>
+where <span class="math inline">\(\eta_k\)</span> is a chosen step size.</p>
+<p>In some cases, the forward simulation of the combined ODE might be an ill-conditioned problem so that single shooting cannot be employed. Even if the forward simulation problem is well-defined, the region of attraction of the Newton iteration can be very small, such that a good guess for <span class="math inline">\(p_0\)</span> is often required.</p>
+</div>
+<div id="multiple-shooting" class="section level4 hasAnchor" number="4.4.1.2">
+<h4><span class="header-section-number">4.4.1.2</span> Multiple Shooting<a href="continuous-time-optimal-control.html#multiple-shooting" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>The single shooting method also suffers from the nonlinearity and inaccuracy brought by simulating the ODE for a long time duration <span class="math inline">\(T\)</span>.</p>
+<p>In multiple shooting, we break the time windown <span class="math inline">\([0,T]\)</span> into <span class="math inline">\(N\)</span> pieces such that
+<span class="math display">\[
+0 = t_0 \leq \dots \leq t_k \leq t_{k+1} \leq \dots \leq t_N = T.
+\]</span>
+We then assign values
+<span class="math display">\[
+z_k = z(t_k), k = 0,\dots,N,
+\]</span>
+as the values of <span class="math inline">\(z(t)\)</span> at those breakpoints. The values <span class="math inline">\(z_k\)</span> should satisfy the ODE
+<span class="math display">\[
+z_{k+1} = \Phi(z_k),
+\]</span>
+where <span class="math inline">\(\Phi(\cdot)\)</span> integrates the ODE from time <span class="math inline">\(t_k\)</span> to <span class="math inline">\(t_{k+1}\)</span> with initial condition <span class="math inline">\(z_k\)</span>.</p>
+<p>We can then form a system of equations on <span class="math inline">\(z=(z_0,\dots,z_N)\)</span> as
+<span class="math display">\[\begin{equation}
+\begin{cases}
+b(z_0,z_N,x_0) = 0 \\
+z_{k+1} - \Phi(s_k) = 0
+\end{cases}.
+\end{equation}\]</span>
+Denoting the vector of residuals as
+<span class="math display">\[
+R(z,x_0) = \begin{bmatrix} b(z_0,z_N,x_0) \\ z_{k+1} - \Phi(s_k) \end{bmatrix},
+\]</span>
+we can use Newton’s method to iteratively solve <span class="math inline">\(z\)</span>:
+<span class="math display">\[\begin{equation}
+z^{(k+1)} = z^{(k)} - \eta_k \left( \frac{\partial R}{\partial z}(z^{(k)}) \right)^{-1} R(z^{(k)}).
+\end{equation}\]</span></p>
+</div>
+<div id="collocation" class="section level4 hasAnchor" number="4.4.1.3">
+<h4><span class="header-section-number">4.4.1.3</span> Collocation<a href="continuous-time-optimal-control.html#collocation" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+</div>
+</div>
+</div>
+<div id="infinite-horizon-problems" class="section level2 hasAnchor" number="4.5">
+<h2><span class="header-section-number">4.5</span> Infinite-Horizon Problems<a href="continuous-time-optimal-control.html#infinite-horizon-problems" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="continuous-time-infinite-horizon-lqr" class="section level3 hasAnchor" number="4.5.1">
+<h3><span class="header-section-number">4.5.1</span> Infinite-Horizon LQR<a href="continuous-time-optimal-control.html#continuous-time-infinite-horizon-lqr" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Consider a linear time-invariant system
+<span class="math display">\[
+\dot{x} = Ax + Bu,
+\]</span>
+and the infinite-horizon optimal control problem
+<span class="math display">\[
+\min \int_{t=0}^{\infty} (x(t)^T Q x(t) + u(t)^T R u(t)) dt, \quad x(0) = x_0.
+\]</span>
+with <span class="math inline">\(Q \succeq 0, R \succ 0\)</span>.
+The optimal controller takes the following linear feedback form
+<span class="math display">\[
+u = - R^{-1}B^T S x,
+\]</span>
+with <span class="math inline">\(S\)</span> the solution to the continuous-time algebraic Riccati equation
+<span class="math display">\[
+0 = SA + A^T S - SBR^{-1} B^T S + Q.
+\]</span>
+In Matlab, given <span class="math inline">\(A,B,Q,R\)</span>, you can use <a href="https://www.mathworks.com/help/control/ref/lti.lqr.html"><code>lqr</code></a> to compute <span class="math inline">\(K\)</span> and <span class="math inline">\(S\)</span>.</p>
+</div>
+</div>
+<div id="viscosity-solution" class="section level2 hasAnchor" number="4.6">
+<h2><span class="header-section-number">4.6</span> Viscosity Solution<a href="continuous-time-optimal-control.html#viscosity-solution" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+
+</div>
+</div>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-bertsekas12book-dpocI" class="csl-entry">
+———. 2012. <em>Dynamic Programming and Optimal Control: Volume i</em>. Vol. 1. Athena scientific.
+</div>
+</div>
+<div class="footnotes">
+<hr />
+<ol start="4">
+<li id="fn4"><p>Even though we write <span class="math inline">\(dx_i(t)/dt\)</span> in the system <a href="continuous-time-optimal-control.html#eq:ct-optimal-control-system">(4.1)</a>, we allow <span class="math inline">\(x(t)\)</span> to be only directionally differentiable at a finite number of points to account for the possible discontinuity of <span class="math inline">\(u(t)\)</span>.<a href="continuous-time-optimal-control.html#fnref4" class="footnote-back">↩︎</a></p></li>
+</ol>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="approximatedp.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="stability.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": false,
+    "facebook": true,
+    "twitter": true,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": "https://github.com/hankyang94/OptimalControlEstimation/blob/main/04-continuous-time-optimal-control.Rmd",
+    "text": "Edit"
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": ["optimal-control-estimation.pdf"],
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
