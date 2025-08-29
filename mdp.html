@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 1 Markov Decision Process | Optimal Control and Reinforcement Learning</title>
+  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  <meta name="generator" content="bookdown 0.44 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 1 Markov Decision Process | Optimal Control and Reinforcement Learning" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  <meta name="github-repo" content="hankyang94/OptimalControlReinforcementLearning" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 1 Markov Decision Process | Optimal Control and Reinforcement Learning" />
+  
+  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  
+
+<meta name="author" content="Heng Yang" />
+
+
+<meta name="date" content="2025-08-29" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="index.html"/>
+<link rel="next" href="appconvex.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Optimal Control and Reinforcement Learning</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#feedback"><i class="fa fa-check"></i>Feedback</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#offerings"><i class="fa fa-check"></i>Offerings</a></li>
+</ul></li>
+<li class="chapter" data-level="1" data-path="mdp.html"><a href="mdp.html"><i class="fa fa-check"></i><b>1</b> Markov Decision Process</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="mdp.html"><a href="mdp.html#FiniteHorizonMDP"><i class="fa fa-check"></i><b>1.1</b> Finite-Horizon MDP</a>
+<ul>
+<li class="chapter" data-level="1.1.1" data-path="mdp.html"><a href="mdp.html#FiniteHorizonMDP-Value"><i class="fa fa-check"></i><b>1.1.1</b> Value Functions</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="mdp.html"><a href="mdp.html#optimality"><i class="fa fa-check"></i><b>1.2</b> Principle of Optimality</a></li>
+<li class="chapter" data-level="1.3" data-path="mdp.html"><a href="mdp.html#dp"><i class="fa fa-check"></i><b>1.3</b> Dynamic Programming</a></li>
+</ul></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="appconvex.html"><a href="appconvex.html"><i class="fa fa-check"></i><b>A</b> Convex Analysis and Optimization</a>
+<ul>
+<li class="chapter" data-level="A.1" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory"><i class="fa fa-check"></i><b>A.1</b> Theory</a>
+<ul>
+<li class="chapter" data-level="A.1.1" data-path="appconvex.html"><a href="appconvex.html#sets"><i class="fa fa-check"></i><b>A.1.1</b> Sets</a></li>
+<li class="chapter" data-level="A.1.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-convexfunction"><i class="fa fa-check"></i><b>A.1.2</b> Convex function</a></li>
+<li class="chapter" data-level="A.1.3" data-path="appconvex.html"><a href="appconvex.html#lagrange-dual"><i class="fa fa-check"></i><b>A.1.3</b> Lagrange dual</a></li>
+<li class="chapter" data-level="A.1.4" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-kkt"><i class="fa fa-check"></i><b>A.1.4</b> KKT condition</a></li>
+</ul></li>
+<li class="chapter" data-level="A.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-practice"><i class="fa fa-check"></i><b>A.2</b> Practice</a>
+<ul>
+<li class="chapter" data-level="A.2.1" data-path="appconvex.html"><a href="appconvex.html#cvx-introduction"><i class="fa fa-check"></i><b>A.2.1</b> CVX Introduction</a></li>
+<li class="chapter" data-level="A.2.2" data-path="appconvex.html"><a href="appconvex.html#linear-programming-lp"><i class="fa fa-check"></i><b>A.2.2</b> Linear Programming (LP)</a></li>
+<li class="chapter" data-level="A.2.3" data-path="appconvex.html"><a href="appconvex.html#quadratic-programming-qp"><i class="fa fa-check"></i><b>A.2.3</b> Quadratic Programming (QP)</a></li>
+<li class="chapter" data-level="A.2.4" data-path="appconvex.html"><a href="appconvex.html#quadratically-constrained-quadratic-programming-qcqp"><i class="fa fa-check"></i><b>A.2.4</b> Quadratically Constrained Quadratic Programming (QCQP)</a></li>
+<li class="chapter" data-level="A.2.5" data-path="appconvex.html"><a href="appconvex.html#second-order-cone-programming-socp"><i class="fa fa-check"></i><b>A.2.5</b> Second-Order Cone Programming (SOCP)</a></li>
+<li class="chapter" data-level="A.2.6" data-path="appconvex.html"><a href="appconvex.html#semidefinite-programming-sdp"><i class="fa fa-check"></i><b>A.2.6</b> Semidefinite Programming (SDP)</a></li>
+<li class="chapter" data-level="A.2.7" data-path="appconvex.html"><a href="appconvex.html#cvxpy-introduction-and-examples"><i class="fa fa-check"></i><b>A.2.7</b> CVXPY Introduction and Examples</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="B" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html"><i class="fa fa-check"></i><b>B</b> Linear System Theory</a>
+<ul>
+<li class="chapter" data-level="B.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability"><i class="fa fa-check"></i><b>B.1</b> Stability</a>
+<ul>
+<li class="chapter" data-level="B.1.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability-ct"><i class="fa fa-check"></i><b>B.1.1</b> Continuous-Time Stability</a></li>
+<li class="chapter" data-level="B.1.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability-dt"><i class="fa fa-check"></i><b>B.1.2</b> Discrete-Time Stability</a></li>
+<li class="chapter" data-level="B.1.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#lyapunov-analysis"><i class="fa fa-check"></i><b>B.1.3</b> Lyapunov Analysis</a></li>
+</ul></li>
+<li class="chapter" data-level="B.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-controllable-observable"><i class="fa fa-check"></i><b>B.2</b> Controllability and Observability</a>
+<ul>
+<li class="chapter" data-level="B.2.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#cayley-hamilton-theorem"><i class="fa fa-check"></i><b>B.2.1</b> Cayley-Hamilton Theorem</a></li>
+<li class="chapter" data-level="B.2.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-controllability"><i class="fa fa-check"></i><b>B.2.2</b> Equivalent Statements for Controllability</a></li>
+<li class="chapter" data-level="B.2.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#duality"><i class="fa fa-check"></i><b>B.2.3</b> Duality</a></li>
+<li class="chapter" data-level="B.2.4" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-observability"><i class="fa fa-check"></i><b>B.2.4</b> Equivalent Statements for Observability</a></li>
+</ul></li>
+<li class="chapter" data-level="B.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#stabilizability-and-detectability"><i class="fa fa-check"></i><b>B.3</b> Stabilizability And Detectability</a>
+<ul>
+<li class="chapter" data-level="B.3.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-stabilizability"><i class="fa fa-check"></i><b>B.3.1</b> Equivalent Statements for Stabilizability</a></li>
+<li class="chapter" data-level="B.3.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-detectability"><i class="fa fa-check"></i><b>B.3.2</b> Equivalent Statements for Detectability</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Reinforcement Learning</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="mdp" class="section level1 hasAnchor" number="1">
+<h1><span class="header-section-number">Chapter 1</span> Markov Decision Process<a href="mdp.html#mdp" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>Optimal control (OC) and reinforcement learning (RL) address the problem of making <strong>optimal decisions</strong> in the presence of a <strong>dynamic environment</strong>.</p>
+<ul>
+<li>In <strong>optimal control</strong>, this dynamic environment is often referred to as a <em>plant</em> or a <em>dynamical system</em>.<br />
+</li>
+<li>In <strong>reinforcement learning</strong>, it is modeled as a <em>Markov decision process</em> (MDP).</li>
+</ul>
+<p>The goal in both fields is to evaluate and design decision-making strategies that optimize long-term performance:</p>
+<ul>
+<li><strong>RL</strong> typically frames this as maximizing a long-term <em>reward</em>.<br />
+</li>
+<li><strong>OC</strong> often formulates it as minimizing a long-term <em>cost</em>.</li>
+</ul>
+<p>The emphasis on <strong>long-term</strong> evaluation is crucial. Because the environment evolves over time, decisions that appear beneficial in the short term may lead to poor long-term outcomes and thus be suboptimal.</p>
+<hr />
+<p>With this motivation, we now formalize the framework of Markov Decision Processes (MDPs), which are discrete-time stochastic dynamical systems.</p>
+<div id="FiniteHorizonMDP" class="section level2 hasAnchor" number="1.1">
+<h2><span class="header-section-number">1.1</span> Finite-Horizon MDP<a href="mdp.html#FiniteHorizonMDP" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>We begin with finite-horizon MDPs and introduce infinite-horizon MDPs in the following section. An abstract definition of the finite-horizon case will be presented first, followed by illustrative examples.</p>
+<p>A finite-horizon MDP is given by the following tuple:
+<span class="math display">\[
+\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, T),
+\]</span>
+where</p>
+<ul>
+<li><span class="math inline">\(\mathcal{S}\)</span>: state space (set of all possible states)</li>
+<li><span class="math inline">\(\mathcal{A}\)</span>: action space (set of all possible actions)</li>
+<li><span class="math inline">\(P(s&#39; \mid s, a)\)</span>: probability of transitioning to state <span class="math inline">\(s&#39;\)</span> from state <span class="math inline">\(s\)</span> under action <span class="math inline">\(a\)</span> (i.e., dynamics)</li>
+<li><span class="math inline">\(R(s,a)\)</span>: reward of taking action <span class="math inline">\(a\)</span> in state <span class="math inline">\(s\)</span></li>
+<li><span class="math inline">\(T\)</span>: horizon, a positive integer</li>
+</ul>
+<p>For now, let us assume both the state space and the action space are discrete and have a finite number of elements. In particular, denote the number of elements in <span class="math inline">\(\mathcal{S}\)</span> as <span class="math inline">\(|\mathcal{S}|\)</span>, and the number of elements in <span class="math inline">\(\mathcal{A}\)</span> as <span class="math inline">\(|\mathcal{A}|\)</span>. This is also referred to as a <em>tabular MDP</em>.</p>
+<p><strong>Policy</strong>. Decision-making in MDPs is represented by policies. A policy is a function that, given any state, outputs a distribution of actions: <span class="math inline">\(\pi: \mathcal{S} \mapsto \Delta(\mathcal{A})\)</span>. That is, <span class="math inline">\(\pi(a \mid s)\)</span> returns the probability of taking action <span class="math inline">\(a\)</span> in state <span class="math inline">\(s\)</span>. In finite-horizon MDPs, we consider a tuple of policies:
+<span class="math display" id="eq:policy-tuple">\[\begin{equation}
+\pi = (\pi_0, \dots, \pi_t, \dots, \pi_{T-1}),
+\tag{1.1}
+\end{equation}\]</span>
+where each <span class="math inline">\(\pi_t\)</span> denotes the policy at step <span class="math inline">\(t \in [0,T-1]\)</span>.</p>
+<p><strong>Trajectory and Return</strong>. Given an initial state <span class="math inline">\(s_0 \in \mathcal{S}\)</span> and a policy <span class="math inline">\(\pi\)</span>, the MDP will evolve as</p>
+<ol style="list-style-type: decimal">
+<li>Start at state <span class="math inline">\(s_0\)</span></li>
+<li>Take action <span class="math inline">\(a_0 \sim \pi_0(a \mid s_0)\)</span> following policy <span class="math inline">\(\pi_0\)</span></li>
+<li>Collect reward <span class="math inline">\(r_0 = R(s_0, a_0)\)</span> (assume <span class="math inline">\(R\)</span> is deterministic)</li>
+<li>Transition to state <span class="math inline">\(s_1 \sim P(s&#39; \mid s_0, a_0)\)</span> following the dynamics</li>
+<li>Go to step 2 and continue until reaching state <span class="math inline">\(s_T\)</span></li>
+</ol>
+<p>This evolution generates a trajectory of states, actions, and rewards:
+<span class="math display">\[
+\tau = (s_0, a_0, r_0, s_1, a_1, r_1,\dots, s_{T-1}, a_{T-1}, r_{T-1}, s_T).
+\]</span>
+The cumulative reward of this trajectory is <span class="math inline">\(g_0 = \sum_{t=0}^{T-1} r_t\)</span>, which is called the <em>return</em> of the trajectory. Clearly, <span class="math inline">\(g_0\)</span> is a random variable due to the stochasticity of both the policy and the dynamics. Similarly, if the state at time <span class="math inline">\(t\)</span> is <span class="math inline">\(s_t\)</span>, we denote:
+<span class="math display">\[
+g_t = r_t + \dots + r_{T-1}
+\]</span>
+as the return of the policy starting at <span class="math inline">\(s_t\)</span>.</p>
+<div id="FiniteHorizonMDP-Value" class="section level3 hasAnchor" number="1.1.1">
+<h3><span class="header-section-number">1.1.1</span> Value Functions<a href="mdp.html#FiniteHorizonMDP-Value" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p><strong>State-Value Function</strong>. Given a policy <span class="math inline">\(\pi\)</span> as in <a href="mdp.html#eq:policy-tuple">(1.1)</a>, which states are preferable at time <span class="math inline">\(t\)</span>? The (time-indexed) state-value function assigns to each <span class="math inline">\(s\in\mathcal{S}\)</span> the expected return from <span class="math inline">\(t\)</span> onward when starting in <span class="math inline">\(s\)</span> and following <span class="math inline">\(\pi\)</span> thereafter. Formally, define
+<span class="math display" id="eq:FiniteHorizonMDP-state-value">\[\begin{equation}
+V_t^\pi(s) := \mathbb{E} \left[g_t \mid s_t=s\right]
+= \mathbb{E} \left[\sum_{i=t}^{T-1} R(s_i,a_i) \middle| s_t=s,a_i\sim \pi_i(\cdot\mid s_i), s_{i+1}\sim P(\cdot\mid s_i,a_i)\right].
+\tag{1.2}
+\end{equation}\]</span>
+The expectation is over the randomness induced by both the policy and the dynamics. Thus, if <span class="math inline">\(V_t^\pi(s_1)&gt;V_t^\pi(s_2)\)</span>, then at time <span class="math inline">\(t\)</span> under policy <span class="math inline">\(\pi\)</span> it is better in expectation to be in <span class="math inline">\(s_1\)</span> than in <span class="math inline">\(s_2\)</span> because the former yields a larger expected return.</p>
+<p><strong>Action-Value Function</strong>. Similarly, the action-value function assigns to each state-action pair <span class="math inline">\((s,a)\in\mathcal{S}\times\mathcal{A}\)</span> the expected return obtained by starting in state <span class="math inline">\(s\)</span>, taking action <span class="math inline">\(a\)</span> first, and then following policy <span class="math inline">\(\pi\)</span> thereafter:
+<span class="math display" id="eq:FiniteHorizonMDP-action-value">\[\begin{equation}
+\begin{split}
+Q_t^\pi(s,a) := &amp; \mathbb{E} \left[R(s,a) + g_{t+1} \mid s_{t+1} \sim P(\cdot \mid s,a)\right] \\
+= &amp; \mathbb{E} \left[R(s,a) + \sum_{i=t+1}^{T-1} R(s_i, a_i) \middle| s_{t+1} \sim P(\cdot \mid s,a) \right].
+\end{split}
+\tag{1.3}
+\end{equation}\]</span>
+The key distinction is that the action-value function evaluates the return when the first action may deviate from policy <span class="math inline">\(\pi\)</span>, whereas the state-value function assumes strict adherence to <span class="math inline">\(\pi\)</span>. This flexibility makes the action-value function central to improving <span class="math inline">\(\pi\)</span>, since it reveals whether alternative actions can yield higher returns.</p>
+</div>
+</div>
+<div id="optimality" class="section level2 hasAnchor" number="1.2">
+<h2><span class="header-section-number">1.2</span> Principle of Optimality<a href="mdp.html#optimality" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+</div>
+<div id="dp" class="section level2 hasAnchor" number="1.3">
+<h2><span class="header-section-number">1.3</span> Dynamic Programming<a href="mdp.html#dp" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<!-- # The Optimal Control Formulation {#formulation}
+
+## The Basic Problem
+Consider a discrete-time dynamical system
+\begin{equation}
+x_{k+1} = f_k (x_k, u_k, w_k), \quad k =0,1,\dots,N-1
+(\#eq:discrete-time-dynamics)
+\end{equation}
+where
+
+- $x_k \in \mathbb{X} \subseteq \mathbb{R}^n$ is the _state_ of the system, 
+
+- $u_k \in \mathbb{U} \subseteq \mathbb{R}^m$ is the _control_ we wish to design, 
+
+- $w_k \in \mathbb{W} \subseteq \mathbb{R}^p$ a random _disturbance_ or noise (e.g., due to unmodelled dynamics) which is described by a probability distribution $P_k(\cdot \mid x_k, u_k)$ that may depend on $x_k$ and $u_k$ but not on prior disturbances $w_0,\dots,w_{k-1}$,
+
+- $k$ indexes the discrete time,
+
+- $N$ denotes the horizon, 
+
+- $f_k$ models the transition function of the system (typically $f_k \equiv f$ is time-invariant, especially for robotics systems; we use $f_k$ here to keep full generality). 
+
+::: {.remark name="Deterministic v.s. Stochastic"}
+When $w_k \equiv 0$ for all $k$, we say the system \@ref(eq:discrete-time-dynamics) is _deterministic_; otherwise we say the system is _stochastic_. In the following we will deal with the stochastic case, but most of the methodology should carry over to the deterministic setup.
+:::
+
+We consider the class of _controllers_ (also called _policies_) that consist of a sequence of functions
+$$
+\pi = \{ \mu_0,\dots,\mu_{N-1} \},
+$$
+where $\mu_k (x_k) \in \mathbb{U}$ for all $x_k$, i.e., $\mu_k$ is a _feedback_ controller that maps the state to an admissible control. Given an initial state $x_0$ and an admissible policy $\pi$, the state _trajectory_ of the system is a sequence of random variables that evolve according to
+\begin{equation}
+x_{k+1} = f_k(x_k,\mu_k(x_k),w_k), \quad k=0,\dots,N-1
+(\#eq:closed-loop-state-trajectory)
+\end{equation}
+where the randomness comes from the disturbance $w_k$.
+
+We assume the state-control trajectory $\{u_k\}_{k=0}^{N-1}$ and $\{x_k \}_{k=0}^{N}$ induce an _additive cost_
+\begin{equation}
+g_N(x_N) + \sum_{k=0}^{N-1} g_k(x_k,u_k)
+(\#eq:additive-cost)
+\end{equation}
+where $g_k,k=0,\dots,N$ are some user-designed functions. 
+
+With \@ref(eq:closed-loop-state-trajectory) and \@ref(eq:additive-cost), for any admissible policy $\pi$, we denote its induced _expected cost_ with initial state $x_0$ as 
+\begin{equation}
+J_\pi (x_0) = \mathbb{E} \left\{ g_N(x_N) + \sum_{k=0}^{N-1} g_k (x_k, \mu_k(x_k))  \right\},
+(\#eq:expected-cost)
+\end{equation}
+where the expectation is taken over the randomness of $w_k$.
+
+::: {.definitionbox}
+::: {.definition #basicproblem name="Discrete-time, Finite-horizon Optimal Control"} 
+Find the best admissible controller that minimizes the expected cost in \@ref(eq:expected-cost)
+\begin{equation}
+\pi^\star \in \arg\min_{\pi \in \Pi} J_\pi(x_0),
+\end{equation}
+where $\Pi$ is the set of all admissible controllers.
+The cost attained by the optimal controller, i.e., $J^\star = J_{\pi^\star}(x_0)$ is called the optimal _cost-to-go_, or the optimal _value function_.
+:::
+:::
+
+::: {.remark name="Open-loop v.s. Closed-loop"}
+An important feature of the basic problem in Definition \@ref(def:basicproblem) is that the problem seeks _feedback policies_, instead of numerical values of the controls, i.e., $u_k = \mu_k(x_k)$ is in general a function of the state $x_k$. In other words, the controls are executed sequentially, one at a time after observing the state at each time. This is called closed-loop control, and is in general better than open-loop control
+$$
+\min_{u_0,\dots,u_{N-1}} \mathbb{E} \left\{ g_N(x_N) + \sum_{k=0}^{N-1} g_k (x_k, u_k)  \right\}
+$$
+where all the controls are planned at $k=0$. Intuitively, a closed-loop policy is able to utilize the extra information received at each timestep (i.e., it observes $x_{k+1}$ and hence also observes the disturbance $w_k$) to obtain a lower cost than an open-loop controller. Example 1.2.1 in [@bertsekas12book-dpocI] gives a concrete application where a closed-loop policy attains a lower cost than an open-loop policy.
+
+In deterministic control (i.e., when $w_k \equiv 0,\forall k$), however, a closed-loop policy has no advantage over an open-loop controller. This is obvious because at $k=0$, even the open-loop controller predicts perfectly the consequences of all its actions and there is no extra information to be observed at later time steps. In fact, even in stochastic problems, a closed-loop policy may not be advantageous, see Exercise 1.27 in [@bertsekas12book-dpocI].
+:::
+
+## Dynamic Programming and Principle of Optimality
+
+We now introduce a general and powerful algorithm, namely _dynamic programming_ (DP), for solving the optimal control problem \@ref(def:basicproblem). The DP algorithm builds upon a quite simple intuition called the _Bellman principle of optimality_.
+
+::: {.theorembox}
+::: {.theorem #bellmanoptimality name="Bellman Principle of Optimality"}
+Let $\pi^\star = \{ \mu_0^\star,\mu_1^\star,\dots,\mu_{N-1}^\star \}$ be an optimal policy for the optimal control problem \@ref(def:basicproblem). Assume that when using $\pi^\star$, a given state $x_i$ occurs at timestep $i$ with positive probability (i.e., $x_i$ is reachable at time $i$). 
+
+Now consider the following subproblem where we are at $x_i$ at time $i$ and wish to minimize the cost-to-go from time $i$ to time $N$
+$$
+\min_{\mu_i,\dots,\mu_{N-1}} \mathbb{E} \left\{ g_N(x_N) + \sum_{k=i}^{N-1} g_k (x_k, \mu_k(x_k)) \right\}.
+$$
+Then the truncated policy $\{\mu^\star_i,\mu^\star_{i+1},\dots, \mu^\star_{N-1}\}$ must be optimal for the subproblem.
+:::
+:::
+
+Theorem \@ref(thm:bellmanoptimality) can be proved intuitively by contradiction: if the truncated policy $\{\mu^\star_i,\mu^\star_{i+1},\dots, \mu^\star_{N-1}\}$ is not optimal for the subproblem, say there exists a different policy $\{\mu_i',\mu_{i+1}',\dots, \mu_{N-1}'\}$ that attains a lower cost for the subproblem starting at $x_i$ at time $i$. Then the combined policy $\{\mu_0^\star,\dots,\mu^\star_{i-1},\mu_i',\dots,\mu_{N-1}'\}$ must attain a lower cost for the original optimal control problem \@ref(def:basicproblem) due to the additive cost structure, contradicting the optimality of $\pi^\star$. 
+
+The Bellman principle of optimality is more than just a principle, it is also an algorithm. It suggests that, to build an optimal policy, one can start by solving the last-stage subproblem to obtain $\{\mu^\star_{N-1} \}$, and then proceed to solve the subproblem containing the last two stages to obtain $\{ \mu^\star_{N-2},\mu^\star_{N-1} \}$. The recursion continues until optimal policies at all stages are computed. The following theorem formalizes this concept.
+
+::: {.theorembox}
+::: {.theorem #dynamicprogramming name="Dynamic Programming"}
+The optimal value function $J^\star(x_0)$ of the optimal control problem \@ref(def:basicproblem) (starting from any given initial condition $x_0$) is equal to $J_0(x_0)$, which can be computed backwards and recursively as
+\begin{align}
+J_N(x_N) &= g_N(x_N) \\
+J_k(x_k) &= \min_{u_k \in \mathbb{U}} \displaystyle \mathbb{E}_{w_k \sim P_k(\cdot \mid x_k, u_k)} \displaystyle \left\{ g_k(x_k,u_k) + J_{k+1}(f_k(x_k,u_k,w_k) ) \right\}, \ k=N-1,\dots,1,0.
+(\#eq:dpbackwardrecursion)
+\end{align}
+Moreover, if $u_k^\star = \mu_k^\star(x_k)$ is a minimizer of \@ref(eq:dpbackwardrecursion) for every $x_k$, then the policy $\pi^\star = \{\mu_0^\star,\dots,\mu_{N-1}^\star \}$ is optimal.
+:::
+:::
+::: {.proofbox}
+::: {.proof}
+For any admissible policy $\pi = \{ \mu_0,\dots,\mu_{N-1} \}$, denote $\pi^k = \{ \mu_k,\dots,\mu_{N-1} \}$ the last-$(N-k)$-stage truncated policy. Consider the subproblem consisting of the last $N-k$ stages starting from $x_k$, and let $J^\star_k(x_k)$ be its optimal cost-to-go. Mathematically, this is
+\begin{equation}
+J^\star_{k}(x_k) = \min_{\pi^k} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_N(x_N) + \sum_{i=k}^{N-1} g_i (x_i,\mu_i(x_i)) \right\}, \quad k=0,1,\dots,N-1.
+(\#eq:dptheoremdefineJkstar)
+\end{equation}
+We define $J^\star_N(x_N) = g(x_N)$ for $k=N$.
+
+Our goal is to prove the $J_k(x_k)$ computed by dynamic programming from \@ref(eq:dpbackwardrecursion) is equal to $J^\star_k (x_k)$ for all $k=0,\dots,N$. We will prove this by induction. 
+
+Firstly, we already have $J^\star_N(x_N) = J_N(x_N) = g(x_N)$, so $k=N$ holds automatically. 
+
+Now we assume $J^\star_{k+1}(x_{k+1}) = J_{k+1}(x_{k+1})$ for all $x_{k+1}$, and we wish to induce $J^\star_{k}(x_{k}) = J_{k}(x_{k})$. To show this, we write 
+\begin{align}
+\hspace{-16mm} J^\star_{k}(x_k) &= \min_{\pi^k} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_N(x_N) + \sum_{i=k}^{N-1} g_i (x_i,\mu_i(x_i)) \right\} (\#eq:dpproof-1)\\
+&= \min_{\mu_k,\pi^{k+1}} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_k(x_k,\mu_k(x_k)) + g_N(x_N) + \sum_{i=k+1}^{N-1} g_i(x_i,\mu_i(x_i))  \right\}
+(\#eq:dpproof-2)\\
+&= \min_{\mu_k} \left[ \min_{\pi^{k+1}} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_k(x_k,\mu_k(x_k)) + g_N(x_N) + \sum_{i=k+1}^{N-1} g_i(x_i,\mu_i(x_i))  \right\}\right] (\#eq:dpproof-3)\\
+&= \min_{\mu_k} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + \min_{\pi^{k+1}} \left[ \mathbb{E}_{w_{k+1},\dots,w_{N-1}} \left\{ g_N(x_N) + \sum_{i=k+1}^{N-1} g_i(x_i,\mu_i(x_i))  \right\}  \right]    \right\} (\#eq:dpproof-4)\\
+&= \min_{\mu_k} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + J^\star_{k+1}(f_k(x_k,\mu_k(x_k),w_k)) \right\} (\#eq:dpproof-5)\\
+&= \min_{\mu_k} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + J_{k+1}(f_k(x_k,\mu_k(x_k),w_k)) \right\} (\#eq:dpproof-6)\\
+&= \min_{u_k \in \mathbb{U}} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + J_{k+1}(f_k(x_k,\mu_k(x_k),w_k)) \right\} (\#eq:dpproof-7)\\
+&= J_k(x_k), (\#eq:dpproof-8)
+\end{align}
+where \@ref(eq:dpproof-1) follows from definition \@ref(eq:dptheoremdefineJkstar); \@ref(eq:dpproof-2) expands $\pi^k = \{ \mu_k, \pi^{k+1}\}$ and $\sum_{i=k}^{N-1} g_i = g_k + \sum_{i=k+1}^{N-1}$; \@ref(eq:dpproof-3) writes the joint minimization over $\mu_k$ and $\pi^{k+1}$ as equivalently first minimizing over $\pi^{k+1}$ and then minimizing over $\mu_k$; \@ref(eq:dpproof-4) is the key step and holds because $g_k$ and $w_k$ depend only on $\mu_k$ but not on $\pi^{k+1}$; \@ref(eq:dpproof-5) follows again from definition \@ref(eq:dptheoremdefineJkstar) with $k$ replaced by $k+1$; \@ref(eq:dpproof-6) results from the induction assumption; \@ref(eq:dpproof-7) clearly holds because any $\mu_k(x_k)$ belongs to $\mathbb{U}$ and any element in $\mathbb{U}$ can be chosen by a feedback controller $\mu_k$; and lastly \@ref(eq:dpproof-8) follows from the dynamic programming algorithm \@ref(eq:dpbackwardrecursion).
+
+By induction, this shows that $J^\star_k(x_k) = J_k(x_k)$ for all $k=0,\dots,N$.
+:::
+:::
+
+The careful reader, especially from a robotics background, may soon become disappointed when seeing the DP algorithm \@ref(eq:dpbackwardrecursion) because it is rather conceptual than practical. To see this, we only need to run DP for $k=N-1$:
+\begin{equation}
+J_{N-1}(x_{N-1}) = \min_{u_{N-1} \in \mathbb{U}} \mathbb{E}_{w_{N-1}} \left\{ g_{N-1}(x_{N-1},u_{N-1}) + J_N(f_{N-1}(x_{N-1},u_{N-1},w_{N-1})) \right\}.
+(\#eq:dptryN-1)
+\end{equation}
+
+Two challenges immediately show up:
+
+- How to perform the minimization over $u_{N-1}$ when $\mathbb{U}$ is a continuous constraint set? Even if we assume $g_{N-1}$ is convex^[You may want to read Appendix \@ref(appconvex) if this is your first time seeing "convex" things.] in $u_{N-1}$, $J_N$ is convex in $x_{N}$, and the dynamics $f_{N-1}$ is also convex in $u_{N-1}$ (so that the optimization \@ref(eq:dptryN-1) is convex), we may be able to solve the minimization _numerically_ for each $x_{N-1}$ using a convex optimization solver, but rarely will we be able to find an analytical policy $\mu_{N-1}^\star$ such that $u_{N-1}^\star = \mu_{N-1}^\star (x_{N-1})$ for every $x_{N-1}$ (i.e., the optimal policy $\mu_{N-1}^\star$ is implict but not explict).
+
+- Suppose we can find an anlytical optimal policy $\mu_{N-1}^\star$, say $\mu_{N-1}^\star = K x_{N-1}$ a linear policy, how will plugging $\mu_{N-1}^\star$ into \@ref(eq:dptryN-1) affect the complexity of $J_{N-1}(x_{N-1})$? One can see that even if $\mu_{N-1}^\star$ is linear in $x_{N-1}$, $J_{N-1}$ may be highly nonlinear in $x_{N-1}$ due to the composition with $g_{N-1}$, $f_{N-1}$ and $J_N$. If $J_{N-1}(x_{N-1})$ becomes too complex, then clearly it becomes more challenging to perform \@ref(eq:dptryN-1) for the next step $k=N-2$.
+
+Due to these challenges, only in a very limited amount of cases will we be able to perform _exact dynamic programming_. For example, when the state space $\mathbb{X}$ and control space $\mathbb{U}$ are discrete, we can design efficient algorithms for exact DP. For another example, when the dynamics $f_k$ is linear and the cost $g_k$ is quadratic, we will also be able to compute $J_k(x_k)$ in closed form (though this sounds a bit surprising!). We will study these problems in more details in Chapter \@ref(exactdp). 
+
+For general optimal control problems with continuous state space and control space (and most problems we care about in robotics), unfortunately, we will have to resort to _approximate dynamic programming_, basically variations of the DP algorithm \@ref(eq:dpbackwardrecursion) where approximate value functions $J_k(x_k)$ and/or control policies $\mu_k(x_k)$ are used (e.g., with neural networks and machine learning).^[Another possible solution is to discretize continuous states and controls. However, when the dimension of state and control is high, discretization becomes too expensive in terms of memory and computational complexity.] We will introduce several popular approximation schemes in Chapter \@ref(approximatedp). We will see that, although exact DP is not possible anymore, the Bellman principle of optimality still remains one of the most important guidelines for designing approximation algorithms. Efficient algorithms for approximate dynamic programming, preferrably with performance guarantees, still remain an active area of research. 
+
+
+## Infinite-horizon Formulation {#infinite-horizon}
+
+So far we are focusing on problems with a finite horizon $N$, what if the horizon $N$ tends to infinity?
+
+In particular, consider the controller $\pi$ now contains an infinite sequence of functions
+$$
+\pi = \{ \mu_0,\dots \}
+$$
+and let us try to find the best policy that minimizes the cost-to-go starting from $x_0$ subject to the same dynamics as in \@ref(eq:discrete-time-dynamics) (with $N$ tends to infinity and $f_k \equiv f$)
+\begin{equation}
+J_{\pi}(x_0) = \mathbb{E} \left\{ \sum_{k=0}^{\infty} g(x_k, \mu_k(x_k)) \right\}
+(\#eq:cost-to-go-infinite),
+\end{equation}
+where the expectation is taken over the (infinite number of) disturbances $\{w_0,\dots \}$.
+
+We can write \@ref(eq:cost-to-go-infinite) equivalently as
+$$
+J_{\pi}(x_0) = \lim_{N \rightarrow \infty} J_\pi^N(x_0),
+$$
+where, with a slight abuse of notation, $J_\pi^N(x_0)$ is \@ref(eq:expected-cost) with $g_N(x_N)$ set to zero. 
+
+Now we invoke the dynamic programming algorithm in Theorem \@ref(thm:dynamicprogramming). We will first set $J_N(x_N) = g_N(x_N)=0$, and then compute backwards in time 
+$$
+J_k(x_k) = \min_{u_k \in \mathbb{U}} \mathbb{E}_{w_k} \left\{ g(x_k,u_k) + J_{k+1}(f(x_k,u_k,w_k)) \right\}, \quad k=N-1,\dots,0.
+$$
+To make our presentation easier later, the above DP iterations are equivalent to
+\begin{align}
+J_0(x_0) &= 0 \\
+J_{k+1}(x_{k+1}) &= \min_{u_k \in \mathbb{U}} \mathbb{E}_{w_k} \left\{ g(x_k,u_k) + J_k(f(x_k,u_k,w_k))  \right\}, \quad k=0,\dots,N, (\#eq:dp-infinite-reversed)
+\end{align}
+where I have done nothing but reversed the time indexing.
+
+Observe that when $N \rightarrow \infty$, \@ref(eq:dp-infinite-reversed) performs the recursion an infinite number of times.
+
+We may want to conjecture three natural consequences of the infinite-horizon solution:
+
+1. The optimal infinite-horizon cost is the limit of the corresponding $N$-stage optimal cost as $N \rightarrow \infty$, i.e.,
+$$
+J^\star(x) = \lim_{N \rightarrow \infty} J_N(x_N),
+$$
+where $J_N(x_N)$ is computed from DP \@ref(eq:dp-infinite-reversed).
+
+2. Bacause $J^\star$ is the result of DP \@ref(eq:dp-infinite-reversed) when $N$ tends to infinity, if the DP algorithm converges to $J^\star$, then $J^\star$ should satisfy
+\begin{equation}
+J^\star(x) = \min_{u \in \mathbb{U}} \mathbb{E}_w \left\{ g(x,u) + J^\star(f(x,u,w)) \right\}, \quad \forall x
+(\#eq:bellman-optimality-equation-infinite-horizon)
+\end{equation}
+Note that \@ref(eq:bellman-optimality-equation-infinite-horizon) is an _equation_ that $J^\star(x)$ should satisfy for all $x$. In fact, this is called the _Bellman Optimality Equation_.
+
+3. If $\mu(x)$ satisfies the Bellman equation \@ref(eq:bellman-optimality-equation-infinite-horizon), i.e., $u = \mu(x)$ minimizes the right-hand side of \@ref(eq:bellman-optimality-equation-infinite-horizon) for any $x$, then the policy $\pi = \{\mu,\mu,\dots \}$ should be optimal. This is saying, the optimal policy is time-invariant.
+
+In fact, all of our conjectures above are true, for most infinite-horizon problems. For example, in Chapter \@ref(mdp-exact-dp), we will investigate the Markov Decision Process (MDP) formulation, under which the above conjectures all hold. However, one should know that there also exist many infinite-horizon problems where our conjectures will fail, and there are many mathematical subtleties in rigorously proving the conjectures. 
+
+The reader should see why it can be more convenient to study the infinite-horizon formulation: (i) the optimal cost-to-go is only a function of the state $x$, but not a function of timestep $k$; (ii) the optimal policy is time-invariant and easier to implement.
+
+**Value Iteration**. The Bellman optimality equation \@ref(eq:bellman-optimality-equation-infinite-horizon) also suggests a natural algorithm for computing $J^\star(x)$. We start with $J(x)$ being all zero, and then iteratively update $J(x)$ by performing the right-hand side of \@ref(eq:bellman-optimality-equation-infinite-horizon). This is the famous _value iteration_ algorithm. We will study it in Chapter \@ref(mdp-exact-dp).
+
+As practitioners, we may simply execute the dynamic programming (value iteration) algoithm without carefully checking if our problem satisfies the assumptions. If the algorithm converges, oftentimes the problem indeed satisfies the assumptions. Otherwise, the algorithm may fail to converge, as we will see in Example \@ref(exm:pendulumvalueiterationbarycentric). -->
+
+</div>
+</div>
+
+
+
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="index.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="appconvex.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": false,
+    "facebook": true,
+    "twitter": true,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": "https://github.com/hankyang94/OptimalControlReinforcementLearning/blob/main/01-mdp.Rmd",
+    "text": "Edit"
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": ["optimal-control-reinforcement-learning.pdf"],
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>
