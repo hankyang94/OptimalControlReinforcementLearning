@@ -1,4 +1,100 @@
-# The Optimal Control Formulation {#formulation}
+# Markov Decision Process {#mdp}
+
+Optimal control (OC) and reinforcement learning (RL) address the problem of making **optimal decisions** in the presence of a **dynamic environment**.  
+
+- In **optimal control**, this dynamic environment is often referred to as a *plant* or a *dynamical system*.  
+- In **reinforcement learning**, it is modeled as a *Markov decision process* (MDP).  
+
+The goal in both fields is to evaluate and design decision-making strategies that optimize long-term performance:  
+
+- **RL** typically frames this as maximizing a long-term *reward*.  
+- **OC** often formulates it as minimizing a long-term *cost*.  
+
+The emphasis on **long-term** evaluation is crucial. Because the environment evolves over time, decisions that appear beneficial in the short term may lead to poor long-term outcomes and thus be suboptimal.  
+
+---
+
+With this motivation, we now formalize the framework of Markov Decision Processes (MDPs), which are discrete-time stochastic dynamical systems. 
+
+
+## Finite-Horizon MDP {#FiniteHorizonMDP}
+
+We begin with finite-horizon MDPs and introduce infinite-horizon MDPs in the following section. An abstract definition of the finite-horizon case will be presented first, followed by illustrative examples.
+
+A finite-horizon MDP is given by the following tuple:
+$$
+\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, T),
+$$
+where
+
+- $\mathcal{S}$: state space (set of all possible states)
+- $\mathcal{A}$: action space (set of all possible actions)
+- $P(s' \mid s, a)$: probability of transitioning to state $s'$ from state $s$ under action $a$ (i.e., dynamics)
+- $R(s,a)$: reward of taking action $a$ in state $s$
+- $T$: horizon, a positive integer
+
+For now, let us assume both the state space and the action space are discrete and have a finite number of elements. In particular, denote the number of elements in $\mathcal{S}$ as $|\mathcal{S}|$, and the number of elements in $\mathcal{A}$ as $|\mathcal{A}|$. This is also referred to as a _tabular MDP_. 
+
+**Policy**. Decision-making in MDPs is represented by policies. A policy is a function that, given any state, outputs a distribution of actions: $\pi: \mathcal{S} \mapsto \Delta(\mathcal{A})$. That is, $\pi(a \mid s)$ returns the probability of taking action $a$ in state $s$. In finite-horizon MDPs, we consider a tuple of policies:
+\begin{equation}
+\pi = (\pi_0, \dots, \pi_t, \dots, \pi_{T-1}),
+(\#eq:policy-tuple)
+\end{equation}
+where each $\pi_t$ denotes the policy at step $t \in [0,T-1]$.
+
+
+**Trajectory and Return**. Given an initial state $s_0 \in \mathcal{S}$ and a policy $\pi$, the MDP will evolve as
+
+1. Start at state $s_0$
+2. Take action $a_0 \sim \pi_0(a \mid s_0)$ following policy $\pi_0$
+3. Collect reward $r_0 = R(s_0, a_0)$ (assume $R$ is deterministic)
+4. Transition to state $s_1 \sim P(s' \mid s_0, a_0)$ following the dynamics
+5. Go to step 2 and continue until reaching state $s_T$
+
+This evolution generates a trajectory of states, actions, and rewards:
+$$
+\tau = (s_0, a_0, r_0, s_1, a_1, r_1,\dots, s_{T-1}, a_{T-1}, r_{T-1}, s_T).
+$$
+The cumulative reward of this trajectory is $g_0 = \sum_{t=0}^{T-1} r_t$, which is called the _return_ of the trajectory. Clearly, $g_0$ is a random variable due to the stochasticity of both the policy and the dynamics. Similarly, if the state at time $t$ is $s_t$, we denote:
+$$
+g_t = r_t + \dots + r_{T-1}
+$$
+as the return of the policy starting at $s_t$. 
+
+### Value Functions {#FiniteHorizonMDP-Value}
+
+**State-Value Function**. Given a policy $\pi$ as in \@ref(eq:policy-tuple), which states are preferable at time $t$? The (time-indexed) state-value function assigns to each $s\in\mathcal{S}$ the expected return from $t$ onward when starting in $s$ and following $\pi$ thereafter. Formally, define
+\begin{equation}
+V_t^\pi(s) := \mathbb{E} \left[g_t \mid s_t=s\right]
+= \mathbb{E} \left[\sum_{i=t}^{T-1} R(s_i,a_i) \middle| s_t=s,a_i\sim \pi_i(\cdot\mid s_i), s_{i+1}\sim P(\cdot\mid s_i,a_i)\right].
+(\#eq:FiniteHorizonMDP-state-value)
+\end{equation}
+The expectation is over the randomness induced by both the policy and the dynamics. Thus, if $V_t^\pi(s_1)>V_t^\pi(s_2)$, then at time $t$ under policy $\pi$ it is better in expectation to be in $s_1$ than in $s_2$ because the former yields a larger expected return.
+
+**Action-Value Function**. Similarly, the action-value function assigns to each state-action pair $(s,a)\in\mathcal{S}\times\mathcal{A}$ the expected return obtained by starting in state $s$, taking action $a$ first, and then following policy $\pi$ thereafter:
+\begin{equation}
+\begin{split}
+Q_t^\pi(s,a) := & \mathbb{E} \left[R(s,a) + g_{t+1} \mid s_{t+1} \sim P(\cdot \mid s,a)\right] \\
+= & \mathbb{E} \left[R(s,a) + \sum_{i=t+1}^{T-1} R(s_i, a_i) \middle| s_{t+1} \sim P(\cdot \mid s,a) \right].
+\end{split}
+(\#eq:FiniteHorizonMDP-action-value)
+\end{equation}
+The key distinction is that the action-value function evaluates the return when the first action may deviate from policy $\pi$, whereas the state-value function assumes strict adherence to $\pi$. This flexibility makes the action-value function central to improving $\pi$, since it reveals whether alternative actions can yield higher returns.
+
+
+
+
+## Principle of Optimality {#optimality}
+
+
+
+
+
+## Dynamic Programming {#dp}
+
+
+
+<!-- # The Optimal Control Formulation {#formulation}
 
 ## The Basic Problem
 Consider a discrete-time dynamical system
@@ -206,6 +302,6 @@ The reader should see why it can be more convenient to study the infinite-horizo
 
 **Value Iteration**. The Bellman optimality equation \@ref(eq:bellman-optimality-equation-infinite-horizon) also suggests a natural algorithm for computing $J^\star(x)$. We start with $J(x)$ being all zero, and then iteratively update $J(x)$ by performing the right-hand side of \@ref(eq:bellman-optimality-equation-infinite-horizon). This is the famous _value iteration_ algorithm. We will study it in Chapter \@ref(mdp-exact-dp).
 
-As practitioners, we may simply execute the dynamic programming (value iteration) algoithm without carefully checking if our problem satisfies the assumptions. If the algorithm converges, oftentimes the problem indeed satisfies the assumptions. Otherwise, the algorithm may fail to converge, as we will see in Example \@ref(exm:pendulumvalueiterationbarycentric).
+As practitioners, we may simply execute the dynamic programming (value iteration) algoithm without carefully checking if our problem satisfies the assumptions. If the algorithm converges, oftentimes the problem indeed satisfies the assumptions. Otherwise, the algorithm may fail to converge, as we will see in Example \@ref(exm:pendulumvalueiterationbarycentric). -->
 
 

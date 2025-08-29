@@ -33,17 +33,16 @@ I would like to invite you to provide feedback to the textbook via inline commen
 
 **Time**: Mon/Wed 2:15 - 3:30pm
 
-**Location**: TBD
+**Location**: SEC 1.413
 
-**Instructor**: [Heng Yang](https://hankyang.seas.harvard.edu/)
+**Instructor**: Heng Yang
 
-**Teaching Fellow**: TBD
+**Teaching Fellow**: Haoyu Han, Han Qi
 
-Syllabus
+[[Syllabus]](https://docs.google.com/document/d/1dIRYQZZJDx8K2q1TrodDDLg-bKJWWmj7o7yzOGlIs7o/edit?usp=sharing), [[Problem Sets]](https://github.com/ComputationalRobotics/2025-ES-AM-158-PSET), [[Canvas]](https://canvas.harvard.edu/courses/153422)
 
 #### 2023 Fall {-}
 
 The course was previously offered as [Introduction to Optimal Control and Estimation](https://hankyang.seas.harvard.edu/OptimalControlEstimation/).
 
 Starting Fall 2025, contents about reinforcement learning have been added to the course.
-
