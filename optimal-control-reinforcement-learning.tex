@@ -555,6 +555,160 @@ You are encouraged to carry out the similar calculations for the action-value fu
 \begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
 
 The toy example was small enough to carry out policy evaluation by hand; in realistic MDPs, we will need the help from computers.
+
+Consider now an MDP whose transition graph is shown in Fig. \ref{fig:mdp-hangover-transition-graph}. This example is adapted from \href{https://github.com/upb-lea/reinforcement_learning_course_materials/blob/master/exercises/solutions/ex02/Ex2.ipynb}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{images/MDP/hangover-graph} 
+
+}
+
+\caption{Hangover Transition Graph.}\label{fig:mdp-hangover-transition-graph}
+\end{figure}
+
+This MDP has six states:
+\[
+\mathcal{S} = \{\text{Hangover}, \text{Sleep}, \text{More Sleep}, \text{Visit Lecture}, \text{Study}, \text{Pass Exam} \},
+\]
+and two actions:
+\[
+\mathcal{A} = \{\text{Lazy}, \text{Productive} \}.
+\]
+The stochastic transition dynamics are labeled in the transition graph. For example, at state ``Hangover'', taking action ``Productive'' will lead to state ``Visit Lecture'' with probability \(0.3\) and state ``Hangover'' with probability \(0.7\).
+The rewards of the MDP are defined as:
+\[
+R(s,a) = \begin{cases}
++1 & s = \text{Pass Exam} \\
+-1 & \text{otherwise}.
+\end{cases}.
+\]
+
+\textbf{Policy Evaluation}. Consider a time-invariant random policy
+\[
+\pi = \{\pi_0,\dots,\pi_{T-1} \}, \quad \pi_t(a \mid s) = \begin{cases}
+\alpha & a = \text{Lazy} \\
+1 - \alpha & a = \text{Productive}
+\end{cases},
+\]
+that takes ``Lazy'' with probability \(\alpha\) and ``Productive'' with probability \(1-\alpha\).
+
+The following Python code performs policy evaluation for this MDP, with \(T=10\) and \(\alpha = 0.4\).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Finite{-}horizon policy evaluation for the Hangover MDP}
+
+\ImportTok{from}\NormalTok{ collections }\ImportTok{import}\NormalTok{ defaultdict}
+\ImportTok{from}\NormalTok{ typing }\ImportTok{import}\NormalTok{ Dict, List, Tuple}
+
+\NormalTok{State }\OperatorTok{=} \BuiltInTok{str}
+\NormalTok{Action }\OperatorTok{=} \BuiltInTok{str}
+
+\CommentTok{\# {-}{-}{-} MDP spec {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\NormalTok{S: List[State] }\OperatorTok{=}\NormalTok{ [}
+    \StringTok{"Hangover"}\NormalTok{, }\StringTok{"Sleep"}\NormalTok{, }\StringTok{"More Sleep"}\NormalTok{, }\StringTok{"Visit Lecture"}\NormalTok{, }\StringTok{"Study"}\NormalTok{, }\StringTok{"Pass Exam"}
+\NormalTok{]}
+\NormalTok{A: List[Action] }\OperatorTok{=}\NormalTok{ [}\StringTok{"Lazy"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{]}
+
+\CommentTok{\# P[s, a] {-}\textgreater{} list of (s\_next, prob)}
+\NormalTok{P: Dict[Tuple[State, Action], List[Tuple[State, }\BuiltInTok{float}\NormalTok{]]] }\OperatorTok{=}\NormalTok{ \{}
+    \CommentTok{\# Hangover}
+\NormalTok{    (}\StringTok{"Hangover"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Hangover"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Visit Lecture"}\NormalTok{, }\FloatTok{0.3}\NormalTok{), (}\StringTok{"Hangover"}\NormalTok{, }\FloatTok{0.7}\NormalTok{)],}
+
+    \CommentTok{\# Sleep}
+\NormalTok{    (}\StringTok{"Sleep"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):          [(}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Sleep"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{):    [(}\StringTok{"Visit Lecture"}\NormalTok{, }\FloatTok{0.6}\NormalTok{), (}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{0.4}\NormalTok{)],}
+
+    \CommentTok{\# More Sleep}
+\NormalTok{    (}\StringTok{"More Sleep"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"More Sleep"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Study"}\NormalTok{, }\FloatTok{0.5}\NormalTok{), (}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{0.5}\NormalTok{)],}
+
+    \CommentTok{\# Visit Lecture}
+\NormalTok{    (}\StringTok{"Visit Lecture"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"Study"}\NormalTok{, }\FloatTok{0.8}\NormalTok{), (}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{0.2}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Visit Lecture"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Study"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+
+    \CommentTok{\# Study}
+\NormalTok{    (}\StringTok{"Study"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):         [(}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Study"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{):   [(}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{0.9}\NormalTok{), (}\StringTok{"Study"}\NormalTok{, }\FloatTok{0.1}\NormalTok{)],}
+
+    \CommentTok{\# Pass Exam (absorbing)}
+\NormalTok{    (}\StringTok{"Pass Exam"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Pass Exam"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{\}}
+
+\KeywordTok{def}\NormalTok{ R(s: State, a: Action) }\OperatorTok{{-}\textgreater{}} \BuiltInTok{float}\NormalTok{:}
+    \CommentTok{"""Reward: +1 in Pass Exam, {-}1 otherwise."""}
+    \ControlFlowTok{return} \FloatTok{1.0} \ControlFlowTok{if}\NormalTok{ s }\OperatorTok{==} \StringTok{"Pass Exam"} \ControlFlowTok{else} \OperatorTok{{-}}\FloatTok{1.0}
+
+\CommentTok{\# {-}{-}{-} Policy: time{-}invariant, state{-}independent {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\KeywordTok{def}\NormalTok{ pi(a: Action, s: State, alpha: }\BuiltInTok{float}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \BuiltInTok{float}\NormalTok{:}
+    \CommentTok{"""π(a|s): Lazy with prob α, Productive with prob 1{-}α."""}
+    \ControlFlowTok{return}\NormalTok{ alpha }\ControlFlowTok{if}\NormalTok{ a }\OperatorTok{==} \StringTok{"Lazy"} \ControlFlowTok{else}\NormalTok{ (}\FloatTok{1.0} \OperatorTok{{-}}\NormalTok{ alpha)}
+
+\CommentTok{\# {-}{-}{-} Policy evaluation {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\KeywordTok{def}\NormalTok{ policy\_evaluation(T: }\BuiltInTok{int}\NormalTok{, alpha: }\BuiltInTok{float}\NormalTok{):}
+    \CommentTok{"""}
+\CommentTok{    Compute \{V\_t(s)\} and \{Q\_t(s,a)\} for t=0..T with terminal condition V\_T = Q\_T = 0.}
+\CommentTok{    Returns:}
+\CommentTok{        V: Dict[int, Dict[State, float]]}
+\CommentTok{        Q: Dict[int, Dict[Tuple[State, Action], float]]}
+\CommentTok{    """}
+    \ControlFlowTok{assert}\NormalTok{ T }\OperatorTok{\textgreater{}=} \DecValTok{0}
+    \CommentTok{\# sanity: probabilities sum to 1 for each (s,a)}
+    \ControlFlowTok{for}\NormalTok{ key, rows }\KeywordTok{in}\NormalTok{ P.items():}
+\NormalTok{        total }\OperatorTok{=} \BuiltInTok{sum}\NormalTok{(p }\ControlFlowTok{for}\NormalTok{ \_, p }\KeywordTok{in}\NormalTok{ rows)}
+        \ControlFlowTok{if} \BuiltInTok{abs}\NormalTok{(total }\OperatorTok{{-}} \FloatTok{1.0}\NormalTok{) }\OperatorTok{\textgreater{}} \FloatTok{1e{-}9}\NormalTok{:}
+            \ControlFlowTok{raise} \PreprocessorTok{ValueError}\NormalTok{(}\SpecialStringTok{f"Probabilities for }\SpecialCharTok{\{}\NormalTok{key}\SpecialCharTok{\}}\SpecialStringTok{ sum to }\SpecialCharTok{\{}\NormalTok{total}\SpecialCharTok{\}}\SpecialStringTok{, not 1."}\NormalTok{)}
+
+\NormalTok{    V: Dict[}\BuiltInTok{int}\NormalTok{, Dict[State, }\BuiltInTok{float}\NormalTok{]] }\OperatorTok{=}\NormalTok{ defaultdict(}\BuiltInTok{dict}\NormalTok{)}
+\NormalTok{    Q: Dict[}\BuiltInTok{int}\NormalTok{, Dict[Tuple[State, Action], }\BuiltInTok{float}\NormalTok{]] }\OperatorTok{=}\NormalTok{ defaultdict(}\BuiltInTok{dict}\NormalTok{)}
+
+    \CommentTok{\# Terminal boundary}
+    \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+\NormalTok{        V[T][s] }\OperatorTok{=} \FloatTok{0.0}
+        \ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ A:}
+\NormalTok{            Q[T][(s, a)] }\OperatorTok{=} \FloatTok{0.0}
+
+    \CommentTok{\# Backward recursion}
+    \ControlFlowTok{for}\NormalTok{ t }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(T }\OperatorTok{{-}} \DecValTok{1}\NormalTok{, }\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\OperatorTok{{-}}\DecValTok{1}\NormalTok{):}
+        \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+            \CommentTok{\# First compute Q\_t(s,a)}
+            \ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ A:}
+\NormalTok{                exp\_next }\OperatorTok{=} \BuiltInTok{sum}\NormalTok{(p }\OperatorTok{*}\NormalTok{ V[t }\OperatorTok{+} \DecValTok{1}\NormalTok{][s\_next] }\ControlFlowTok{for}\NormalTok{ s\_next, p }\KeywordTok{in}\NormalTok{ P[(s, a)])}
+\NormalTok{                Q[t][(s, a)] }\OperatorTok{=}\NormalTok{ R(s, a) }\OperatorTok{+}\NormalTok{ exp\_next}
+            \CommentTok{\# Then V\_t(s) = E\_\{a\textasciitilde{}π\}[Q\_t(s,a)]}
+\NormalTok{            V[t][s] }\OperatorTok{=} \BuiltInTok{sum}\NormalTok{(pi(a, s, alpha) }\OperatorTok{*}\NormalTok{ Q[t][(s, a)] }\ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ A)}
+
+    \ControlFlowTok{return}\NormalTok{ V, Q}
+
+\CommentTok{\# {-}{-}{-} Example run {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\ControlFlowTok{if} \VariableTok{\_\_name\_\_} \OperatorTok{==} \StringTok{"\_\_main\_\_"}\NormalTok{:}
+\NormalTok{    T }\OperatorTok{=} \DecValTok{10}        \CommentTok{\# horizon}
+\NormalTok{    alpha }\OperatorTok{=} \FloatTok{0.4}  \CommentTok{\# probability of choosing Lazy}
+\NormalTok{    V, Q }\OperatorTok{=}\NormalTok{ policy\_evaluation(T}\OperatorTok{=}\NormalTok{T, alpha}\OperatorTok{=}\NormalTok{alpha)}
+
+    \CommentTok{\# Print V\_0}
+    \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"V\_0(s) with T=}\SpecialCharTok{\{}\NormalTok{T}\SpecialCharTok{\}}\SpecialStringTok{, alpha=}\SpecialCharTok{\{}\NormalTok{alpha}\SpecialCharTok{\}}\SpecialStringTok{:"}\NormalTok{)}
+    \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+        \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"  }\SpecialCharTok{\{}\NormalTok{s}\SpecialCharTok{:13s\}}\SpecialStringTok{: }\SpecialCharTok{\{}\NormalTok{V[}\DecValTok{0}\NormalTok{][s]}\SpecialCharTok{: .3f\}}\SpecialStringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The code returns the following state values at \(t=0\):
+\[
+V^{\pi}_0 = \begin{bmatrix}
+-3.582 \\ -2.306 \\ -2.180 \\ 1.757 \\ 2.939 \\ 10
+\end{bmatrix},
+\]
+where the ordering of the states follows that defined in \(\mathcal{S}\).
+
+You can find the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_policy_evaluation.py}{here}.
 \end{example}
 
 \section{Principle of Optimality}\label{optimality}
