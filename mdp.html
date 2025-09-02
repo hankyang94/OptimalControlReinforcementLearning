@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-08-29" />
+<meta name="date" content="2025-09-02" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -173,6 +173,7 @@ div.csl-indent {
 <li class="chapter" data-level="1.1" data-path="mdp.html"><a href="mdp.html#FiniteHorizonMDP"><i class="fa fa-check"></i><b>1.1</b> Finite-Horizon MDP</a>
 <ul>
 <li class="chapter" data-level="1.1.1" data-path="mdp.html"><a href="mdp.html#FiniteHorizonMDP-Value"><i class="fa fa-check"></i><b>1.1.1</b> Value Functions</a></li>
+<li class="chapter" data-level="1.1.2" data-path="mdp.html"><a href="mdp.html#policy-evaluation"><i class="fa fa-check"></i><b>1.1.2</b> Policy Evaluation</a></li>
 </ul></li>
 <li class="chapter" data-level="1.2" data-path="mdp.html"><a href="mdp.html#optimality"><i class="fa fa-check"></i><b>1.2</b> Principle of Optimality</a></li>
 <li class="chapter" data-level="1.3" data-path="mdp.html"><a href="mdp.html#dp"><i class="fa fa-check"></i><b>1.3</b> Dynamic Programming</a></li>
@@ -305,6 +306,9 @@ V_t^\pi(s) := \mathbb{E} \left[g_t \mid s_t=s\right]
 \tag{1.2}
 \end{equation}\]</span>
 The expectation is over the randomness induced by both the policy and the dynamics. Thus, if <span class="math inline">\(V_t^\pi(s_1)&gt;V_t^\pi(s_2)\)</span>, then at time <span class="math inline">\(t\)</span> under policy <span class="math inline">\(\pi\)</span> it is better in expectation to be in <span class="math inline">\(s_1\)</span> than in <span class="math inline">\(s_2\)</span> because the former yields a larger expected return.</p>
+<div class="highlightbox">
+<p><span class="math inline">\(V^{\pi}_t(s)\)</span>: given policy <span class="math inline">\(\pi\)</span>, how good is it to start in state <span class="math inline">\(s\)</span> at time <span class="math inline">\(t\)</span>?</p>
+</div>
 <p><strong>Action-Value Function</strong>. Similarly, the action-value function assigns to each state-action pair <span class="math inline">\((s,a)\in\mathcal{S}\times\mathcal{A}\)</span> the expected return obtained by starting in state <span class="math inline">\(s\)</span>, taking action <span class="math inline">\(a\)</span> first, and then following policy <span class="math inline">\(\pi\)</span> thereafter:
 <span class="math display" id="eq:FiniteHorizonMDP-action-value">\[\begin{equation}
 \begin{split}
@@ -314,6 +318,221 @@ Q_t^\pi(s,a) := &amp; \mathbb{E} \left[R(s,a) + g_{t+1} \mid s_{t+1} \sim P(\cdo
 \tag{1.3}
 \end{equation}\]</span>
 The key distinction is that the action-value function evaluates the return when the first action may deviate from policy <span class="math inline">\(\pi\)</span>, whereas the state-value function assumes strict adherence to <span class="math inline">\(\pi\)</span>. This flexibility makes the action-value function central to improving <span class="math inline">\(\pi\)</span>, since it reveals whether alternative actions can yield higher returns.</p>
+<div class="highlightbox">
+<p><span class="math inline">\(Q^{\pi}_t(s,a)\)</span>: At time <span class="math inline">\(t\)</span>, how good is it to take action <span class="math inline">\(a\)</span> in state <span class="math inline">\(s\)</span>, then follow the policy <span class="math inline">\(\pi\)</span>?</p>
+</div>
+<p>It is easy to verify that the state-value function and the action-value function satisfy:
+<span class="math display" id="eq:FiniteHorizonMDP-action-value-from-state-value" id="eq:FiniteHorizonMDP-state-value-from-action-value">\[\begin{align}
+V_t^{\pi}(s) &amp; = \sum_{a \in \mathcal{A}} \pi_t(a \mid s) Q_t^{\pi}(s,a), \tag{1.4} \\
+Q_t^{\pi}(s,a) &amp; = R(s,a) + \sum_{s&#39; \in \mathcal{S}} P(s&#39; \mid s, a) V^{\pi}_{t+1} (s&#39;). \tag{1.5}
+\end{align}\]</span></p>
+<p>From these two equations, we can derive the Bellman Consistency equations.</p>
+<div class="theorembox">
+<div class="proposition">
+<p><span id="prp:BellmanConsistency" class="proposition"><strong>Proposition 1.1  (Bellman Consistency) </strong></span>The state-value function <span class="math inline">\(V^{\pi}_t(\cdot)\)</span> in <a href="mdp.html#eq:FiniteHorizonMDP-state-value">(1.2)</a> satisfies the following recursion:
+<span class="math display" id="eq:BellmanConsistency-State-Value">\[\begin{equation}
+\begin{split}
+V^{\pi}_t(s) &amp; = \sum_{a \in \mathcal{A}} \pi_t(a\mid s) \left( R(s,a) + \sum_{s&#39; \in \mathcal{S}} P(s&#39; \mid s, a) V^{\pi}_{t+1} (s&#39;) \right) \\
+    &amp; =: \mathbb{E}_{a \sim \pi_t(\cdot \mid s)} \left[ R(s, a) + \mathbb{E}_{s&#39; \sim P(\cdot \mid s, a)} [V^{\pi}_{t+1}(s&#39;)] \right].
+\end{split}
+\tag{1.6}
+\end{equation}\]</span></p>
+<p>Similarly, the action-value function <span class="math inline">\(Q^{\pi}_t(s,a)\)</span> in <a href="mdp.html#eq:FiniteHorizonMDP-action-value">(1.3)</a> satisfies the following recursion:
+<span class="math display" id="eq:BellmanConsistency-Action-Value">\[\begin{equation}
+\begin{split}
+Q^{\pi}_t (s, a) &amp; = R(s,a) + \sum_{s&#39; \in \mathcal{S}} P(s&#39; \mid s, a) \left( \sum_{a&#39; \in \mathcal{A}} \pi_{t+1}(a&#39; \mid s&#39;) Q^{\pi}_{t+1}(s&#39;, a&#39;)\right) \\
+&amp; =: R(s, a) + \mathbb{E}_{s&#39; \sim P(\cdot \mid s, a)} \left[\mathbb{E}_{a&#39; \sim \pi_{t+1}(\cdot \mid s&#39;)} [Q^{\pi}_{t+1}(s&#39;, a&#39;)] \right].
+\end{split}
+\tag{1.7}
+\end{equation}\]</span></p>
+</div>
+</div>
+</div>
+<div id="policy-evaluation" class="section level3 hasAnchor" number="1.1.2">
+<h3><span class="header-section-number">1.1.2</span> Policy Evaluation<a href="mdp.html#policy-evaluation" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The Bellman consistency result in Proposition <a href="mdp.html#prp:BellmanConsistency">1.1</a> is fundamental because it directly yields an algorithm for evaluating a given policy <span class="math inline">\(\pi\)</span>—that is, for computing its state-value and action-value functions—provided the transition dynamics of the MDP are known.</p>
+<p>Policy evaluation for the state-value function proceeds as follows:</p>
+<ul>
+<li><strong>Initialization:</strong> set <span class="math inline">\(V^{\pi}_T(s) = 0\)</span> for all <span class="math inline">\(s \in \mathcal{S}\)</span>.<br />
+</li>
+<li><strong>Backward recursion:</strong> for <span class="math inline">\(t = T-1, T-2, \dots, 0\)</span>, update each <span class="math inline">\(s \in \mathcal{S}\)</span> by
+<span class="math display">\[
+V^{\pi}_{t}(s) = \mathbb{E}_{a \sim \pi_t(\cdot \mid s)} \left[ R(s, a) + \mathbb{E}_{s&#39; \sim P(\cdot \mid s, a)} \big[ V^{\pi}_{t+1}(s&#39;) \big] \right].
+\]</span></li>
+</ul>
+<p>Similarly, policy evaluation for the action-value function is given by:</p>
+<ul>
+<li><strong>Initialization:</strong> set <span class="math inline">\(Q^{\pi}_T(s,a) = 0\)</span> for all <span class="math inline">\(s \in \mathcal{S}, a \in \mathcal{A}\)</span>.<br />
+</li>
+<li><strong>Backward recursion:</strong> for <span class="math inline">\(t = T-1, T-2, \dots, 0\)</span>, update each <span class="math inline">\((s,a) \in \mathcal{S}\times\mathcal{A}\)</span> by
+<span class="math display">\[
+Q^{\pi}_t(s,a) = R(s, a) + \mathbb{E}_{s&#39; \sim P(\cdot \mid s, a)} \left[ \mathbb{E}_{a&#39; \sim \pi_{t+1}(\cdot \mid s&#39;)} \big[ Q^{\pi}_{t+1}(s&#39;, a&#39;) \big] \right].
+\]</span></li>
+</ul>
+<p>The essential feature of this algorithm is its backward-in-time recursion: the value functions are first set at the terminal horizon <span class="math inline">\(T\)</span>, and then propagated backward step by step through the Bellman consistency equations.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:MDPExampleGraph" class="example"><strong>Example 1.1  (MDP, Transition Graph, and Policy Evaluation) </strong></span>It is often useful to visualize small MDPs as transition graphs, where states are represented by nodes and actions are represented by directed edges connecting those nodes.</p>
+<p>As a simple illustrative example, consider a robot navigating on a two-state grid. At each step, the robot can either Stay in its current state or Move to the other state. This finite-horizon MDP is fully specified by the tuple of states, actions, transition dynamics, rewards, and horizon:</p>
+<ul>
+<li><p>States: <span class="math inline">\(\mathcal{S} = \{\alpha, \beta \}\)</span></p></li>
+<li><p>Actions: <span class="math inline">\(\mathcal{A} = \{\text{Move} , \text{Stay} \}\)</span></p></li>
+<li><p>Transition dynamics: we can specify the transition dynamics in the following table</p></li>
+</ul>
+<table>
+<colgroup>
+<col width="20%" />
+<col width="22%" />
+<col width="34%" />
+<col width="22%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th align="center">State <span class="math inline">\(s\)</span></th>
+<th align="center">Action <span class="math inline">\(a\)</span></th>
+<th align="center">Next State <span class="math inline">\(s&#39;\)</span></th>
+<th align="center">Probability <span class="math inline">\(P(s&#39; \mid s, a)\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="center"><span class="math inline">\(\alpha\)</span></td>
+<td align="center">Stay</td>
+<td align="center"><span class="math inline">\(\alpha\)</span></td>
+<td align="center">1</td>
+</tr>
+<tr class="even">
+<td align="center"><span class="math inline">\(\alpha\)</span></td>
+<td align="center">Move</td>
+<td align="center"><span class="math inline">\(\beta\)</span></td>
+<td align="center">1</td>
+</tr>
+<tr class="odd">
+<td align="center"><span class="math inline">\(\beta\)</span></td>
+<td align="center">Stay</td>
+<td align="center"><span class="math inline">\(\beta\)</span></td>
+<td align="center">1</td>
+</tr>
+<tr class="even">
+<td align="center"><span class="math inline">\(\beta\)</span></td>
+<td align="center">Move</td>
+<td align="center"><span class="math inline">\(\alpha\)</span></td>
+<td align="center">1</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><p>Reward: <span class="math inline">\(R(s,a)=1\)</span> if <span class="math inline">\(a = \text{Move}\)</span> and <span class="math inline">\(R(s,a)=0\)</span> if <span class="math inline">\(a = \text{Stay}\)</span></p></li>
+<li><p>Horizon: <span class="math inline">\(T=2\)</span>.</p></li>
+</ul>
+<p>This MDP can be represented by the transition graph in Fig. <a href="mdp.html#fig:mdp-robot-transition-graph">1.1</a>. Note that for this MDP, the transition dynamics is deterministic. We will see a stochastic MDP soon.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mdp-robot-transition-graph"></span>
+<img src="images/MDP/robot-mdp-graph.png" alt="A Simple Transition Graph." width="90%" />
+<p class="caption">
+Figure 1.1: A Simple Transition Graph.
+</p>
+</div>
+<p>At time <span class="math inline">\(t=0\)</span>, if the robot starts at <span class="math inline">\(s_0 = \alpha\)</span>, first chooses action <span class="math inline">\(a_0 = \text{Move}\)</span>, and then chooses action <span class="math inline">\(a_1 = \text{Stay}\)</span>, the resulting trajectory is
+<span class="math display">\[
+\tau = (\alpha, \text{Move}, +1, \beta, \text{Stay}, 0,  \beta).
+\]</span>
+The return of this trajectory is:
+<span class="math display">\[
+g_0 = +1 + 0 = +1.
+\]</span></p>
+<p><strong>Policy Evaluation</strong>. Given a policy
+<span class="math display">\[\begin{equation}
+\pi = (\pi_0, \pi_1), \quad \pi_0(a \mid s) = \begin{cases}
+0.5 &amp; a = \text{Move} \\
+0.5 &amp; a = \text{Stay}
+\end{cases},
+\quad
+\pi_1( a \mid s) = \begin{cases}
+0.8 &amp; a = \text{Move} \\
+0.2 &amp; a = \text{Stay}
+\end{cases}.
+\end{equation}\]</span>
+We can use the Bellman consistency equations to compute the state-value function. We first initialize:
+<span class="math display">\[
+V^{\pi}_2 = \begin{bmatrix}
+0 \\ 0
+\end{bmatrix},
+\]</span>
+where the first row contains the value at <span class="math inline">\(s = \alpha\)</span> and the second row contains the value at <span class="math inline">\(s = \beta\)</span>.
+We then perform the backward recursion for <span class="math inline">\(t=1\)</span>. For <span class="math inline">\(s = \alpha\)</span>, we have
+<span class="math display">\[\begin{equation}
+V^{\pi}_1(\alpha) = \begin{bmatrix}
+\pi_1(\text{Move} \mid \alpha) \\
+\pi_1(\text{Stay} \mid \alpha)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\alpha, \text{Move}) + V^{\pi}_2(\beta) \\
+R(\alpha, \text{Stay}) + V^{\pi}_2(\alpha)
+\end{bmatrix} = \begin{bmatrix}
+0.8 \\ 0.2
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1 \\ 0
+\end{bmatrix} = 0.8
+\end{equation}\]</span>
+For <span class="math inline">\(s = \beta\)</span>, we have
+<span class="math display">\[\begin{equation}
+V^{\pi}_1(\beta) = \begin{bmatrix}
+\pi_1(\text{Move} \mid \beta) \\
+\pi_1(\text{Stay} \mid \beta)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\beta, \text{Move}) + V^{\pi}_2(\alpha) \\
+R(\beta, \text{Stay}) + V^{\pi}_2(\beta)
+\end{bmatrix} = \begin{bmatrix}
+0.8 \\ 0.2
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1 \\ 0
+\end{bmatrix} = 0.8.
+\end{equation}\]</span>
+Therefore, we have
+<span class="math display">\[
+V^{\pi}_1 = \begin{bmatrix}
+0.8 \\ 0.8
+\end{bmatrix}.
+\]</span>
+We then proceed to the backward recursion for <span class="math inline">\(t=0\)</span>:
+<span class="math display">\[\begin{align}
+V_0^{\pi}(\alpha) &amp; = \begin{bmatrix}
+\pi_0(\text{Move} \mid \alpha) \\
+\pi_0(\text{Stay} \mid \alpha)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\alpha, \text{Move}) + V^{\pi}_1(\beta) \\
+R(\alpha, \text{Stay}) + V^{\pi}_1(\alpha)
+\end{bmatrix} = \begin{bmatrix}
+0.5 \\ 0.5
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1.8 \\ 0.8
+\end{bmatrix} = 1.3. \\
+V_0^{\pi}(\beta) &amp; = \begin{bmatrix}
+\pi_0(\text{Move} \mid \beta) \\
+\pi_0(\text{Stay} \mid \beta)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\beta, \text{Move}) + V^{\pi}_0(\alpha) \\
+R(\beta, \text{Stay}) + V^{\pi}_0(\beta)
+\end{bmatrix} = \begin{bmatrix}
+0.5 \\ 0.5
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1.8 \\ 0.8
+\end{bmatrix} = 1.3.
+\end{align}\]</span>
+Therefore, the state-value function at <span class="math inline">\(t=0\)</span> is
+<span class="math display">\[
+V^{\pi}_0 = \begin{bmatrix}
+1.3 \\ 1.3
+\end{bmatrix}.
+\]</span>
+You are encouraged to carry out the similar calculations for the action-value function.</p>
+<hr />
+<p>The toy example was small enough to carry out policy evaluation by hand; in realistic MDPs, we will need the help from computers.</p>
+</div>
+</div>
 </div>
 </div>
 <div id="optimality" class="section level2 hasAnchor" number="1.2">
@@ -321,215 +540,6 @@ The key distinction is that the action-value function evaluates the return when 
 </div>
 <div id="dp" class="section level2 hasAnchor" number="1.3">
 <h2><span class="header-section-number">1.3</span> Dynamic Programming<a href="mdp.html#dp" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<!-- # The Optimal Control Formulation {#formulation}
-
-## The Basic Problem
-Consider a discrete-time dynamical system
-\begin{equation}
-x_{k+1} = f_k (x_k, u_k, w_k), \quad k =0,1,\dots,N-1
-(\#eq:discrete-time-dynamics)
-\end{equation}
-where
-
-- $x_k \in \mathbb{X} \subseteq \mathbb{R}^n$ is the _state_ of the system, 
-
-- $u_k \in \mathbb{U} \subseteq \mathbb{R}^m$ is the _control_ we wish to design, 
-
-- $w_k \in \mathbb{W} \subseteq \mathbb{R}^p$ a random _disturbance_ or noise (e.g., due to unmodelled dynamics) which is described by a probability distribution $P_k(\cdot \mid x_k, u_k)$ that may depend on $x_k$ and $u_k$ but not on prior disturbances $w_0,\dots,w_{k-1}$,
-
-- $k$ indexes the discrete time,
-
-- $N$ denotes the horizon, 
-
-- $f_k$ models the transition function of the system (typically $f_k \equiv f$ is time-invariant, especially for robotics systems; we use $f_k$ here to keep full generality). 
-
-::: {.remark name="Deterministic v.s. Stochastic"}
-When $w_k \equiv 0$ for all $k$, we say the system \@ref(eq:discrete-time-dynamics) is _deterministic_; otherwise we say the system is _stochastic_. In the following we will deal with the stochastic case, but most of the methodology should carry over to the deterministic setup.
-:::
-
-We consider the class of _controllers_ (also called _policies_) that consist of a sequence of functions
-$$
-\pi = \{ \mu_0,\dots,\mu_{N-1} \},
-$$
-where $\mu_k (x_k) \in \mathbb{U}$ for all $x_k$, i.e., $\mu_k$ is a _feedback_ controller that maps the state to an admissible control. Given an initial state $x_0$ and an admissible policy $\pi$, the state _trajectory_ of the system is a sequence of random variables that evolve according to
-\begin{equation}
-x_{k+1} = f_k(x_k,\mu_k(x_k),w_k), \quad k=0,\dots,N-1
-(\#eq:closed-loop-state-trajectory)
-\end{equation}
-where the randomness comes from the disturbance $w_k$.
-
-We assume the state-control trajectory $\{u_k\}_{k=0}^{N-1}$ and $\{x_k \}_{k=0}^{N}$ induce an _additive cost_
-\begin{equation}
-g_N(x_N) + \sum_{k=0}^{N-1} g_k(x_k,u_k)
-(\#eq:additive-cost)
-\end{equation}
-where $g_k,k=0,\dots,N$ are some user-designed functions. 
-
-With \@ref(eq:closed-loop-state-trajectory) and \@ref(eq:additive-cost), for any admissible policy $\pi$, we denote its induced _expected cost_ with initial state $x_0$ as 
-\begin{equation}
-J_\pi (x_0) = \mathbb{E} \left\{ g_N(x_N) + \sum_{k=0}^{N-1} g_k (x_k, \mu_k(x_k))  \right\},
-(\#eq:expected-cost)
-\end{equation}
-where the expectation is taken over the randomness of $w_k$.
-
-::: {.definitionbox}
-::: {.definition #basicproblem name="Discrete-time, Finite-horizon Optimal Control"} 
-Find the best admissible controller that minimizes the expected cost in \@ref(eq:expected-cost)
-\begin{equation}
-\pi^\star \in \arg\min_{\pi \in \Pi} J_\pi(x_0),
-\end{equation}
-where $\Pi$ is the set of all admissible controllers.
-The cost attained by the optimal controller, i.e., $J^\star = J_{\pi^\star}(x_0)$ is called the optimal _cost-to-go_, or the optimal _value function_.
-:::
-:::
-
-::: {.remark name="Open-loop v.s. Closed-loop"}
-An important feature of the basic problem in Definition \@ref(def:basicproblem) is that the problem seeks _feedback policies_, instead of numerical values of the controls, i.e., $u_k = \mu_k(x_k)$ is in general a function of the state $x_k$. In other words, the controls are executed sequentially, one at a time after observing the state at each time. This is called closed-loop control, and is in general better than open-loop control
-$$
-\min_{u_0,\dots,u_{N-1}} \mathbb{E} \left\{ g_N(x_N) + \sum_{k=0}^{N-1} g_k (x_k, u_k)  \right\}
-$$
-where all the controls are planned at $k=0$. Intuitively, a closed-loop policy is able to utilize the extra information received at each timestep (i.e., it observes $x_{k+1}$ and hence also observes the disturbance $w_k$) to obtain a lower cost than an open-loop controller. Example 1.2.1 in [@bertsekas12book-dpocI] gives a concrete application where a closed-loop policy attains a lower cost than an open-loop policy.
-
-In deterministic control (i.e., when $w_k \equiv 0,\forall k$), however, a closed-loop policy has no advantage over an open-loop controller. This is obvious because at $k=0$, even the open-loop controller predicts perfectly the consequences of all its actions and there is no extra information to be observed at later time steps. In fact, even in stochastic problems, a closed-loop policy may not be advantageous, see Exercise 1.27 in [@bertsekas12book-dpocI].
-:::
-
-## Dynamic Programming and Principle of Optimality
-
-We now introduce a general and powerful algorithm, namely _dynamic programming_ (DP), for solving the optimal control problem \@ref(def:basicproblem). The DP algorithm builds upon a quite simple intuition called the _Bellman principle of optimality_.
-
-::: {.theorembox}
-::: {.theorem #bellmanoptimality name="Bellman Principle of Optimality"}
-Let $\pi^\star = \{ \mu_0^\star,\mu_1^\star,\dots,\mu_{N-1}^\star \}$ be an optimal policy for the optimal control problem \@ref(def:basicproblem). Assume that when using $\pi^\star$, a given state $x_i$ occurs at timestep $i$ with positive probability (i.e., $x_i$ is reachable at time $i$). 
-
-Now consider the following subproblem where we are at $x_i$ at time $i$ and wish to minimize the cost-to-go from time $i$ to time $N$
-$$
-\min_{\mu_i,\dots,\mu_{N-1}} \mathbb{E} \left\{ g_N(x_N) + \sum_{k=i}^{N-1} g_k (x_k, \mu_k(x_k)) \right\}.
-$$
-Then the truncated policy $\{\mu^\star_i,\mu^\star_{i+1},\dots, \mu^\star_{N-1}\}$ must be optimal for the subproblem.
-:::
-:::
-
-Theorem \@ref(thm:bellmanoptimality) can be proved intuitively by contradiction: if the truncated policy $\{\mu^\star_i,\mu^\star_{i+1},\dots, \mu^\star_{N-1}\}$ is not optimal for the subproblem, say there exists a different policy $\{\mu_i',\mu_{i+1}',\dots, \mu_{N-1}'\}$ that attains a lower cost for the subproblem starting at $x_i$ at time $i$. Then the combined policy $\{\mu_0^\star,\dots,\mu^\star_{i-1},\mu_i',\dots,\mu_{N-1}'\}$ must attain a lower cost for the original optimal control problem \@ref(def:basicproblem) due to the additive cost structure, contradicting the optimality of $\pi^\star$. 
-
-The Bellman principle of optimality is more than just a principle, it is also an algorithm. It suggests that, to build an optimal policy, one can start by solving the last-stage subproblem to obtain $\{\mu^\star_{N-1} \}$, and then proceed to solve the subproblem containing the last two stages to obtain $\{ \mu^\star_{N-2},\mu^\star_{N-1} \}$. The recursion continues until optimal policies at all stages are computed. The following theorem formalizes this concept.
-
-::: {.theorembox}
-::: {.theorem #dynamicprogramming name="Dynamic Programming"}
-The optimal value function $J^\star(x_0)$ of the optimal control problem \@ref(def:basicproblem) (starting from any given initial condition $x_0$) is equal to $J_0(x_0)$, which can be computed backwards and recursively as
-\begin{align}
-J_N(x_N) &= g_N(x_N) \\
-J_k(x_k) &= \min_{u_k \in \mathbb{U}} \displaystyle \mathbb{E}_{w_k \sim P_k(\cdot \mid x_k, u_k)} \displaystyle \left\{ g_k(x_k,u_k) + J_{k+1}(f_k(x_k,u_k,w_k) ) \right\}, \ k=N-1,\dots,1,0.
-(\#eq:dpbackwardrecursion)
-\end{align}
-Moreover, if $u_k^\star = \mu_k^\star(x_k)$ is a minimizer of \@ref(eq:dpbackwardrecursion) for every $x_k$, then the policy $\pi^\star = \{\mu_0^\star,\dots,\mu_{N-1}^\star \}$ is optimal.
-:::
-:::
-::: {.proofbox}
-::: {.proof}
-For any admissible policy $\pi = \{ \mu_0,\dots,\mu_{N-1} \}$, denote $\pi^k = \{ \mu_k,\dots,\mu_{N-1} \}$ the last-$(N-k)$-stage truncated policy. Consider the subproblem consisting of the last $N-k$ stages starting from $x_k$, and let $J^\star_k(x_k)$ be its optimal cost-to-go. Mathematically, this is
-\begin{equation}
-J^\star_{k}(x_k) = \min_{\pi^k} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_N(x_N) + \sum_{i=k}^{N-1} g_i (x_i,\mu_i(x_i)) \right\}, \quad k=0,1,\dots,N-1.
-(\#eq:dptheoremdefineJkstar)
-\end{equation}
-We define $J^\star_N(x_N) = g(x_N)$ for $k=N$.
-
-Our goal is to prove the $J_k(x_k)$ computed by dynamic programming from \@ref(eq:dpbackwardrecursion) is equal to $J^\star_k (x_k)$ for all $k=0,\dots,N$. We will prove this by induction. 
-
-Firstly, we already have $J^\star_N(x_N) = J_N(x_N) = g(x_N)$, so $k=N$ holds automatically. 
-
-Now we assume $J^\star_{k+1}(x_{k+1}) = J_{k+1}(x_{k+1})$ for all $x_{k+1}$, and we wish to induce $J^\star_{k}(x_{k}) = J_{k}(x_{k})$. To show this, we write 
-\begin{align}
-\hspace{-16mm} J^\star_{k}(x_k) &= \min_{\pi^k} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_N(x_N) + \sum_{i=k}^{N-1} g_i (x_i,\mu_i(x_i)) \right\} (\#eq:dpproof-1)\\
-&= \min_{\mu_k,\pi^{k+1}} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_k(x_k,\mu_k(x_k)) + g_N(x_N) + \sum_{i=k+1}^{N-1} g_i(x_i,\mu_i(x_i))  \right\}
-(\#eq:dpproof-2)\\
-&= \min_{\mu_k} \left[ \min_{\pi^{k+1}} \mathbb{E}_{w_k,\dots,w_{N-1}} \left\{ g_k(x_k,\mu_k(x_k)) + g_N(x_N) + \sum_{i=k+1}^{N-1} g_i(x_i,\mu_i(x_i))  \right\}\right] (\#eq:dpproof-3)\\
-&= \min_{\mu_k} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + \min_{\pi^{k+1}} \left[ \mathbb{E}_{w_{k+1},\dots,w_{N-1}} \left\{ g_N(x_N) + \sum_{i=k+1}^{N-1} g_i(x_i,\mu_i(x_i))  \right\}  \right]    \right\} (\#eq:dpproof-4)\\
-&= \min_{\mu_k} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + J^\star_{k+1}(f_k(x_k,\mu_k(x_k),w_k)) \right\} (\#eq:dpproof-5)\\
-&= \min_{\mu_k} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + J_{k+1}(f_k(x_k,\mu_k(x_k),w_k)) \right\} (\#eq:dpproof-6)\\
-&= \min_{u_k \in \mathbb{U}} \mathbb{E}_{w_k} \left\{ g_k(x_k,\mu_k(x_k)) + J_{k+1}(f_k(x_k,\mu_k(x_k),w_k)) \right\} (\#eq:dpproof-7)\\
-&= J_k(x_k), (\#eq:dpproof-8)
-\end{align}
-where \@ref(eq:dpproof-1) follows from definition \@ref(eq:dptheoremdefineJkstar); \@ref(eq:dpproof-2) expands $\pi^k = \{ \mu_k, \pi^{k+1}\}$ and $\sum_{i=k}^{N-1} g_i = g_k + \sum_{i=k+1}^{N-1}$; \@ref(eq:dpproof-3) writes the joint minimization over $\mu_k$ and $\pi^{k+1}$ as equivalently first minimizing over $\pi^{k+1}$ and then minimizing over $\mu_k$; \@ref(eq:dpproof-4) is the key step and holds because $g_k$ and $w_k$ depend only on $\mu_k$ but not on $\pi^{k+1}$; \@ref(eq:dpproof-5) follows again from definition \@ref(eq:dptheoremdefineJkstar) with $k$ replaced by $k+1$; \@ref(eq:dpproof-6) results from the induction assumption; \@ref(eq:dpproof-7) clearly holds because any $\mu_k(x_k)$ belongs to $\mathbb{U}$ and any element in $\mathbb{U}$ can be chosen by a feedback controller $\mu_k$; and lastly \@ref(eq:dpproof-8) follows from the dynamic programming algorithm \@ref(eq:dpbackwardrecursion).
-
-By induction, this shows that $J^\star_k(x_k) = J_k(x_k)$ for all $k=0,\dots,N$.
-:::
-:::
-
-The careful reader, especially from a robotics background, may soon become disappointed when seeing the DP algorithm \@ref(eq:dpbackwardrecursion) because it is rather conceptual than practical. To see this, we only need to run DP for $k=N-1$:
-\begin{equation}
-J_{N-1}(x_{N-1}) = \min_{u_{N-1} \in \mathbb{U}} \mathbb{E}_{w_{N-1}} \left\{ g_{N-1}(x_{N-1},u_{N-1}) + J_N(f_{N-1}(x_{N-1},u_{N-1},w_{N-1})) \right\}.
-(\#eq:dptryN-1)
-\end{equation}
-
-Two challenges immediately show up:
-
-- How to perform the minimization over $u_{N-1}$ when $\mathbb{U}$ is a continuous constraint set? Even if we assume $g_{N-1}$ is convex^[You may want to read Appendix \@ref(appconvex) if this is your first time seeing "convex" things.] in $u_{N-1}$, $J_N$ is convex in $x_{N}$, and the dynamics $f_{N-1}$ is also convex in $u_{N-1}$ (so that the optimization \@ref(eq:dptryN-1) is convex), we may be able to solve the minimization _numerically_ for each $x_{N-1}$ using a convex optimization solver, but rarely will we be able to find an analytical policy $\mu_{N-1}^\star$ such that $u_{N-1}^\star = \mu_{N-1}^\star (x_{N-1})$ for every $x_{N-1}$ (i.e., the optimal policy $\mu_{N-1}^\star$ is implict but not explict).
-
-- Suppose we can find an anlytical optimal policy $\mu_{N-1}^\star$, say $\mu_{N-1}^\star = K x_{N-1}$ a linear policy, how will plugging $\mu_{N-1}^\star$ into \@ref(eq:dptryN-1) affect the complexity of $J_{N-1}(x_{N-1})$? One can see that even if $\mu_{N-1}^\star$ is linear in $x_{N-1}$, $J_{N-1}$ may be highly nonlinear in $x_{N-1}$ due to the composition with $g_{N-1}$, $f_{N-1}$ and $J_N$. If $J_{N-1}(x_{N-1})$ becomes too complex, then clearly it becomes more challenging to perform \@ref(eq:dptryN-1) for the next step $k=N-2$.
-
-Due to these challenges, only in a very limited amount of cases will we be able to perform _exact dynamic programming_. For example, when the state space $\mathbb{X}$ and control space $\mathbb{U}$ are discrete, we can design efficient algorithms for exact DP. For another example, when the dynamics $f_k$ is linear and the cost $g_k$ is quadratic, we will also be able to compute $J_k(x_k)$ in closed form (though this sounds a bit surprising!). We will study these problems in more details in Chapter \@ref(exactdp). 
-
-For general optimal control problems with continuous state space and control space (and most problems we care about in robotics), unfortunately, we will have to resort to _approximate dynamic programming_, basically variations of the DP algorithm \@ref(eq:dpbackwardrecursion) where approximate value functions $J_k(x_k)$ and/or control policies $\mu_k(x_k)$ are used (e.g., with neural networks and machine learning).^[Another possible solution is to discretize continuous states and controls. However, when the dimension of state and control is high, discretization becomes too expensive in terms of memory and computational complexity.] We will introduce several popular approximation schemes in Chapter \@ref(approximatedp). We will see that, although exact DP is not possible anymore, the Bellman principle of optimality still remains one of the most important guidelines for designing approximation algorithms. Efficient algorithms for approximate dynamic programming, preferrably with performance guarantees, still remain an active area of research. 
-
-
-## Infinite-horizon Formulation {#infinite-horizon}
-
-So far we are focusing on problems with a finite horizon $N$, what if the horizon $N$ tends to infinity?
-
-In particular, consider the controller $\pi$ now contains an infinite sequence of functions
-$$
-\pi = \{ \mu_0,\dots \}
-$$
-and let us try to find the best policy that minimizes the cost-to-go starting from $x_0$ subject to the same dynamics as in \@ref(eq:discrete-time-dynamics) (with $N$ tends to infinity and $f_k \equiv f$)
-\begin{equation}
-J_{\pi}(x_0) = \mathbb{E} \left\{ \sum_{k=0}^{\infty} g(x_k, \mu_k(x_k)) \right\}
-(\#eq:cost-to-go-infinite),
-\end{equation}
-where the expectation is taken over the (infinite number of) disturbances $\{w_0,\dots \}$.
-
-We can write \@ref(eq:cost-to-go-infinite) equivalently as
-$$
-J_{\pi}(x_0) = \lim_{N \rightarrow \infty} J_\pi^N(x_0),
-$$
-where, with a slight abuse of notation, $J_\pi^N(x_0)$ is \@ref(eq:expected-cost) with $g_N(x_N)$ set to zero. 
-
-Now we invoke the dynamic programming algorithm in Theorem \@ref(thm:dynamicprogramming). We will first set $J_N(x_N) = g_N(x_N)=0$, and then compute backwards in time 
-$$
-J_k(x_k) = \min_{u_k \in \mathbb{U}} \mathbb{E}_{w_k} \left\{ g(x_k,u_k) + J_{k+1}(f(x_k,u_k,w_k)) \right\}, \quad k=N-1,\dots,0.
-$$
-To make our presentation easier later, the above DP iterations are equivalent to
-\begin{align}
-J_0(x_0) &= 0 \\
-J_{k+1}(x_{k+1}) &= \min_{u_k \in \mathbb{U}} \mathbb{E}_{w_k} \left\{ g(x_k,u_k) + J_k(f(x_k,u_k,w_k))  \right\}, \quad k=0,\dots,N, (\#eq:dp-infinite-reversed)
-\end{align}
-where I have done nothing but reversed the time indexing.
-
-Observe that when $N \rightarrow \infty$, \@ref(eq:dp-infinite-reversed) performs the recursion an infinite number of times.
-
-We may want to conjecture three natural consequences of the infinite-horizon solution:
-
-1. The optimal infinite-horizon cost is the limit of the corresponding $N$-stage optimal cost as $N \rightarrow \infty$, i.e.,
-$$
-J^\star(x) = \lim_{N \rightarrow \infty} J_N(x_N),
-$$
-where $J_N(x_N)$ is computed from DP \@ref(eq:dp-infinite-reversed).
-
-2. Bacause $J^\star$ is the result of DP \@ref(eq:dp-infinite-reversed) when $N$ tends to infinity, if the DP algorithm converges to $J^\star$, then $J^\star$ should satisfy
-\begin{equation}
-J^\star(x) = \min_{u \in \mathbb{U}} \mathbb{E}_w \left\{ g(x,u) + J^\star(f(x,u,w)) \right\}, \quad \forall x
-(\#eq:bellman-optimality-equation-infinite-horizon)
-\end{equation}
-Note that \@ref(eq:bellman-optimality-equation-infinite-horizon) is an _equation_ that $J^\star(x)$ should satisfy for all $x$. In fact, this is called the _Bellman Optimality Equation_.
-
-3. If $\mu(x)$ satisfies the Bellman equation \@ref(eq:bellman-optimality-equation-infinite-horizon), i.e., $u = \mu(x)$ minimizes the right-hand side of \@ref(eq:bellman-optimality-equation-infinite-horizon) for any $x$, then the policy $\pi = \{\mu,\mu,\dots \}$ should be optimal. This is saying, the optimal policy is time-invariant.
-
-In fact, all of our conjectures above are true, for most infinite-horizon problems. For example, in Chapter \@ref(mdp-exact-dp), we will investigate the Markov Decision Process (MDP) formulation, under which the above conjectures all hold. However, one should know that there also exist many infinite-horizon problems where our conjectures will fail, and there are many mathematical subtleties in rigorously proving the conjectures. 
-
-The reader should see why it can be more convenient to study the infinite-horizon formulation: (i) the optimal cost-to-go is only a function of the state $x$, but not a function of timestep $k$; (ii) the optimal policy is time-invariant and easier to implement.
-
-**Value Iteration**. The Bellman optimality equation \@ref(eq:bellman-optimality-equation-infinite-horizon) also suggests a natural algorithm for computing $J^\star(x)$. We start with $J(x)$ being all zero, and then iteratively update $J(x)$ by performing the right-hand side of \@ref(eq:bellman-optimality-equation-infinite-horizon). This is the famous _value iteration_ algorithm. We will study it in Chapter \@ref(mdp-exact-dp).
-
-As practitioners, we may simply execute the dynamic programming (value iteration) algoithm without carefully checking if our problem satisfies the assumptions. If the algorithm converges, oftentimes the problem indeed satisfies the assumptions. Otherwise, the algorithm may fail to converge, as we will see in Example \@ref(exm:pendulumvalueiterationbarycentric). -->
 
 </div>
 </div>

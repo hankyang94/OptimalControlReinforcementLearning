@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-08-29}
+\date{2025-09-02}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -322,6 +322,8 @@ V_t^\pi(s) := \mathbb{E} \left[g_t \mid s_t=s\right]
 \end{equation}
 The expectation is over the randomness induced by both the policy and the dynamics. Thus, if \(V_t^\pi(s_1)>V_t^\pi(s_2)\), then at time \(t\) under policy \(\pi\) it is better in expectation to be in \(s_1\) than in \(s_2\) because the former yields a larger expected return.
 
+\(V^{\pi}_t(s)\): given policy \(\pi\), how good is it to start in state \(s\) at time \(t\)?
+
 \textbf{Action-Value Function}. Similarly, the action-value function assigns to each state-action pair \((s,a)\in\mathcal{S}\times\mathcal{A}\) the expected return obtained by starting in state \(s\), taking action \(a\) first, and then following policy \(\pi\) thereafter:
 \begin{equation}
 \begin{split}
@@ -331,6 +333,229 @@ Q_t^\pi(s,a) := & \mathbb{E} \left[R(s,a) + g_{t+1} \mid s_{t+1} \sim P(\cdot \m
 \label{eq:FiniteHorizonMDP-action-value}
 \end{equation}
 The key distinction is that the action-value function evaluates the return when the first action may deviate from policy \(\pi\), whereas the state-value function assumes strict adherence to \(\pi\). This flexibility makes the action-value function central to improving \(\pi\), since it reveals whether alternative actions can yield higher returns.
+
+\(Q^{\pi}_t(s,a)\): At time \(t\), how good is it to take action \(a\) in state \(s\), then follow the policy \(\pi\)?
+
+It is easy to verify that the state-value function and the action-value function satisfy:
+\begin{align}
+V_t^{\pi}(s) & = \sum_{a \in \mathcal{A}} \pi_t(a \mid s) Q_t^{\pi}(s,a), \label{eq:FiniteHorizonMDP-state-value-from-action-value} \\
+Q_t^{\pi}(s,a) & = R(s,a) + \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^{\pi}_{t+1} (s'). \label{eq:FiniteHorizonMDP-action-value-from-state-value}
+\end{align}
+
+From these two equations, we can derive the Bellman Consistency equations.
+
+\begin{proposition}[Bellman Consistency]
+\protect\hypertarget{prp:BellmanConsistency}{}\label{prp:BellmanConsistency}The state-value function \(V^{\pi}_t(\cdot)\) in \eqref{eq:FiniteHorizonMDP-state-value} satisfies the following recursion:
+\begin{equation}
+\begin{split}
+V^{\pi}_t(s) & = \sum_{a \in \mathcal{A}} \pi_t(a\mid s) \left( R(s,a) + \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^{\pi}_{t+1} (s') \right) \\
+    & =: \mathbb{E}_{a \sim \pi_t(\cdot \mid s)} \left[ R(s, a) + \mathbb{E}_{s' \sim P(\cdot \mid s, a)} [V^{\pi}_{t+1}(s')] \right].
+\end{split}
+\label{eq:BellmanConsistency-State-Value}
+\end{equation}
+
+Similarly, the action-value function \(Q^{\pi}_t(s,a)\) in \eqref{eq:FiniteHorizonMDP-action-value} satisfies the following recursion:
+\begin{equation}
+\begin{split}
+Q^{\pi}_t (s, a) & = R(s,a) + \sum_{s' \in \mathcal{S}} P(s' \mid s, a) \left( \sum_{a' \in \mathcal{A}} \pi_{t+1}(a' \mid s') Q^{\pi}_{t+1}(s', a')\right) \\
+& =: R(s, a) + \mathbb{E}_{s' \sim P(\cdot \mid s, a)} \left[\mathbb{E}_{a' \sim \pi_{t+1}(\cdot \mid s')} [Q^{\pi}_{t+1}(s', a')] \right].
+\end{split}
+\label{eq:BellmanConsistency-Action-Value}
+\end{equation}
+\end{proposition}
+
+\subsection{Policy Evaluation}\label{policy-evaluation}
+
+The Bellman consistency result in Proposition \ref{prp:BellmanConsistency} is fundamental because it directly yields an algorithm for evaluating a given policy \(\pi\)---that is, for computing its state-value and action-value functions---provided the transition dynamics of the MDP are known.
+
+Policy evaluation for the state-value function proceeds as follows:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Initialization:} set \(V^{\pi}_T(s) = 0\) for all \(s \in \mathcal{S}\).\\
+\item
+  \textbf{Backward recursion:} for \(t = T-1, T-2, \dots, 0\), update each \(s \in \mathcal{S}\) by
+  \[
+  V^{\pi}_{t}(s) = \mathbb{E}_{a \sim \pi_t(\cdot \mid s)} \left[ R(s, a) + \mathbb{E}_{s' \sim P(\cdot \mid s, a)} \big[ V^{\pi}_{t+1}(s') \big] \right].
+  \]
+\end{itemize}
+
+Similarly, policy evaluation for the action-value function is given by:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Initialization:} set \(Q^{\pi}_T(s,a) = 0\) for all \(s \in \mathcal{S}, a \in \mathcal{A}\).\\
+\item
+  \textbf{Backward recursion:} for \(t = T-1, T-2, \dots, 0\), update each \((s,a) \in \mathcal{S}\times\mathcal{A}\) by
+  \[
+  Q^{\pi}_t(s,a) = R(s, a) + \mathbb{E}_{s' \sim P(\cdot \mid s, a)} \left[ \mathbb{E}_{a' \sim \pi_{t+1}(\cdot \mid s')} \big[ Q^{\pi}_{t+1}(s', a') \big] \right].
+  \]
+\end{itemize}
+
+The essential feature of this algorithm is its backward-in-time recursion: the value functions are first set at the terminal horizon \(T\), and then propagated backward step by step through the Bellman consistency equations.
+
+\begin{example}[MDP, Transition Graph, and Policy Evaluation]
+\protect\hypertarget{exm:MDPExampleGraph}{}\label{exm:MDPExampleGraph}It is often useful to visualize small MDPs as transition graphs, where states are represented by nodes and actions are represented by directed edges connecting those nodes.
+
+As a simple illustrative example, consider a robot navigating on a two-state grid. At each step, the robot can either Stay in its current state or Move to the other state. This finite-horizon MDP is fully specified by the tuple of states, actions, transition dynamics, rewards, and horizon:
+
+\begin{itemize}
+\item
+  States: \(\mathcal{S} = \{\alpha, \beta \}\)
+\item
+  Actions: \(\mathcal{A} = \{\text{Move} , \text{Stay} \}\)
+\item
+  Transition dynamics: we can specify the transition dynamics in the following table
+\end{itemize}
+
+\begin{longtable}[]{@{}
+  >{\centering\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2000}}
+  >{\centering\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2286}}
+  >{\centering\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.3429}}
+  >{\centering\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.2286}}@{}}
+\toprule\noalign{}
+\begin{minipage}[b]{\linewidth}\centering
+State \(s\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Action \(a\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Next State \(s'\)
+\end{minipage} & \begin{minipage}[b]{\linewidth}\centering
+Probability \(P(s' \mid s, a)\)
+\end{minipage} \\
+\midrule\noalign{}
+\endhead
+\bottomrule\noalign{}
+\endlastfoot
+\(\alpha\) & Stay & \(\alpha\) & 1 \\
+\(\alpha\) & Move & \(\beta\) & 1 \\
+\(\beta\) & Stay & \(\beta\) & 1 \\
+\(\beta\) & Move & \(\alpha\) & 1 \\
+\end{longtable}
+
+\begin{itemize}
+\item
+  Reward: \(R(s,a)=1\) if \(a = \text{Move}\) and \(R(s,a)=0\) if \(a = \text{Stay}\)
+\item
+  Horizon: \(T=2\).
+\end{itemize}
+
+This MDP can be represented by the transition graph in Fig. \ref{fig:mdp-robot-transition-graph}. Note that for this MDP, the transition dynamics is deterministic. We will see a stochastic MDP soon.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{images/MDP/robot-mdp-graph} 
+
+}
+
+\caption{A Simple Transition Graph.}\label{fig:mdp-robot-transition-graph}
+\end{figure}
+
+At time \(t=0\), if the robot starts at \(s_0 = \alpha\), first chooses action \(a_0 = \text{Move}\), and then chooses action \(a_1 = \text{Stay}\), the resulting trajectory is
+\[
+\tau = (\alpha, \text{Move}, +1, \beta, \text{Stay}, 0,  \beta).
+\]
+The return of this trajectory is:
+\[
+g_0 = +1 + 0 = +1.
+\]
+
+\textbf{Policy Evaluation}. Given a policy
+\begin{equation}
+\pi = (\pi_0, \pi_1), \quad \pi_0(a \mid s) = \begin{cases}
+0.5 & a = \text{Move} \\
+0.5 & a = \text{Stay}
+\end{cases}, 
+\quad 
+\pi_1( a \mid s) = \begin{cases}
+0.8 & a = \text{Move} \\
+0.2 & a = \text{Stay}
+\end{cases}.
+\end{equation}
+We can use the Bellman consistency equations to compute the state-value function. We first initialize:
+\[
+V^{\pi}_2 = \begin{bmatrix}
+0 \\ 0
+\end{bmatrix},
+\]
+where the first row contains the value at \(s = \alpha\) and the second row contains the value at \(s = \beta\).
+We then perform the backward recursion for \(t=1\). For \(s = \alpha\), we have
+\begin{equation}
+V^{\pi}_1(\alpha) = \begin{bmatrix}
+\pi_1(\text{Move} \mid \alpha) \\
+\pi_1(\text{Stay} \mid \alpha)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\alpha, \text{Move}) + V^{\pi}_2(\beta) \\
+R(\alpha, \text{Stay}) + V^{\pi}_2(\alpha)
+\end{bmatrix} = \begin{bmatrix}
+0.8 \\ 0.2
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1 \\ 0
+\end{bmatrix} = 0.8 
+\end{equation}
+For \(s = \beta\), we have
+\begin{equation}
+V^{\pi}_1(\beta) = \begin{bmatrix}
+\pi_1(\text{Move} \mid \beta) \\
+\pi_1(\text{Stay} \mid \beta)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\beta, \text{Move}) + V^{\pi}_2(\alpha) \\
+R(\beta, \text{Stay}) + V^{\pi}_2(\beta)
+\end{bmatrix} = \begin{bmatrix}
+0.8 \\ 0.2
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1 \\ 0
+\end{bmatrix} = 0.8.
+\end{equation}
+Therefore, we have
+\[
+V^{\pi}_1 = \begin{bmatrix}
+0.8 \\ 0.8
+\end{bmatrix}.
+\]
+We then proceed to the backward recursion for \(t=0\):
+\begin{align}
+V_0^{\pi}(\alpha) & = \begin{bmatrix}
+\pi_0(\text{Move} \mid \alpha) \\
+\pi_0(\text{Stay} \mid \alpha)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\alpha, \text{Move}) + V^{\pi}_1(\beta) \\
+R(\alpha, \text{Stay}) + V^{\pi}_1(\alpha)
+\end{bmatrix} = \begin{bmatrix}
+0.5 \\ 0.5
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1.8 \\ 0.8
+\end{bmatrix} = 1.3. \\
+V_0^{\pi}(\beta) & = \begin{bmatrix}
+\pi_0(\text{Move} \mid \beta) \\
+\pi_0(\text{Stay} \mid \beta)
+\end{bmatrix}^{\top} \begin{bmatrix}
+R(\beta, \text{Move}) + V^{\pi}_0(\alpha) \\
+R(\beta, \text{Stay}) + V^{\pi}_0(\beta)
+\end{bmatrix} = \begin{bmatrix}
+0.5 \\ 0.5
+\end{bmatrix}^{\top}
+\begin{bmatrix}
+1.8 \\ 0.8
+\end{bmatrix} = 1.3.
+\end{align}
+Therefore, the state-value function at \(t=0\) is
+\[
+V^{\pi}_0 = \begin{bmatrix}
+1.3 \\ 1.3
+\end{bmatrix}.
+\]
+You are encouraged to carry out the similar calculations for the action-value function.
+
+\begin{center}\rule{0.5\linewidth}{0.5pt}\end{center}
+
+The toy example was small enough to carry out policy evaluation by hand; in realistic MDPs, we will need the help from computers.
+\end{example}
 
 \section{Principle of Optimality}\label{optimality}
 
