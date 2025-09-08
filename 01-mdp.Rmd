@@ -411,11 +411,12 @@ if __name__ == "__main__":
 ```
 
 The code returns the following state values at $t=0$:
-$$
+\begin{equation}
 V^{\pi}_0 = \begin{bmatrix}
 -3.582 \\ -2.306 \\ -2.180 \\ 1.757 \\ 2.939 \\ 10
 \end{bmatrix},
-$$
+(\#eq:HangoverRandomValueFunction)
+\end{equation}
 where the ordering of the states follows that defined in $\mathcal{S}$.
 
 You can find the code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_policy_evaluation.py).
@@ -423,15 +424,306 @@ You can find the code [here](https://github.com/ComputationalRobotics/2025-ES-AM
 :::
 
 
-
-
 ## Principle of Optimality {#optimality}
 
+Every policy $\pi$ induces a value function $V_0^{\pi}$ that can be evaluated by policy evaluation (assuming the transition dynamics are known). The goal of reinforcement learning is to find an optimal policy that maximizes the value function with respect to a given initial state distribution:
+\begin{equation}
+V^\star_0 = \max_{\pi}\; \mathbb{E}_{s_0 \sim \mu(\cdot)} \big[ V_0^{\pi}(s_0) \big],
+(\#eq:FiniteHorizonMDPRLProblem)
+\end{equation}
+where we have used the superscript "$\star$" to denote the optimality of the value function. $V^\star_0$ is often known as the _optimal value function_.
+
+At first glance, \@ref(eq:FiniteHorizonMDPRLProblem) appears daunting: a naive approach would enumerate all stochastic policies $\pi$, evaluate their value functions, and select the best. A central result in reinforcement learning and optimal control—rooted in the principle of optimality—is that the _optimal_ value functions satisfy a Bellman-style recursion, analogous to Proposition \@ref(prp:BellmanConsistency). This Bellman optimality recursion enables backward computation of the optimal value functions without enumerating policies.
 
 
+::: {.theorembox}
+::: {.theorem #FiniteHorizonMDPBellmanOptimality name="Bellman Optimality (Finite Horizon, State-Value)"}
+
+Consider a finite-horizon MDP $\mathcal{M}=(\mathcal{S},\mathcal{A},P,R,T)$ with finite state and action sets and bounded rewards.
+Define the optimal value functions $\{V_t^\star\}_{t=0}^{T}$ by the following _Bellman optimality_ recursion
+\begin{equation}
+\begin{split}
+V_T^\star(s)& \equiv 0, \\
+V_t^\star(s)& = \max_{a\in\mathcal{A}}\Big\{ R(s,a)\;+\;\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s')\Big\},\ t=T-1,\ldots,0.
+\end{split}
+(\#eq:FiniteHorizonMDPBellmanOptimality)
+\end{equation}
+Then, the optimal value functions are optimal in the sense of _statewise dominance_:
+\begin{equation}
+V_t^{\star}(s)\;\ge\; V_t^{\pi}(s)
+\quad\text{for all policies }\pi,\; s\in\mathcal{S},\; t=0,\ldots,T.
+(\#eq:FiniteHorizonMDPStatewiseDominance)
+\end{equation}
+
+Moreover, the deterministic policy 
+$\pi^\star=(\pi^\star_0,\ldots,\pi^\star_{T-1})$ with
+\begin{equation}
+\pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
+\Big\{ R(s,a)\;+\;\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s')\Big\}, \ \forall s\in\mathcal{S},\; t\in[T-1]
+(\#eq:FiniteHorizonMDPOptimalPolicy)
+\end{equation}
+is optimal, where ties can be broken by any fixed rule.
+:::
+:::
+
+::: {.proofbox}
+::: {.proof}
+We first show that the value functions defined by the Bellman optimality recursion \@ref(eq:FiniteHorizonMDPBellmanOptimality) are _optimal_ in the sense that they dominate the value functions of any other policy. The proof proceeds by backward induction.
+
+**Base case ($t=T$).**
+For every $s\in\mathcal{S}$,
+\[
+V^\star_T(s)\;=\;0\;=\;V_T^{\pi}(s),
+\]
+so $V^\star_T(s)\ge V_T^{\pi}(s)$ holds trivially.
+
+**Inductive step.**
+Assume $V^\star_{t+1}(s)\ge V^{\pi}_{t+1}(s)$ for all $s\in\mathcal{S}$. Then, for any $s\in\mathcal{S}$,
+\begin{align*}
+V_t^{\pi}(s)
+&= \sum_{a\in\mathcal{A}} \pi_t(a\mid s)\!\left(R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^{\pi}(s')\right) \\
+&\le \sum_{a\in\mathcal{A}} \pi_t(a\mid s)\!\left(R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^{\star}(s')\right) \\
+&\le \max_{a\in\mathcal{A}} \left(R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^{\star}(s')\right)
+\;=\; V_t^\star(s),
+\end{align*}
+where the first inequality uses the induction hypothesis and the second uses that an expectation is bounded above by a maximum. Hence $V_t^\star(s)\ge V_t^{\pi}(s)$ for all $s$, completing the induction. Therefore, $\{V_t^\star\}_{t=0}^T$ dominates the value functions attainable by any policy.
+
+
+Next, we show that $\{V_t^\star\}$ is _attainable_ by some policy. Since $\mathcal{A}$ is finite (tabular setting), the maximizer in the Bellman optimality operator exists for every $(t,s)$; thus we can define a (deterministic) greedy policy
+\[
+\pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
+\Big\{ R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s') \Big\}.
+\]
+A simple backward induction then shows $V_t^{\pi^\star}(s)=V_t^\star(s)$ for all $t$ and $s$: at $t=T$ both are $0$, and if $V_{t+1}^{\pi^\star}=V_{t+1}^\star$, then by construction of $\pi_t^\star$ the Bellman equality yields $V_t^{\pi^\star}=V_t^\star$. Consequently, the optimal value functions are achieved by the greedy (deterministic) policy $\pi^\star$.
+:::
+:::
+
+
+
+::: {.theorembox}
+::: {.corollary #FiniteHorizonMDPBellmanOptimalityActionValue name="Bellman Optimality (Finite Horizon, Action-Value)"}
+Given the optimal (state-)value functions $V^{\star}_{t},t=0,\dots,T$, define the optimal action-value function
+\begin{equation}
+Q_t^\star(s,a)\;=\;R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s'), \quad t=0,\dots,T-1.
+(\#eq:FiniteHorizonMDPOptimalActionValue)
+\end{equation}
+
+Then we have 
+\begin{equation}
+V_t^\star(s)=\max_{a\in\mathcal{A}} Q_t^\star(s,a),\qquad
+\pi_t^\star(s)\in\arg\max_{a\in\mathcal{A}} Q_t^\star(s,a).
+(\#eq:FiniteHorizonMDPStateValueActionValue)
+\end{equation}
+
+The optimal action-value functions satisfy:
+\begin{equation}
+\begin{split}
+Q_T^\star(s,a) & \equiv 0,\\
+Q_t^\star(s,a)
+& = R(s,a) \;+\; \mathbb{E}_{s'\sim P(\cdot\mid s,a)}
+\!\left[ \max_{a'\in\mathcal{A}} Q_{t+1}^\star(s',a') \right],
+\quad t=T-1,\ldots,0.
+\end{split}
+(\#eq:FiniteHorizonMDPBellmanRecursionActionValue)
+\end{equation}
+:::
+:::
 
 
 ## Dynamic Programming {#dp}
+
+The principle of optimality in Theorem \@ref(thm:FiniteHorizonMDPBellmanOptimality) yields a constructive procedure to compute the optimal value functions and an associated deterministic optimal policy. This backward-induction procedure is the *dynamic programming* (DP) algorithm.
+
+**Dynamic programming (finite horizon).**
+
+- **Initialization.** Set $V_T^\star(s) = 0$ for all $s \in \mathcal{S}$.
+
+- **Backward recursion.** For $t = T-1, T-2, \dots, 0$:
+
+  - *Optimal value:* for each $s \in \mathcal{S}$,
+  $$
+  V_t^\star(s)
+  = \max_{a \in \mathcal{A}}
+  \left\{
+    R(s,a) + \mathbb{E}_{s' \sim P(\cdot \mid s,a)} \big[ V_{t+1}^\star(s') \big]
+  \right\}.
+  $$
+
+  - *Greedy policy (deterministic):* for each $s \in \mathcal{S}$,
+  $$
+  \pi_t^\star(s) \in \arg\max_{a \in \mathcal{A}}
+  \left\{
+    R(s,a) + \mathbb{E}_{s' \sim P(\cdot \mid s,a)} \big[ V_{t+1}^\star(s') \big]
+  \right\}.
+  $$
+
+
+::: {.exercisebox}
+::: {.exercise}
+How does dynamic programming look like when applied to the action-value function? 
+:::
+:::
+
+::: {.exercisebox}
+::: {.exercise}
+What is the computational complexity of dynamic programming? 
+:::
+:::
+
+
+Let us try dynamic programming for the Hangover MDP presented before.
+
+::: {.examplebox}
+::: {.example #HangoverDynamicProgramming name="Dynamic Programming for Hangover MDP"}
+Consider the Hangover MDP defined by the transition graph shown in Fig. \@ref(fig:mdp-hangover-transition-graph). With slight modification to the policy evaluation code, we can find the optimal value functions and optimal policies.
+
+```Python
+# Dynamic programming (finite-horizon optimal control) for the Hangover MDP
+
+from collections import defaultdict
+from typing import Dict, List, Tuple
+
+State = str
+Action = str
+
+# --- MDP spec ---------------------------------------------------------------
+
+S: List[State] = [
+    "Hangover", "Sleep", "More Sleep", "Visit Lecture", "Study", "Pass Exam"
+]
+A: List[Action] = ["Lazy", "Productive"]
+
+# P[s, a] -> list of (s_next, prob)
+P: Dict[Tuple[State, Action], List[Tuple[State, float]]] = {
+    # Hangover
+    ("Hangover", "Lazy"):       [("Sleep", 1.0)],
+    ("Hangover", "Productive"): [("Visit Lecture", 0.3), ("Hangover", 0.7)],
+
+    # Sleep
+    ("Sleep", "Lazy"):          [("More Sleep", 1.0)],
+    ("Sleep", "Productive"):    [("Visit Lecture", 0.6), ("More Sleep", 0.4)],
+
+    # More Sleep
+    ("More Sleep", "Lazy"):       [("More Sleep", 1.0)],
+    ("More Sleep", "Productive"): [("Study", 0.5), ("More Sleep", 0.5)],
+
+    # Visit Lecture
+    ("Visit Lecture", "Lazy"):       [("Study", 0.8), ("Pass Exam", 0.2)],
+    ("Visit Lecture", "Productive"): [("Study", 1.0)],
+
+    # Study
+    ("Study", "Lazy"):         [("More Sleep", 1.0)],
+    ("Study", "Productive"):   [("Pass Exam", 0.9), ("Study", 0.1)],
+
+    # Pass Exam (absorbing)
+    ("Pass Exam", "Lazy"):       [("Pass Exam", 1.0)],
+    ("Pass Exam", "Productive"): [("Pass Exam", 1.0)],
+}
+
+def R(s: State, a: Action) -> float:
+    """Reward: +1 in Pass Exam, -1 otherwise."""
+    return 1.0 if s == "Pass Exam" else -1.0
+
+# --- Dynamic programming (Bellman optimality) -------------------------------
+
+def dynamic_programming(T: int):
+    """
+    Compute optimal finite-horizon tables:
+      - V[t][s] = V_t^*(s)
+      - Q[t][(s,a)] = Q_t^*(s,a)
+      - PI[t][s] = optimal action at (t,s)
+    with terminal condition V_T^* = 0.
+    """
+    assert T >= 0
+
+    # sanity: probabilities sum to 1 for each (s,a)
+    for key, rows in P.items():
+        total = sum(p for _, p in rows)
+        if abs(total - 1.0) > 1e-9:
+            raise ValueError(f"Probabilities for {key} sum to {total}, not 1.")
+
+    V: Dict[int, Dict[State, float]] = defaultdict(dict)
+    Q: Dict[int, Dict[Tuple[State, Action], float]] = defaultdict(dict)
+    PI: Dict[int, Dict[State, Action]] = defaultdict(dict)
+
+    # Terminal boundary
+    for s in S:
+        V[T][s] = 0.0
+        for a in A:
+            Q[T][(s, a)] = 0.0
+
+    # Backward recursion (Bellman optimality)
+    for t in range(T - 1, -1, -1):
+        for s in S:
+            # compute Q*_t(s,a)
+            for a in A:
+                exp_next = sum(p * V[t + 1][s_next] for s_next, p in P[(s, a)])
+                Q[t][(s, a)] = R(s, a) + exp_next
+
+            # greedy action and optimal value
+            # tie-breaking is deterministic by the order in A
+            best_a = max(A, key=lambda a: Q[t][(s, a)])
+            PI[t][s] = best_a
+            V[t][s] = Q[t][(s, best_a)]
+
+    return V, Q, PI
+
+# --- Example run -------------------------------------------------------------
+
+if __name__ == "__main__":
+    T = 10  # horizon
+    V, Q, PI = dynamic_programming(T=T)
+
+    print(f"Optimal V_0(s) with T={T}:")
+    for s in S:
+        print(f"  {s:13s}: {V[0][s]: .3f}")
+
+    print("\nGreedy policy at t=0:")
+    for s in S:
+        print(f"  {s:13s}: {PI[0][s]}")
+
+    print("\nAction value at t=0:")
+    for s in S:
+        print(f"  {s:13s}: {Q[0][s, A[0]]: .3f}, {Q[0][s, A[1]]: .3f}")
+```
+
+The optimal value function at $t=0$ is:
+\begin{equation}
+V^\star_0 = \begin{bmatrix}
+1.259 \\
+3.251 \\
+3.787 \\
+6.222 \\
+7.778 \\
+10
+\end{bmatrix}.
+(\#eq:HangoverOptimalValueFunction)
+\end{equation}
+Clearly, the optimal value function dominates the value function shown in \@ref(eq:HangoverRandomValueFunction) of the random policy at every state. 
+
+The optimal actions at $t=0$ are:
+\begin{equation}
+\begin{split}
+\text{Hangover} & : \text{Lazy} \\
+\text{Sleep}        & : \text{Productive} \\
+\text{More Sleep}   & : \text{Productive} \\
+\text{Visit Lecture} & : \text{Lazy} \\
+\text{Study}      & : \text{Productive} \\
+\text{Pass Exam}    & : \text{Lazy}
+\end{split}.
+\end{equation}
+
+You can play with the code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_dynamic_programming.py).
+:::
+:::
+
+## Infinite-Horizon MDP {#InfiniteHorizonMDP}
+
+
+
+
+
+
 
 
 
