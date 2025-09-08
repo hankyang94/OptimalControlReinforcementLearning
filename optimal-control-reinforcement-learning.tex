@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-09-02}
+\date{2025-09-08}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -701,11 +701,12 @@ The following Python code performs policy evaluation for this MDP, with \(T=10\)
 \end{Shaded}
 
 The code returns the following state values at \(t=0\):
-\[
+\begin{equation}
 V^{\pi}_0 = \begin{bmatrix}
 -3.582 \\ -2.306 \\ -2.180 \\ 1.757 \\ 2.939 \\ 10
 \end{bmatrix},
-\]
+\label{eq:HangoverRandomValueFunction}
+\end{equation}
 where the ordering of the states follows that defined in \(\mathcal{S}\).
 
 You can find the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_policy_evaluation.py}{here}.
@@ -713,7 +714,286 @@ You can find the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-
 
 \section{Principle of Optimality}\label{optimality}
 
+Every policy \(\pi\) induces a value function \(V_0^{\pi}\) that can be evaluated by policy evaluation (assuming the transition dynamics are known). The goal of reinforcement learning is to find an optimal policy that maximizes the value function with respect to a given initial state distribution:
+\begin{equation}
+V^\star_0 = \max_{\pi}\; \mathbb{E}_{s_0 \sim \mu(\cdot)} \big[ V_0^{\pi}(s_0) \big],
+\label{eq:FiniteHorizonMDPRLProblem}
+\end{equation}
+where we have used the superscript ``\(\star\)'' to denote the optimality of the value function. \(V^\star_0\) is often known as the \emph{optimal value function}.
+
+At first glance, \eqref{eq:FiniteHorizonMDPRLProblem} appears daunting: a naive approach would enumerate all stochastic policies \(\pi\), evaluate their value functions, and select the best. A central result in reinforcement learning and optimal control---rooted in the principle of optimality---is that the \emph{optimal} value functions satisfy a Bellman-style recursion, analogous to Proposition \ref{prp:BellmanConsistency}. This Bellman optimality recursion enables backward computation of the optimal value functions without enumerating policies.
+
+\begin{theorem}[Bellman Optimality (Finite Horizon, State-Value)]
+\protect\hypertarget{thm:FiniteHorizonMDPBellmanOptimality}{}\label{thm:FiniteHorizonMDPBellmanOptimality}Consider a finite-horizon MDP \(\mathcal{M}=(\mathcal{S},\mathcal{A},P,R,T)\) with finite state and action sets and bounded rewards.
+Define the optimal value functions \(\{V_t^\star\}_{t=0}^{T}\) by the following \emph{Bellman optimality} recursion
+\begin{equation}
+\begin{split}
+V_T^\star(s)& \equiv 0, \\
+V_t^\star(s)& = \max_{a\in\mathcal{A}}\Big\{ R(s,a)\;+\;\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s')\Big\},\ t=T-1,\ldots,0.
+\end{split}
+\label{eq:FiniteHorizonMDPBellmanOptimality}
+\end{equation}
+Then, the optimal value functions are optimal in the sense of \emph{statewise dominance}:
+\begin{equation}
+V_t^{\star}(s)\;\ge\; V_t^{\pi}(s)
+\quad\text{for all policies }\pi,\; s\in\mathcal{S},\; t=0,\ldots,T.
+\label{eq:FiniteHorizonMDPStatewiseDominance}
+\end{equation}
+
+Moreover, the deterministic policy
+\(\pi^\star=(\pi^\star_0,\ldots,\pi^\star_{T-1})\) with
+\begin{equation}
+\pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
+\Big\{ R(s,a)\;+\;\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s')\Big\}, \ \forall s\in\mathcal{S},\; t\in[T-1]
+\label{eq:FiniteHorizonMDPOptimalPolicy}
+\end{equation}
+is optimal, where ties can be broken by any fixed rule.
+\end{theorem}
+
+\begin{proof}
+We first show that the value functions defined by the Bellman optimality recursion \eqref{eq:FiniteHorizonMDPBellmanOptimality} are \emph{optimal} in the sense that they dominate the value functions of any other policy. The proof proceeds by backward induction.
+
+\textbf{Base case (\(t=T\)).}
+For every \(s\in\mathcal{S}\),
+\[
+V^\star_T(s)\;=\;0\;=\;V_T^{\pi}(s),
+\]
+so \(V^\star_T(s)\ge V_T^{\pi}(s)\) holds trivially.
+
+\textbf{Inductive step.}
+Assume \(V^\star_{t+1}(s)\ge V^{\pi}_{t+1}(s)\) for all \(s\in\mathcal{S}\). Then, for any \(s\in\mathcal{S}\),
+\begin{align*}
+V_t^{\pi}(s)
+&= \sum_{a\in\mathcal{A}} \pi_t(a\mid s)\!\left(R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^{\pi}(s')\right) \\
+&\le \sum_{a\in\mathcal{A}} \pi_t(a\mid s)\!\left(R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^{\star}(s')\right) \\
+&\le \max_{a\in\mathcal{A}} \left(R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^{\star}(s')\right)
+\;=\; V_t^\star(s),
+\end{align*}
+where the first inequality uses the induction hypothesis and the second uses that an expectation is bounded above by a maximum. Hence \(V_t^\star(s)\ge V_t^{\pi}(s)\) for all \(s\), completing the induction. Therefore, \(\{V_t^\star\}_{t=0}^T\) dominates the value functions attainable by any policy.
+
+Next, we show that \(\{V_t^\star\}\) is \emph{attainable} by some policy. Since \(\mathcal{A}\) is finite (tabular setting), the maximizer in the Bellman optimality operator exists for every \((t,s)\); thus we can define a (deterministic) greedy policy
+\[
+\pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
+\Big\{ R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s') \Big\}.
+\]
+A simple backward induction then shows \(V_t^{\pi^\star}(s)=V_t^\star(s)\) for all \(t\) and \(s\): at \(t=T\) both are \(0\), and if \(V_{t+1}^{\pi^\star}=V_{t+1}^\star\), then by construction of \(\pi_t^\star\) the Bellman equality yields \(V_t^{\pi^\star}=V_t^\star\). Consequently, the optimal value functions are achieved by the greedy (deterministic) policy \(\pi^\star\).
+\end{proof}
+
+\begin{corollary}[Bellman Optimality (Finite Horizon, Action-Value)]
+\protect\hypertarget{cor:FiniteHorizonMDPBellmanOptimalityActionValue}{}\label{cor:FiniteHorizonMDPBellmanOptimalityActionValue}Given the optimal (state-)value functions \(V^{\star}_{t},t=0,\dots,T\), define the optimal action-value function
+\begin{equation}
+Q_t^\star(s,a)\;=\;R(s,a)+\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s'), \quad t=0,\dots,T-1.
+\label{eq:FiniteHorizonMDPOptimalActionValue}
+\end{equation}
+
+Then we have
+\begin{equation}
+V_t^\star(s)=\max_{a\in\mathcal{A}} Q_t^\star(s,a),\qquad
+\pi_t^\star(s)\in\arg\max_{a\in\mathcal{A}} Q_t^\star(s,a).
+\label{eq:FiniteHorizonMDPStateValueActionValue}
+\end{equation}
+
+The optimal action-value functions satisfy:
+\begin{equation}
+\begin{split}
+Q_T^\star(s,a) & \equiv 0,\\
+Q_t^\star(s,a)
+& = R(s,a) \;+\; \mathbb{E}_{s'\sim P(\cdot\mid s,a)}
+\!\left[ \max_{a'\in\mathcal{A}} Q_{t+1}^\star(s',a') \right],
+\quad t=T-1,\ldots,0.
+\end{split}
+\label{eq:FiniteHorizonMDPBellmanRecursionActionValue}
+\end{equation}
+\end{corollary}
+
 \section{Dynamic Programming}\label{dp}
+
+The principle of optimality in Theorem \ref{thm:FiniteHorizonMDPBellmanOptimality} yields a constructive procedure to compute the optimal value functions and an associated deterministic optimal policy. This backward-induction procedure is the \emph{dynamic programming} (DP) algorithm.
+
+\textbf{Dynamic programming (finite horizon).}
+
+\begin{itemize}
+\item
+  \textbf{Initialization.} Set \(V_T^\star(s) = 0\) for all \(s \in \mathcal{S}\).
+\item
+  \textbf{Backward recursion.} For \(t = T-1, T-2, \dots, 0\):
+
+  \begin{itemize}
+  \item
+    \emph{Optimal value:} for each \(s \in \mathcal{S}\),
+    \[
+    V_t^\star(s)
+    = \max_{a \in \mathcal{A}}
+    \left\{
+    R(s,a) + \mathbb{E}_{s' \sim P(\cdot \mid s,a)} \big[ V_{t+1}^\star(s') \big]
+    \right\}.
+    \]
+  \item
+    \emph{Greedy policy (deterministic):} for each \(s \in \mathcal{S}\),
+    \[
+    \pi_t^\star(s) \in \arg\max_{a \in \mathcal{A}}
+    \left\{
+    R(s,a) + \mathbb{E}_{s' \sim P(\cdot \mid s,a)} \big[ V_{t+1}^\star(s') \big]
+    \right\}.
+    \]
+  \end{itemize}
+\end{itemize}
+
+\begin{exercise}
+How does dynamic programming look like when applied to the action-value function?
+\end{exercise}
+
+\begin{exercise}
+What is the computational complexity of dynamic programming?
+\end{exercise}
+
+Let us try dynamic programming for the Hangover MDP presented before.
+
+\begin{example}[Dynamic Programming for Hangover MDP]
+\protect\hypertarget{exm:HangoverDynamicProgramming}{}\label{exm:HangoverDynamicProgramming}Consider the Hangover MDP defined by the transition graph shown in Fig. \ref{fig:mdp-hangover-transition-graph}. With slight modification to the policy evaluation code, we can find the optimal value functions and optimal policies.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Dynamic programming (finite{-}horizon optimal control) for the Hangover MDP}
+
+\ImportTok{from}\NormalTok{ collections }\ImportTok{import}\NormalTok{ defaultdict}
+\ImportTok{from}\NormalTok{ typing }\ImportTok{import}\NormalTok{ Dict, List, Tuple}
+
+\NormalTok{State }\OperatorTok{=} \BuiltInTok{str}
+\NormalTok{Action }\OperatorTok{=} \BuiltInTok{str}
+
+\CommentTok{\# {-}{-}{-} MDP spec {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\NormalTok{S: List[State] }\OperatorTok{=}\NormalTok{ [}
+    \StringTok{"Hangover"}\NormalTok{, }\StringTok{"Sleep"}\NormalTok{, }\StringTok{"More Sleep"}\NormalTok{, }\StringTok{"Visit Lecture"}\NormalTok{, }\StringTok{"Study"}\NormalTok{, }\StringTok{"Pass Exam"}
+\NormalTok{]}
+\NormalTok{A: List[Action] }\OperatorTok{=}\NormalTok{ [}\StringTok{"Lazy"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{]}
+
+\CommentTok{\# P[s, a] {-}\textgreater{} list of (s\_next, prob)}
+\NormalTok{P: Dict[Tuple[State, Action], List[Tuple[State, }\BuiltInTok{float}\NormalTok{]]] }\OperatorTok{=}\NormalTok{ \{}
+    \CommentTok{\# Hangover}
+\NormalTok{    (}\StringTok{"Hangover"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Hangover"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Visit Lecture"}\NormalTok{, }\FloatTok{0.3}\NormalTok{), (}\StringTok{"Hangover"}\NormalTok{, }\FloatTok{0.7}\NormalTok{)],}
+
+    \CommentTok{\# Sleep}
+\NormalTok{    (}\StringTok{"Sleep"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):          [(}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Sleep"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{):    [(}\StringTok{"Visit Lecture"}\NormalTok{, }\FloatTok{0.6}\NormalTok{), (}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{0.4}\NormalTok{)],}
+
+    \CommentTok{\# More Sleep}
+\NormalTok{    (}\StringTok{"More Sleep"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"More Sleep"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Study"}\NormalTok{, }\FloatTok{0.5}\NormalTok{), (}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{0.5}\NormalTok{)],}
+
+    \CommentTok{\# Visit Lecture}
+\NormalTok{    (}\StringTok{"Visit Lecture"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"Study"}\NormalTok{, }\FloatTok{0.8}\NormalTok{), (}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{0.2}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Visit Lecture"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Study"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+
+    \CommentTok{\# Study}
+\NormalTok{    (}\StringTok{"Study"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):         [(}\StringTok{"More Sleep"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Study"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{):   [(}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{0.9}\NormalTok{), (}\StringTok{"Study"}\NormalTok{, }\FloatTok{0.1}\NormalTok{)],}
+
+    \CommentTok{\# Pass Exam (absorbing)}
+\NormalTok{    (}\StringTok{"Pass Exam"}\NormalTok{, }\StringTok{"Lazy"}\NormalTok{):       [(}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{    (}\StringTok{"Pass Exam"}\NormalTok{, }\StringTok{"Productive"}\NormalTok{): [(}\StringTok{"Pass Exam"}\NormalTok{, }\FloatTok{1.0}\NormalTok{)],}
+\NormalTok{\}}
+
+\KeywordTok{def}\NormalTok{ R(s: State, a: Action) }\OperatorTok{{-}\textgreater{}} \BuiltInTok{float}\NormalTok{:}
+    \CommentTok{"""Reward: +1 in Pass Exam, {-}1 otherwise."""}
+    \ControlFlowTok{return} \FloatTok{1.0} \ControlFlowTok{if}\NormalTok{ s }\OperatorTok{==} \StringTok{"Pass Exam"} \ControlFlowTok{else} \OperatorTok{{-}}\FloatTok{1.0}
+
+\CommentTok{\# {-}{-}{-} Dynamic programming (Bellman optimality) {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\KeywordTok{def}\NormalTok{ dynamic\_programming(T: }\BuiltInTok{int}\NormalTok{):}
+    \CommentTok{"""}
+\CommentTok{    Compute optimal finite{-}horizon tables:}
+\CommentTok{      {-} V[t][s] = V\_t\^{}*(s)}
+\CommentTok{      {-} Q[t][(s,a)] = Q\_t\^{}*(s,a)}
+\CommentTok{      {-} PI[t][s] = optimal action at (t,s)}
+\CommentTok{    with terminal condition V\_T\^{}* = 0.}
+\CommentTok{    """}
+    \ControlFlowTok{assert}\NormalTok{ T }\OperatorTok{\textgreater{}=} \DecValTok{0}
+
+    \CommentTok{\# sanity: probabilities sum to 1 for each (s,a)}
+    \ControlFlowTok{for}\NormalTok{ key, rows }\KeywordTok{in}\NormalTok{ P.items():}
+\NormalTok{        total }\OperatorTok{=} \BuiltInTok{sum}\NormalTok{(p }\ControlFlowTok{for}\NormalTok{ \_, p }\KeywordTok{in}\NormalTok{ rows)}
+        \ControlFlowTok{if} \BuiltInTok{abs}\NormalTok{(total }\OperatorTok{{-}} \FloatTok{1.0}\NormalTok{) }\OperatorTok{\textgreater{}} \FloatTok{1e{-}9}\NormalTok{:}
+            \ControlFlowTok{raise} \PreprocessorTok{ValueError}\NormalTok{(}\SpecialStringTok{f"Probabilities for }\SpecialCharTok{\{}\NormalTok{key}\SpecialCharTok{\}}\SpecialStringTok{ sum to }\SpecialCharTok{\{}\NormalTok{total}\SpecialCharTok{\}}\SpecialStringTok{, not 1."}\NormalTok{)}
+
+\NormalTok{    V: Dict[}\BuiltInTok{int}\NormalTok{, Dict[State, }\BuiltInTok{float}\NormalTok{]] }\OperatorTok{=}\NormalTok{ defaultdict(}\BuiltInTok{dict}\NormalTok{)}
+\NormalTok{    Q: Dict[}\BuiltInTok{int}\NormalTok{, Dict[Tuple[State, Action], }\BuiltInTok{float}\NormalTok{]] }\OperatorTok{=}\NormalTok{ defaultdict(}\BuiltInTok{dict}\NormalTok{)}
+\NormalTok{    PI: Dict[}\BuiltInTok{int}\NormalTok{, Dict[State, Action]] }\OperatorTok{=}\NormalTok{ defaultdict(}\BuiltInTok{dict}\NormalTok{)}
+
+    \CommentTok{\# Terminal boundary}
+    \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+\NormalTok{        V[T][s] }\OperatorTok{=} \FloatTok{0.0}
+        \ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ A:}
+\NormalTok{            Q[T][(s, a)] }\OperatorTok{=} \FloatTok{0.0}
+
+    \CommentTok{\# Backward recursion (Bellman optimality)}
+    \ControlFlowTok{for}\NormalTok{ t }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(T }\OperatorTok{{-}} \DecValTok{1}\NormalTok{, }\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\OperatorTok{{-}}\DecValTok{1}\NormalTok{):}
+        \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+            \CommentTok{\# compute Q*\_t(s,a)}
+            \ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ A:}
+\NormalTok{                exp\_next }\OperatorTok{=} \BuiltInTok{sum}\NormalTok{(p }\OperatorTok{*}\NormalTok{ V[t }\OperatorTok{+} \DecValTok{1}\NormalTok{][s\_next] }\ControlFlowTok{for}\NormalTok{ s\_next, p }\KeywordTok{in}\NormalTok{ P[(s, a)])}
+\NormalTok{                Q[t][(s, a)] }\OperatorTok{=}\NormalTok{ R(s, a) }\OperatorTok{+}\NormalTok{ exp\_next}
+
+            \CommentTok{\# greedy action and optimal value}
+            \CommentTok{\# tie{-}breaking is deterministic by the order in A}
+\NormalTok{            best\_a }\OperatorTok{=} \BuiltInTok{max}\NormalTok{(A, key}\OperatorTok{=}\KeywordTok{lambda}\NormalTok{ a: Q[t][(s, a)])}
+\NormalTok{            PI[t][s] }\OperatorTok{=}\NormalTok{ best\_a}
+\NormalTok{            V[t][s] }\OperatorTok{=}\NormalTok{ Q[t][(s, best\_a)]}
+
+    \ControlFlowTok{return}\NormalTok{ V, Q, PI}
+
+\CommentTok{\# {-}{-}{-} Example run {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
+
+\ControlFlowTok{if} \VariableTok{\_\_name\_\_} \OperatorTok{==} \StringTok{"\_\_main\_\_"}\NormalTok{:}
+\NormalTok{    T }\OperatorTok{=} \DecValTok{10}  \CommentTok{\# horizon}
+\NormalTok{    V, Q, PI }\OperatorTok{=}\NormalTok{ dynamic\_programming(T}\OperatorTok{=}\NormalTok{T)}
+
+    \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"Optimal V\_0(s) with T=}\SpecialCharTok{\{}\NormalTok{T}\SpecialCharTok{\}}\SpecialStringTok{:"}\NormalTok{)}
+    \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+        \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"  }\SpecialCharTok{\{}\NormalTok{s}\SpecialCharTok{:13s\}}\SpecialStringTok{: }\SpecialCharTok{\{}\NormalTok{V[}\DecValTok{0}\NormalTok{][s]}\SpecialCharTok{: .3f\}}\SpecialStringTok{"}\NormalTok{)}
+
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{Greedy policy at t=0:"}\NormalTok{)}
+    \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+        \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"  }\SpecialCharTok{\{}\NormalTok{s}\SpecialCharTok{:13s\}}\SpecialStringTok{: }\SpecialCharTok{\{}\NormalTok{PI[}\DecValTok{0}\NormalTok{][s]}\SpecialCharTok{\}}\SpecialStringTok{"}\NormalTok{)}
+
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"}\CharTok{\textbackslash{}n}\StringTok{Action value at t=0:"}\NormalTok{)}
+    \ControlFlowTok{for}\NormalTok{ s }\KeywordTok{in}\NormalTok{ S:}
+        \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"  }\SpecialCharTok{\{}\NormalTok{s}\SpecialCharTok{:13s\}}\SpecialStringTok{: }\SpecialCharTok{\{}\NormalTok{Q[}\DecValTok{0}\NormalTok{][s, A[}\DecValTok{0}\NormalTok{]]}\SpecialCharTok{: .3f\}}\SpecialStringTok{, }\SpecialCharTok{\{}\NormalTok{Q[}\DecValTok{0}\NormalTok{][s, A[}\DecValTok{1}\NormalTok{]]}\SpecialCharTok{: .3f\}}\SpecialStringTok{"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+The optimal value function at \(t=0\) is:
+\begin{equation}
+V^\star_0 = \begin{bmatrix}
+1.259 \\
+3.251 \\
+3.787 \\
+6.222 \\
+7.778 \\
+10
+\end{bmatrix}.
+\label{eq:HangoverOptimalValueFunction}
+\end{equation}
+Clearly, the optimal value function dominates the value function shown in \eqref{eq:HangoverRandomValueFunction} of the random policy at every state.
+
+The optimal actions at \(t=0\) are:
+\begin{equation}
+\begin{split}
+\text{Hangover} & : \text{Lazy} \\
+\text{Sleep}        & : \text{Productive} \\
+\text{More Sleep}   & : \text{Productive} \\
+\text{Visit Lecture} & : \text{Lazy} \\
+\text{Study}      & : \text{Productive} \\
+\text{Pass Exam}    & : \text{Lazy}
+\end{split}.
+\end{equation}
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_dynamic_programming.py}{here}.
+\end{example}
+
+\section{Infinite-Horizon MDP}\label{InfiniteHorizonMDP}
 
 \appendix
 

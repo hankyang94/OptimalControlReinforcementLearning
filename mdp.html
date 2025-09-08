@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-09-02" />
+<meta name="date" content="2025-09-08" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -177,6 +177,7 @@ div.csl-indent {
 </ul></li>
 <li class="chapter" data-level="1.2" data-path="mdp.html"><a href="mdp.html#optimality"><i class="fa fa-check"></i><b>1.2</b> Principle of Optimality</a></li>
 <li class="chapter" data-level="1.3" data-path="mdp.html"><a href="mdp.html#dp"><i class="fa fa-check"></i><b>1.3</b> Dynamic Programming</a></li>
+<li class="chapter" data-level="1.4" data-path="mdp.html"><a href="mdp.html#InfiniteHorizonMDP"><i class="fa fa-check"></i><b>1.4</b> Infinite-Horizon MDP</a></li>
 </ul></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="appconvex.html"><a href="appconvex.html"><i class="fa fa-check"></i><b>A</b> Convex Analysis and Optimization</a>
@@ -664,11 +665,12 @@ that takes “Lazy” with probability <span class="math inline">\(\alpha\)</spa
 <span id="cb1-99"><a href="mdp.html#cb1-99" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> S:</span>
 <span id="cb1-100"><a href="mdp.html#cb1-100" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;  </span><span class="sc">{</span>s<span class="sc">:13s}</span><span class="ss">: </span><span class="sc">{</span>V[<span class="dv">0</span>][s]<span class="sc">: .3f}</span><span class="ss">&quot;</span>)</span></code></pre></div>
 <p>The code returns the following state values at <span class="math inline">\(t=0\)</span>:
-<span class="math display">\[
+<span class="math display" id="eq:HangoverRandomValueFunction">\[\begin{equation}
 V^{\pi}_0 = \begin{bmatrix}
 -3.582 \\ -2.306 \\ -2.180 \\ 1.757 \\ 2.939 \\ 10
 \end{bmatrix},
-\]</span>
+\tag{1.8}
+\end{equation}\]</span>
 where the ordering of the states follows that defined in <span class="math inline">\(\mathcal{S}\)</span>.</p>
 <p>You can find the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_policy_evaluation.py">here</a>.</p>
 </div>
@@ -677,9 +679,270 @@ where the ordering of the states follows that defined in <span class="math inlin
 </div>
 <div id="optimality" class="section level2 hasAnchor" number="1.2">
 <h2><span class="header-section-number">1.2</span> Principle of Optimality<a href="mdp.html#optimality" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Every policy <span class="math inline">\(\pi\)</span> induces a value function <span class="math inline">\(V_0^{\pi}\)</span> that can be evaluated by policy evaluation (assuming the transition dynamics are known). The goal of reinforcement learning is to find an optimal policy that maximizes the value function with respect to a given initial state distribution:
+<span class="math display" id="eq:FiniteHorizonMDPRLProblem">\[\begin{equation}
+V^\star_0 = \max_{\pi}\; \mathbb{E}_{s_0 \sim \mu(\cdot)} \big[ V_0^{\pi}(s_0) \big],
+\tag{1.9}
+\end{equation}\]</span>
+where we have used the superscript “<span class="math inline">\(\star\)</span>” to denote the optimality of the value function. <span class="math inline">\(V^\star_0\)</span> is often known as the <em>optimal value function</em>.</p>
+<p>At first glance, <a href="mdp.html#eq:FiniteHorizonMDPRLProblem">(1.9)</a> appears daunting: a naive approach would enumerate all stochastic policies <span class="math inline">\(\pi\)</span>, evaluate their value functions, and select the best. A central result in reinforcement learning and optimal control—rooted in the principle of optimality—is that the <em>optimal</em> value functions satisfy a Bellman-style recursion, analogous to Proposition <a href="mdp.html#prp:BellmanConsistency">1.1</a>. This Bellman optimality recursion enables backward computation of the optimal value functions without enumerating policies.</p>
+<div class="theorembox">
+<div class="theorem">
+<p><span id="thm:FiniteHorizonMDPBellmanOptimality" class="theorem"><strong>Theorem 1.1  (Bellman Optimality (Finite Horizon, State-Value)) </strong></span>Consider a finite-horizon MDP <span class="math inline">\(\mathcal{M}=(\mathcal{S},\mathcal{A},P,R,T)\)</span> with finite state and action sets and bounded rewards.
+Define the optimal value functions <span class="math inline">\(\{V_t^\star\}_{t=0}^{T}\)</span> by the following <em>Bellman optimality</em> recursion
+<span class="math display" id="eq:FiniteHorizonMDPBellmanOptimality">\[\begin{equation}
+\begin{split}
+V_T^\star(s)&amp; \equiv 0, \\
+V_t^\star(s)&amp; = \max_{a\in\mathcal{A}}\Big\{ R(s,a)\;+\;\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^\star(s&#39;)\Big\},\ t=T-1,\ldots,0.
+\end{split}
+\tag{1.10}
+\end{equation}\]</span>
+Then, the optimal value functions are optimal in the sense of <em>statewise dominance</em>:
+<span class="math display" id="eq:FiniteHorizonMDPStatewiseDominance">\[\begin{equation}
+V_t^{\star}(s)\;\ge\; V_t^{\pi}(s)
+\quad\text{for all policies }\pi,\; s\in\mathcal{S},\; t=0,\ldots,T.
+\tag{1.11}
+\end{equation}\]</span></p>
+<p>Moreover, the deterministic policy
+<span class="math inline">\(\pi^\star=(\pi^\star_0,\ldots,\pi^\star_{T-1})\)</span> with
+<span class="math display" id="eq:FiniteHorizonMDPOptimalPolicy">\[\begin{equation}
+\pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
+\Big\{ R(s,a)\;+\;\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^\star(s&#39;)\Big\}, \ \forall s\in\mathcal{S},\; t\in[T-1]
+\tag{1.12}
+\end{equation}\]</span>
+is optimal, where ties can be broken by any fixed rule.</p>
+</div>
+</div>
+<div class="proofbox">
+<div class="proof">
+<p><span id="unlabeled-div-1" class="proof"><em>Proof</em>. </span>We first show that the value functions defined by the Bellman optimality recursion <a href="mdp.html#eq:FiniteHorizonMDPBellmanOptimality">(1.10)</a> are <em>optimal</em> in the sense that they dominate the value functions of any other policy. The proof proceeds by backward induction.</p>
+<p><strong>Base case (<span class="math inline">\(t=T\)</span>).</strong>
+For every <span class="math inline">\(s\in\mathcal{S}\)</span>,
+<span class="math display">\[
+V^\star_T(s)\;=\;0\;=\;V_T^{\pi}(s),
+\]</span>
+so <span class="math inline">\(V^\star_T(s)\ge V_T^{\pi}(s)\)</span> holds trivially.</p>
+<p><strong>Inductive step.</strong>
+Assume <span class="math inline">\(V^\star_{t+1}(s)\ge V^{\pi}_{t+1}(s)\)</span> for all <span class="math inline">\(s\in\mathcal{S}\)</span>. Then, for any <span class="math inline">\(s\in\mathcal{S}\)</span>,
+<span class="math display">\[\begin{align*}
+V_t^{\pi}(s)
+&amp;= \sum_{a\in\mathcal{A}} \pi_t(a\mid s)\!\left(R(s,a)+\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^{\pi}(s&#39;)\right) \\
+&amp;\le \sum_{a\in\mathcal{A}} \pi_t(a\mid s)\!\left(R(s,a)+\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^{\star}(s&#39;)\right) \\
+&amp;\le \max_{a\in\mathcal{A}} \left(R(s,a)+\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^{\star}(s&#39;)\right)
+\;=\; V_t^\star(s),
+\end{align*}\]</span>
+where the first inequality uses the induction hypothesis and the second uses that an expectation is bounded above by a maximum. Hence <span class="math inline">\(V_t^\star(s)\ge V_t^{\pi}(s)\)</span> for all <span class="math inline">\(s\)</span>, completing the induction. Therefore, <span class="math inline">\(\{V_t^\star\}_{t=0}^T\)</span> dominates the value functions attainable by any policy.</p>
+<p>Next, we show that <span class="math inline">\(\{V_t^\star\}\)</span> is <em>attainable</em> by some policy. Since <span class="math inline">\(\mathcal{A}\)</span> is finite (tabular setting), the maximizer in the Bellman optimality operator exists for every <span class="math inline">\((t,s)\)</span>; thus we can define a (deterministic) greedy policy
+<span class="math display">\[
+\pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
+\Big\{ R(s,a)+\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^\star(s&#39;) \Big\}.
+\]</span>
+A simple backward induction then shows <span class="math inline">\(V_t^{\pi^\star}(s)=V_t^\star(s)\)</span> for all <span class="math inline">\(t\)</span> and <span class="math inline">\(s\)</span>: at <span class="math inline">\(t=T\)</span> both are <span class="math inline">\(0\)</span>, and if <span class="math inline">\(V_{t+1}^{\pi^\star}=V_{t+1}^\star\)</span>, then by construction of <span class="math inline">\(\pi_t^\star\)</span> the Bellman equality yields <span class="math inline">\(V_t^{\pi^\star}=V_t^\star\)</span>. Consequently, the optimal value functions are achieved by the greedy (deterministic) policy <span class="math inline">\(\pi^\star\)</span>.</p>
+</div>
+</div>
+<div class="theorembox">
+<div class="corollary">
+<p><span id="cor:FiniteHorizonMDPBellmanOptimalityActionValue" class="corollary"><strong>Corollary 1.1  (Bellman Optimality (Finite Horizon, Action-Value)) </strong></span>Given the optimal (state-)value functions <span class="math inline">\(V^{\star}_{t},t=0,\dots,T\)</span>, define the optimal action-value function
+<span class="math display" id="eq:FiniteHorizonMDPOptimalActionValue">\[\begin{equation}
+Q_t^\star(s,a)\;=\;R(s,a)+\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^\star(s&#39;), \quad t=0,\dots,T-1.
+\tag{1.13}
+\end{equation}\]</span></p>
+<p>Then we have
+<span class="math display" id="eq:FiniteHorizonMDPStateValueActionValue">\[\begin{equation}
+V_t^\star(s)=\max_{a\in\mathcal{A}} Q_t^\star(s,a),\qquad
+\pi_t^\star(s)\in\arg\max_{a\in\mathcal{A}} Q_t^\star(s,a).
+\tag{1.14}
+\end{equation}\]</span></p>
+<p>The optimal action-value functions satisfy:
+<span class="math display" id="eq:FiniteHorizonMDPBellmanRecursionActionValue">\[\begin{equation}
+\begin{split}
+Q_T^\star(s,a) &amp; \equiv 0,\\
+Q_t^\star(s,a)
+&amp; = R(s,a) \;+\; \mathbb{E}_{s&#39;\sim P(\cdot\mid s,a)}
+\!\left[ \max_{a&#39;\in\mathcal{A}} Q_{t+1}^\star(s&#39;,a&#39;) \right],
+\quad t=T-1,\ldots,0.
+\end{split}
+\tag{1.15}
+\end{equation}\]</span></p>
+</div>
+</div>
 </div>
 <div id="dp" class="section level2 hasAnchor" number="1.3">
 <h2><span class="header-section-number">1.3</span> Dynamic Programming<a href="mdp.html#dp" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>The principle of optimality in Theorem <a href="mdp.html#thm:FiniteHorizonMDPBellmanOptimality">1.1</a> yields a constructive procedure to compute the optimal value functions and an associated deterministic optimal policy. This backward-induction procedure is the <em>dynamic programming</em> (DP) algorithm.</p>
+<p><strong>Dynamic programming (finite horizon).</strong></p>
+<ul>
+<li><p><strong>Initialization.</strong> Set <span class="math inline">\(V_T^\star(s) = 0\)</span> for all <span class="math inline">\(s \in \mathcal{S}\)</span>.</p></li>
+<li><p><strong>Backward recursion.</strong> For <span class="math inline">\(t = T-1, T-2, \dots, 0\)</span>:</p>
+<ul>
+<li><p><em>Optimal value:</em> for each <span class="math inline">\(s \in \mathcal{S}\)</span>,
+<span class="math display">\[
+V_t^\star(s)
+= \max_{a \in \mathcal{A}}
+\left\{
+R(s,a) + \mathbb{E}_{s&#39; \sim P(\cdot \mid s,a)} \big[ V_{t+1}^\star(s&#39;) \big]
+\right\}.
+\]</span></p></li>
+<li><p><em>Greedy policy (deterministic):</em> for each <span class="math inline">\(s \in \mathcal{S}\)</span>,
+<span class="math display">\[
+\pi_t^\star(s) \in \arg\max_{a \in \mathcal{A}}
+\left\{
+R(s,a) + \mathbb{E}_{s&#39; \sim P(\cdot \mid s,a)} \big[ V_{t+1}^\star(s&#39;) \big]
+\right\}.
+\]</span></p></li>
+</ul></li>
+</ul>
+<div class="exercisebox">
+<div class="exercise">
+<p><span id="exr:unlabeled-div-2" class="exercise"><strong>Exercise 1.1  </strong></span>How does dynamic programming look like when applied to the action-value function?</p>
+</div>
+</div>
+<div class="exercisebox">
+<div class="exercise">
+<p><span id="exr:unlabeled-div-3" class="exercise"><strong>Exercise 1.2  </strong></span>What is the computational complexity of dynamic programming?</p>
+</div>
+</div>
+<p>Let us try dynamic programming for the Hangover MDP presented before.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:HangoverDynamicProgramming" class="example"><strong>Example 1.2  (Dynamic Programming for Hangover MDP) </strong></span>Consider the Hangover MDP defined by the transition graph shown in Fig. <a href="mdp.html#fig:mdp-hangover-transition-graph">1.2</a>. With slight modification to the policy evaluation code, we can find the optimal value functions and optimal policies.</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="mdp.html#cb2-1" tabindex="-1"></a><span class="co"># Dynamic programming (finite-horizon optimal control) for the Hangover MDP</span></span>
+<span id="cb2-2"><a href="mdp.html#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="mdp.html#cb2-3" tabindex="-1"></a><span class="im">from</span> collections <span class="im">import</span> defaultdict</span>
+<span id="cb2-4"><a href="mdp.html#cb2-4" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Dict, List, Tuple</span>
+<span id="cb2-5"><a href="mdp.html#cb2-5" tabindex="-1"></a></span>
+<span id="cb2-6"><a href="mdp.html#cb2-6" tabindex="-1"></a>State <span class="op">=</span> <span class="bu">str</span></span>
+<span id="cb2-7"><a href="mdp.html#cb2-7" tabindex="-1"></a>Action <span class="op">=</span> <span class="bu">str</span></span>
+<span id="cb2-8"><a href="mdp.html#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="mdp.html#cb2-9" tabindex="-1"></a><span class="co"># --- MDP spec ---------------------------------------------------------------</span></span>
+<span id="cb2-10"><a href="mdp.html#cb2-10" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="mdp.html#cb2-11" tabindex="-1"></a>S: List[State] <span class="op">=</span> [</span>
+<span id="cb2-12"><a href="mdp.html#cb2-12" tabindex="-1"></a>    <span class="st">&quot;Hangover&quot;</span>, <span class="st">&quot;Sleep&quot;</span>, <span class="st">&quot;More Sleep&quot;</span>, <span class="st">&quot;Visit Lecture&quot;</span>, <span class="st">&quot;Study&quot;</span>, <span class="st">&quot;Pass Exam&quot;</span></span>
+<span id="cb2-13"><a href="mdp.html#cb2-13" tabindex="-1"></a>]</span>
+<span id="cb2-14"><a href="mdp.html#cb2-14" tabindex="-1"></a>A: List[Action] <span class="op">=</span> [<span class="st">&quot;Lazy&quot;</span>, <span class="st">&quot;Productive&quot;</span>]</span>
+<span id="cb2-15"><a href="mdp.html#cb2-15" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="mdp.html#cb2-16" tabindex="-1"></a><span class="co"># P[s, a] -&gt; list of (s_next, prob)</span></span>
+<span id="cb2-17"><a href="mdp.html#cb2-17" tabindex="-1"></a>P: Dict[Tuple[State, Action], List[Tuple[State, <span class="bu">float</span>]]] <span class="op">=</span> {</span>
+<span id="cb2-18"><a href="mdp.html#cb2-18" tabindex="-1"></a>    <span class="co"># Hangover</span></span>
+<span id="cb2-19"><a href="mdp.html#cb2-19" tabindex="-1"></a>    (<span class="st">&quot;Hangover&quot;</span>, <span class="st">&quot;Lazy&quot;</span>):       [(<span class="st">&quot;Sleep&quot;</span>, <span class="fl">1.0</span>)],</span>
+<span id="cb2-20"><a href="mdp.html#cb2-20" tabindex="-1"></a>    (<span class="st">&quot;Hangover&quot;</span>, <span class="st">&quot;Productive&quot;</span>): [(<span class="st">&quot;Visit Lecture&quot;</span>, <span class="fl">0.3</span>), (<span class="st">&quot;Hangover&quot;</span>, <span class="fl">0.7</span>)],</span>
+<span id="cb2-21"><a href="mdp.html#cb2-21" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="mdp.html#cb2-22" tabindex="-1"></a>    <span class="co"># Sleep</span></span>
+<span id="cb2-23"><a href="mdp.html#cb2-23" tabindex="-1"></a>    (<span class="st">&quot;Sleep&quot;</span>, <span class="st">&quot;Lazy&quot;</span>):          [(<span class="st">&quot;More Sleep&quot;</span>, <span class="fl">1.0</span>)],</span>
+<span id="cb2-24"><a href="mdp.html#cb2-24" tabindex="-1"></a>    (<span class="st">&quot;Sleep&quot;</span>, <span class="st">&quot;Productive&quot;</span>):    [(<span class="st">&quot;Visit Lecture&quot;</span>, <span class="fl">0.6</span>), (<span class="st">&quot;More Sleep&quot;</span>, <span class="fl">0.4</span>)],</span>
+<span id="cb2-25"><a href="mdp.html#cb2-25" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="mdp.html#cb2-26" tabindex="-1"></a>    <span class="co"># More Sleep</span></span>
+<span id="cb2-27"><a href="mdp.html#cb2-27" tabindex="-1"></a>    (<span class="st">&quot;More Sleep&quot;</span>, <span class="st">&quot;Lazy&quot;</span>):       [(<span class="st">&quot;More Sleep&quot;</span>, <span class="fl">1.0</span>)],</span>
+<span id="cb2-28"><a href="mdp.html#cb2-28" tabindex="-1"></a>    (<span class="st">&quot;More Sleep&quot;</span>, <span class="st">&quot;Productive&quot;</span>): [(<span class="st">&quot;Study&quot;</span>, <span class="fl">0.5</span>), (<span class="st">&quot;More Sleep&quot;</span>, <span class="fl">0.5</span>)],</span>
+<span id="cb2-29"><a href="mdp.html#cb2-29" tabindex="-1"></a></span>
+<span id="cb2-30"><a href="mdp.html#cb2-30" tabindex="-1"></a>    <span class="co"># Visit Lecture</span></span>
+<span id="cb2-31"><a href="mdp.html#cb2-31" tabindex="-1"></a>    (<span class="st">&quot;Visit Lecture&quot;</span>, <span class="st">&quot;Lazy&quot;</span>):       [(<span class="st">&quot;Study&quot;</span>, <span class="fl">0.8</span>), (<span class="st">&quot;Pass Exam&quot;</span>, <span class="fl">0.2</span>)],</span>
+<span id="cb2-32"><a href="mdp.html#cb2-32" tabindex="-1"></a>    (<span class="st">&quot;Visit Lecture&quot;</span>, <span class="st">&quot;Productive&quot;</span>): [(<span class="st">&quot;Study&quot;</span>, <span class="fl">1.0</span>)],</span>
+<span id="cb2-33"><a href="mdp.html#cb2-33" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="mdp.html#cb2-34" tabindex="-1"></a>    <span class="co"># Study</span></span>
+<span id="cb2-35"><a href="mdp.html#cb2-35" tabindex="-1"></a>    (<span class="st">&quot;Study&quot;</span>, <span class="st">&quot;Lazy&quot;</span>):         [(<span class="st">&quot;More Sleep&quot;</span>, <span class="fl">1.0</span>)],</span>
+<span id="cb2-36"><a href="mdp.html#cb2-36" tabindex="-1"></a>    (<span class="st">&quot;Study&quot;</span>, <span class="st">&quot;Productive&quot;</span>):   [(<span class="st">&quot;Pass Exam&quot;</span>, <span class="fl">0.9</span>), (<span class="st">&quot;Study&quot;</span>, <span class="fl">0.1</span>)],</span>
+<span id="cb2-37"><a href="mdp.html#cb2-37" tabindex="-1"></a></span>
+<span id="cb2-38"><a href="mdp.html#cb2-38" tabindex="-1"></a>    <span class="co"># Pass Exam (absorbing)</span></span>
+<span id="cb2-39"><a href="mdp.html#cb2-39" tabindex="-1"></a>    (<span class="st">&quot;Pass Exam&quot;</span>, <span class="st">&quot;Lazy&quot;</span>):       [(<span class="st">&quot;Pass Exam&quot;</span>, <span class="fl">1.0</span>)],</span>
+<span id="cb2-40"><a href="mdp.html#cb2-40" tabindex="-1"></a>    (<span class="st">&quot;Pass Exam&quot;</span>, <span class="st">&quot;Productive&quot;</span>): [(<span class="st">&quot;Pass Exam&quot;</span>, <span class="fl">1.0</span>)],</span>
+<span id="cb2-41"><a href="mdp.html#cb2-41" tabindex="-1"></a>}</span>
+<span id="cb2-42"><a href="mdp.html#cb2-42" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="mdp.html#cb2-43" tabindex="-1"></a><span class="kw">def</span> R(s: State, a: Action) <span class="op">-&gt;</span> <span class="bu">float</span>:</span>
+<span id="cb2-44"><a href="mdp.html#cb2-44" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Reward: +1 in Pass Exam, -1 otherwise.&quot;&quot;&quot;</span></span>
+<span id="cb2-45"><a href="mdp.html#cb2-45" tabindex="-1"></a>    <span class="cf">return</span> <span class="fl">1.0</span> <span class="cf">if</span> s <span class="op">==</span> <span class="st">&quot;Pass Exam&quot;</span> <span class="cf">else</span> <span class="op">-</span><span class="fl">1.0</span></span>
+<span id="cb2-46"><a href="mdp.html#cb2-46" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="mdp.html#cb2-47" tabindex="-1"></a><span class="co"># --- Dynamic programming (Bellman optimality) -------------------------------</span></span>
+<span id="cb2-48"><a href="mdp.html#cb2-48" tabindex="-1"></a></span>
+<span id="cb2-49"><a href="mdp.html#cb2-49" tabindex="-1"></a><span class="kw">def</span> dynamic_programming(T: <span class="bu">int</span>):</span>
+<span id="cb2-50"><a href="mdp.html#cb2-50" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;</span></span>
+<span id="cb2-51"><a href="mdp.html#cb2-51" tabindex="-1"></a><span class="co">    Compute optimal finite-horizon tables:</span></span>
+<span id="cb2-52"><a href="mdp.html#cb2-52" tabindex="-1"></a><span class="co">      - V[t][s] = V_t^*(s)</span></span>
+<span id="cb2-53"><a href="mdp.html#cb2-53" tabindex="-1"></a><span class="co">      - Q[t][(s,a)] = Q_t^*(s,a)</span></span>
+<span id="cb2-54"><a href="mdp.html#cb2-54" tabindex="-1"></a><span class="co">      - PI[t][s] = optimal action at (t,s)</span></span>
+<span id="cb2-55"><a href="mdp.html#cb2-55" tabindex="-1"></a><span class="co">    with terminal condition V_T^* = 0.</span></span>
+<span id="cb2-56"><a href="mdp.html#cb2-56" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb2-57"><a href="mdp.html#cb2-57" tabindex="-1"></a>    <span class="cf">assert</span> T <span class="op">&gt;=</span> <span class="dv">0</span></span>
+<span id="cb2-58"><a href="mdp.html#cb2-58" tabindex="-1"></a></span>
+<span id="cb2-59"><a href="mdp.html#cb2-59" tabindex="-1"></a>    <span class="co"># sanity: probabilities sum to 1 for each (s,a)</span></span>
+<span id="cb2-60"><a href="mdp.html#cb2-60" tabindex="-1"></a>    <span class="cf">for</span> key, rows <span class="kw">in</span> P.items():</span>
+<span id="cb2-61"><a href="mdp.html#cb2-61" tabindex="-1"></a>        total <span class="op">=</span> <span class="bu">sum</span>(p <span class="cf">for</span> _, p <span class="kw">in</span> rows)</span>
+<span id="cb2-62"><a href="mdp.html#cb2-62" tabindex="-1"></a>        <span class="cf">if</span> <span class="bu">abs</span>(total <span class="op">-</span> <span class="fl">1.0</span>) <span class="op">&gt;</span> <span class="fl">1e-9</span>:</span>
+<span id="cb2-63"><a href="mdp.html#cb2-63" tabindex="-1"></a>            <span class="cf">raise</span> <span class="pp">ValueError</span>(<span class="ss">f&quot;Probabilities for </span><span class="sc">{</span>key<span class="sc">}</span><span class="ss"> sum to </span><span class="sc">{</span>total<span class="sc">}</span><span class="ss">, not 1.&quot;</span>)</span>
+<span id="cb2-64"><a href="mdp.html#cb2-64" tabindex="-1"></a></span>
+<span id="cb2-65"><a href="mdp.html#cb2-65" tabindex="-1"></a>    V: Dict[<span class="bu">int</span>, Dict[State, <span class="bu">float</span>]] <span class="op">=</span> defaultdict(<span class="bu">dict</span>)</span>
+<span id="cb2-66"><a href="mdp.html#cb2-66" tabindex="-1"></a>    Q: Dict[<span class="bu">int</span>, Dict[Tuple[State, Action], <span class="bu">float</span>]] <span class="op">=</span> defaultdict(<span class="bu">dict</span>)</span>
+<span id="cb2-67"><a href="mdp.html#cb2-67" tabindex="-1"></a>    PI: Dict[<span class="bu">int</span>, Dict[State, Action]] <span class="op">=</span> defaultdict(<span class="bu">dict</span>)</span>
+<span id="cb2-68"><a href="mdp.html#cb2-68" tabindex="-1"></a></span>
+<span id="cb2-69"><a href="mdp.html#cb2-69" tabindex="-1"></a>    <span class="co"># Terminal boundary</span></span>
+<span id="cb2-70"><a href="mdp.html#cb2-70" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> S:</span>
+<span id="cb2-71"><a href="mdp.html#cb2-71" tabindex="-1"></a>        V[T][s] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb2-72"><a href="mdp.html#cb2-72" tabindex="-1"></a>        <span class="cf">for</span> a <span class="kw">in</span> A:</span>
+<span id="cb2-73"><a href="mdp.html#cb2-73" tabindex="-1"></a>            Q[T][(s, a)] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb2-74"><a href="mdp.html#cb2-74" tabindex="-1"></a></span>
+<span id="cb2-75"><a href="mdp.html#cb2-75" tabindex="-1"></a>    <span class="co"># Backward recursion (Bellman optimality)</span></span>
+<span id="cb2-76"><a href="mdp.html#cb2-76" tabindex="-1"></a>    <span class="cf">for</span> t <span class="kw">in</span> <span class="bu">range</span>(T <span class="op">-</span> <span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>, <span class="op">-</span><span class="dv">1</span>):</span>
+<span id="cb2-77"><a href="mdp.html#cb2-77" tabindex="-1"></a>        <span class="cf">for</span> s <span class="kw">in</span> S:</span>
+<span id="cb2-78"><a href="mdp.html#cb2-78" tabindex="-1"></a>            <span class="co"># compute Q*_t(s,a)</span></span>
+<span id="cb2-79"><a href="mdp.html#cb2-79" tabindex="-1"></a>            <span class="cf">for</span> a <span class="kw">in</span> A:</span>
+<span id="cb2-80"><a href="mdp.html#cb2-80" tabindex="-1"></a>                exp_next <span class="op">=</span> <span class="bu">sum</span>(p <span class="op">*</span> V[t <span class="op">+</span> <span class="dv">1</span>][s_next] <span class="cf">for</span> s_next, p <span class="kw">in</span> P[(s, a)])</span>
+<span id="cb2-81"><a href="mdp.html#cb2-81" tabindex="-1"></a>                Q[t][(s, a)] <span class="op">=</span> R(s, a) <span class="op">+</span> exp_next</span>
+<span id="cb2-82"><a href="mdp.html#cb2-82" tabindex="-1"></a></span>
+<span id="cb2-83"><a href="mdp.html#cb2-83" tabindex="-1"></a>            <span class="co"># greedy action and optimal value</span></span>
+<span id="cb2-84"><a href="mdp.html#cb2-84" tabindex="-1"></a>            <span class="co"># tie-breaking is deterministic by the order in A</span></span>
+<span id="cb2-85"><a href="mdp.html#cb2-85" tabindex="-1"></a>            best_a <span class="op">=</span> <span class="bu">max</span>(A, key<span class="op">=</span><span class="kw">lambda</span> a: Q[t][(s, a)])</span>
+<span id="cb2-86"><a href="mdp.html#cb2-86" tabindex="-1"></a>            PI[t][s] <span class="op">=</span> best_a</span>
+<span id="cb2-87"><a href="mdp.html#cb2-87" tabindex="-1"></a>            V[t][s] <span class="op">=</span> Q[t][(s, best_a)]</span>
+<span id="cb2-88"><a href="mdp.html#cb2-88" tabindex="-1"></a></span>
+<span id="cb2-89"><a href="mdp.html#cb2-89" tabindex="-1"></a>    <span class="cf">return</span> V, Q, PI</span>
+<span id="cb2-90"><a href="mdp.html#cb2-90" tabindex="-1"></a></span>
+<span id="cb2-91"><a href="mdp.html#cb2-91" tabindex="-1"></a><span class="co"># --- Example run -------------------------------------------------------------</span></span>
+<span id="cb2-92"><a href="mdp.html#cb2-92" tabindex="-1"></a></span>
+<span id="cb2-93"><a href="mdp.html#cb2-93" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb2-94"><a href="mdp.html#cb2-94" tabindex="-1"></a>    T <span class="op">=</span> <span class="dv">10</span>  <span class="co"># horizon</span></span>
+<span id="cb2-95"><a href="mdp.html#cb2-95" tabindex="-1"></a>    V, Q, PI <span class="op">=</span> dynamic_programming(T<span class="op">=</span>T)</span>
+<span id="cb2-96"><a href="mdp.html#cb2-96" tabindex="-1"></a></span>
+<span id="cb2-97"><a href="mdp.html#cb2-97" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Optimal V_0(s) with T=</span><span class="sc">{</span>T<span class="sc">}</span><span class="ss">:&quot;</span>)</span>
+<span id="cb2-98"><a href="mdp.html#cb2-98" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> S:</span>
+<span id="cb2-99"><a href="mdp.html#cb2-99" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;  </span><span class="sc">{</span>s<span class="sc">:13s}</span><span class="ss">: </span><span class="sc">{</span>V[<span class="dv">0</span>][s]<span class="sc">: .3f}</span><span class="ss">&quot;</span>)</span>
+<span id="cb2-100"><a href="mdp.html#cb2-100" tabindex="-1"></a></span>
+<span id="cb2-101"><a href="mdp.html#cb2-101" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">Greedy policy at t=0:&quot;</span>)</span>
+<span id="cb2-102"><a href="mdp.html#cb2-102" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> S:</span>
+<span id="cb2-103"><a href="mdp.html#cb2-103" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;  </span><span class="sc">{</span>s<span class="sc">:13s}</span><span class="ss">: </span><span class="sc">{</span>PI[<span class="dv">0</span>][s]<span class="sc">}</span><span class="ss">&quot;</span>)</span>
+<span id="cb2-104"><a href="mdp.html#cb2-104" tabindex="-1"></a></span>
+<span id="cb2-105"><a href="mdp.html#cb2-105" tabindex="-1"></a>    <span class="bu">print</span>(<span class="st">&quot;</span><span class="ch">\n</span><span class="st">Action value at t=0:&quot;</span>)</span>
+<span id="cb2-106"><a href="mdp.html#cb2-106" tabindex="-1"></a>    <span class="cf">for</span> s <span class="kw">in</span> S:</span>
+<span id="cb2-107"><a href="mdp.html#cb2-107" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;  </span><span class="sc">{</span>s<span class="sc">:13s}</span><span class="ss">: </span><span class="sc">{</span>Q[<span class="dv">0</span>][s, A[<span class="dv">0</span>]]<span class="sc">: .3f}</span><span class="ss">, </span><span class="sc">{</span>Q[<span class="dv">0</span>][s, A[<span class="dv">1</span>]]<span class="sc">: .3f}</span><span class="ss">&quot;</span>)</span></code></pre></div>
+<p>The optimal value function at <span class="math inline">\(t=0\)</span> is:
+<span class="math display" id="eq:HangoverOptimalValueFunction">\[\begin{equation}
+V^\star_0 = \begin{bmatrix}
+1.259 \\
+3.251 \\
+3.787 \\
+6.222 \\
+7.778 \\
+10
+\end{bmatrix}.
+\tag{1.16}
+\end{equation}\]</span>
+Clearly, the optimal value function dominates the value function shown in <a href="mdp.html#eq:HangoverRandomValueFunction">(1.8)</a> of the random policy at every state.</p>
+<p>The optimal actions at <span class="math inline">\(t=0\)</span> are:
+<span class="math display">\[\begin{equation}
+\begin{split}
+\text{Hangover} &amp; : \text{Lazy} \\
+\text{Sleep}        &amp; : \text{Productive} \\
+\text{More Sleep}   &amp; : \text{Productive} \\
+\text{Visit Lecture} &amp; : \text{Lazy} \\
+\text{Study}      &amp; : \text{Productive} \\
+\text{Pass Exam}    &amp; : \text{Lazy}
+\end{split}.
+\end{equation}\]</span></p>
+<p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_dynamic_programming.py">here</a>.</p>
+</div>
+</div>
+</div>
+<div id="InfiniteHorizonMDP" class="section level2 hasAnchor" number="1.4">
+<h2><span class="header-section-number">1.4</span> Infinite-Horizon MDP<a href="mdp.html#InfiniteHorizonMDP" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 
 </div>
 </div>
