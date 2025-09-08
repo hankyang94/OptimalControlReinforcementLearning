@@ -743,8 +743,11 @@ V_t^{\star}(s)\;\ge\; V_t^{\pi}(s)
 Moreover, the deterministic policy
 \(\pi^\star=(\pi^\star_0,\ldots,\pi^\star_{T-1})\) with
 \begin{equation}
+\begin{split}
 \pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
-\Big\{ R(s,a)\;+\;\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s')\Big\}, \ \forall s\in\mathcal{S},\; t\in[T-1]
+\Big\{ R(s,a)\;+\;\sum_{s'\in\mathcal{S}} P(s'\mid s,a)\,V_{t+1}^\star(s')\Big\}, \\
+\text{for any } s\in\mathcal{S},\; t=0,\dots,T-1
+\end{split}
 \label{eq:FiniteHorizonMDPOptimalPolicy}
 \end{equation}
 is optimal, where ties can be broken by any fixed rule.

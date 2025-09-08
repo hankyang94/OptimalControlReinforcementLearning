@@ -706,8 +706,11 @@ V_t^{\star}(s)\;\ge\; V_t^{\pi}(s)
 <p>Moreover, the deterministic policy
 <span class="math inline">\(\pi^\star=(\pi^\star_0,\ldots,\pi^\star_{T-1})\)</span> with
 <span class="math display" id="eq:FiniteHorizonMDPOptimalPolicy">\[\begin{equation}
+\begin{split}
 \pi_t^\star(s)\;\in\;\arg\max_{a\in\mathcal{A}}
-\Big\{ R(s,a)\;+\;\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^\star(s&#39;)\Big\}, \ \forall s\in\mathcal{S},\; t\in[T-1]
+\Big\{ R(s,a)\;+\;\sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\,V_{t+1}^\star(s&#39;)\Big\}, \\
+\text{for any } s\in\mathcal{S},\; t=0,\dots,T-1
+\end{split}
 \tag{1.12}
 \end{equation}\]</span>
 is optimal, where ties can be broken by any fixed rule.</p>
