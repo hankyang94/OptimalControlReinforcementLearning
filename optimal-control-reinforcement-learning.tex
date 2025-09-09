@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-09-08}
+\date{2025-09-09}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -344,7 +344,7 @@ Q_t^{\pi}(s,a) & = R(s,a) + \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^{\pi}_{t
 
 From these two equations, we can derive the Bellman Consistency equations.
 
-\begin{proposition}[Bellman Consistency]
+\begin{proposition}[Bellman Consistency (Finite Horizon)]
 \protect\hypertarget{prp:BellmanConsistency}{}\label{prp:BellmanConsistency}The state-value function \(V^{\pi}_t(\cdot)\) in \eqref{eq:FiniteHorizonMDP-state-value} satisfies the following recursion:
 \begin{equation}
 \begin{split}
@@ -712,7 +712,7 @@ where the ordering of the states follows that defined in \(\mathcal{S}\).
 You can find the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/hangover_policy_evaluation.py}{here}.
 \end{example}
 
-\section{Principle of Optimality}\label{optimality}
+\subsection{Principle of Optimality}\label{optimality}
 
 Every policy \(\pi\) induces a value function \(V_0^{\pi}\) that can be evaluated by policy evaluation (assuming the transition dynamics are known). The goal of reinforcement learning is to find an optimal policy that maximizes the value function with respect to a given initial state distribution:
 \begin{equation}
@@ -809,7 +809,7 @@ Q_t^\star(s,a)
 \end{equation}
 \end{corollary}
 
-\section{Dynamic Programming}\label{dp}
+\subsection{Dynamic Programming}\label{dp}
 
 The principle of optimality in Theorem \ref{thm:FiniteHorizonMDPBellmanOptimality} yields a constructive procedure to compute the optimal value functions and an associated deterministic optimal policy. This backward-induction procedure is the \emph{dynamic programming} (DP) algorithm.
 
@@ -997,6 +997,756 @@ You can play with the code \href{https://github.com/ComputationalRobotics/2025-E
 \end{example}
 
 \section{Infinite-Horizon MDP}\label{InfiniteHorizonMDP}
+
+In a finite-horizon MDP, the horizon \(T\) must be specified in advance in order to carry out policy evaluation and dynamic programming. The finite horizon naturally provides a terminal condition, which serves as the boundary condition that allows backward recursion to proceed.
+
+In many practical applications, however, the horizon \(T\) is not well defined or is difficult to determine. In such cases, it is often more natural and convenient to adopt the infinite-horizon MDP formulation.
+
+An infinite-horizon MDP is given by the following tuple:
+\[
+\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, \gamma),
+\]
+where \(\mathcal{S}\), \(\mathcal{A}\), \(P\), and \(R\) are the same as defined before in a finite-horizon MDP. We still restrict ourselves to the tabular MDP setup where \(\mathcal{S}\) and \(\mathcal{A}\) both have a finite number of elements.
+
+The key difference between the finite-horizon and infinite-horizon formulations is that the fixed horizon \(T\) is replaced by a \textbf{discount factor} \(\gamma \in [0,1)\). This discount factor weights future rewards less heavily than immediate rewards, as we will see shortly.
+
+\textbf{Stationary Policy.} In an infinite-horizon MDP, we focus on \emph{stationary} policies \(\pi: \mathcal{S} \mapsto \Delta(\mathcal{A})\), where \(\pi(a \mid s)\) denotes the probability of taking action \(a\) in state \(s\).
+
+In contrast, in a finite-horizon MDP we considered a tuple of \(T\) policies (see \eqref{eq:policy-tuple}), where each \(\pi_t\) could vary with time (i.e., policies were non-stationary).
+
+Intuitively, in the infinite-horizon setting, it suffices to consider stationary policies because the decision-making problem at time \(t\) is equivalent to the problem at time \(t + k\) for any \(k \in \mathbb{N}\), as both face the same infinite horizon.
+
+\textbf{Trajectory and Return}. Given an initial state \(s_0 \in \mathcal{S}\) and a stationary policy \(\pi\), the MDP will evolve as
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Start at state \(s_0\)
+\item
+  Take action \(a_0 \sim \pi(\cdot \mid s_0)\) following policy \(\pi\)
+\item
+  Collect reward \(r_0 = R(s_0, a_0)\)
+\item
+  Transition to state \(s_1 \sim P(s' \mid s_0, a_0)\) following the dynamics
+\item
+  Go to step 2 and continue forever
+\end{enumerate}
+
+This process generates a trajectory of states, actions, and rewards:
+\[
+\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \dots).
+\]
+
+The return of a trajectory is defined as
+\[
+g_0 = r_0 + \gamma r_1 + \gamma^2 r_2 + \dots = \sum_{t=0}^{\infty} \gamma^t r_t.
+\]
+
+Here, the discount factor \(\gamma\) plays a key role: it progressively reduces the weight of rewards received further in the future, making them less influential as \(t\) increases.
+
+\subsection{Value Functions}\label{value-functions}
+
+Similar to the case of finite-horizon MDP, we can define the state-value function and the action-value function associated with a policy \(\pi\).
+
+\textbf{State-Value Function}. The value of a state \(s \in \mathcal{S}\) under policy \(\pi\) is the expected discounted return obtained when starting from \(s\) at time \(0\):
+\begin{equation}
+V^{\pi}(s) := \mathbb{E}\left[ \sum_{t=0}^{\infty} \gamma^t R(s_t, a_t) \,\middle|\, s_0 = s, a_t \sim \pi(\cdot \mid s_t), s_{t+1} \sim P(\cdot \mid s_t, a_t) \right].
+\label{eq:InfiniteHorizonMDPStateValue}
+\end{equation}
+
+\textbf{Action-Value Function}. The value of a state-action pair \((s,a) \in \mathcal{S} \times \mathcal{A}\) under policy \(\pi\) is the expected discounted return obtained by first taking action \(a\) in state \(s\), and then following policy \(\pi\) thereafter:
+\begin{equation}
+Q^{\pi}(s,a) := \mathbb{E} \left[ \sum_{t=0}^{\infty} \gamma^t R(s_t, a_t) \,\middle|\, s_0 = s, a_0 = a, a_t \sim \pi(\cdot \mid s_t), s_{t+1} \sim P(\cdot \mid s_t, a_t) \right].
+\label{eq:InfiniteHorizonMDPActionValue}
+\end{equation}
+
+Note that a nice feature of having a discount factor \(\gamma \in [0,1)\) is that both the state-value and the action-value functions are guaranteed to be bounded even if the horizon is unbounded (assuming the reward function is bounded).
+
+We can verify the state-value function and the action value function satisfy the following relationship:
+\begin{align}
+V^{\pi}(s) &= \sum_{a \in \mathcal{A}} \pi(a \mid s) Q^{\pi}(s,a) \label{eq:InfiniteHorizonMDPStateValueActionValueRelation-1}\\
+Q^{\pi}(s,a) & = R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^{\pi}(s'). \label{eq:InfiniteHorizonMDPStateValueActionValueRelation-2}
+\end{align}
+
+Combining these two equations, we arrive at the Bellman consistency result for infinite-horizon MDP.
+
+\begin{proposition}[Bellman Consistency (Infinite Horizon)]
+\protect\hypertarget{prp:BellmanConsistencyInfiniteHorizon}{}\label{prp:BellmanConsistencyInfiniteHorizon}The state-value function \(V^{\pi}\) in \eqref{eq:InfiniteHorizonMDPStateValue} satisfies the following recursion:
+\begin{equation}
+\begin{split}
+V^{\pi} (s) & = \sum_{a \in \mathcal{A}} \pi (a\mid s) \left( R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^{\pi} (s') \right) \\
+    & =: \mathbb{E}_{a \sim \pi(\cdot \mid s)} \left[ R(s, a) + \gamma \mathbb{E}_{s' \sim P(\cdot \mid s, a)} [V^{\pi}(s')] \right].
+\end{split}
+\label{eq:BellmanConsistency-InfiniteHorizon-State-Value}
+\end{equation}
+
+Similarly, the action-value function \(Q^{\pi}(s,a)\) in \eqref{eq:InfiniteHorizonMDPActionValue} satisfies the following recursion:
+\begin{equation}
+\begin{split}
+Q^{\pi} (s, a) & = R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) \left( \sum_{a' \in \mathcal{A}} \pi(a' \mid s') Q^{\pi}(s', a')\right) \\
+& =: R(s, a) + \gamma \mathbb{E}_{s' \sim P(\cdot \mid s, a)} \left[\mathbb{E}_{a' \sim \pi(\cdot \mid s')} [Q^{\pi}(s', a')] \right].
+\end{split}
+\label{eq:BellmanConsistency-InfiniteHorizon-Action-Value}
+\end{equation}
+\end{proposition}
+
+\subsection{Policy Evaluation}\label{policy-evaluation-1}
+
+Given a policy \(\pi\), how can we compute its associated state-value and action-value functions?
+
+\begin{itemize}
+\item
+  \textbf{Finite-horizon case.} We initialize the terminal value function \(V_T^{\pi}(s) = 0\) for every \(s \in \mathcal{S}\), and then apply the Bellman Consistency result (Proposition \ref{prp:BellmanConsistency}) to perform backward recursion.
+\item
+  \textbf{Infinite-horizon case.} The Bellman Consistency result (Proposition \ref{prp:BellmanConsistencyInfiniteHorizon}) takes a different form and does not provide the same simple recipe for backward recursion.
+\end{itemize}
+
+\textbf{System of Linear Equations.} A closer look at the Bellman Consistency equation \eqref{eq:BellmanConsistency-InfiniteHorizon-State-Value} for the state-value function shows that it defines a square system of linear equations. Specifically, the value function \(V^{\pi}\) can be represented as a vector with \(|\mathcal{S}|\) variables, and \eqref{eq:BellmanConsistency-InfiniteHorizon-State-Value} provides \(|\mathcal{S}|\) linear equations over these variables.\\
+Thus, one way to compute the state-value function is to set up this linear system and solve it. However, doing so typically requires matrix inversion or factorization, which can be computationally expensive.
+
+The same reasoning applies to the action-value function \(Q^{\pi}\), which can be represented as a vector of \(|\mathcal{S}||\mathcal{A}|\) variables constrained by \(|\mathcal{S}||\mathcal{A}|\) linear equations.
+
+The following proposition states that, instead of solving a linear system of equations, one can use a globally convergent iterative scheme, one that is very much like the policy evaluation algorithm for the finite-horizon MDP, to evaluate the state-value function associated with a policy \(\pi\).
+
+\begin{proposition}[Policy Evaluation (Infinite Horizon, State-Value)]
+\protect\hypertarget{prp:PolicyEvaluationInfiniteHorizonStateValue}{}\label{prp:PolicyEvaluationInfiniteHorizonStateValue}Consider an infinite-horizon MDP \(\mathcal{M}=(\mathcal{S},\mathcal{A},P,R,\gamma)\). Fix a policy \(\pi\) and consider the iterative scheme for the state-value function:
+\begin{equation}
+V_{k+1}(s) \;\; \gets \;\; \sum_{a \in \mathcal{A}} \pi(a \mid s) 
+\left[ R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s,a) V_k(s') \right],
+\quad \forall s \in \mathcal{S}.
+\label{eq:PolicyEvaluationInfiniteHorizonStateValue}
+\end{equation}
+
+Then, starting from any initialization \(V_0 \in \mathbb{R}^{|\mathcal{S}|}\), the sequence \(\{V_k\}\) converges to the unique fixed point \(V^{\pi}\), the state-value function associated with policy \(\pi\).
+\end{proposition}
+
+\begin{proof}
+This result follows from the fact that the Bellman operator
+\[
+(T^{\pi} V)(s) := \sum_{a \in \mathcal{A}} \pi(a \mid s) 
+\left[ R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s,a) V(s') \right]
+\]
+is a \(\gamma\)-contraction mapping in the sup-norm. By the Banach fixed-point theorem, global convergence is guaranteed regardless of initialization.
+
+We will work out the details of this proof in the PSET.
+\end{proof}
+
+We have a similar policy evaluation algorithm for the action-value function.
+
+\begin{proposition}[Policy Evaluation (Infinite Horizon, Action-Value)]
+\protect\hypertarget{prp:PolicyEvaluationInfiniteHorizonActionValue}{}\label{prp:PolicyEvaluationInfiniteHorizonActionValue}Fix a policy \(\pi\). Consider the iterative scheme on \(Q:\mathcal{S}\times\mathcal{A}\to\mathbb{R}\):
+\begin{equation}
+\begin{split}
+Q_{k+1}(s,a) \;\gets\; R(s,a)
+\;+\; \gamma \sum_{s'\in\mathcal{S}} P(s'\mid s,a)\!\left(\sum_{a'\in\mathcal{A}} \pi(a'\mid s')\, Q_k(s',a')\right), 
+\\
+\forall (s,a)\in\mathcal{S}\times\mathcal{A}.
+\end{split}
+\label{eq:PolicyEvaluationInfiniteHorizonActionValue}
+\end{equation}
+Then, for any initialization \(Q_0\), the sequence \(\{Q_k\}\) converges to the unique fixed point \(Q^{\pi}\), the action-value function associated with policy \(\pi\).
+\end{proposition}
+
+\begin{proof}
+Define the Bellman operator on action-values
+\[
+(T^{\pi}Q)(s,a) := R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\Big(\sum_{a'} \pi(a'\mid s')\, Q(s',a')\Big).
+\]
+\(T^{\pi}\) is a \(\gamma\)-contraction in the sup-norm on \(\mathbb{R}^{|\mathcal{S}||\mathcal{A}|}\); hence by the Banach fixed-point theorem, global convergence holds regardless of initialization.
+\end{proof}
+
+\begin{example}[Policy Evaluation for Inverted Pendulum]
+\protect\hypertarget{exm:InfiniteHorizonMDPPolicyEvaluation}{}\label{exm:InfiniteHorizonMDPPolicyEvaluation}\leavevmode
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.4\linewidth]{images/MDP/pendulum-drawing} 
+
+}
+
+\caption{Inverted Pendulum.}\label{fig:mdp-pendulum-illustration}
+\end{figure}
+
+We consider the inverted pendulum with state \(s=(\theta, \dot\theta)\) and action (torque) \(a = u\), as visualized in Fig. \ref{fig:mdp-pendulum-illustration}. Our goal is to swing up the pendulum from any initial state to the upright position \(s = (0,0)\).
+
+\textbf{Continuous-Time Dynamics}. The continuous-time dynamics of the inverted pendulum is
+\[
+\ddot{\theta} \;=\; \frac{g}{l}\sin(\theta) \;+\; \frac{1}{ml^2}u \;-\; c\,\dot{\theta},
+\]
+where \(m > 0\) is the mass of the pendulum, \(l > 0\) is the length of the pole, \(c > 0\) is the damping coefficient, and \(g\) is the gravitational constant.
+
+\textbf{Discretization (Euler)}. With timestep \(\Delta t\), we obtain the following discrete-time dynamics:
+\begin{equation}
+\begin{split}
+\theta_{k+1} &= \theta_k + \Delta t \, \dot{\theta}_k, \\
+\dot{\theta}_{k+1} &= \dot{\theta}_k + \Delta t
+\Big(\tfrac{g}{l}\sin(\theta_k) + \tfrac{1}{ml^2}u_k - c\,\dot{\theta}_k\Big).
+\end{split}
+\label{eq:PendulumDynamicsDiscrete}
+\end{equation}
+
+We wrap angles to \([-\pi,\pi]\) via \(\operatorname{wrap}(\theta)=\mathrm{atan2}(\sin\theta,\cos\theta)\).
+
+\textbf{Tabular MDP}. We convert the discrete-time dynamics into a tabular MDP.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{State grid.} \(\theta \in [-\pi,\pi]\), \(\dot\theta \in [-\pi,\pi]\) on uniform grids:
+  \[
+  \mathcal{S}=\{\;(\theta_i,\dot\theta_j)\;:\; i=1,\dots,N_\theta,\; j=1, \dots, N_{\dot\theta}\;\}.
+  \]
+\item
+  \textbf{Action grid.} \(u \in [-mgl/2, mgl/2]\) on \(N_u\) uniform points:
+  \[
+  \mathcal{A}=\{u_\ell:\ell=1,\dots,N_u\}.
+  \]
+\item
+  \textbf{Stochastic transition kernel (nearest-3 interpolation).} From a grid point \(s=(\theta_i,\dot\theta_j)\) and an action \(u_\ell\),
+  compute the next continuous state \(s^+ = (\theta^+,\dot\theta^+)\) via the discrete-time dynamics in \eqref{eq:PendulumDynamicsDiscrete}.
+  If \(s^+\notin\mathcal{S}\), choose the three closest grid states
+  \(\{s^{(1)},s^{(2)},s^{(3)}\}\) by Euclidean distance in \((\theta,\dot\theta)\) and assign
+  probabilities
+  \[
+  p_r \propto \frac{1}{\|s^+ - s^{(r)}\|_2 + \varepsilon},\quad r=1,2,3,
+  \qquad \sum_r p_r=1,
+  \]
+  so nearer grid points receive higher probability (use a small \(\varepsilon>0\) to avoid division by zero).
+\item
+  \textbf{Reward.} A quadratic shaping penalty around the upright equilibrium:
+  \[
+  R(s,a) = -\Big(\theta^2 + 0.1\,\dot\theta^2 + 0.01\,u^2\Big).
+  \]
+\item
+  \textbf{Discount.} \(\gamma \in [0,1)\). We obtain a discounted, infinite-horizon, \textbf{tabular} MDP.
+\end{itemize}
+
+\textbf{Policy}. For policy evaluation, consider \(\pi(a\mid s)\) be uniform over the discretized actions, i.e., a random policy.
+
+\textbf{Policy Evaluation}. The following python script performs policy evaluation.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ImportTok{import}\NormalTok{ numpy }\ImportTok{as}\NormalTok{ np}
+\ImportTok{import}\NormalTok{ matplotlib.pyplot }\ImportTok{as}\NormalTok{ plt}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Physical \& MDP parameters {-}{-}{-}{-}{-}}
+\NormalTok{g, l, m, c }\OperatorTok{=} \FloatTok{9.81}\NormalTok{, }\FloatTok{1.0}\NormalTok{, }\FloatTok{1.0}\NormalTok{, }\FloatTok{0.1}
+\NormalTok{dt }\OperatorTok{=} \FloatTok{0.05}
+\NormalTok{gamma }\OperatorTok{=} \FloatTok{0.97}
+\NormalTok{eps }\OperatorTok{=} \FloatTok{1e{-}8}
+
+\CommentTok{\# Grids}
+\NormalTok{N\_theta }\OperatorTok{=} \DecValTok{41}
+\NormalTok{N\_thetadot }\OperatorTok{=} \DecValTok{41}
+\NormalTok{N\_u }\OperatorTok{=} \DecValTok{21}
+
+\NormalTok{theta\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{np.pi, np.pi, N\_theta)}
+\NormalTok{thetadot\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{np.pi, np.pi, N\_thetadot)}
+\NormalTok{u\_max }\OperatorTok{=} \FloatTok{0.5} \OperatorTok{*}\NormalTok{ m }\OperatorTok{*}\NormalTok{ g }\OperatorTok{*}\NormalTok{ l}
+\NormalTok{u\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{u\_max, u\_max, N\_u)}
+
+\CommentTok{\# Helpers to index/unwrap}
+\KeywordTok{def}\NormalTok{ wrap\_angle(x):}
+    \ControlFlowTok{return}\NormalTok{ np.arctan2(np.sin(x), np.cos(x))}
+
+\KeywordTok{def}\NormalTok{ state\_index(i, j):}
+    \ControlFlowTok{return}\NormalTok{ i }\OperatorTok{*}\NormalTok{ N\_thetadot }\OperatorTok{+}\NormalTok{ j}
+
+\KeywordTok{def}\NormalTok{ index\_to\_state(idx):}
+\NormalTok{    i }\OperatorTok{=}\NormalTok{ idx }\OperatorTok{//}\NormalTok{ N\_thetadot}
+\NormalTok{    j }\OperatorTok{=}\NormalTok{ idx }\OperatorTok{\%}\NormalTok{ N\_thetadot}
+    \ControlFlowTok{return}\NormalTok{ theta\_grid[i], thetadot\_grid[j]}
+
+\NormalTok{S }\OperatorTok{=}\NormalTok{ N\_theta }\OperatorTok{*}\NormalTok{ N\_thetadot}
+\NormalTok{A }\OperatorTok{=}\NormalTok{ N\_u}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Dynamics step (continuous {-}\textgreater{} one Euler step) {-}{-}{-}{-}{-}}
+\KeywordTok{def}\NormalTok{ step\_euler(theta, thetadot, u):}
+\NormalTok{    theta\_next }\OperatorTok{=}\NormalTok{ wrap\_angle(theta }\OperatorTok{+}\NormalTok{ dt }\OperatorTok{*}\NormalTok{ thetadot)}
+\NormalTok{    thetadot\_next }\OperatorTok{=}\NormalTok{ thetadot }\OperatorTok{+}\NormalTok{ dt }\OperatorTok{*}\NormalTok{ ((g}\OperatorTok{/}\NormalTok{l) }\OperatorTok{*}\NormalTok{ np.sin(theta) }\OperatorTok{+}\NormalTok{ (}\DecValTok{1}\OperatorTok{/}\NormalTok{(m}\OperatorTok{*}\NormalTok{l}\OperatorTok{*}\NormalTok{l))}\OperatorTok{*}\NormalTok{u }\OperatorTok{{-}}\NormalTok{ c}\OperatorTok{*}\NormalTok{thetadot)}
+    \CommentTok{\# clip angular velocity to grid range (bounded MDP)}
+\NormalTok{    thetadot\_next }\OperatorTok{=}\NormalTok{ np.clip(thetadot\_next, thetadot\_grid[}\DecValTok{0}\NormalTok{], thetadot\_grid[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{])}
+    \ControlFlowTok{return}\NormalTok{ theta\_next, thetadot\_next}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Find 3 nearest grid states and probability weights (inverse{-}distance) {-}{-}{-}{-}{-}}
+\CommentTok{\# Pre{-}compute all grid points for fast nearest neighbor search}
+\NormalTok{grid\_pts }\OperatorTok{=}\NormalTok{ np.stack(np.meshgrid(theta\_grid, thetadot\_grid, indexing}\OperatorTok{=}\StringTok{\textquotesingle{}ij\textquotesingle{}}\NormalTok{), axis}\OperatorTok{={-}}\DecValTok{1}\NormalTok{).reshape(}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{)}
+
+\KeywordTok{def}\NormalTok{ nearest3\_probs(theta\_next, thetadot\_next):}
+\NormalTok{    x }\OperatorTok{=}\NormalTok{ np.array([theta\_next, thetadot\_next])}
+\NormalTok{    dists }\OperatorTok{=}\NormalTok{ np.linalg.norm(grid\_pts }\OperatorTok{{-}}\NormalTok{ x[}\VariableTok{None}\NormalTok{, :], axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)}
+\NormalTok{    nn\_idx }\OperatorTok{=}\NormalTok{ np.argpartition(dists, }\DecValTok{3}\NormalTok{)[:}\DecValTok{3}\NormalTok{]  }\CommentTok{\# three smallest (unordered)}
+    \CommentTok{\# sort those 3 by distance for stability}
+\NormalTok{    nn\_idx }\OperatorTok{=}\NormalTok{ nn\_idx[np.argsort(dists[nn\_idx])]}
+\NormalTok{    d }\OperatorTok{=}\NormalTok{ dists[nn\_idx]}
+\NormalTok{    w }\OperatorTok{=} \FloatTok{1.0} \OperatorTok{/}\NormalTok{ (d }\OperatorTok{+}\NormalTok{ eps)}
+\NormalTok{    p }\OperatorTok{=}\NormalTok{ w }\OperatorTok{/}\NormalTok{ w.}\BuiltInTok{sum}\NormalTok{()}
+    \ControlFlowTok{return}\NormalTok{ nn\_idx.astype(}\BuiltInTok{int}\NormalTok{), p}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Reward {-}{-}{-}{-}{-}}
+\KeywordTok{def}\NormalTok{ reward(theta, thetadot, u):}
+    \ControlFlowTok{return} \OperatorTok{{-}}\NormalTok{(theta}\OperatorTok{**}\DecValTok{2} \OperatorTok{+} \FloatTok{0.1}\OperatorTok{*}\NormalTok{thetadot}\OperatorTok{**}\DecValTok{2} \OperatorTok{+} \FloatTok{0.01}\OperatorTok{*}\NormalTok{u}\OperatorTok{**}\DecValTok{2}\NormalTok{)}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Build tabular MDP: R[s,a] and sparse P[s,a,3] {-}{-}{-}{-}{-}}
+\NormalTok{R }\OperatorTok{=}\NormalTok{ np.zeros((S, A))}
+\NormalTok{NS\_idx }\OperatorTok{=}\NormalTok{ np.zeros((S, A, }\DecValTok{3}\NormalTok{), dtype}\OperatorTok{=}\BuiltInTok{int}\NormalTok{)   }\CommentTok{\# next{-}state indices (3 nearest)}
+\NormalTok{NS\_prob }\OperatorTok{=}\NormalTok{ np.zeros((S, A, }\DecValTok{3}\NormalTok{))            }\CommentTok{\# their probabilities}
+
+\ControlFlowTok{for}\NormalTok{ i, th }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(theta\_grid):}
+    \ControlFlowTok{for}\NormalTok{ j, thd }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(thetadot\_grid):}
+\NormalTok{        s }\OperatorTok{=}\NormalTok{ state\_index(i, j)}
+        \ControlFlowTok{for}\NormalTok{ a, u }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(u\_grid):}
+            \CommentTok{\# reward at current (s,a)}
+\NormalTok{            R[s, a] }\OperatorTok{=}\NormalTok{ reward(th, thd, u)}
+            \CommentTok{\# next continuous state}
+\NormalTok{            th\_n, thd\_n }\OperatorTok{=}\NormalTok{ step\_euler(th, thd, u)}
+            \CommentTok{\# map to 3 nearest grid states}
+\NormalTok{            nn\_idx, p }\OperatorTok{=}\NormalTok{ nearest3\_probs(th\_n, thd\_n)}
+\NormalTok{            NS\_idx[s, a, :] }\OperatorTok{=}\NormalTok{ nn\_idx}
+\NormalTok{            NS\_prob[s, a, :] }\OperatorTok{=}\NormalTok{ p}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Fixed policy: uniform over actions {-}{-}{-}{-}{-}}
+\NormalTok{Pi }\OperatorTok{=}\NormalTok{ np.full((S, A), }\FloatTok{1.0} \OperatorTok{/}\NormalTok{ A)}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Iterative policy evaluation {-}{-}{-}{-}{-}}
+\NormalTok{V }\OperatorTok{=}\NormalTok{ np.zeros(S)  }\CommentTok{\# initialization (any vector works)}
+\NormalTok{tol }\OperatorTok{=} \FloatTok{1e{-}6}
+\NormalTok{max\_iters }\OperatorTok{=} \DecValTok{10000}
+
+\ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(max\_iters):}
+\NormalTok{    V\_new }\OperatorTok{=}\NormalTok{ np.zeros\_like(V)}
+    \CommentTok{\# Compute Bellman update: V\_\{k+1\}(s) = sum\_a Pi(s,a)[ R(s,a) + gamma * sum\_j P(s,a,j) V\_k(ns\_j) ]}
+    \CommentTok{\# First, expected next V for each (s,a)}
+\NormalTok{    EV\_next }\OperatorTok{=}\NormalTok{ (NS\_prob }\OperatorTok{*}\NormalTok{ V[NS\_idx]).}\BuiltInTok{sum}\NormalTok{(axis}\OperatorTok{=}\DecValTok{2}\NormalTok{)  }\CommentTok{\# shape: (S, A)}
+    \CommentTok{\# Then expectation over actions under Pi}
+\NormalTok{    V\_new }\OperatorTok{=}\NormalTok{ (Pi }\OperatorTok{*}\NormalTok{ (R }\OperatorTok{+}\NormalTok{ gamma }\OperatorTok{*}\NormalTok{ EV\_next)).}\BuiltInTok{sum}\NormalTok{(axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)  }\CommentTok{\# shape: (S,)}
+    \CommentTok{\# Check convergence}
+    \ControlFlowTok{if}\NormalTok{ np.}\BuiltInTok{max}\NormalTok{(np.}\BuiltInTok{abs}\NormalTok{(V\_new }\OperatorTok{{-}}\NormalTok{ V)) }\OperatorTok{\textless{}}\NormalTok{ tol:}
+\NormalTok{        V }\OperatorTok{=}\NormalTok{ V\_new}
+        \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"Converged in }\SpecialCharTok{\{}\NormalTok{k}\OperatorTok{+}\DecValTok{1}\SpecialCharTok{\}}\SpecialStringTok{ iterations (sup{-}norm change \textless{} }\SpecialCharTok{\{}\NormalTok{tol}\SpecialCharTok{\}}\SpecialStringTok{)."}\NormalTok{)}
+        \ControlFlowTok{break}
+\NormalTok{    V }\OperatorTok{=}\NormalTok{ V\_new}
+\ControlFlowTok{else}\NormalTok{:}
+    \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"Reached max\_iters=}\SpecialCharTok{\{}\NormalTok{max\_iters}\SpecialCharTok{\}}\SpecialStringTok{ without meeting tolerance }\SpecialCharTok{\{}\NormalTok{tol}\SpecialCharTok{\}}\SpecialStringTok{."}\NormalTok{)}
+
+\NormalTok{V\_grid }\OperatorTok{=}\NormalTok{ V.reshape(N\_theta, N\_thetadot)}
+
+\CommentTok{\# V\_grid: shape (N\_theta, N\_thetadot)}
+\CommentTok{\# theta\_grid, thetadot\_grid already defined}
+\NormalTok{fig, ax }\OperatorTok{=}\NormalTok{ plt.subplots(figsize}\OperatorTok{=}\NormalTok{(}\DecValTok{7}\NormalTok{,}\DecValTok{5}\NormalTok{), dpi}\OperatorTok{=}\DecValTok{120}\NormalTok{)}
+\NormalTok{im }\OperatorTok{=}\NormalTok{ ax.imshow(}
+\NormalTok{    V\_grid,}
+\NormalTok{    origin}\OperatorTok{=}\StringTok{"lower"}\NormalTok{,}
+\NormalTok{    extent}\OperatorTok{=}\NormalTok{[thetadot\_grid.}\BuiltInTok{min}\NormalTok{(), thetadot\_grid.}\BuiltInTok{max}\NormalTok{(),}
+\NormalTok{            theta\_grid.}\BuiltInTok{min}\NormalTok{(), theta\_grid.}\BuiltInTok{max}\NormalTok{()],}
+\NormalTok{    aspect}\OperatorTok{=}\StringTok{"auto"}\NormalTok{,}
+\NormalTok{    cmap}\OperatorTok{=}\StringTok{"viridis"}  \CommentTok{\# any matplotlib colormap, e.g., "plasma", "inferno"}
+\NormalTok{)}
+\NormalTok{cbar }\OperatorTok{=}\NormalTok{ fig.colorbar(im, ax}\OperatorTok{=}\NormalTok{ax)}
+\NormalTok{cbar.set\_label(}\VerbatimStringTok{r"$V\^{}\textbackslash{}pi(\textbackslash{}theta,\textbackslash{}dot\{\textbackslash{}theta\})$"}\NormalTok{)}
+
+\NormalTok{ax.set\_xlabel(}\VerbatimStringTok{r"$\textbackslash{}dot\{\textbackslash{}theta\}$"}\NormalTok{)}
+\NormalTok{ax.set\_ylabel(}\VerbatimStringTok{r"$\textbackslash{}theta$"}\NormalTok{)}
+\NormalTok{ax.set\_title(}\VerbatimStringTok{r"State{-}value $V\^{}\textbackslash{}pi$ (tabular policy evaluation)"}\NormalTok{)}
+
+\NormalTok{plt.tight\_layout()}
+\NormalTok{plt.show()}
+\end{Highlighting}
+\end{Shaded}
+
+Running the code, it shows that policy evaluation converges in 518 iterations under tolerance \(10^{-6}\).
+
+The figure blow plots the value function over the state grid.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{images/MDP/pendulum_policy_evaluation} 
+
+}
+
+\caption{Value function from policy evaluation.}\label{fig:mdp-pendulum-value-function-policy-evaluation}
+\end{figure}
+
+\end{example}
+
+\subsection{Policy Improvement}\label{policy-improvement}
+
+The policy evaluation algorithm enables us to compute the value functions associated with a given policy \(\pi\). The next result, known as the \emph{Policy Improvement Lemma}, shows that once we have \(V^{\pi}\), constructing a greedy policy with respect to \(V^{\pi}\) guarantees performance that is at least as good as \(\pi\), and strictly better in some states unless \(\pi\) is already greedy with respect to \(V^{\pi}\).
+
+\begin{lemma}[Policy Improvement]
+\protect\hypertarget{lem:InfiniteHorizonPolicyImprovement}{}\label{lem:InfiniteHorizonPolicyImprovement}Let \(\pi\) be any policy and let \(V^{\pi}\) be its state-value function.\\
+Define a new policy \(\pi'\) such that for each state \(s\),
+\[
+\pi'(s) \in \arg\max_{a \in \mathcal{A}}
+\Big[ R(s,a) + \gamma \sum_{s'} P(s' \mid s,a) V^{\pi}(s') \Big].
+\]
+
+Then for all states \(s \in \mathcal{S}\),
+\[
+V^{\pi'}(s) \;\ge\; V^{\pi}(s).
+\]
+Moreover, the inequality is strict for some \(s\) if \(\pi'\) differs from \(\pi\) on any action that yields a strictly higher value.
+\end{lemma}
+
+\begin{proof}
+Let \(V^{\pi}\) be the value function of a policy \(\pi\), and define a new (possibly stochastic) policy \(\pi'\) that is greedy w.r.t. \(V^{\pi}\):
+\[
+\pi'(\cdot \mid s) \in \arg\max_{\mu \in \Delta(\mathcal{A})}
+\sum_{a}\mu(a)\Big[ R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\, V^{\pi}(s')\Big].
+\]
+Define the Bellman operators
+\begin{align*}
+(T^{\pi}V)(s) & := \sum_a \pi(a\mid s)\Big[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V(s')\Big],\\
+(T^{\pi'}V)(s) & := \sum_a \pi'(a\mid s)\Big[\cdots\Big].
+\end{align*}
+
+\textbf{Step 1: One-step improvement at \(V^{\pi}\)}.
+By greediness of \(\pi'\) w.r.t. \(V^{\pi}\),
+\[
+(T^{\pi'} V^{\pi})(s)
+= \max_{\mu}\sum_a \mu(a)\Big[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V^{\pi}(s')\Big]
+\;\;\ge\;\; (T^{\pi} V^{\pi})(s) = V^{\pi}(s),
+\]
+for all \(s\). Hence
+\begin{equation}
+T^{\pi'} V^{\pi} \;\ge\; V^{\pi}\quad\text{(componentwise).}
+\label{eq:ProofPolicyImprovementStepOne}
+\end{equation}
+
+\textbf{Step 2: Monotonicity + contraction yield global improvement}.
+The operator \(T^{\pi'}\) is \textbf{monotone} (order-preserving) and a \textbf{\(\gamma\)-contraction} in the sup-norm.\\
+Apply \(T^{\pi'}\) repeatedly to both sides of \eqref{eq:ProofPolicyImprovementStepOne}:
+\[
+(T^{\pi'})^k V^{\pi} \;\ge\; (T^{\pi'})^{k-1} V^{\pi} \;\ge\; \cdots \;\ge\; V^{\pi},\qquad k=1,2,\dots
+\]
+By contraction, \((T^{\pi'})^k V^{\pi} \to V^{\pi'}\), the unique fixed point of \(T^{\pi'}\).\\
+Taking limits preserves the inequality, so
+\[
+V^{\pi'} \;\ge\; V^{\pi}\quad\text{statewise.}
+\]
+
+\textbf{Strict improvement condition}.
+If there exists a state \(s\) such that
+\[
+(T^{\pi'} V^{\pi})(s) \;>\; V^{\pi}(s),
+\]
+then by monotonicity we have a strict increase at that state after one iteration, and the limit remains strictly larger at that state (or at any state that can reach it with positive probability under \(\pi'\)).\\
+This happens precisely when \(\pi'\) selects, with positive probability, an action \(a\) for which
+\[
+Q^{\pi}(s,a)=R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\, V^{\pi}(s') \;>\; V^{\pi}(s),
+\]
+i.e., when \(\pi\) was not already greedy (optimal) at \(s\).
+\end{proof}
+
+\subsection{Principle of Optimality}\label{principle-of-optimality}
+
+In an infinite-horizon MDP, our goal is to find the optimal policy that maximizes the expected long-term discounted return:
+\[
+V^\star := \max_{\pi} \mathbb{E}_{s \sim \mu(\cdot)} [V^\pi(s)],
+\]
+where \(\mu\) is a given initial distribution. We call \(V^\star\) the optimal value function.
+
+Given a policy \(\pi\) and its associated value function \(V^\pi\), how do we know if the policy is already optimal?
+
+\begin{theorem}[Bellman Optimality (Infinite Horizon)]
+\protect\hypertarget{thm:BellmanOptimalityInfiniteHorizon}{}\label{thm:BellmanOptimalityInfiniteHorizon}For an infinite-horizon MDP with discount factor \(\gamma \in [0,1)\),
+the optimal state-value function \(V^\star(s)\)
+satisfies the Bellman optimality equation
+\begin{equation}
+V^\star(s) \;=\; \max_{a \in \mathcal{A}}
+\Big[\, R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s,a)\, V^\star(s') \,\Big].
+\label{eq:BellmanOptimalityInfiniteHorizonStateValue}
+\end{equation}
+
+Define the optimal action-value function as
+\begin{equation}
+Q^\star(s,a) = R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s, a) V^\star(s').
+\label{eq:InfiniteHorizonOptimalActionValue}
+\end{equation}
+We have that \(Q^\star(s,a)\) satisfies
+\begin{equation}
+Q^\star(s,a) \;=\; R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s,a)\, \left[\max_{a' \in \mathcal{A}} Q^\star(s',a') \right].
+\label{eq:BellmanOptimalityInfiniteHorizonActionValue}
+\end{equation}
+
+Moreover, any greedy policy with respect to \(V^\star\) (equivalently, to \(Q^\star\)) is optimal:
+\begin{equation}
+\begin{split}
+\pi^\star(s) & \in \arg\max_{a \in \mathcal{A}}
+\Big[\, R(s,a) + \gamma \sum_{s'} P(s' \mid s,a)\, V^\star(s') \,\Big]
+\quad\Longleftrightarrow\quad \\
+\pi^\star(s) & \in \arg\max_{a \in \mathcal{A}} Q^\star(s,a).
+\end{split}
+\label{eq:InfiniteHorizonOptimalPolicy}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+We will first show that \(V^\star\) has statewise dominance over all other policies, and then show that \(V^\star\) can be attained by the greedy policy.
+
+\textbf{Claim.} For any discounted MDP with \(\gamma \in [0,1)\) and any policy \(\pi\),
+\[
+V^\star(s) \;\ge\; V^{\pi}(s)\qquad \forall s\in\mathcal{S},
+\]
+where \(V^\star\) is the unique solution of the Bellman \textbf{optimality} equation and \(V^\pi\) solves the Bellman \textbf{consistency} equation for \(\pi\).
+
+\textbf{Proof via Bellman Operators}.
+Define the Bellman operators
+\[
+(T^\pi V)(s) := \sum_{a}\pi(a\mid s)\Big[ R(s,a)+\gamma \sum_{s'} P(s'\mid s,a)V(s') \Big],
+\]
+\[
+(T^\star V)(s) := \max_{a}\Big[ R(s,a)+\gamma \sum_{s'} P(s'\mid s,a)V(s') \Big].
+\]
+
+Key facts:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  (\textbf{Monotonicity}) If \(V \ge W\) componentwise, then \(T^\pi V \ge T^\pi W\) and \(T^\star V \ge T^\star W\).
+\item
+  (\textbf{Dominance of \(T^*\)}) For any \(V\) and any \(\pi\),
+  \[
+  T^\star V \;\ge\; T^\pi V
+  \]
+  because the max over actions is at least the \(\pi\)-weighted average.
+\item
+  (\textbf{Fixed points}) \(V^\pi = T^\pi V^\pi\) and \(V^\star = T^\star V^\star\).
+\item
+  (\textbf{Contraction}) Each \(T^\pi\) and \(T^\star\) is a \(\gamma\)-contraction in the sup-norm; hence their fixed points are unique.
+\end{enumerate}
+
+Now start from \(V^\pi\). Using (2),
+\[
+V^\pi = T^\pi V^\pi \;\le\; T^\star V^\pi.
+\]
+Applying \(T^\star\) repeatedly and using (1),
+\[
+V^\pi \;\le\; T^\star V^\pi \;\le\; (T^\star)^2 V^\pi \;\le\; \cdots
+\]
+The sequence \((T^\star)^k V^\pi\) converges (by contraction) to the unique fixed point of \(T^\star\), namely \(V^\star\). Taking limits preserves the inequality, yielding \(V^\pi \le V^\star\) statewise.
+\end{proof}
+
+\subsection{Policy Iteration}\label{policy-iteration}
+
+The policy improvement lemma and the principle of optimality, combined together, leads to the first algorithm that guarantees convergence to an optimal policy. This algorithm is called policy iteration.
+
+\begin{theorem}[Convergence of Policy Iteration]
+\protect\hypertarget{thm:PolicyIterationConvergence}{}\label{thm:PolicyIterationConvergence}
+
+Consider a discounted MDP with finite state and action sets and \(\gamma\in[0,1)\). Let \(\{\pi_k\}_{k\ge0}\) be the sequence produced by \emph{Policy Iteration (PI)}:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Policy evaluation:} compute \(V^{\pi_k}\) such that \(V^{\pi_k}=T^{\pi_k}V^{\pi_k}\).
+\item
+  \textbf{Policy improvement:} choose \(\pi_{k+1}\) greedy w.r.t. \(V^{\pi_k}\):
+  \[
+  \pi_{k+1}(s) \in \arg\max_{a}\Big[ R(s,a)+\gamma\sum_{s'}P(s'|s,a)\,V^{\pi_k}(s')\Big].
+  \]
+\end{enumerate}
+
+Then:
+
+\begin{enumerate}
+\def\labelenumi{\alph{enumi}.}
+\item
+  \(V^{\pi_{k+1}} \ge V^{\pi_k}\) componentwise, and the inequality is strict for some state unless \(\pi_{k+1}=\pi_k\).
+\item
+  If \(\pi_{k+1}=\pi_k\), then \(V^{\pi_k}\) satisfies the Bellman optimality equation; hence \(\pi_k\) is optimal and \(V^{\pi_k}=V^*\).
+\item
+  Because the number of stationary policies is finite, PI terminates in finitely many iterations at an optimal policy \(\pi^*\) with value \(V^*\).
+\end{enumerate}
+
+\end{theorem}
+
+Let us apply Policy Iteration to the inverted pendulum problem.
+
+\begin{example}[Policy Iteration for Inverted Pendulum]
+\protect\hypertarget{exm:InvertedPendulumPolicyIteration}{}\label{exm:InvertedPendulumPolicyIteration}
+
+The following code performs policy iteration for the inverted pendulum problem.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ImportTok{import}\NormalTok{ numpy }\ImportTok{as}\NormalTok{ np}
+\ImportTok{import}\NormalTok{ matplotlib.pyplot }\ImportTok{as}\NormalTok{ plt}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Physical \& MDP parameters {-}{-}{-}{-}{-}}
+\NormalTok{g, l, m, c }\OperatorTok{=} \FloatTok{9.81}\NormalTok{, }\FloatTok{1.0}\NormalTok{, }\FloatTok{1.0}\NormalTok{, }\FloatTok{0.1}
+\NormalTok{dt }\OperatorTok{=} \FloatTok{0.05}
+\NormalTok{gamma }\OperatorTok{=} \FloatTok{0.97}
+\NormalTok{eps }\OperatorTok{=} \FloatTok{1e{-}8}
+
+\CommentTok{\# Grids}
+\NormalTok{N\_theta }\OperatorTok{=} \DecValTok{41}
+\NormalTok{N\_thetadot }\OperatorTok{=} \DecValTok{41}
+\NormalTok{N\_u }\OperatorTok{=} \DecValTok{21}
+
+\NormalTok{theta\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{np.pi, np.pi, N\_theta)}
+\NormalTok{thetadot\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{np.pi, np.pi, N\_thetadot)}
+\NormalTok{u\_max }\OperatorTok{=} \FloatTok{0.5} \OperatorTok{*}\NormalTok{ m }\OperatorTok{*}\NormalTok{ g }\OperatorTok{*}\NormalTok{ l}
+\NormalTok{u\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{u\_max, u\_max, N\_u)}
+
+\CommentTok{\# Helpers to index/unwrap}
+\KeywordTok{def}\NormalTok{ wrap\_angle(x):}
+    \ControlFlowTok{return}\NormalTok{ np.arctan2(np.sin(x), np.cos(x))}
+
+\KeywordTok{def}\NormalTok{ state\_index(i, j):}
+    \ControlFlowTok{return}\NormalTok{ i }\OperatorTok{*}\NormalTok{ N\_thetadot }\OperatorTok{+}\NormalTok{ j}
+
+\KeywordTok{def}\NormalTok{ index\_to\_state(idx):}
+\NormalTok{    i }\OperatorTok{=}\NormalTok{ idx }\OperatorTok{//}\NormalTok{ N\_thetadot}
+\NormalTok{    j }\OperatorTok{=}\NormalTok{ idx }\OperatorTok{\%}\NormalTok{ N\_thetadot}
+    \ControlFlowTok{return}\NormalTok{ theta\_grid[i], thetadot\_grid[j]}
+
+\NormalTok{S }\OperatorTok{=}\NormalTok{ N\_theta }\OperatorTok{*}\NormalTok{ N\_thetadot}
+\NormalTok{A }\OperatorTok{=}\NormalTok{ N\_u}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Dynamics step (continuous {-}\textgreater{} one Euler step) {-}{-}{-}{-}{-}}
+\KeywordTok{def}\NormalTok{ step\_euler(theta, thetadot, u):}
+\NormalTok{    theta\_next }\OperatorTok{=}\NormalTok{ wrap\_angle(theta }\OperatorTok{+}\NormalTok{ dt }\OperatorTok{*}\NormalTok{ thetadot)}
+\NormalTok{    thetadot\_next }\OperatorTok{=}\NormalTok{ thetadot }\OperatorTok{+}\NormalTok{ dt }\OperatorTok{*}\NormalTok{ ((g}\OperatorTok{/}\NormalTok{l) }\OperatorTok{*}\NormalTok{ np.sin(theta) }\OperatorTok{+}\NormalTok{ (}\DecValTok{1}\OperatorTok{/}\NormalTok{(m}\OperatorTok{*}\NormalTok{l}\OperatorTok{*}\NormalTok{l))}\OperatorTok{*}\NormalTok{u }\OperatorTok{{-}}\NormalTok{ c}\OperatorTok{*}\NormalTok{thetadot)}
+    \CommentTok{\# clip angular velocity to grid range (bounded MDP)}
+\NormalTok{    thetadot\_next }\OperatorTok{=}\NormalTok{ np.clip(thetadot\_next, thetadot\_grid[}\DecValTok{0}\NormalTok{], thetadot\_grid[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{])}
+    \ControlFlowTok{return}\NormalTok{ theta\_next, thetadot\_next}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Find 3 nearest grid states and probability weights (inverse{-}distance) {-}{-}{-}{-}{-}}
+\NormalTok{grid\_pts }\OperatorTok{=}\NormalTok{ np.stack(np.meshgrid(theta\_grid, thetadot\_grid, indexing}\OperatorTok{=}\StringTok{\textquotesingle{}ij\textquotesingle{}}\NormalTok{), axis}\OperatorTok{={-}}\DecValTok{1}\NormalTok{).reshape(}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{)}
+
+\KeywordTok{def}\NormalTok{ nearest3\_probs(theta\_next, thetadot\_next):}
+\NormalTok{    x }\OperatorTok{=}\NormalTok{ np.array([theta\_next, thetadot\_next])}
+\NormalTok{    dists }\OperatorTok{=}\NormalTok{ np.linalg.norm(grid\_pts }\OperatorTok{{-}}\NormalTok{ x[}\VariableTok{None}\NormalTok{, :], axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)}
+\NormalTok{    nn\_idx }\OperatorTok{=}\NormalTok{ np.argpartition(dists, }\DecValTok{3}\NormalTok{)[:}\DecValTok{3}\NormalTok{]      }\CommentTok{\# three smallest (unordered)}
+\NormalTok{    nn\_idx }\OperatorTok{=}\NormalTok{ nn\_idx[np.argsort(dists[nn\_idx])]  }\CommentTok{\# sort those 3 by distance}
+\NormalTok{    d }\OperatorTok{=}\NormalTok{ dists[nn\_idx]}
+\NormalTok{    w }\OperatorTok{=} \FloatTok{1.0} \OperatorTok{/}\NormalTok{ (d }\OperatorTok{+}\NormalTok{ eps)}
+\NormalTok{    p }\OperatorTok{=}\NormalTok{ w }\OperatorTok{/}\NormalTok{ w.}\BuiltInTok{sum}\NormalTok{()}
+    \ControlFlowTok{return}\NormalTok{ nn\_idx.astype(}\BuiltInTok{int}\NormalTok{), p}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Reward {-}{-}{-}{-}{-}}
+\KeywordTok{def}\NormalTok{ reward(theta, thetadot, u):}
+    \ControlFlowTok{return} \OperatorTok{{-}}\NormalTok{(theta}\OperatorTok{**}\DecValTok{2} \OperatorTok{+} \FloatTok{0.1}\OperatorTok{*}\NormalTok{thetadot}\OperatorTok{**}\DecValTok{2} \OperatorTok{+} \FloatTok{0.01}\OperatorTok{*}\NormalTok{u}\OperatorTok{**}\DecValTok{2}\NormalTok{)}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Build tabular MDP: R[s,a] and sparse P[s,a,3] {-}{-}{-}{-}{-}}
+\NormalTok{R }\OperatorTok{=}\NormalTok{ np.zeros((S, A))}
+\NormalTok{NS\_idx }\OperatorTok{=}\NormalTok{ np.zeros((S, A, }\DecValTok{3}\NormalTok{), dtype}\OperatorTok{=}\BuiltInTok{int}\NormalTok{)   }\CommentTok{\# next{-}state indices (3 nearest)}
+\NormalTok{NS\_prob }\OperatorTok{=}\NormalTok{ np.zeros((S, A, }\DecValTok{3}\NormalTok{))             }\CommentTok{\# their probabilities}
+
+\ControlFlowTok{for}\NormalTok{ i, th }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(theta\_grid):}
+    \ControlFlowTok{for}\NormalTok{ j, thd }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(thetadot\_grid):}
+\NormalTok{        s }\OperatorTok{=}\NormalTok{ state\_index(i, j)}
+        \ControlFlowTok{for}\NormalTok{ a, u }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(u\_grid):}
+            \CommentTok{\# reward at current (s,a)}
+\NormalTok{            R[s, a] }\OperatorTok{=}\NormalTok{ reward(th, thd, u)}
+            \CommentTok{\# next continuous state}
+\NormalTok{            th\_n, thd\_n }\OperatorTok{=}\NormalTok{ step\_euler(th, thd, u)}
+            \CommentTok{\# map to 3 nearest grid states}
+\NormalTok{            nn\_idx, p }\OperatorTok{=}\NormalTok{ nearest3\_probs(th\_n, thd\_n)}
+\NormalTok{            NS\_idx[s, a, :] }\OperatorTok{=}\NormalTok{ nn\_idx}
+\NormalTok{            NS\_prob[s, a, :] }\OperatorTok{=}\NormalTok{ p}
+
+\CommentTok{\# =======================}
+\CommentTok{\#     POLICY ITERATION}
+\CommentTok{\# =======================}
+
+\CommentTok{\# Represent policy as a deterministic action index per state: pi[s] in \{0..A{-}1\}}
+\CommentTok{\# Start from uniform{-}random policy (deterministic tie{-}breaker: middle action)}
+\NormalTok{pi }\OperatorTok{=}\NormalTok{ np.full(S, A }\OperatorTok{//} \DecValTok{2}\NormalTok{, dtype}\OperatorTok{=}\BuiltInTok{int}\NormalTok{)}
+
+\KeywordTok{def}\NormalTok{ policy\_evaluation(pi, V\_init}\OperatorTok{=}\VariableTok{None}\NormalTok{, tol}\OperatorTok{=}\FloatTok{1e{-}6}\NormalTok{, max\_iters}\OperatorTok{=}\DecValTok{10000}\NormalTok{):}
+    \CommentTok{"""Iterative policy evaluation for deterministic pi (action index per state)."""}
+\NormalTok{    V }\OperatorTok{=}\NormalTok{ np.zeros(S) }\ControlFlowTok{if}\NormalTok{ V\_init }\KeywordTok{is} \VariableTok{None} \ControlFlowTok{else}\NormalTok{ V\_init.copy()}
+    \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(max\_iters):}
+        \CommentTok{\# For each state s, use chosen action a = pi[s]}
+\NormalTok{        a }\OperatorTok{=}\NormalTok{ pi  }\CommentTok{\# shape (S,)}
+        \CommentTok{\# Expected next value under chosen action}
+\NormalTok{        EV\_next }\OperatorTok{=}\NormalTok{ (NS\_prob[np.arange(S), a] }\OperatorTok{*}\NormalTok{ V[NS\_idx[np.arange(S), a]]).}\BuiltInTok{sum}\NormalTok{(axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)  }\CommentTok{\# (S,)}
+\NormalTok{        V\_new }\OperatorTok{=}\NormalTok{ R[np.arange(S), a] }\OperatorTok{+}\NormalTok{ gamma }\OperatorTok{*}\NormalTok{ EV\_next}
+        \ControlFlowTok{if}\NormalTok{ np.}\BuiltInTok{max}\NormalTok{(np.}\BuiltInTok{abs}\NormalTok{(V\_new }\OperatorTok{{-}}\NormalTok{ V)) }\OperatorTok{\textless{}}\NormalTok{ tol:}
+            \CommentTok{\# print(f"Policy evaluation converged in \{k+1\} iterations.")}
+            \ControlFlowTok{return}\NormalTok{ V\_new}
+\NormalTok{        V }\OperatorTok{=}\NormalTok{ V\_new}
+    \CommentTok{\# print("Policy evaluation reached max\_iters without meeting tolerance.")}
+    \ControlFlowTok{return}\NormalTok{ V}
+
+\KeywordTok{def}\NormalTok{ policy\_improvement(V, pi\_old}\OperatorTok{=}\VariableTok{None}\NormalTok{):}
+    \CommentTok{"""Greedy improvement: pi\textquotesingle{}(s) = argmax\_a [ R(s,a) + gamma * E[V(s\textquotesingle{})] ]."""}
+    \CommentTok{\# Compute Q(s,a) = R + gamma * sum\_j P(s,a,j) V(ns\_j)}
+\NormalTok{    EV\_next }\OperatorTok{=}\NormalTok{ (NS\_prob }\OperatorTok{*}\NormalTok{ V[NS\_idx]).}\BuiltInTok{sum}\NormalTok{(axis}\OperatorTok{=}\DecValTok{2}\NormalTok{)      }\CommentTok{\# (S, A)}
+\NormalTok{    Q }\OperatorTok{=}\NormalTok{ R }\OperatorTok{+}\NormalTok{ gamma }\OperatorTok{*}\NormalTok{ EV\_next                           }\CommentTok{\# (S, A)}
+\NormalTok{    pi\_new }\OperatorTok{=}\NormalTok{ np.argmax(Q, axis}\OperatorTok{=}\DecValTok{1}\NormalTok{).astype(}\BuiltInTok{int}\NormalTok{)         }\CommentTok{\# greedy deterministic policy}
+\NormalTok{    stable }\OperatorTok{=}\NormalTok{ (pi\_old }\KeywordTok{is} \KeywordTok{not} \VariableTok{None}\NormalTok{) }\KeywordTok{and}\NormalTok{ np.array\_equal(pi\_new, pi\_old)}
+    \ControlFlowTok{return}\NormalTok{ pi\_new, stable}
+
+\CommentTok{\# Main PI loop}
+\NormalTok{max\_pi\_iters }\OperatorTok{=} \DecValTok{100}
+\NormalTok{V }\OperatorTok{=}\NormalTok{ np.zeros(S)}
+\ControlFlowTok{for}\NormalTok{ it }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(max\_pi\_iters):}
+    \CommentTok{\# Policy evaluation}
+\NormalTok{    V }\OperatorTok{=}\NormalTok{ policy\_evaluation(pi, V\_init}\OperatorTok{=}\NormalTok{V, tol}\OperatorTok{=}\FloatTok{1e{-}6}\NormalTok{, max\_iters}\OperatorTok{=}\DecValTok{10000}\NormalTok{)}
+    \CommentTok{\# Policy improvement}
+\NormalTok{    pi\_new, stable }\OperatorTok{=}\NormalTok{ policy\_improvement(V, pi\_old}\OperatorTok{=}\NormalTok{pi)}
+    \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"[PI] Iter }\SpecialCharTok{\{}\NormalTok{it}\OperatorTok{+}\DecValTok{1}\SpecialCharTok{\}}\SpecialStringTok{: policy changed = }\SpecialCharTok{\{}\KeywordTok{not}\NormalTok{ stable}\SpecialCharTok{\}}\SpecialStringTok{"}\NormalTok{)}
+\NormalTok{    pi }\OperatorTok{=}\NormalTok{ pi\_new}
+    \ControlFlowTok{if}\NormalTok{ stable:}
+        \BuiltInTok{print}\NormalTok{(}\StringTok{"Policy iteration converged: policy stable."}\NormalTok{)}
+        \ControlFlowTok{break}
+\ControlFlowTok{else}\NormalTok{:}
+    \BuiltInTok{print}\NormalTok{(}\StringTok{"Reached max\_pi\_iters without policy stability (may still be near{-}optimal)."}\NormalTok{)}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Visualization {-}{-}{-}{-}{-}}
+\NormalTok{V\_grid }\OperatorTok{=}\NormalTok{ V.reshape(N\_theta, N\_thetadot)}
+
+\NormalTok{fig, ax }\OperatorTok{=}\NormalTok{ plt.subplots(figsize}\OperatorTok{=}\NormalTok{(}\DecValTok{7}\NormalTok{,}\DecValTok{5}\NormalTok{), dpi}\OperatorTok{=}\DecValTok{120}\NormalTok{)}
+\NormalTok{im }\OperatorTok{=}\NormalTok{ ax.imshow(}
+\NormalTok{    V\_grid,}
+\NormalTok{    origin}\OperatorTok{=}\StringTok{"lower"}\NormalTok{,}
+\NormalTok{    extent}\OperatorTok{=}\NormalTok{[thetadot\_grid.}\BuiltInTok{min}\NormalTok{(), thetadot\_grid.}\BuiltInTok{max}\NormalTok{(),}
+\NormalTok{            theta\_grid.}\BuiltInTok{min}\NormalTok{(), theta\_grid.}\BuiltInTok{max}\NormalTok{()],}
+\NormalTok{    aspect}\OperatorTok{=}\StringTok{"auto"}\NormalTok{,}
+\NormalTok{    cmap}\OperatorTok{=}\StringTok{"viridis"}
+\NormalTok{)}
+\NormalTok{cbar }\OperatorTok{=}\NormalTok{ fig.colorbar(im, ax}\OperatorTok{=}\NormalTok{ax)}
+\NormalTok{cbar.set\_label(}\VerbatimStringTok{r"$V\^{}\{\textbackslash{}pi\}(\textbackslash{}theta,\textbackslash{}dot\{\textbackslash{}theta\})$ (final PI)"}\NormalTok{)}
+
+\NormalTok{ax.set\_xlabel(}\VerbatimStringTok{r"$\textbackslash{}dot\{\textbackslash{}theta\}$"}\NormalTok{)}
+\NormalTok{ax.set\_ylabel(}\VerbatimStringTok{r"$\textbackslash{}theta$"}\NormalTok{)}
+\NormalTok{ax.set\_title(}\VerbatimStringTok{r"State{-}value $V$ after Policy Iteration"}\NormalTok{)}
+
+\NormalTok{plt.tight\_layout()}
+\NormalTok{plt.show()}
+
+\CommentTok{\# Visualize the greedy action *value* (torque)}
+\NormalTok{pi\_grid }\OperatorTok{=}\NormalTok{ pi.reshape(N\_theta, N\_thetadot)          }\CommentTok{\# action indices}
+\NormalTok{action\_values }\OperatorTok{=}\NormalTok{ u\_grid[pi\_grid]                    }\CommentTok{\# map indices {-}\textgreater{} torques}
+
+\NormalTok{plt.figure(figsize}\OperatorTok{=}\NormalTok{(}\DecValTok{7}\NormalTok{,}\DecValTok{5}\NormalTok{), dpi}\OperatorTok{=}\DecValTok{120}\NormalTok{)}
+\NormalTok{im }\OperatorTok{=}\NormalTok{ plt.imshow(action\_values,}
+\NormalTok{           origin}\OperatorTok{=}\StringTok{"lower"}\NormalTok{,}
+\NormalTok{           extent}\OperatorTok{=}\NormalTok{[thetadot\_grid.}\BuiltInTok{min}\NormalTok{(), thetadot\_grid.}\BuiltInTok{max}\NormalTok{(),}
+\NormalTok{                   theta\_grid.}\BuiltInTok{min}\NormalTok{(), theta\_grid.}\BuiltInTok{max}\NormalTok{()],}
+\NormalTok{           aspect}\OperatorTok{=}\StringTok{"auto"}\NormalTok{, cmap}\OperatorTok{=}\StringTok{"coolwarm"}\NormalTok{)         }\CommentTok{\# diverging colormap good for ± torque}
+\NormalTok{cbar }\OperatorTok{=}\NormalTok{ plt.colorbar(im)}
+\NormalTok{cbar.set\_label(}\StringTok{"Greedy action value (torque)"}\NormalTok{)}
+
+\NormalTok{plt.xlabel(}\VerbatimStringTok{r"$\textbackslash{}dot\{\textbackslash{}theta\}$"}\NormalTok{)}
+\NormalTok{plt.ylabel(}\VerbatimStringTok{r"$\textbackslash{}theta$"}\NormalTok{)}
+\NormalTok{plt.title(}\StringTok{"Greedy policy (torque) after PI"}\NormalTok{)}
+\NormalTok{plt.tight\_layout()}
+\NormalTok{plt.show()}
+\end{Highlighting}
+\end{Shaded}
+
+\end{example}
+
+\subsection{Value Iteration}\label{value-iteration}
 
 \appendix
 
