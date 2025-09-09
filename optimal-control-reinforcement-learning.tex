@@ -1358,7 +1358,7 @@ We wrap angles to \([-\pi,\pi]\) via \(\operatorname{wrap}(\theta)=\mathrm{atan2
 
 Running the code, it shows that policy evaluation converges in 518 iterations under tolerance \(10^{-6}\).
 
-The figure blow plots the value function over the state grid.
+Fig. \ref{fig:mdp-pendulum-value-function-policy-evaluation} plots the value function over the state grid.
 
 \begin{figure}
 
@@ -1366,8 +1366,10 @@ The figure blow plots the value function over the state grid.
 
 }
 
-\caption{Value function from policy evaluation.}\label{fig:mdp-pendulum-value-function-policy-evaluation}
+\caption{Value Function from Policy Evaluation.}\label{fig:mdp-pendulum-value-function-policy-evaluation}
 \end{figure}
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_policy_evaluation.py}{here}.
 
 \end{example}
 
@@ -1569,9 +1571,7 @@ Then:
 Let us apply Policy Iteration to the inverted pendulum problem.
 
 \begin{example}[Policy Iteration for Inverted Pendulum]
-\protect\hypertarget{exm:InvertedPendulumPolicyIteration}{}\label{exm:InvertedPendulumPolicyIteration}
-
-The following code performs policy iteration for the inverted pendulum problem.
+\protect\hypertarget{exm:InvertedPendulumPolicyIteration}{}\label{exm:InvertedPendulumPolicyIteration}The following code performs policy iteration for the inverted pendulum problem.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1585,12 +1585,12 @@ The following code performs policy iteration for the inverted pendulum problem.
 \NormalTok{eps }\OperatorTok{=} \FloatTok{1e{-}8}
 
 \CommentTok{\# Grids}
-\NormalTok{N\_theta }\OperatorTok{=} \DecValTok{41}
-\NormalTok{N\_thetadot }\OperatorTok{=} \DecValTok{41}
-\NormalTok{N\_u }\OperatorTok{=} \DecValTok{21}
+\NormalTok{N\_theta }\OperatorTok{=} \DecValTok{101}
+\NormalTok{N\_thetadot }\OperatorTok{=} \DecValTok{101}
+\NormalTok{N\_u }\OperatorTok{=} \DecValTok{51}
 
-\NormalTok{theta\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{np.pi, np.pi, N\_theta)}
-\NormalTok{thetadot\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{np.pi, np.pi, N\_thetadot)}
+\NormalTok{theta\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, }\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, N\_theta)}
+\NormalTok{thetadot\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, }\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, N\_thetadot)}
 \NormalTok{u\_max }\OperatorTok{=} \FloatTok{0.5} \OperatorTok{*}\NormalTok{ m }\OperatorTok{*}\NormalTok{ g }\OperatorTok{*}\NormalTok{ l}
 \NormalTok{u\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{u\_max, u\_max, N\_u)}
 
@@ -1744,9 +1744,236 @@ The following code performs policy iteration for the inverted pendulum problem.
 \end{Highlighting}
 \end{Shaded}
 
+Running the code produces the optimal value function shown in Fig. \ref{fig:mdp-pendulum-PI-value} and the optimal policy shown in Fig. \ref{fig:mdp-pendulum-PI-policy}.
+
+As we can see, the policy learns to perform ``bang-bang'' control to accumulate energy before swinging up.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{images/MDP/pendulum_PI_value} 
+
+}
+
+\caption{Optimal Value Function after Policy Iteration}\label{fig:mdp-pendulum-PI-value}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{images/MDP/pendulum_PI_policy} 
+
+}
+
+\caption{Optimal Policy after Policy Iteration}\label{fig:mdp-pendulum-PI-policy}
+\end{figure}
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_policy_iteration.py}{here}.
 \end{example}
 
 \subsection{Value Iteration}\label{value-iteration}
+
+Policy iteration---as the name suggests---iterates on \emph{policies}: it alternates between
+(1) \emph{policy evaluation} (computing \(V^{\pi}\) for the current policy \(\pi\)) and
+(2) \emph{policy improvement} (making \(\pi\) greedy w.r.t. \(V^{\pi}\)).
+
+An alternative, often very effective, method is \emph{value iteration}. Unlike policy iteration, value iteration does \emph{not} explicitly maintain a policy during its updates; it iterates directly on the value function toward the fixed point of the Bellman optimality* operator. Once the value function has (approximately) converged, the optimal policy is obtained by a single greedy extraction step. Note that intermediate value iterates need not correspond to the value of any actual policy, yet value iteration typically converges rapidly in discounted, finite MDPs.
+
+The value iteration (VI) algorithm works as follows:
+
+\textbf{Initialization.} Choose any \(V_0:\mathcal{S}\to\mathbb{R}\) (e.g., \(V_0 \equiv 0\)).\\
+\textbf{Iteration.} For \(k=0,1,2,\dots\),
+\[
+V_{k+1}(s) \;\leftarrow\; \max_{a\in\mathcal{A}}
+\Big[\, R(s,a) \;+\; \gamma \sum_{s'\in\mathcal{S}} P(s'\mid s,a)\; V_k(s') \,\Big],
+\quad \forall s\in\mathcal{S}.
+\]
+\textbf{Stopping rule.} Stop when \(\lVert V_{k+1}-V_k\rVert_\infty \le \varepsilon\) (or any chosen tolerance).
+
+\textbf{Policy extraction (greedy):}
+\[
+\pi_{k+1}(s) \in \arg\max_{a\in\mathcal{A}}
+\Big[\, R(s,a) \;+\; \gamma \sum_{s'} P(s'\mid s,a)\; V_{k+1}(s') \,\Big].
+\]
+
+The following theorem states the convergence of value iteration.
+
+\begin{theorem}[Convergence of Value Iteration]
+\protect\hypertarget{thm:ValueIterationConvergence}{}\label{thm:ValueIterationConvergence}Let \(T^\star\) be the Bellman optimality operator,
+\[
+(T^\star V)(s) := \max_{a}\Big[ R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\, V(s') \Big].
+\]
+For \(\gamma\in[0,1)\) and finite \(\mathcal{S},\mathcal{A}\), \(T^\star\) is a \(\gamma\)-contraction in the sup-norm. Hence, for any \(V_0\),
+\[
+V_k \;=\; (T^\star )^k V_0 \;\xrightarrow[k\to\infty]{}\; V^*,
+\]
+the unique fixed point of \(T^\star\). Moreover, the greedy policy \(\pi_k\) extracted from \(V_k\) converges to an optimal policy \(\pi^\star\).
+
+In addition, after \(k\) iterations, we have
+\[
+\lVert V_k - V^* \rVert_\infty \;\le\; \gamma^k \, \lVert V_0 - V^* \rVert_\infty.
+\]
+\end{theorem}
+
+\begin{example}[Value Iteration for Inverted Pendulum]
+\protect\hypertarget{exm:InvertedPendulumValueIteration}{}\label{exm:InvertedPendulumValueIteration}The following code performs value iteration for the inverted pendulum problem.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\ImportTok{import}\NormalTok{ numpy }\ImportTok{as}\NormalTok{ np}
+\ImportTok{import}\NormalTok{ matplotlib.pyplot }\ImportTok{as}\NormalTok{ plt}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Physical \& MDP parameters {-}{-}{-}{-}{-}}
+\NormalTok{g, l, m, c }\OperatorTok{=} \FloatTok{9.81}\NormalTok{, }\FloatTok{1.0}\NormalTok{, }\FloatTok{1.0}\NormalTok{, }\FloatTok{0.1}
+\NormalTok{dt }\OperatorTok{=} \FloatTok{0.05}
+\NormalTok{gamma }\OperatorTok{=} \FloatTok{0.97}
+\NormalTok{eps }\OperatorTok{=} \FloatTok{1e{-}8}
+
+\CommentTok{\# Grids}
+\NormalTok{N\_theta }\OperatorTok{=} \DecValTok{101}
+\NormalTok{N\_thetadot }\OperatorTok{=} \DecValTok{101}
+\NormalTok{N\_u }\OperatorTok{=} \DecValTok{51}
+
+\NormalTok{theta\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, }\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, N\_theta)}
+\NormalTok{thetadot\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, }\FloatTok{1.5}\OperatorTok{*}\NormalTok{np.pi, N\_thetadot)}
+\NormalTok{u\_max }\OperatorTok{=} \FloatTok{0.5} \OperatorTok{*}\NormalTok{ m }\OperatorTok{*}\NormalTok{ g }\OperatorTok{*}\NormalTok{ l}
+\NormalTok{u\_grid }\OperatorTok{=}\NormalTok{ np.linspace(}\OperatorTok{{-}}\NormalTok{u\_max, u\_max, N\_u)}
+
+\CommentTok{\# Helpers to index/unwrap}
+\KeywordTok{def}\NormalTok{ wrap\_angle(x):}
+    \ControlFlowTok{return}\NormalTok{ np.arctan2(np.sin(x), np.cos(x))}
+
+\KeywordTok{def}\NormalTok{ state\_index(i, j):}
+    \ControlFlowTok{return}\NormalTok{ i }\OperatorTok{*}\NormalTok{ N\_thetadot }\OperatorTok{+}\NormalTok{ j}
+
+\KeywordTok{def}\NormalTok{ index\_to\_state(idx):}
+\NormalTok{    i }\OperatorTok{=}\NormalTok{ idx }\OperatorTok{//}\NormalTok{ N\_thetadot}
+\NormalTok{    j }\OperatorTok{=}\NormalTok{ idx }\OperatorTok{\%}\NormalTok{ N\_thetadot}
+    \ControlFlowTok{return}\NormalTok{ theta\_grid[i], thetadot\_grid[j]}
+
+\NormalTok{S }\OperatorTok{=}\NormalTok{ N\_theta }\OperatorTok{*}\NormalTok{ N\_thetadot}
+\NormalTok{A }\OperatorTok{=}\NormalTok{ N\_u}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Dynamics step (continuous {-}\textgreater{} one Euler step) {-}{-}{-}{-}{-}}
+\KeywordTok{def}\NormalTok{ step\_euler(theta, thetadot, u):}
+\NormalTok{    theta\_next }\OperatorTok{=}\NormalTok{ wrap\_angle(theta }\OperatorTok{+}\NormalTok{ dt }\OperatorTok{*}\NormalTok{ thetadot)}
+\NormalTok{    thetadot\_next }\OperatorTok{=}\NormalTok{ thetadot }\OperatorTok{+}\NormalTok{ dt }\OperatorTok{*}\NormalTok{ ((g}\OperatorTok{/}\NormalTok{l) }\OperatorTok{*}\NormalTok{ np.sin(theta) }\OperatorTok{+}\NormalTok{ (}\DecValTok{1}\OperatorTok{/}\NormalTok{(m}\OperatorTok{*}\NormalTok{l}\OperatorTok{*}\NormalTok{l))}\OperatorTok{*}\NormalTok{u }\OperatorTok{{-}}\NormalTok{ c}\OperatorTok{*}\NormalTok{thetadot)}
+    \CommentTok{\# clip angular velocity to grid range (bounded MDP)}
+\NormalTok{    thetadot\_next }\OperatorTok{=}\NormalTok{ np.clip(thetadot\_next, thetadot\_grid[}\DecValTok{0}\NormalTok{], thetadot\_grid[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{])}
+    \ControlFlowTok{return}\NormalTok{ theta\_next, thetadot\_next}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Find 3 nearest grid states and probability weights (inverse{-}distance) {-}{-}{-}{-}{-}}
+\NormalTok{grid\_pts }\OperatorTok{=}\NormalTok{ np.stack(np.meshgrid(theta\_grid, thetadot\_grid, indexing}\OperatorTok{=}\StringTok{\textquotesingle{}ij\textquotesingle{}}\NormalTok{), axis}\OperatorTok{={-}}\DecValTok{1}\NormalTok{).reshape(}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{)}
+
+\KeywordTok{def}\NormalTok{ nearest3\_probs(theta\_next, thetadot\_next):}
+\NormalTok{    x }\OperatorTok{=}\NormalTok{ np.array([theta\_next, thetadot\_next])}
+\NormalTok{    dists }\OperatorTok{=}\NormalTok{ np.linalg.norm(grid\_pts }\OperatorTok{{-}}\NormalTok{ x[}\VariableTok{None}\NormalTok{, :], axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)}
+\NormalTok{    nn\_idx }\OperatorTok{=}\NormalTok{ np.argpartition(dists, }\DecValTok{3}\NormalTok{)[:}\DecValTok{3}\NormalTok{]      }\CommentTok{\# three smallest (unordered)}
+\NormalTok{    nn\_idx }\OperatorTok{=}\NormalTok{ nn\_idx[np.argsort(dists[nn\_idx])]  }\CommentTok{\# sort those 3 by distance}
+\NormalTok{    d }\OperatorTok{=}\NormalTok{ dists[nn\_idx]}
+\NormalTok{    w }\OperatorTok{=} \FloatTok{1.0} \OperatorTok{/}\NormalTok{ (d }\OperatorTok{+}\NormalTok{ eps)}
+\NormalTok{    p }\OperatorTok{=}\NormalTok{ w }\OperatorTok{/}\NormalTok{ w.}\BuiltInTok{sum}\NormalTok{()}
+    \ControlFlowTok{return}\NormalTok{ nn\_idx.astype(}\BuiltInTok{int}\NormalTok{), p}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Reward {-}{-}{-}{-}{-}}
+\KeywordTok{def}\NormalTok{ reward(theta, thetadot, u):}
+    \ControlFlowTok{return} \OperatorTok{{-}}\NormalTok{(theta}\OperatorTok{**}\DecValTok{2} \OperatorTok{+} \FloatTok{0.1}\OperatorTok{*}\NormalTok{thetadot}\OperatorTok{**}\DecValTok{2} \OperatorTok{+} \FloatTok{0.01}\OperatorTok{*}\NormalTok{u}\OperatorTok{**}\DecValTok{2}\NormalTok{)}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Build tabular MDP: R[s,a] and sparse P[s,a,3] {-}{-}{-}{-}{-}}
+\NormalTok{R }\OperatorTok{=}\NormalTok{ np.zeros((S, A))}
+\NormalTok{NS\_idx }\OperatorTok{=}\NormalTok{ np.zeros((S, A, }\DecValTok{3}\NormalTok{), dtype}\OperatorTok{=}\BuiltInTok{int}\NormalTok{)   }\CommentTok{\# next{-}state indices (3 nearest)}
+\NormalTok{NS\_prob }\OperatorTok{=}\NormalTok{ np.zeros((S, A, }\DecValTok{3}\NormalTok{))             }\CommentTok{\# their probabilities}
+
+\ControlFlowTok{for}\NormalTok{ i, th }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(theta\_grid):}
+    \ControlFlowTok{for}\NormalTok{ j, thd }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(thetadot\_grid):}
+\NormalTok{        s }\OperatorTok{=}\NormalTok{ state\_index(i, j)}
+        \ControlFlowTok{for}\NormalTok{ a, u }\KeywordTok{in} \BuiltInTok{enumerate}\NormalTok{(u\_grid):}
+\NormalTok{            R[s, a] }\OperatorTok{=}\NormalTok{ reward(th, thd, u)}
+\NormalTok{            th\_n, thd\_n }\OperatorTok{=}\NormalTok{ step\_euler(th, thd, u)}
+\NormalTok{            nn\_idx, p }\OperatorTok{=}\NormalTok{ nearest3\_probs(th\_n, thd\_n)}
+\NormalTok{            NS\_idx[s, a, :] }\OperatorTok{=}\NormalTok{ nn\_idx}
+\NormalTok{            NS\_prob[s, a, :] }\OperatorTok{=}\NormalTok{ p}
+
+\CommentTok{\# =======================}
+\CommentTok{\#       VALUE ITERATION}
+\CommentTok{\# =======================}
+
+\CommentTok{\# Bellman optimality update:}
+\CommentTok{\# V\_\{k+1\}(s) = max\_a [ R(s,a) + gamma * sum\_j P(s,a,j) * V\_k(ns\_j) ]}
+\NormalTok{V }\OperatorTok{=}\NormalTok{ np.zeros(S)}
+\NormalTok{tol }\OperatorTok{=} \FloatTok{1e{-}6}
+\NormalTok{max\_vi\_iters }\OperatorTok{=} \DecValTok{1000}
+
+\ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(max\_vi\_iters):}
+    \CommentTok{\# Expected next V for every (s,a), given current V\_k}
+\NormalTok{    EV\_next }\OperatorTok{=}\NormalTok{ (NS\_prob }\OperatorTok{*}\NormalTok{ V[NS\_idx]).}\BuiltInTok{sum}\NormalTok{(axis}\OperatorTok{=}\DecValTok{2}\NormalTok{)   }\CommentTok{\# shape (S, A)}
+\NormalTok{    Q }\OperatorTok{=}\NormalTok{ R }\OperatorTok{+}\NormalTok{ gamma }\OperatorTok{*}\NormalTok{ EV\_next                       }\CommentTok{\# shape (S, A)}
+\NormalTok{    V\_new }\OperatorTok{=}\NormalTok{ np.}\BuiltInTok{max}\NormalTok{(Q, axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)                     }\CommentTok{\# greedy backup over actions}
+
+\NormalTok{    delta }\OperatorTok{=}\NormalTok{ np.}\BuiltInTok{max}\NormalTok{(np.}\BuiltInTok{abs}\NormalTok{(V\_new }\OperatorTok{{-}}\NormalTok{ V))}
+    \CommentTok{\# Optional: a stopping rule aligned with policy loss bound could scale tol}
+    \CommentTok{\# e.g., stop when delta \textless{}= tol * (1 {-} gamma) / (2 * gamma)}
+    \ControlFlowTok{if}\NormalTok{ delta }\OperatorTok{\textless{}}\NormalTok{ tol:}
+\NormalTok{        V }\OperatorTok{=}\NormalTok{ V\_new}
+        \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"Value Iteration converged in }\SpecialCharTok{\{}\NormalTok{k}\OperatorTok{+}\DecValTok{1}\SpecialCharTok{\}}\SpecialStringTok{ iterations (sup{-}norm change }\SpecialCharTok{\{}\NormalTok{delta}\SpecialCharTok{:.2e\}}\SpecialStringTok{)."}\NormalTok{)}
+        \ControlFlowTok{break}
+\NormalTok{    V }\OperatorTok{=}\NormalTok{ V\_new}
+\ControlFlowTok{else}\NormalTok{:}
+    \BuiltInTok{print}\NormalTok{(}\SpecialStringTok{f"Reached max\_vi\_iters=}\SpecialCharTok{\{}\NormalTok{max\_vi\_iters}\SpecialCharTok{\}}\SpecialStringTok{ (last sup{-}norm change }\SpecialCharTok{\{}\NormalTok{delta}\SpecialCharTok{:.2e\}}\SpecialStringTok{)."}\NormalTok{)}
+
+\CommentTok{\# Greedy policy extraction from the final V}
+\NormalTok{EV\_next }\OperatorTok{=}\NormalTok{ (NS\_prob }\OperatorTok{*}\NormalTok{ V[NS\_idx]).}\BuiltInTok{sum}\NormalTok{(axis}\OperatorTok{=}\DecValTok{2}\NormalTok{)   }\CommentTok{\# recompute with final V}
+\NormalTok{Q }\OperatorTok{=}\NormalTok{ R }\OperatorTok{+}\NormalTok{ gamma }\OperatorTok{*}\NormalTok{ EV\_next}
+\NormalTok{pi }\OperatorTok{=}\NormalTok{ np.argmax(Q, axis}\OperatorTok{=}\DecValTok{1}\NormalTok{)                     }\CommentTok{\# deterministic greedy policy (indices)}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Visualization: Value function {-}{-}{-}{-}{-}}
+\NormalTok{V\_grid }\OperatorTok{=}\NormalTok{ V.reshape(N\_theta, N\_thetadot)}
+
+\NormalTok{fig, ax }\OperatorTok{=}\NormalTok{ plt.subplots(figsize}\OperatorTok{=}\NormalTok{(}\DecValTok{7}\NormalTok{,}\DecValTok{5}\NormalTok{), dpi}\OperatorTok{=}\DecValTok{120}\NormalTok{)}
+\NormalTok{im }\OperatorTok{=}\NormalTok{ ax.imshow(}
+\NormalTok{    V\_grid,}
+\NormalTok{    origin}\OperatorTok{=}\StringTok{"lower"}\NormalTok{,}
+\NormalTok{    extent}\OperatorTok{=}\NormalTok{[thetadot\_grid.}\BuiltInTok{min}\NormalTok{(), thetadot\_grid.}\BuiltInTok{max}\NormalTok{(),}
+\NormalTok{            theta\_grid.}\BuiltInTok{min}\NormalTok{(), theta\_grid.}\BuiltInTok{max}\NormalTok{()],}
+\NormalTok{    aspect}\OperatorTok{=}\StringTok{"auto"}\NormalTok{,}
+\NormalTok{    cmap}\OperatorTok{=}\StringTok{"viridis"}
+\NormalTok{)}
+\NormalTok{cbar }\OperatorTok{=}\NormalTok{ fig.colorbar(im, ax}\OperatorTok{=}\NormalTok{ax)}
+\NormalTok{cbar.set\_label(}\VerbatimStringTok{r"$V\^{}*(\textbackslash{}theta,\textbackslash{}dot\{\textbackslash{}theta\})$ (Value Iteration)"}\NormalTok{)}
+
+\NormalTok{ax.set\_xlabel(}\VerbatimStringTok{r"$\textbackslash{}dot\{\textbackslash{}theta\}$"}\NormalTok{)}
+\NormalTok{ax.set\_ylabel(}\VerbatimStringTok{r"$\textbackslash{}theta$"}\NormalTok{)}
+\NormalTok{ax.set\_title(}\VerbatimStringTok{r"State{-}value $V$ after Value Iteration"}\NormalTok{)}
+
+\NormalTok{plt.tight\_layout()}
+\NormalTok{plt.show()}
+
+\CommentTok{\# {-}{-}{-}{-}{-} Visualization: Greedy torque field {-}{-}{-}{-}{-}}
+\NormalTok{pi\_grid }\OperatorTok{=}\NormalTok{ pi.reshape(N\_theta, N\_thetadot)   }\CommentTok{\# action indices}
+\NormalTok{action\_values }\OperatorTok{=}\NormalTok{ u\_grid[pi\_grid]             }\CommentTok{\# map indices {-}\textgreater{} torques}
+
+\NormalTok{plt.figure(figsize}\OperatorTok{=}\NormalTok{(}\DecValTok{7}\NormalTok{,}\DecValTok{5}\NormalTok{), dpi}\OperatorTok{=}\DecValTok{120}\NormalTok{)}
+\NormalTok{im }\OperatorTok{=}\NormalTok{ plt.imshow(}
+\NormalTok{    action\_values,}
+\NormalTok{    origin}\OperatorTok{=}\StringTok{"lower"}\NormalTok{,}
+\NormalTok{    extent}\OperatorTok{=}\NormalTok{[thetadot\_grid.}\BuiltInTok{min}\NormalTok{(), thetadot\_grid.}\BuiltInTok{max}\NormalTok{(),}
+\NormalTok{            theta\_grid.}\BuiltInTok{min}\NormalTok{(), theta\_grid.}\BuiltInTok{max}\NormalTok{()],}
+\NormalTok{    aspect}\OperatorTok{=}\StringTok{"auto"}\NormalTok{,}
+\NormalTok{    cmap}\OperatorTok{=}\StringTok{"coolwarm"}   \CommentTok{\# good for ± torque}
+\NormalTok{)}
+\NormalTok{cbar }\OperatorTok{=}\NormalTok{ plt.colorbar(im)}
+\NormalTok{cbar.set\_label(}\StringTok{"Greedy action value (torque)"}\NormalTok{)}
+
+\NormalTok{plt.xlabel(}\VerbatimStringTok{r"$\textbackslash{}dot\{\textbackslash{}theta\}$"}\NormalTok{)}
+\NormalTok{plt.ylabel(}\VerbatimStringTok{r"$\textbackslash{}theta$"}\NormalTok{)}
+\NormalTok{plt.title(}\StringTok{"Greedy policy (torque) extracted from Value Iteration"}\NormalTok{)}
+\NormalTok{plt.tight\_layout()}
+\NormalTok{plt.show()}
+\end{Highlighting}
+\end{Shaded}
+
+Try it for yourself \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_value_iteration.py}{here}!
+
+You should obtain the same results as policy iteration.
+\end{example}
 
 \appendix
 

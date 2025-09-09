@@ -1261,13 +1261,14 @@ R(s,a) = -\Big(\theta^2 + 0.1\,\dot\theta^2 + 0.01\,u^2\Big).
 <span id="cb3-124"><a href="mdp.html#cb3-124" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb3-125"><a href="mdp.html#cb3-125" tabindex="-1"></a>plt.show()</span></code></pre></div>
 <p>Running the code, it shows that policy evaluation converges in 518 iterations under tolerance <span class="math inline">\(10^{-6}\)</span>.</p>
-<p>The figure blow plots the value function over the state grid.</p>
+<p>Fig. <a href="mdp.html#fig:mdp-pendulum-value-function-policy-evaluation">1.4</a> plots the value function over the state grid.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:mdp-pendulum-value-function-policy-evaluation"></span>
-<img src="images/MDP/pendulum_policy_evaluation.png" alt="Value function from policy evaluation." width="80%" />
+<img src="images/MDP/pendulum_policy_evaluation.png" alt="Value Function from Policy Evaluation." width="80%" />
 <p class="caption">
-Figure 1.4: Value function from policy evaluation.
+Figure 1.4: Value Function from Policy Evaluation.
 </p>
 </div>
+<p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_policy_evaluation.py">here</a>.</p>
 </div>
 </div>
 </div>
@@ -1452,12 +1453,12 @@ The sequence <span class="math inline">\((T^\star)^k V^\pi\)</span> converges (b
 <span id="cb4-8"><a href="mdp.html#cb4-8" tabindex="-1"></a>eps <span class="op">=</span> <span class="fl">1e-8</span></span>
 <span id="cb4-9"><a href="mdp.html#cb4-9" tabindex="-1"></a></span>
 <span id="cb4-10"><a href="mdp.html#cb4-10" tabindex="-1"></a><span class="co"># Grids</span></span>
-<span id="cb4-11"><a href="mdp.html#cb4-11" tabindex="-1"></a>N_theta <span class="op">=</span> <span class="dv">41</span></span>
-<span id="cb4-12"><a href="mdp.html#cb4-12" tabindex="-1"></a>N_thetadot <span class="op">=</span> <span class="dv">41</span></span>
-<span id="cb4-13"><a href="mdp.html#cb4-13" tabindex="-1"></a>N_u <span class="op">=</span> <span class="dv">21</span></span>
+<span id="cb4-11"><a href="mdp.html#cb4-11" tabindex="-1"></a>N_theta <span class="op">=</span> <span class="dv">101</span></span>
+<span id="cb4-12"><a href="mdp.html#cb4-12" tabindex="-1"></a>N_thetadot <span class="op">=</span> <span class="dv">101</span></span>
+<span id="cb4-13"><a href="mdp.html#cb4-13" tabindex="-1"></a>N_u <span class="op">=</span> <span class="dv">51</span></span>
 <span id="cb4-14"><a href="mdp.html#cb4-14" tabindex="-1"></a></span>
-<span id="cb4-15"><a href="mdp.html#cb4-15" tabindex="-1"></a>theta_grid <span class="op">=</span> np.linspace(<span class="op">-</span>np.pi, np.pi, N_theta)</span>
-<span id="cb4-16"><a href="mdp.html#cb4-16" tabindex="-1"></a>thetadot_grid <span class="op">=</span> np.linspace(<span class="op">-</span>np.pi, np.pi, N_thetadot)</span>
+<span id="cb4-15"><a href="mdp.html#cb4-15" tabindex="-1"></a>theta_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">1.5</span><span class="op">*</span>np.pi, <span class="fl">1.5</span><span class="op">*</span>np.pi, N_theta)</span>
+<span id="cb4-16"><a href="mdp.html#cb4-16" tabindex="-1"></a>thetadot_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">1.5</span><span class="op">*</span>np.pi, <span class="fl">1.5</span><span class="op">*</span>np.pi, N_thetadot)</span>
 <span id="cb4-17"><a href="mdp.html#cb4-17" tabindex="-1"></a>u_max <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> m <span class="op">*</span> g <span class="op">*</span> l</span>
 <span id="cb4-18"><a href="mdp.html#cb4-18" tabindex="-1"></a>u_grid <span class="op">=</span> np.linspace(<span class="op">-</span>u_max, u_max, N_u)</span>
 <span id="cb4-19"><a href="mdp.html#cb4-19" tabindex="-1"></a></span>
@@ -1608,16 +1609,218 @@ The sequence <span class="math inline">\((T^\star)^k V^\pi\)</span> converges (b
 <span id="cb4-164"><a href="mdp.html#cb4-164" tabindex="-1"></a>plt.title(<span class="st">&quot;Greedy policy (torque) after PI&quot;</span>)</span>
 <span id="cb4-165"><a href="mdp.html#cb4-165" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb4-166"><a href="mdp.html#cb4-166" tabindex="-1"></a>plt.show()</span></code></pre></div>
+<p>Running the code produces the optimal value function shown in Fig. <a href="mdp.html#fig:mdp-pendulum-PI-value">1.5</a> and the optimal policy shown in Fig. <a href="mdp.html#fig:mdp-pendulum-PI-policy">1.6</a>.</p>
+<p>As we can see, the policy learns to perform “bang-bang” control to accumulate energy before swinging up.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mdp-pendulum-PI-value"></span>
+<img src="images/MDP/pendulum_PI_value.png" alt="Optimal Value Function after Policy Iteration" width="80%" />
+<p class="caption">
+Figure 1.5: Optimal Value Function after Policy Iteration
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mdp-pendulum-PI-policy"></span>
+<img src="images/MDP/pendulum_PI_policy.png" alt="Optimal Policy after Policy Iteration" width="80%" />
+<p class="caption">
+Figure 1.6: Optimal Policy after Policy Iteration
+</p>
+</div>
+<p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_policy_iteration.py">here</a>.</p>
 </div>
 </div>
 </div>
 <div id="value-iteration" class="section level3 hasAnchor" number="1.2.6">
 <h3><span class="header-section-number">1.2.6</span> Value Iteration<a href="mdp.html#value-iteration" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<!-- ::: {.examplebox}
-::: {.example #InvertedPendulumValueIteration name="Value Iteration for Inverted Pendulum"}
-xxx
-:::
-::: -->
+<p>Policy iteration—as the name suggests—iterates on <em>policies</em>: it alternates between
+(1) <em>policy evaluation</em> (computing <span class="math inline">\(V^{\pi}\)</span> for the current policy <span class="math inline">\(\pi\)</span>) and
+(2) <em>policy improvement</em> (making <span class="math inline">\(\pi\)</span> greedy w.r.t. <span class="math inline">\(V^{\pi}\)</span>).</p>
+<p>An alternative, often very effective, method is <em>value iteration</em>. Unlike policy iteration, value iteration does <em>not</em> explicitly maintain a policy during its updates; it iterates directly on the value function toward the fixed point of the Bellman optimality* operator. Once the value function has (approximately) converged, the optimal policy is obtained by a single greedy extraction step. Note that intermediate value iterates need not correspond to the value of any actual policy, yet value iteration typically converges rapidly in discounted, finite MDPs.</p>
+<p>The value iteration (VI) algorithm works as follows:</p>
+<p><strong>Initialization.</strong> Choose any <span class="math inline">\(V_0:\mathcal{S}\to\mathbb{R}\)</span> (e.g., <span class="math inline">\(V_0 \equiv 0\)</span>).<br />
+<strong>Iteration.</strong> For <span class="math inline">\(k=0,1,2,\dots\)</span>,
+<span class="math display">\[
+V_{k+1}(s) \;\leftarrow\; \max_{a\in\mathcal{A}}
+\Big[\, R(s,a) \;+\; \gamma \sum_{s&#39;\in\mathcal{S}} P(s&#39;\mid s,a)\; V_k(s&#39;) \,\Big],
+\quad \forall s\in\mathcal{S}.
+\]</span>
+<strong>Stopping rule.</strong> Stop when <span class="math inline">\(\lVert V_{k+1}-V_k\rVert_\infty \le \varepsilon\)</span> (or any chosen tolerance).</p>
+<p><strong>Policy extraction (greedy):</strong>
+<span class="math display">\[
+\pi_{k+1}(s) \in \arg\max_{a\in\mathcal{A}}
+\Big[\, R(s,a) \;+\; \gamma \sum_{s&#39;} P(s&#39;\mid s,a)\; V_{k+1}(s&#39;) \,\Big].
+\]</span></p>
+<p>The following theorem states the convergence of value iteration.</p>
+<div class="theorembox">
+<div class="theorem">
+<p><span id="thm:ValueIterationConvergence" class="theorem"><strong>Theorem 1.4  (Convergence of Value Iteration) </strong></span>Let <span class="math inline">\(T^\star\)</span> be the Bellman optimality operator,
+<span class="math display">\[
+(T^\star V)(s) := \max_{a}\Big[ R(s,a) + \gamma \sum_{s&#39;} P(s&#39;\mid s,a)\, V(s&#39;) \Big].
+\]</span>
+For <span class="math inline">\(\gamma\in[0,1)\)</span> and finite <span class="math inline">\(\mathcal{S},\mathcal{A}\)</span>, <span class="math inline">\(T^\star\)</span> is a <span class="math inline">\(\gamma\)</span>-contraction in the sup-norm. Hence, for any <span class="math inline">\(V_0\)</span>,
+<span class="math display">\[
+V_k \;=\; (T^\star )^k V_0 \;\xrightarrow[k\to\infty]{}\; V^*,
+\]</span>
+the unique fixed point of <span class="math inline">\(T^\star\)</span>. Moreover, the greedy policy <span class="math inline">\(\pi_k\)</span> extracted from <span class="math inline">\(V_k\)</span> converges to an optimal policy <span class="math inline">\(\pi^\star\)</span>.</p>
+<p>In addition, after <span class="math inline">\(k\)</span> iterations, we have
+<span class="math display">\[
+\lVert V_k - V^* \rVert_\infty \;\le\; \gamma^k \, \lVert V_0 - V^* \rVert_\infty.
+\]</span></p>
+</div>
+</div>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:InvertedPendulumValueIteration" class="example"><strong>Example 1.5  (Value Iteration for Inverted Pendulum) </strong></span>The following code performs value iteration for the inverted pendulum problem.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="mdp.html#cb5-1" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb5-2"><a href="mdp.html#cb5-2" tabindex="-1"></a><span class="im">import</span> matplotlib.pyplot <span class="im">as</span> plt</span>
+<span id="cb5-3"><a href="mdp.html#cb5-3" tabindex="-1"></a></span>
+<span id="cb5-4"><a href="mdp.html#cb5-4" tabindex="-1"></a><span class="co"># ----- Physical &amp; MDP parameters -----</span></span>
+<span id="cb5-5"><a href="mdp.html#cb5-5" tabindex="-1"></a>g, l, m, c <span class="op">=</span> <span class="fl">9.81</span>, <span class="fl">1.0</span>, <span class="fl">1.0</span>, <span class="fl">0.1</span></span>
+<span id="cb5-6"><a href="mdp.html#cb5-6" tabindex="-1"></a>dt <span class="op">=</span> <span class="fl">0.05</span></span>
+<span id="cb5-7"><a href="mdp.html#cb5-7" tabindex="-1"></a>gamma <span class="op">=</span> <span class="fl">0.97</span></span>
+<span id="cb5-8"><a href="mdp.html#cb5-8" tabindex="-1"></a>eps <span class="op">=</span> <span class="fl">1e-8</span></span>
+<span id="cb5-9"><a href="mdp.html#cb5-9" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="mdp.html#cb5-10" tabindex="-1"></a><span class="co"># Grids</span></span>
+<span id="cb5-11"><a href="mdp.html#cb5-11" tabindex="-1"></a>N_theta <span class="op">=</span> <span class="dv">101</span></span>
+<span id="cb5-12"><a href="mdp.html#cb5-12" tabindex="-1"></a>N_thetadot <span class="op">=</span> <span class="dv">101</span></span>
+<span id="cb5-13"><a href="mdp.html#cb5-13" tabindex="-1"></a>N_u <span class="op">=</span> <span class="dv">51</span></span>
+<span id="cb5-14"><a href="mdp.html#cb5-14" tabindex="-1"></a></span>
+<span id="cb5-15"><a href="mdp.html#cb5-15" tabindex="-1"></a>theta_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">1.5</span><span class="op">*</span>np.pi, <span class="fl">1.5</span><span class="op">*</span>np.pi, N_theta)</span>
+<span id="cb5-16"><a href="mdp.html#cb5-16" tabindex="-1"></a>thetadot_grid <span class="op">=</span> np.linspace(<span class="op">-</span><span class="fl">1.5</span><span class="op">*</span>np.pi, <span class="fl">1.5</span><span class="op">*</span>np.pi, N_thetadot)</span>
+<span id="cb5-17"><a href="mdp.html#cb5-17" tabindex="-1"></a>u_max <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> m <span class="op">*</span> g <span class="op">*</span> l</span>
+<span id="cb5-18"><a href="mdp.html#cb5-18" tabindex="-1"></a>u_grid <span class="op">=</span> np.linspace(<span class="op">-</span>u_max, u_max, N_u)</span>
+<span id="cb5-19"><a href="mdp.html#cb5-19" tabindex="-1"></a></span>
+<span id="cb5-20"><a href="mdp.html#cb5-20" tabindex="-1"></a><span class="co"># Helpers to index/unwrap</span></span>
+<span id="cb5-21"><a href="mdp.html#cb5-21" tabindex="-1"></a><span class="kw">def</span> wrap_angle(x):</span>
+<span id="cb5-22"><a href="mdp.html#cb5-22" tabindex="-1"></a>    <span class="cf">return</span> np.arctan2(np.sin(x), np.cos(x))</span>
+<span id="cb5-23"><a href="mdp.html#cb5-23" tabindex="-1"></a></span>
+<span id="cb5-24"><a href="mdp.html#cb5-24" tabindex="-1"></a><span class="kw">def</span> state_index(i, j):</span>
+<span id="cb5-25"><a href="mdp.html#cb5-25" tabindex="-1"></a>    <span class="cf">return</span> i <span class="op">*</span> N_thetadot <span class="op">+</span> j</span>
+<span id="cb5-26"><a href="mdp.html#cb5-26" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="mdp.html#cb5-27" tabindex="-1"></a><span class="kw">def</span> index_to_state(idx):</span>
+<span id="cb5-28"><a href="mdp.html#cb5-28" tabindex="-1"></a>    i <span class="op">=</span> idx <span class="op">//</span> N_thetadot</span>
+<span id="cb5-29"><a href="mdp.html#cb5-29" tabindex="-1"></a>    j <span class="op">=</span> idx <span class="op">%</span> N_thetadot</span>
+<span id="cb5-30"><a href="mdp.html#cb5-30" tabindex="-1"></a>    <span class="cf">return</span> theta_grid[i], thetadot_grid[j]</span>
+<span id="cb5-31"><a href="mdp.html#cb5-31" tabindex="-1"></a></span>
+<span id="cb5-32"><a href="mdp.html#cb5-32" tabindex="-1"></a>S <span class="op">=</span> N_theta <span class="op">*</span> N_thetadot</span>
+<span id="cb5-33"><a href="mdp.html#cb5-33" tabindex="-1"></a>A <span class="op">=</span> N_u</span>
+<span id="cb5-34"><a href="mdp.html#cb5-34" tabindex="-1"></a></span>
+<span id="cb5-35"><a href="mdp.html#cb5-35" tabindex="-1"></a><span class="co"># ----- Dynamics step (continuous -&gt; one Euler step) -----</span></span>
+<span id="cb5-36"><a href="mdp.html#cb5-36" tabindex="-1"></a><span class="kw">def</span> step_euler(theta, thetadot, u):</span>
+<span id="cb5-37"><a href="mdp.html#cb5-37" tabindex="-1"></a>    theta_next <span class="op">=</span> wrap_angle(theta <span class="op">+</span> dt <span class="op">*</span> thetadot)</span>
+<span id="cb5-38"><a href="mdp.html#cb5-38" tabindex="-1"></a>    thetadot_next <span class="op">=</span> thetadot <span class="op">+</span> dt <span class="op">*</span> ((g<span class="op">/</span>l) <span class="op">*</span> np.sin(theta) <span class="op">+</span> (<span class="dv">1</span><span class="op">/</span>(m<span class="op">*</span>l<span class="op">*</span>l))<span class="op">*</span>u <span class="op">-</span> c<span class="op">*</span>thetadot)</span>
+<span id="cb5-39"><a href="mdp.html#cb5-39" tabindex="-1"></a>    <span class="co"># clip angular velocity to grid range (bounded MDP)</span></span>
+<span id="cb5-40"><a href="mdp.html#cb5-40" tabindex="-1"></a>    thetadot_next <span class="op">=</span> np.clip(thetadot_next, thetadot_grid[<span class="dv">0</span>], thetadot_grid[<span class="op">-</span><span class="dv">1</span>])</span>
+<span id="cb5-41"><a href="mdp.html#cb5-41" tabindex="-1"></a>    <span class="cf">return</span> theta_next, thetadot_next</span>
+<span id="cb5-42"><a href="mdp.html#cb5-42" tabindex="-1"></a></span>
+<span id="cb5-43"><a href="mdp.html#cb5-43" tabindex="-1"></a><span class="co"># ----- Find 3 nearest grid states and probability weights (inverse-distance) -----</span></span>
+<span id="cb5-44"><a href="mdp.html#cb5-44" tabindex="-1"></a>grid_pts <span class="op">=</span> np.stack(np.meshgrid(theta_grid, thetadot_grid, indexing<span class="op">=</span><span class="st">&#39;ij&#39;</span>), axis<span class="op">=-</span><span class="dv">1</span>).reshape(<span class="op">-</span><span class="dv">1</span>, <span class="dv">2</span>)</span>
+<span id="cb5-45"><a href="mdp.html#cb5-45" tabindex="-1"></a></span>
+<span id="cb5-46"><a href="mdp.html#cb5-46" tabindex="-1"></a><span class="kw">def</span> nearest3_probs(theta_next, thetadot_next):</span>
+<span id="cb5-47"><a href="mdp.html#cb5-47" tabindex="-1"></a>    x <span class="op">=</span> np.array([theta_next, thetadot_next])</span>
+<span id="cb5-48"><a href="mdp.html#cb5-48" tabindex="-1"></a>    dists <span class="op">=</span> np.linalg.norm(grid_pts <span class="op">-</span> x[<span class="va">None</span>, :], axis<span class="op">=</span><span class="dv">1</span>)</span>
+<span id="cb5-49"><a href="mdp.html#cb5-49" tabindex="-1"></a>    nn_idx <span class="op">=</span> np.argpartition(dists, <span class="dv">3</span>)[:<span class="dv">3</span>]      <span class="co"># three smallest (unordered)</span></span>
+<span id="cb5-50"><a href="mdp.html#cb5-50" tabindex="-1"></a>    nn_idx <span class="op">=</span> nn_idx[np.argsort(dists[nn_idx])]  <span class="co"># sort those 3 by distance</span></span>
+<span id="cb5-51"><a href="mdp.html#cb5-51" tabindex="-1"></a>    d <span class="op">=</span> dists[nn_idx]</span>
+<span id="cb5-52"><a href="mdp.html#cb5-52" tabindex="-1"></a>    w <span class="op">=</span> <span class="fl">1.0</span> <span class="op">/</span> (d <span class="op">+</span> eps)</span>
+<span id="cb5-53"><a href="mdp.html#cb5-53" tabindex="-1"></a>    p <span class="op">=</span> w <span class="op">/</span> w.<span class="bu">sum</span>()</span>
+<span id="cb5-54"><a href="mdp.html#cb5-54" tabindex="-1"></a>    <span class="cf">return</span> nn_idx.astype(<span class="bu">int</span>), p</span>
+<span id="cb5-55"><a href="mdp.html#cb5-55" tabindex="-1"></a></span>
+<span id="cb5-56"><a href="mdp.html#cb5-56" tabindex="-1"></a><span class="co"># ----- Reward -----</span></span>
+<span id="cb5-57"><a href="mdp.html#cb5-57" tabindex="-1"></a><span class="kw">def</span> reward(theta, thetadot, u):</span>
+<span id="cb5-58"><a href="mdp.html#cb5-58" tabindex="-1"></a>    <span class="cf">return</span> <span class="op">-</span>(theta<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> <span class="fl">0.1</span><span class="op">*</span>thetadot<span class="op">**</span><span class="dv">2</span> <span class="op">+</span> <span class="fl">0.01</span><span class="op">*</span>u<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb5-59"><a href="mdp.html#cb5-59" tabindex="-1"></a></span>
+<span id="cb5-60"><a href="mdp.html#cb5-60" tabindex="-1"></a><span class="co"># ----- Build tabular MDP: R[s,a] and sparse P[s,a,3] -----</span></span>
+<span id="cb5-61"><a href="mdp.html#cb5-61" tabindex="-1"></a>R <span class="op">=</span> np.zeros((S, A))</span>
+<span id="cb5-62"><a href="mdp.html#cb5-62" tabindex="-1"></a>NS_idx <span class="op">=</span> np.zeros((S, A, <span class="dv">3</span>), dtype<span class="op">=</span><span class="bu">int</span>)   <span class="co"># next-state indices (3 nearest)</span></span>
+<span id="cb5-63"><a href="mdp.html#cb5-63" tabindex="-1"></a>NS_prob <span class="op">=</span> np.zeros((S, A, <span class="dv">3</span>))             <span class="co"># their probabilities</span></span>
+<span id="cb5-64"><a href="mdp.html#cb5-64" tabindex="-1"></a></span>
+<span id="cb5-65"><a href="mdp.html#cb5-65" tabindex="-1"></a><span class="cf">for</span> i, th <span class="kw">in</span> <span class="bu">enumerate</span>(theta_grid):</span>
+<span id="cb5-66"><a href="mdp.html#cb5-66" tabindex="-1"></a>    <span class="cf">for</span> j, thd <span class="kw">in</span> <span class="bu">enumerate</span>(thetadot_grid):</span>
+<span id="cb5-67"><a href="mdp.html#cb5-67" tabindex="-1"></a>        s <span class="op">=</span> state_index(i, j)</span>
+<span id="cb5-68"><a href="mdp.html#cb5-68" tabindex="-1"></a>        <span class="cf">for</span> a, u <span class="kw">in</span> <span class="bu">enumerate</span>(u_grid):</span>
+<span id="cb5-69"><a href="mdp.html#cb5-69" tabindex="-1"></a>            R[s, a] <span class="op">=</span> reward(th, thd, u)</span>
+<span id="cb5-70"><a href="mdp.html#cb5-70" tabindex="-1"></a>            th_n, thd_n <span class="op">=</span> step_euler(th, thd, u)</span>
+<span id="cb5-71"><a href="mdp.html#cb5-71" tabindex="-1"></a>            nn_idx, p <span class="op">=</span> nearest3_probs(th_n, thd_n)</span>
+<span id="cb5-72"><a href="mdp.html#cb5-72" tabindex="-1"></a>            NS_idx[s, a, :] <span class="op">=</span> nn_idx</span>
+<span id="cb5-73"><a href="mdp.html#cb5-73" tabindex="-1"></a>            NS_prob[s, a, :] <span class="op">=</span> p</span>
+<span id="cb5-74"><a href="mdp.html#cb5-74" tabindex="-1"></a></span>
+<span id="cb5-75"><a href="mdp.html#cb5-75" tabindex="-1"></a><span class="co"># =======================</span></span>
+<span id="cb5-76"><a href="mdp.html#cb5-76" tabindex="-1"></a><span class="co">#       VALUE ITERATION</span></span>
+<span id="cb5-77"><a href="mdp.html#cb5-77" tabindex="-1"></a><span class="co"># =======================</span></span>
+<span id="cb5-78"><a href="mdp.html#cb5-78" tabindex="-1"></a></span>
+<span id="cb5-79"><a href="mdp.html#cb5-79" tabindex="-1"></a><span class="co"># Bellman optimality update:</span></span>
+<span id="cb5-80"><a href="mdp.html#cb5-80" tabindex="-1"></a><span class="co"># V_{k+1}(s) = max_a [ R(s,a) + gamma * sum_j P(s,a,j) * V_k(ns_j) ]</span></span>
+<span id="cb5-81"><a href="mdp.html#cb5-81" tabindex="-1"></a>V <span class="op">=</span> np.zeros(S)</span>
+<span id="cb5-82"><a href="mdp.html#cb5-82" tabindex="-1"></a>tol <span class="op">=</span> <span class="fl">1e-6</span></span>
+<span id="cb5-83"><a href="mdp.html#cb5-83" tabindex="-1"></a>max_vi_iters <span class="op">=</span> <span class="dv">1000</span></span>
+<span id="cb5-84"><a href="mdp.html#cb5-84" tabindex="-1"></a></span>
+<span id="cb5-85"><a href="mdp.html#cb5-85" tabindex="-1"></a><span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(max_vi_iters):</span>
+<span id="cb5-86"><a href="mdp.html#cb5-86" tabindex="-1"></a>    <span class="co"># Expected next V for every (s,a), given current V_k</span></span>
+<span id="cb5-87"><a href="mdp.html#cb5-87" tabindex="-1"></a>    EV_next <span class="op">=</span> (NS_prob <span class="op">*</span> V[NS_idx]).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">2</span>)   <span class="co"># shape (S, A)</span></span>
+<span id="cb5-88"><a href="mdp.html#cb5-88" tabindex="-1"></a>    Q <span class="op">=</span> R <span class="op">+</span> gamma <span class="op">*</span> EV_next                       <span class="co"># shape (S, A)</span></span>
+<span id="cb5-89"><a href="mdp.html#cb5-89" tabindex="-1"></a>    V_new <span class="op">=</span> np.<span class="bu">max</span>(Q, axis<span class="op">=</span><span class="dv">1</span>)                     <span class="co"># greedy backup over actions</span></span>
+<span id="cb5-90"><a href="mdp.html#cb5-90" tabindex="-1"></a></span>
+<span id="cb5-91"><a href="mdp.html#cb5-91" tabindex="-1"></a>    delta <span class="op">=</span> np.<span class="bu">max</span>(np.<span class="bu">abs</span>(V_new <span class="op">-</span> V))</span>
+<span id="cb5-92"><a href="mdp.html#cb5-92" tabindex="-1"></a>    <span class="co"># Optional: a stopping rule aligned with policy loss bound could scale tol</span></span>
+<span id="cb5-93"><a href="mdp.html#cb5-93" tabindex="-1"></a>    <span class="co"># e.g., stop when delta &lt;= tol * (1 - gamma) / (2 * gamma)</span></span>
+<span id="cb5-94"><a href="mdp.html#cb5-94" tabindex="-1"></a>    <span class="cf">if</span> delta <span class="op">&lt;</span> tol:</span>
+<span id="cb5-95"><a href="mdp.html#cb5-95" tabindex="-1"></a>        V <span class="op">=</span> V_new</span>
+<span id="cb5-96"><a href="mdp.html#cb5-96" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;Value Iteration converged in </span><span class="sc">{</span>k<span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss"> iterations (sup-norm change </span><span class="sc">{</span>delta<span class="sc">:.2e}</span><span class="ss">).&quot;</span>)</span>
+<span id="cb5-97"><a href="mdp.html#cb5-97" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb5-98"><a href="mdp.html#cb5-98" tabindex="-1"></a>    V <span class="op">=</span> V_new</span>
+<span id="cb5-99"><a href="mdp.html#cb5-99" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb5-100"><a href="mdp.html#cb5-100" tabindex="-1"></a>    <span class="bu">print</span>(<span class="ss">f&quot;Reached max_vi_iters=</span><span class="sc">{</span>max_vi_iters<span class="sc">}</span><span class="ss"> (last sup-norm change </span><span class="sc">{</span>delta<span class="sc">:.2e}</span><span class="ss">).&quot;</span>)</span>
+<span id="cb5-101"><a href="mdp.html#cb5-101" tabindex="-1"></a></span>
+<span id="cb5-102"><a href="mdp.html#cb5-102" tabindex="-1"></a><span class="co"># Greedy policy extraction from the final V</span></span>
+<span id="cb5-103"><a href="mdp.html#cb5-103" tabindex="-1"></a>EV_next <span class="op">=</span> (NS_prob <span class="op">*</span> V[NS_idx]).<span class="bu">sum</span>(axis<span class="op">=</span><span class="dv">2</span>)   <span class="co"># recompute with final V</span></span>
+<span id="cb5-104"><a href="mdp.html#cb5-104" tabindex="-1"></a>Q <span class="op">=</span> R <span class="op">+</span> gamma <span class="op">*</span> EV_next</span>
+<span id="cb5-105"><a href="mdp.html#cb5-105" tabindex="-1"></a>pi <span class="op">=</span> np.argmax(Q, axis<span class="op">=</span><span class="dv">1</span>)                     <span class="co"># deterministic greedy policy (indices)</span></span>
+<span id="cb5-106"><a href="mdp.html#cb5-106" tabindex="-1"></a></span>
+<span id="cb5-107"><a href="mdp.html#cb5-107" tabindex="-1"></a><span class="co"># ----- Visualization: Value function -----</span></span>
+<span id="cb5-108"><a href="mdp.html#cb5-108" tabindex="-1"></a>V_grid <span class="op">=</span> V.reshape(N_theta, N_thetadot)</span>
+<span id="cb5-109"><a href="mdp.html#cb5-109" tabindex="-1"></a></span>
+<span id="cb5-110"><a href="mdp.html#cb5-110" tabindex="-1"></a>fig, ax <span class="op">=</span> plt.subplots(figsize<span class="op">=</span>(<span class="dv">7</span>,<span class="dv">5</span>), dpi<span class="op">=</span><span class="dv">120</span>)</span>
+<span id="cb5-111"><a href="mdp.html#cb5-111" tabindex="-1"></a>im <span class="op">=</span> ax.imshow(</span>
+<span id="cb5-112"><a href="mdp.html#cb5-112" tabindex="-1"></a>    V_grid,</span>
+<span id="cb5-113"><a href="mdp.html#cb5-113" tabindex="-1"></a>    origin<span class="op">=</span><span class="st">&quot;lower&quot;</span>,</span>
+<span id="cb5-114"><a href="mdp.html#cb5-114" tabindex="-1"></a>    extent<span class="op">=</span>[thetadot_grid.<span class="bu">min</span>(), thetadot_grid.<span class="bu">max</span>(),</span>
+<span id="cb5-115"><a href="mdp.html#cb5-115" tabindex="-1"></a>            theta_grid.<span class="bu">min</span>(), theta_grid.<span class="bu">max</span>()],</span>
+<span id="cb5-116"><a href="mdp.html#cb5-116" tabindex="-1"></a>    aspect<span class="op">=</span><span class="st">&quot;auto&quot;</span>,</span>
+<span id="cb5-117"><a href="mdp.html#cb5-117" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">&quot;viridis&quot;</span></span>
+<span id="cb5-118"><a href="mdp.html#cb5-118" tabindex="-1"></a>)</span>
+<span id="cb5-119"><a href="mdp.html#cb5-119" tabindex="-1"></a>cbar <span class="op">=</span> fig.colorbar(im, ax<span class="op">=</span>ax)</span>
+<span id="cb5-120"><a href="mdp.html#cb5-120" tabindex="-1"></a>cbar.set_label(<span class="vs">r&quot;$V^*(\theta,\dot{\theta})$ (Value Iteration)&quot;</span>)</span>
+<span id="cb5-121"><a href="mdp.html#cb5-121" tabindex="-1"></a></span>
+<span id="cb5-122"><a href="mdp.html#cb5-122" tabindex="-1"></a>ax.set_xlabel(<span class="vs">r&quot;$\dot{\theta}$&quot;</span>)</span>
+<span id="cb5-123"><a href="mdp.html#cb5-123" tabindex="-1"></a>ax.set_ylabel(<span class="vs">r&quot;$\theta$&quot;</span>)</span>
+<span id="cb5-124"><a href="mdp.html#cb5-124" tabindex="-1"></a>ax.set_title(<span class="vs">r&quot;State-value $V$ after Value Iteration&quot;</span>)</span>
+<span id="cb5-125"><a href="mdp.html#cb5-125" tabindex="-1"></a></span>
+<span id="cb5-126"><a href="mdp.html#cb5-126" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb5-127"><a href="mdp.html#cb5-127" tabindex="-1"></a>plt.show()</span>
+<span id="cb5-128"><a href="mdp.html#cb5-128" tabindex="-1"></a></span>
+<span id="cb5-129"><a href="mdp.html#cb5-129" tabindex="-1"></a><span class="co"># ----- Visualization: Greedy torque field -----</span></span>
+<span id="cb5-130"><a href="mdp.html#cb5-130" tabindex="-1"></a>pi_grid <span class="op">=</span> pi.reshape(N_theta, N_thetadot)   <span class="co"># action indices</span></span>
+<span id="cb5-131"><a href="mdp.html#cb5-131" tabindex="-1"></a>action_values <span class="op">=</span> u_grid[pi_grid]             <span class="co"># map indices -&gt; torques</span></span>
+<span id="cb5-132"><a href="mdp.html#cb5-132" tabindex="-1"></a></span>
+<span id="cb5-133"><a href="mdp.html#cb5-133" tabindex="-1"></a>plt.figure(figsize<span class="op">=</span>(<span class="dv">7</span>,<span class="dv">5</span>), dpi<span class="op">=</span><span class="dv">120</span>)</span>
+<span id="cb5-134"><a href="mdp.html#cb5-134" tabindex="-1"></a>im <span class="op">=</span> plt.imshow(</span>
+<span id="cb5-135"><a href="mdp.html#cb5-135" tabindex="-1"></a>    action_values,</span>
+<span id="cb5-136"><a href="mdp.html#cb5-136" tabindex="-1"></a>    origin<span class="op">=</span><span class="st">&quot;lower&quot;</span>,</span>
+<span id="cb5-137"><a href="mdp.html#cb5-137" tabindex="-1"></a>    extent<span class="op">=</span>[thetadot_grid.<span class="bu">min</span>(), thetadot_grid.<span class="bu">max</span>(),</span>
+<span id="cb5-138"><a href="mdp.html#cb5-138" tabindex="-1"></a>            theta_grid.<span class="bu">min</span>(), theta_grid.<span class="bu">max</span>()],</span>
+<span id="cb5-139"><a href="mdp.html#cb5-139" tabindex="-1"></a>    aspect<span class="op">=</span><span class="st">&quot;auto&quot;</span>,</span>
+<span id="cb5-140"><a href="mdp.html#cb5-140" tabindex="-1"></a>    cmap<span class="op">=</span><span class="st">&quot;coolwarm&quot;</span>   <span class="co"># good for ± torque</span></span>
+<span id="cb5-141"><a href="mdp.html#cb5-141" tabindex="-1"></a>)</span>
+<span id="cb5-142"><a href="mdp.html#cb5-142" tabindex="-1"></a>cbar <span class="op">=</span> plt.colorbar(im)</span>
+<span id="cb5-143"><a href="mdp.html#cb5-143" tabindex="-1"></a>cbar.set_label(<span class="st">&quot;Greedy action value (torque)&quot;</span>)</span>
+<span id="cb5-144"><a href="mdp.html#cb5-144" tabindex="-1"></a></span>
+<span id="cb5-145"><a href="mdp.html#cb5-145" tabindex="-1"></a>plt.xlabel(<span class="vs">r&quot;$\dot{\theta}$&quot;</span>)</span>
+<span id="cb5-146"><a href="mdp.html#cb5-146" tabindex="-1"></a>plt.ylabel(<span class="vs">r&quot;$\theta$&quot;</span>)</span>
+<span id="cb5-147"><a href="mdp.html#cb5-147" tabindex="-1"></a>plt.title(<span class="st">&quot;Greedy policy (torque) extracted from Value Iteration&quot;</span>)</span>
+<span id="cb5-148"><a href="mdp.html#cb5-148" tabindex="-1"></a>plt.tight_layout()</span>
+<span id="cb5-149"><a href="mdp.html#cb5-149" tabindex="-1"></a>plt.show()</span></code></pre></div>
+<p>Try it for yourself <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_value_iteration.py">here</a>!</p>
+<p>You should obtain the same results as policy iteration.</p>
+</div>
+</div>
 
 </div>
 </div>
