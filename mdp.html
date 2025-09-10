@@ -1485,7 +1485,33 @@ i.e., when <span class="math inline">\(\pi\)</span> was not already greedy (opti
 <li><p><span class="math inline">\(V^{\pi_{k+1}} \ge V^{\pi_k}\)</span> componentwise, and the inequality is strict for some state unless <span class="math inline">\(\pi_{k+1}=\pi_k\)</span>.</p></li>
 <li><p>If <span class="math inline">\(\pi_{k+1}=\pi_k\)</span>, then <span class="math inline">\(V^{\pi_k}\)</span> satisfies the Bellman optimality equation; hence <span class="math inline">\(\pi_k\)</span> is optimal and <span class="math inline">\(V^{\pi_k}=V^*\)</span>.</p></li>
 <li><p>Because the number of stationary policies is finite, PI terminates in finitely many iterations at an optimal policy <span class="math inline">\(\pi^*\)</span> with value <span class="math inline">\(V^*\)</span>.</p></li>
+<li><p><span class="math inline">\(\Vert V^{\pi_{k+1}} - V^\star \Vert_{\infty} \leq \gamma \Vert V^{\pi_k} -  V^\star \Vert_{\infty}\)</span>, for any <span class="math inline">\(k\)</span> (i.e., contraction).</p></li>
 </ol>
+</div>
+</div>
+<div class="proofbox">
+<div class="proof">
+<p><span id="unlabeled-div-8" class="proof"><em>Proof</em>. </span>By the policy improvement lemma, we have
+<span class="math display">\[
+V^{\pi_{k+1}} \geq V^{\pi_k}.
+\]</span>
+By monotonicity of the Bellman operator <span class="math inline">\(T^{\pi_{k+1}}\)</span>, we have
+<span class="math display">\[
+V^{\pi_{k+1}} = T^{\pi_{k+1}} V^{\pi_{k+1}} \geq  T^{\pi_{k+1}} V^{\pi_k}.
+\]</span>
+By definition of the Bellman optimality operator, we have
+<span class="math display">\[
+T^{\pi_{k+1}} V^{\pi_k} = T^\star V^{\pi_k}.
+\]</span>
+Therefore,
+<span class="math display">\[
+0 \geq V^{\pi_{k+1}} - V^\star \geq T^{\pi_{k+1}} V^{\pi_k} - V^\star = T^\star V^{\pi_k} - T^\star V^\star
+\]</span>
+As a result,
+<span class="math display">\[
+\Vert V^{\pi_{k+1}} - V^\star \Vert_{\infty} \leq \Vert T^\star V^{\pi_k} - T^\star V^\star \Vert_{\infty} \leq \gamma \Vert V^{\pi_k} -  V^\star \Vert_{\infty}.
+\]</span>
+This proves the contraction result (d).</p>
 </div>
 </div>
 <p>Let us apply Policy Iteration to the inverted pendulum problem.</p>
@@ -1659,7 +1685,6 @@ i.e., when <span class="math inline">\(\pi\)</span> was not already greedy (opti
 <span id="cb4-165"><a href="mdp.html#cb4-165" tabindex="-1"></a>plt.tight_layout()</span>
 <span id="cb4-166"><a href="mdp.html#cb4-166" tabindex="-1"></a>plt.show()</span></code></pre></div>
 <p>Running the code produces the optimal value function shown in Fig. <a href="mdp.html#fig:mdp-pendulum-PI-value">1.5</a> and the optimal policy shown in Fig. <a href="mdp.html#fig:mdp-pendulum-PI-policy">1.6</a>.</p>
-<p>As we can see, the policy learns to perform “bang-bang” control to accumulate energy before swinging up.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:mdp-pendulum-PI-value"></span>
 <img src="images/MDP/pendulum_PI_value.png" alt="Optimal Value Function after Policy Iteration" width="80%" />
 <p class="caption">
@@ -1672,7 +1697,21 @@ Figure 1.5: Optimal Value Function after Policy Iteration
 Figure 1.6: Optimal Policy after Policy Iteration
 </p>
 </div>
+<p>We can apply the optimal policy to the pendulum with an initial state of <span class="math inline">\((-\pi, 0)\)</span> (i.e., the bottomright position). Fig. <a href="mdp.html#fig:mdp-pendulum-PI-rollout-trajectory">1.7</a> plots the rollout trajectory of <span class="math inline">\(\theta, \dot{\theta}, u\)</span>. We can see that the optimal policy is capable of performing “bang-bang” control to accumulate energy before swinging up.</p>
+<p>Fig. <a href="mdp.html#fig:mdp-pendulum-PI-rollout-trajectory-value">1.8</a> overlays the trajectory on top of the optimal value function.</p>
 <p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_policy_iteration.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mdp-pendulum-PI-rollout-trajectory"></span>
+<img src="images/MDP/pendulum_optimal_trajectory.png" alt="Optimal Trajectory of Pendulum Swing-Up" width="90%" />
+<p class="caption">
+Figure 1.7: Optimal Trajectory of Pendulum Swing-Up
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mdp-pendulum-PI-rollout-trajectory-value"></span>
+<img src="images/MDP/pendulum_optimal_trajectory_value.png" alt="Optimal Trajectory of Pendulum Swing-Up Overlayed with Optimal Value Function" width="90%" />
+<p class="caption">
+Figure 1.8: Optimal Trajectory of Pendulum Swing-Up Overlayed with Optimal Value Function
+</p>
+</div>
 </div>
 </div>
 </div>

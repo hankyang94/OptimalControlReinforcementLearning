@@ -1625,14 +1625,42 @@ Then:
   If \(\pi_{k+1}=\pi_k\), then \(V^{\pi_k}\) satisfies the Bellman optimality equation; hence \(\pi_k\) is optimal and \(V^{\pi_k}=V^*\).
 \item
   Because the number of stationary policies is finite, PI terminates in finitely many iterations at an optimal policy \(\pi^*\) with value \(V^*\).
+\item
+  \(\Vert V^{\pi_{k+1}} - V^\star \Vert_{\infty} \leq \gamma \Vert V^{\pi_k} -  V^\star \Vert_{\infty}\), for any \(k\) (i.e., contraction).
 \end{enumerate}
 
 \end{theorem}
 
+\begin{proof}
+By the policy improvement lemma, we have
+\[
+V^{\pi_{k+1}} \geq V^{\pi_k}.
+\]
+By monotonicity of the Bellman operator \(T^{\pi_{k+1}}\), we have
+\[
+V^{\pi_{k+1}} = T^{\pi_{k+1}} V^{\pi_{k+1}} \geq  T^{\pi_{k+1}} V^{\pi_k}.
+\]
+By definition of the Bellman optimality operator, we have
+\[
+T^{\pi_{k+1}} V^{\pi_k} = T^\star V^{\pi_k}.
+\]
+Therefore,
+\[
+0 \geq V^{\pi_{k+1}} - V^\star \geq T^{\pi_{k+1}} V^{\pi_k} - V^\star = T^\star V^{\pi_k} - T^\star V^\star
+\]
+As a result,
+\[
+\Vert V^{\pi_{k+1}} - V^\star \Vert_{\infty} \leq \Vert T^\star V^{\pi_k} - T^\star V^\star \Vert_{\infty} \leq \gamma \Vert V^{\pi_k} -  V^\star \Vert_{\infty}.
+\]
+This proves the contraction result (d).
+\end{proof}
+
 Let us apply Policy Iteration to the inverted pendulum problem.
 
 \begin{example}[Policy Iteration for Inverted Pendulum]
-\protect\hypertarget{exm:InvertedPendulumPolicyIteration}{}\label{exm:InvertedPendulumPolicyIteration}The following code performs policy iteration for the inverted pendulum problem.
+\protect\hypertarget{exm:InvertedPendulumPolicyIteration}{}\label{exm:InvertedPendulumPolicyIteration}
+
+The following code performs policy iteration for the inverted pendulum problem.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1807,8 +1835,6 @@ Let us apply Policy Iteration to the inverted pendulum problem.
 
 Running the code produces the optimal value function shown in Fig. \ref{fig:mdp-pendulum-PI-value} and the optimal policy shown in Fig. \ref{fig:mdp-pendulum-PI-policy}.
 
-As we can see, the policy learns to perform ``bang-bang'' control to accumulate energy before swinging up.
-
 \begin{figure}
 
 {\centering \includegraphics[width=0.8\linewidth]{images/MDP/pendulum_PI_value} 
@@ -1827,7 +1853,30 @@ As we can see, the policy learns to perform ``bang-bang'' control to accumulate 
 \caption{Optimal Policy after Policy Iteration}\label{fig:mdp-pendulum-PI-policy}
 \end{figure}
 
+We can apply the optimal policy to the pendulum with an initial state of \((-\pi, 0)\) (i.e., the bottomright position). Fig. \ref{fig:mdp-pendulum-PI-rollout-trajectory} plots the rollout trajectory of \(\theta, \dot{\theta}, u\). We can see that the optimal policy is capable of performing ``bang-bang'' control to accumulate energy before swinging up.
+
+Fig. \ref{fig:mdp-pendulum-PI-rollout-trajectory-value} overlays the trajectory on top of the optimal value function.
+
 You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_policy_iteration.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{images/MDP/pendulum_optimal_trajectory} 
+
+}
+
+\caption{Optimal Trajectory of Pendulum Swing-Up}\label{fig:mdp-pendulum-PI-rollout-trajectory}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{images/MDP/pendulum_optimal_trajectory_value} 
+
+}
+
+\caption{Optimal Trajectory of Pendulum Swing-Up Overlayed with Optimal Value Function}\label{fig:mdp-pendulum-PI-rollout-trajectory-value}
+\end{figure}
+
 \end{example}
 
 \subsection{Value Iteration}\label{value-iteration}
