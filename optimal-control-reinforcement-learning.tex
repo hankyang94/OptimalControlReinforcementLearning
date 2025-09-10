@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-09-09}
+\date{2025-09-10}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -1122,14 +1122,67 @@ Then, starting from any initialization \(V_0 \in \mathbb{R}^{|\mathcal{S}|}\), t
 \end{proposition}
 
 \begin{proof}
-This result follows from the fact that the Bellman operator
-\[
-(T^{\pi} V)(s) := \sum_{a \in \mathcal{A}} \pi(a \mid s) 
-\left[ R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s,a) V(s') \right]
-\]
-is a \(\gamma\)-contraction mapping in the sup-norm. By the Banach fixed-point theorem, global convergence is guaranteed regardless of initialization.
+To prove the convergence of the policy evaluation algorithm, we shall introduce the notion of a Bellman operator.
 
-We will work out the details of this proof in the PSET.
+\textbf{Bellman Operator}. Any value function \(V(s)\) can be interpreted as a vector in \(\mathbb{R}^{|\mathcal{S}|}\) (recall we are in the tabular MDP case). Given any value function \(V \in \mathbb{R}^{|\mathcal{S}|}\), and a policy \(\pi\), define the Bellman operator associated with \(\pi\) as \(T^{\pi}: \mathbb{R}^{|\mathcal{S}|} \mapsto \mathbb{R}^{|\mathcal{S}|}\):
+\begin{equation}
+(T^{\pi} V)(s) := \sum_{a \in \mathcal{A}} \pi(a \mid s) 
+\left[ R(s,a) + \gamma \sum_{s' \in \mathcal{S}} P(s' \mid s,a) V(s') \right].
+\label{eq:BellmanOperatorPolicy}
+\end{equation}
+
+We claim that \(T^{\pi}\) has two important properties.
+
+\begin{itemize}
+\item
+  \textbf{Monotonicity}. If \(V \leq W\) (i.e., \(V(s) \leq W(s)\) for any \(s \in \mathcal{S}\)), then \(T^{\pi} V \leq T^{\pi}W\). To see this, observe that
+  \begin{align*}
+  (T^{\pi}V)(s) - (T^\pi W)(s) &= \sum_{a} \pi(a \mid s) \left(\gamma \sum_{s'} P(s' \mid s, a) (V(s') - W(s')) \right) \\
+  & = \gamma \mathbb{E}_{a \sim \pi(\cdot \mid s), s' \sim P(\cdot \mid s,a)}[V(s') - W(s')].
+  \end{align*}
+  Therefore, if \(V(s') - W(s') \leq 0\) for any \(s' \in \mathcal{S}\), then \(T^{\pi}V \leq T^{\pi} W\).
+\item
+  \textbf{\(\gamma\)-Contraction}. For any value function \(V \in \mathbb{R}^{|\mathcal{S}|}\), define the \(\ell_{\infty}\) norm (sup norm) as
+  \[
+  \Vert V \Vert_{\infty} = \max_{s \in \mathcal{S}} |V(s)|.
+  \]
+\end{itemize}
+
+We claim that the Bellman operator \(T^{\pi}\) is a \(\gamma\)-contraction in the sup norm, i.e.,
+\begin{equation}
+\Vert T^\pi V - T^\pi W \Vert_{\infty} \leq \gamma \Vert V - W \Vert_{\infty}, \quad \forall V, W \in \mathbb{R}^{|\mathcal{S}|}.
+\label{eq:gamma-contraction-Bellman-operator}
+\end{equation}
+To prove this, observe that for any \(s \in \mathcal{S}\), we have:
+\begin{align*}
+|(T^\pi V)(s) - (T^\pi W)(s)|
+&= \left| \sum_a \pi(a|s)\,\gamma \sum_{s'} P(s'|s,a)\big(V(s') - W(s')\big) \right| \\
+&\le \gamma \sum_a \pi(a|s)\sum_{s'} P(s'|s,a)\,|V(s') - W(s')| \\
+&\le \gamma \|V - W\|_\infty \sum_a \pi(a|s)\sum_{s'} P(s'|s,a) \\
+&= \gamma \|V - W\|_\infty.
+\end{align*}
+
+Taking the maximum over \(s\) gives
+\[
+\|T^\pi V - T^\pi W\|_\infty \le \gamma \|V - W\|_\infty,
+\]
+so \(T^\pi\) is a \(\gamma\)-contraction in the sup norm.
+
+With the Bellman operator defined, we observe that the value function of \(\pi\), denoted \(V^{\pi}\) in \eqref{eq:BellmanConsistency-InfiniteHorizon-State-Value}, is a \textbf{fixed point} of \(T^{\pi}\). That is to say \(V^{\pi}\) satisfies:
+\[
+T^{\pi} V^{\pi} = V^{\pi}.
+\]
+In other words, \(V^{\pi}\) is fixed (remains unchanged) under the Bellman operator.
+
+Since \(T^{\pi}\) is a \(\gamma\)-contraction, by the Banach Fixed-Point Theorem, we know that there exists a unique fixed point to \(T^{\pi}\), which is \(V^{\pi}\). Moreover, since
+\[
+\Vert V_{k} - V^{\pi} \Vert_{\infty} = \Vert T^{\pi} V_{k-1} - T^{\pi} V^{\pi} \Vert_{\infty} \leq \gamma \Vert V_{k-1} - V^{\pi} \Vert_{\infty},
+\]
+we can deduce the rate of convergence
+\[
+\Vert V_{k} - V^{\pi} \Vert_{\infty} \leq \gamma^{k} \Vert V_0 - V^{\pi} \Vert_{\infty}.
+\]
+Therefore, policy evaluation globally converges from any initialization \(V_0\) at a linear rate of \(\gamma\).
 \end{proof}
 
 We have a similar policy evaluation algorithm for the action-value function.
@@ -1155,6 +1208,8 @@ Define the Bellman operator on action-values
 \]
 \(T^{\pi}\) is a \(\gamma\)-contraction in the sup-norm on \(\mathbb{R}^{|\mathcal{S}||\mathcal{A}|}\); hence by the Banach fixed-point theorem, global convergence holds regardless of initialization.
 \end{proof}
+
+Let us apply policy evaluation to an infinite-horizon MDP.
 
 \begin{example}[Policy Evaluation for Inverted Pendulum]
 \protect\hypertarget{exm:InfiniteHorizonMDPPolicyEvaluation}{}\label{exm:InfiniteHorizonMDPPolicyEvaluation}\leavevmode
@@ -1373,75 +1428,6 @@ You can play with the code \href{https://github.com/ComputationalRobotics/2025-E
 
 \end{example}
 
-\subsection{Policy Improvement}\label{policy-improvement}
-
-The policy evaluation algorithm enables us to compute the value functions associated with a given policy \(\pi\). The next result, known as the \emph{Policy Improvement Lemma}, shows that once we have \(V^{\pi}\), constructing a greedy policy with respect to \(V^{\pi}\) guarantees performance that is at least as good as \(\pi\), and strictly better in some states unless \(\pi\) is already greedy with respect to \(V^{\pi}\).
-
-\begin{lemma}[Policy Improvement]
-\protect\hypertarget{lem:InfiniteHorizonPolicyImprovement}{}\label{lem:InfiniteHorizonPolicyImprovement}Let \(\pi\) be any policy and let \(V^{\pi}\) be its state-value function.\\
-Define a new policy \(\pi'\) such that for each state \(s\),
-\[
-\pi'(s) \in \arg\max_{a \in \mathcal{A}}
-\Big[ R(s,a) + \gamma \sum_{s'} P(s' \mid s,a) V^{\pi}(s') \Big].
-\]
-
-Then for all states \(s \in \mathcal{S}\),
-\[
-V^{\pi'}(s) \;\ge\; V^{\pi}(s).
-\]
-Moreover, the inequality is strict for some \(s\) if \(\pi'\) differs from \(\pi\) on any action that yields a strictly higher value.
-\end{lemma}
-
-\begin{proof}
-Let \(V^{\pi}\) be the value function of a policy \(\pi\), and define a new (possibly stochastic) policy \(\pi'\) that is greedy w.r.t. \(V^{\pi}\):
-\[
-\pi'(\cdot \mid s) \in \arg\max_{\mu \in \Delta(\mathcal{A})}
-\sum_{a}\mu(a)\Big[ R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\, V^{\pi}(s')\Big].
-\]
-Define the Bellman operators
-\begin{align*}
-(T^{\pi}V)(s) & := \sum_a \pi(a\mid s)\Big[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V(s')\Big],\\
-(T^{\pi'}V)(s) & := \sum_a \pi'(a\mid s)\Big[\cdots\Big].
-\end{align*}
-
-\textbf{Step 1: One-step improvement at \(V^{\pi}\)}.
-By greediness of \(\pi'\) w.r.t. \(V^{\pi}\),
-\[
-(T^{\pi'} V^{\pi})(s)
-= \max_{\mu}\sum_a \mu(a)\Big[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V^{\pi}(s')\Big]
-\;\;\ge\;\; (T^{\pi} V^{\pi})(s) = V^{\pi}(s),
-\]
-for all \(s\). Hence
-\begin{equation}
-T^{\pi'} V^{\pi} \;\ge\; V^{\pi}\quad\text{(componentwise).}
-\label{eq:ProofPolicyImprovementStepOne}
-\end{equation}
-
-\textbf{Step 2: Monotonicity + contraction yield global improvement}.
-The operator \(T^{\pi'}\) is \textbf{monotone} (order-preserving) and a \textbf{\(\gamma\)-contraction} in the sup-norm.\\
-Apply \(T^{\pi'}\) repeatedly to both sides of \eqref{eq:ProofPolicyImprovementStepOne}:
-\[
-(T^{\pi'})^k V^{\pi} \;\ge\; (T^{\pi'})^{k-1} V^{\pi} \;\ge\; \cdots \;\ge\; V^{\pi},\qquad k=1,2,\dots
-\]
-By contraction, \((T^{\pi'})^k V^{\pi} \to V^{\pi'}\), the unique fixed point of \(T^{\pi'}\).\\
-Taking limits preserves the inequality, so
-\[
-V^{\pi'} \;\ge\; V^{\pi}\quad\text{statewise.}
-\]
-
-\textbf{Strict improvement condition}.
-If there exists a state \(s\) such that
-\[
-(T^{\pi'} V^{\pi})(s) \;>\; V^{\pi}(s),
-\]
-then by monotonicity we have a strict increase at that state after one iteration, and the limit remains strictly larger at that state (or at any state that can reach it with positive probability under \(\pi'\)).\\
-This happens precisely when \(\pi'\) selects, with positive probability, an action \(a\) for which
-\[
-Q^{\pi}(s,a)=R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\, V^{\pi}(s') \;>\; V^{\pi}(s),
-\]
-i.e., when \(\pi\) was not already greedy (optimal) at \(s\).
-\end{proof}
-
 \subsection{Principle of Optimality}\label{principle-of-optimality}
 
 In an infinite-horizon MDP, our goal is to find the optimal policy that maximizes the expected long-term discounted return:
@@ -1531,6 +1517,81 @@ Applying \(T^\star\) repeatedly and using (1),
 V^\pi \;\le\; T^\star V^\pi \;\le\; (T^\star)^2 V^\pi \;\le\; \cdots
 \]
 The sequence \((T^\star)^k V^\pi\) converges (by contraction) to the unique fixed point of \(T^\star\), namely \(V^\star\). Taking limits preserves the inequality, yielding \(V^\pi \le V^\star\) statewise.
+\end{proof}
+
+The Bellman optimality condition tells us, if a policy \(\pi\) is already greedy with respect to its value function \(V^\pi\), then \(\pi\) is the optimal policy and \(V^\pi\) is the optimal value function.
+
+In the next, we introduce two algorithms that can guarantee finding the optimal policy and the optimal value function.
+
+The first algorithm, policy iteration (PI), iterates over the space of policies; while the second algorithm, value iteration (VI), iterates over the space of value functions.
+
+\subsection{Policy Improvement}\label{policy-improvement}
+
+The policy evaluation algorithm enables us to compute the value functions associated with a given policy \(\pi\). The next result, known as the \emph{Policy Improvement Lemma}, shows that once we have \(V^{\pi}\), constructing a greedy policy with respect to \(V^{\pi}\) guarantees performance that is at least as good as \(\pi\), and strictly better in some states unless \(\pi\) is already greedy with respect to \(V^{\pi}\).
+
+\begin{lemma}[Policy Improvement]
+\protect\hypertarget{lem:InfiniteHorizonPolicyImprovement}{}\label{lem:InfiniteHorizonPolicyImprovement}Let \(\pi\) be any policy and let \(V^{\pi}\) be its state-value function.\\
+Define a new policy \(\pi'\) such that for each state \(s\),
+\[
+\pi'(s) \in \arg\max_{a \in \mathcal{A}}
+\Big[ R(s,a) + \gamma \sum_{s'} P(s' \mid s,a) V^{\pi}(s') \Big].
+\]
+
+Then for all states \(s \in \mathcal{S}\),
+\[
+V^{\pi'}(s) \;\ge\; V^{\pi}(s).
+\]
+Moreover, the inequality is strict for some state \(s\) unless \(\pi\) is already greedy with respect to \(V^\pi\) (which implies optimality).
+\end{lemma}
+
+\begin{proof}
+Let \(V^{\pi}\) be the value function of a policy \(\pi\), and define a new (possibly stochastic) policy \(\pi'\) that is greedy w.r.t. \(V^{\pi}\):
+\[
+\pi'(\cdot \mid s) \in \arg\max_{\mu \in \Delta(\mathcal{A})}
+\sum_{a}\mu(a)\Big[ R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\, V^{\pi}(s')\Big].
+\]
+Define the Bellman operators
+\begin{align*}
+(T^{\pi}V)(s) & := \sum_a \pi(a\mid s)\Big[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V(s')\Big],\\
+(T^{\pi'}V)(s) & := \sum_a \pi'(a\mid s)\Big[\cdots\Big].
+\end{align*}
+
+\textbf{Step 1: One-step improvement at \(V^{\pi}\)}.
+By greediness of \(\pi'\) w.r.t. \(V^{\pi}\),
+\[
+(T^{\pi'} V^{\pi})(s)
+= \max_{\mu}\sum_a \mu(a)\Big[R(s,a)+\gamma\sum_{s'}P(s'\mid s,a)V^{\pi}(s')\Big]
+\;\;\ge\;\; (T^{\pi} V^{\pi})(s) = V^{\pi}(s),
+\]
+for all \(s\). Hence
+\begin{equation}
+T^{\pi'} V^{\pi} \;\ge\; V^{\pi}\quad\text{(componentwise).}
+\label{eq:ProofPolicyImprovementStepOne}
+\end{equation}
+
+\textbf{Step 2: Monotonicity + contraction yield global improvement}.
+The operator \(T^{\pi'}\) is \textbf{monotone} (order-preserving) and a \textbf{\(\gamma\)-contraction} in the sup-norm.\\
+Apply \(T^{\pi'}\) repeatedly to both sides of \eqref{eq:ProofPolicyImprovementStepOne}:
+\[
+(T^{\pi'})^k V^{\pi} \;\ge\; (T^{\pi'})^{k-1} V^{\pi} \;\ge\; \cdots \;\ge\; V^{\pi},\qquad k=1,2,\dots
+\]
+By contraction, \((T^{\pi'})^k V^{\pi} \to V^{\pi'}\), the unique fixed point of \(T^{\pi'}\).\\
+Taking limits preserves the inequality, so
+\[
+V^{\pi'} \;\ge\; V^{\pi}\quad\text{statewise.}
+\]
+
+\textbf{Strict improvement condition}.
+If there exists a state \(s\) such that
+\[
+(T^{\pi'} V^{\pi})(s) \;>\; V^{\pi}(s),
+\]
+then by monotonicity we have a strict increase at that state after one iteration, and the limit remains strictly larger at that state (or at any state that can reach it with positive probability under \(\pi'\)).\\
+This happens precisely when \(\pi'\) selects, with positive probability, an action \(a\) for which
+\[
+Q^{\pi}(s,a)=R(s,a) + \gamma \sum_{s'} P(s'\mid s,a)\, V^{\pi}(s') \;>\; V^{\pi}(s),
+\]
+i.e., when \(\pi\) was not already greedy (optimal) at \(s\).
 \end{proof}
 
 \subsection{Policy Iteration}\label{policy-iteration}
@@ -1775,7 +1836,7 @@ Policy iteration---as the name suggests---iterates on \emph{policies}: it altern
 (1) \emph{policy evaluation} (computing \(V^{\pi}\) for the current policy \(\pi\)) and
 (2) \emph{policy improvement} (making \(\pi\) greedy w.r.t. \(V^{\pi}\)).
 
-An alternative, often very effective, method is \emph{value iteration}. Unlike policy iteration, value iteration does \emph{not} explicitly maintain a policy during its updates; it iterates directly on the value function toward the fixed point of the Bellman optimality* operator. Once the value function has (approximately) converged, the optimal policy is obtained by a single greedy extraction step. Note that intermediate value iterates need not correspond to the value of any actual policy, yet value iteration typically converges rapidly in discounted, finite MDPs.
+An alternative, often very effective, method is \emph{value iteration}. Unlike policy iteration, value iteration does \emph{not} explicitly maintain a policy during its updates; it iterates directly on the value function toward the fixed point of the Bellman optimality* operator. Once the value function has (approximately) converged, the optimal policy is obtained by a single greedy extraction step. Note that intermediate value iterates need not correspond to the value of any actual policy.
 
 The value iteration (VI) algorithm works as follows:
 
@@ -1812,6 +1873,8 @@ In addition, after \(k\) iterations, we have
 \lVert V_k - V^* \rVert_\infty \;\le\; \gamma^k \, \lVert V_0 - V^* \rVert_\infty.
 \]
 \end{theorem}
+
+Finally, we apply value iteration to the inverted pendulum problem.
 
 \begin{example}[Value Iteration for Inverted Pendulum]
 \protect\hypertarget{exm:InvertedPendulumValueIteration}{}\label{exm:InvertedPendulumValueIteration}The following code performs value iteration for the inverted pendulum problem.
