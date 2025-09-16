@@ -1,0 +1,344 @@
+# Value-based Reinforcement Learning {#value-rl}
+
+In Chapter \@ref(mdp), we introduced algorithms for policy evaluation, policy improvement, and computing optimal policies in the tabular setting when the model is known. These dynamic-programming methods are grounded in Bellman consistency and optimality and come with strong convergence guarantees.
+
+A key limitation of the methods in Chapter \@ref(mdp) is that they require the transition dynamics \(P(s' \mid s, a)\) to be known. While in some applications modeling the dynamics is feasible (e.g., the inverted pendulum), in many others it is costly or impractical to obtain an accurate model of the environment (e.g., a humanoid robot interacting with everyday objects).
+
+This motivates relaxing the known-dynamics assumption and asking whether we can design algorithms that learn purely from interaction—i.e., by collecting data through environment interaction. This brings us to **model-free reinforcement learning**.
+
+In this chapter we focus on **value-based** RL methods. The central idea is to learn the value functions—\(V(s)\) and \(Q(s,a)\)—from interaction with the environment and then leverage these estimates to derive (approximately) optimal policies. We begin with tabular methods and then move to function-approximation approaches (e.g., neural networks) for problems where a tabular representation is intractable.
+
+
+
+## Tabular Methods {#tabular-methods}
+
+Consider an infinite-horizon Markov decision process (MDP)  
+$$
+\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, \gamma),
+$$
+with a discount factor \(\gamma \in [0,1)\). We focus on the *tabular setting* where both the state space \(\mathcal{S}\) and the action space \(\mathcal{A}\) are finite, with cardinalities \(|\mathcal{S}|\) and \(|\mathcal{A}|\), respectively.  
+
+A policy is a stationary stochastic mapping  
+$$
+\pi: \mathcal{S} \to \Delta(\mathcal{A}),
+$$
+where \(\pi(a \mid s)\) denotes the probability of selecting action \(a\) in state \(s\).  
+
+Unlike in Chapter \@ref(mdp), here we do not assume knowledge of the transition dynamics \(P\) or the reward function \(R\) (other than that \(R\) is deterministic). Instead, we assume we can interact with the environment and obtain *trajectories* of the form  
+$$
+\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \dots),
+$$
+by following a policy \(\pi\).
+
+
+### Policy Evaluation
+
+We first consider the problem of estimating the value function of a given policy $\pi$. Recall the definition of the state-value function associated with $\pi$ is:
+\begin{equation}
+V^{\pi}(s) = \mathbb{E}\left[ \sum_{t=0}^{\infty} \gamma^t R(s_t, a_t) \mid s_0 = s \right],
+(\#eq:InfiniteHorizonStateValueRestate)
+\end{equation}
+where the expectation is taken over the randomness of both the policy $\pi$ and the transition dynamics $P$.
+
+
+#### Monte Carlo Estimation
+
+The basic idea of Monte Carlo (MC) estimation is to approximate the value function \(V^\pi\) by averaging *empirical returns* observed from sampled trajectories generated under policy \(\pi\). Since the return is defined as the discounted sum of future rewards, MC methods replace the expectation in the definition of \(V^\pi\) with an average over sampled trajectories.
+
+**Episodic Assumption.** To make Monte Carlo methods well-defined, we restrict attention to the *episodic setup*, where each trajectory terminates upon reaching a terminal state (and the rewards thereafter are always zero). This ensures that the return is finite and can be computed exactly for each trajectory. Concretely, if an episode terminates at time \(T\), the return starting from time \(t\) is
+\begin{equation}
+g_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k} = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \dots + \gamma^{T-t-1} r_{T-1}.
+(\#eq:return-MC)
+\end{equation}
+
+**Algorithmic Form.** Let \(\mathcal{D}(s)\) denote the set of all time indices at which state \(s\) is visited across sampled episodes. Then the Monte Carlo estimate of the value function is
+\begin{equation}
+\hat{V}(s) = \frac{1}{|\mathcal{D}(s)|} \sum_{t \in \mathcal{D}(s)} g_t.
+(\#eq:StateValueMCEstimate)
+\end{equation}
+
+There are two common variants:
+
+- **First-visit MC:** use only the first occurrence of \(s\) in each episode.  
+- **Every-visit MC:** use all occurrences of \(s\) within an episode.  
+
+Both variants converge to the same value function in the limit of infinitely many episodes.
+
+**Theoretical Guarantees.**
+
+1. **Unbiasedness:** For any state \(s\), the return \(g_t\) is an unbiased sample of \(V^\pi(s)\).  
+   \[
+   \mathbb{E}[g_t \mid s_t = s] = V^\pi(s).
+   \]
+2. **Consistency:** By the law of large numbers, as the number of episodes grows,
+   \[
+   \hat{V}(s) \xrightarrow{\text{a.s.}} V^\pi(s).
+   \]
+3. **Asymptotic Normality:** The MC estimator converges at rate \(O(1/\sqrt{N})\), where $N$ is the number of episodes used for the estimation.
+
+
+**Limitations.** Despite its conceptual simplicity, MC estimation suffers from several drawbacks:
+
+- It requires *episodes to terminate*, making it unsuitable for continuing tasks without artificial truncation.  
+
+- It can only update value estimates *after an episode ends*, which is data-inefficient.  
+
+- While unbiased, MC estimates often have *high variance*, leading to slow convergence.  
+
+These limitations motivate the study of *Temporal-Difference (TD) learning*, which updates value estimates online and can handle continuing tasks.
+
+
+#### Temporal-Difference Learning 
+
+While Monte Carlo methods estimate value functions by averaging full returns from complete episodes, Temporal-Difference (TD) learning provides an alternative approach that updates value estimates *incrementally* after each step of interaction with the environment. The key idea is to combine the sampling of Monte Carlo with the *bootstrapping* of dynamic programming.
+
+**High-Level Intuition.** TD learning avoids waiting until the end of an episode by using the Bellman consistency equation as a basis for updates. Recall that for any policy $\pi$, the Bellman consistency equation reads:
+\begin{equation}
+V^\pi(s) = \mathbb{E}_{a \sim \pi(\cdot \mid s)} \left[ R(s,a) + \gamma \mathbb{E}_{s' \sim P(s' \mid s, a)} V(s')  \right].
+(\#eq:InfiniteHorizonBellmanConsistencyRestate)
+\end{equation}
+At a high level, TD learning turns the expectation in Bellman equation into sampling.
+At each step, it updates the current estimate of the value function toward a *one-step bootstrap target*: the immediate reward plus the discounted value of the next state. This makes TD methods more data-efficient and applicable to continuing tasks without terminal states.
+
+**Algorithmic Form.** Suppose the agent is in state \(s_t\), takes action \(a_t \sim \pi(\cdot \mid s_t)\), receives reward \(r_t\), and transitions to \(s_{t+1}\). The TD(0) update rule is
+\begin{equation}
+\hat{V}(s_t) \;\leftarrow\; \hat{V}(s_t) + \alpha \big[ r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t) \big],
+(\#eq:TDZeroUpdate)
+\end{equation}
+where \(\alpha \in (0,1]\) is the learning rate.  
+
+The term inside the brackets,
+\begin{equation}
+\delta_t = r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t),
+(\#eq:TDError)
+\end{equation}
+is called the TD error. It measures the discrepancy between the current value estimate and the bootstrap target. The algorithm updates \(\hat{V}(s_t)\) in the direction of reducing this error.
+
+**Theoretical Guarantees.**
+
+1. **Convergence in the Tabular Case:**  If each state is visited infinitely often and the learning rate sequence satisfies
+   $$
+   \sum_t \alpha_t = \infty, \; \sum_t \alpha_t^2 < \infty
+   $$
+   then TD(0) converges almost surely to the true value function \(V^\pi\). For example, choosing $\alpha_t = 1/(t+1)$ satisfies this condition.
+   
+2. **Bias–Variance Tradeoff:**  
+
+   - The TD target uses the current estimate \(\hat{V}(s_{t+1})\) rather than the true value, which introduces *bias*. 
+
+   - However, it has significantly *lower variance* than Monte Carlo estimates, often leading to faster convergence in practice.
+
+   To see this, note that for TD(0), the target is a one-step bootstrap:
+$$
+Y_t = r_t + \gamma \hat{V}(s_{t+1}).
+$$
+This replaces the true value \(V^\pi(s_{t+1})\) with the *current estimate* \(\hat{V}(s_{t+1})\). As a result, \(Y_t\) is *biased* relative to the true return. However, since it depends only on the immediate reward and the next state, the variance of \(Y_t\) is *much lower* than that of the Monte Carlo target.
+
+
+**Limitations.**
+
+- TD(0) relies on bootstrapping, which introduces bias relative to Monte Carlo methods.  
+
+- Convergence can be slow if the learning rate is not chosen carefully.  
+
+In summary, Temporal-Difference learning addresses the major limitations of Monte Carlo estimation: it works in *continuing tasks*, updates *online* at each step, and is generally more *sample-efficient*. However, it trades away unbiasedness for bias–variance efficiency, motivating further extensions such as multi-step TD and TD(\(\lambda\)).
+
+
+#### Multi-Step TD Learning
+
+Monte Carlo methods use the *full return* \(g_t\), while TD(0) uses a *one-step bootstrap*. Multi-step TD learning generalizes these two extremes by using $n$-step returns as targets. In this way, multi-step TD interpolates between Monte Carlo and TD(0).
+
+**High-Level Intuition.** The motivation is to balance the high variance of Monte Carlo with the bias of TD(0). Instead of waiting for a full return (MC) or using only one step of bootstrapping (TD(0)), multi-step TD uses partial returns spanning \(n\) steps of real rewards, followed by a bootstrap. This provides a flexible tradeoff between bias and variance.
+
+**Algorithmic Form.** The $n$-step return starting from time \(t\) is defined as
+\begin{equation}
+g_t^{(n)} = r_t + \gamma r_{t+1} + \dots + \gamma^{n-1} r_{t+n-1} + \gamma^n \hat{V}(s_{t+n}).
+(\#eq:nStepReturn)
+\end{equation}
+
+The $n$-step TD update is
+\begin{equation}
+\hat{V}(s_t) \;\leftarrow\; \hat{V}(s_t) + \alpha \big[ g_t^{(n)} - \hat{V}(s_t) \big],
+(\#eq:nStepTDUpdate)
+\end{equation}
+where \(g_t^{(n)}\) replaces the one-step target in TD(0) \@ref(eq:TDZeroUpdate).
+
+- For \(n=1\): the method reduces to TD(0).  
+
+- For \(n=T-t\) (the full episode length): the method reduces to Monte Carlo.  
+
+**Theoretical Guarantees.**
+
+1. **Convergence in the Tabular Case:** With suitable learning rates and sufficient exploration, $n$-step TD converges to \(V^\pi\).  
+
+2. **Bias–Variance Tradeoff:**  
+
+   - Larger \(n\): lower bias, higher variance (closer to Monte Carlo).  
+
+   - Smaller \(n\): higher bias, lower variance (closer to TD(0)).  
+
+   - Intermediate \(n\) provides a balance that often yields faster learning in practice.
+
+**Limitations.**
+
+- Choosing the right \(n\) is problem-dependent: too small and bias dominates; too large and variance grows.  
+
+- Requires storing \(n\)-step reward sequences before updating, which can increase memory and computation.  
+
+  
+In summary, multi-step TD unifies Monte Carlo and TD(0) by introducing \(n\)-step returns. It allows practitioners to *tune the bias–variance tradeoff* by selecting \(n\). Later, we will see how TD(\(\lambda\)) averages over all $n$-step returns in a principled way, further smoothing this tradeoff.
+
+#### Eligibility Traces and TD(\(\lambda\))
+
+So far, we have seen that Monte Carlo methods use *full returns* \(g_t\), while TD(0) uses a *one-step bootstrap*. Multi-step TD methods generalize between these two extremes by using \(n\)-step returns. However, a natural question arises: *can we combine information from all possible \(n\)-step returns in a principled way?*  
+
+This motivates TD(\(\lambda\)), which blends multi-step TD methods into a single algorithm using *eligibility traces*.
+
+**High-Level Intuition.** TD(\(\lambda\)) introduces a parameter \(\lambda \in [0,1]\) that controls the weighting of \(n\)-step returns:
+
+- \(\lambda = 0\): reduces to TD(0), relying only on one-step bootstrapping.  
+
+- \(\lambda = 1\): reduces to Monte Carlo, relying on full returns.  
+
+- \(0 < \lambda < 1\): interpolates smoothly between these two extremes by averaging all \(n\)-step returns with exponentially decaying weights.  
+
+Formally, the \(\lambda\)-return is
+\begin{equation}
+g_t^{(\lambda)} = (1-\lambda) \sum_{n=1}^{\infty} \lambda^{n-1} g_t^{(n)},
+(\#eq:LambdaReturn)
+\end{equation}
+where \(g_t^{(n)}\) is the \(n\)-step return defined in \@ref(eq:nStepReturn).
+
+
+**Eligibility Traces.** Naively computing \(g_t^{(\lambda)}\) would require storing and combining infinitely many \(n\)-step returns, which is impractical. Instead, TD(\(\lambda\)) uses eligibility traces to implement this efficiently online.
+
+An eligibility trace is a temporary record that tracks how much each state is “eligible” for updates based on how recently and frequently it has been visited. Specifically, for each state \(s\), we maintain a trace \(z_t(s)\) that evolves as
+\begin{equation}
+z_t(s) = \gamma \lambda z_{t-1}(s) + \mathbf{1}\{s_t = s\},
+(\#eq:EligibilityTrace)
+\end{equation}
+where \(\mathbf{1}\{s_t = s\}\) is an indicator that equals 1 if state \(s\) is visited at time \(t\), and 0 otherwise.
+
+**TD(\(\lambda\)) Update Rule.** At each time step \(t\), we compute the TD error
+\[
+\delta_t = r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t),
+\]
+as in \@ref(eq:TDError). Then, for each state \(s\), we update
+\begin{equation}
+\hat{V}(s) \;\leftarrow\; \hat{V}(s) + \alpha \, \delta_t \, z_t(s).
+(\#eq:TDLambdaUpdate)
+\end{equation}
+
+Thus, all states with nonzero eligibility traces are updated simultaneously, with the magnitude of the update determined by both the TD error and the eligibility trace. See Proposition \@ref(prp:ForwardBackwardEquivalence) below for a justification.
+
+
+**Theoretical Guarantees.**
+
+1. In the tabular case, TD(\(\lambda\)) converges almost surely to the true value function \(V^\pi\) under the usual stochastic approximation conditions (sufficient exploration, decaying step sizes).  
+
+2. The parameter \(\lambda\) directly controls the bias–variance tradeoff:  
+
+   - Smaller \(\lambda\): more bootstrapping, more bias but lower variance.  
+
+   - Larger \(\lambda\): less bootstrapping, less bias but higher variance.  
+
+3. TD(\(\lambda\)) can be shown to converge to the fixed point of the \(\lambda\)-operator, which is itself a contraction mapping.
+
+
+In summary, eligibility traces provide an elegant mechanism to combine the advantages of Monte Carlo and TD learning. TD(\(\lambda\)) introduces a spectrum of algorithms: at one end TD(0), at the other Monte Carlo, and in between a family of methods balancing bias and variance. In practice, intermediate values such as \(\lambda \approx 0.9\) often work well.
+
+::: {.theorembox}
+::: {.proposition #ForwardBackwardEquivalence name="Forward–Backward Equivalence"}
+Consider one episode \(s_0,a_0,r_0,\ldots,s_T\) with \( \hat V(s_T)=0 \). Let the **forward view** apply updates at the end of the episode:
+\[
+\hat V(s_t) \leftarrow \hat V(s_t) + \alpha \big[g_t^{(\lambda)}-\hat V(s_t)\big],
+\quad t=0,\ldots,T-1,
+\]
+where \(g_t^{(\lambda)}\) is the \(\lambda\)-return in \@ref(eq:LambdaReturn) with the \(n\)-step returns \(g_t^{(n)}\) from \@ref(eq:nStepReturn), and where \(\hat V\) is kept fixed while computing all \(g_t^{(\lambda)}\).
+
+Let the **backward view** run through the episode once, using the TD error \(\delta_t\) from \@ref(eq:TDError) and eligibility traces \(z_t(s)\) from \@ref(eq:EligibilityTrace), and then apply the cumulative update
+\[
+\Delta_{\text{back}} \hat V(s) \;=\; \alpha \sum_{t=0}^{T-1} \delta_t\, z_t(s).
+\]
+
+Then, for every state \(s\),
+\[
+\Delta_{\text{back}} \hat V(s)
+\;=\;
+\alpha \sum_{t:\, s_t=s}\big[g_t^{(\lambda)}-\hat V(s_t)\big],
+\]
+i.e., the net parameter change produced by \@ref(eq:TDLambdaUpdate) equals that of the \(\lambda\)-return updates.
+:::
+:::
+::: {.proofbox}
+::: {.proof}
+Fix a state \(s\). Using \@ref(eq:EligibilityTrace),
+\[
+z_t(s)=\sum_{k=0}^{t}(\gamma\lambda)^{\,t-k}\,\mathbf{1}\{s_k=s\}.
+\]
+Hence
+\[
+\sum_{t=0}^{T-1}\delta_t z_t(s)
+=\sum_{t=0}^{T-1}\delta_t \sum_{k=0}^{t}(\gamma\lambda)^{\,t-k}\mathbf{1}\{s_k=s\}
+=\sum_{k:\,s_k=s}\; \sum_{t=k}^{T-1} (\gamma\lambda)^{\,t-k}\delta_t .
+\tag{1}
+\]
+
+Write \(\delta_t=r_t+\gamma\hat V(s_{t+1})-\hat V(s_t)\) and split the inner sum:
+\[
+\sum_{t=k}^{T-1} (\gamma\lambda)^{t-k}\delta_t
+= \underbrace{\sum_{t=k}^{T-1} \gamma^{t-k}\lambda^{t-k} r_t}_{\text{(A)}}
++ \underbrace{\sum_{t=k}^{T-1}\gamma^{t-k}\lambda^{t-k}(\gamma\hat V(s_{t+1})-\hat V(s_t))}_{\text{(B)}}.
+\]
+
+Term (B) telescopes. Shifting index in the first part of (B),
+\[
+\sum_{t=k}^{T-1}\gamma^{t-k}\lambda^{t-k}\gamma \hat V(s_{t+1})
+= \sum_{t=k+1}^{T}\gamma^{t-k}\lambda^{t-1-k}\hat V(s_t).
+\]
+Therefore
+\[
+\text{(B)}=
+-\hat V(s_k) 
++ \sum_{t=k+1}^{T-1}\gamma^{t-k}\lambda^{t-1-k}(1-\lambda)\hat V(s_t)
++ \underbrace{\gamma^{T-k}\lambda^{T-1-k}\hat V(s_T)}_{=\,0}.
+\tag{2}
+\]
+
+Combining (A) and (2), and reindexing with \(n=t-k\),
+\[
+\sum_{t=k}^{T-1} (\gamma\lambda)^{t-k}\delta_t
+= -\hat V(s_k)
++ \sum_{n=0}^{T-1-k}\gamma^{n}\lambda^{n} r_{k+n}
++ (1-\lambda)\sum_{n=1}^{T-1-k}\gamma^{n}\lambda^{n-1}\hat V(s_{k+n}).
+\tag{3}
+\]
+
+On the other hand, expanding the \(\lambda\)-return \@ref(eq:LambdaReturn),
+\[
+\begin{aligned}
+g_k^{(\lambda)}
+&=(1-\lambda)\sum_{n=1}^{T-k}\lambda^{n-1}
+\Bigg(\sum_{m=0}^{n-1}\gamma^{m} r_{k+m} + \gamma^{n}\hat V(s_{k+n})\Bigg)\\
+&= \sum_{n=0}^{T-1-k}\gamma^{n}\lambda^{n} r_{k+n}
++ (1-\lambda)\sum_{n=1}^{T-1-k}\gamma^{n}\lambda^{n-1}\hat V(s_{k+n}),
+\end{aligned}
+\tag{4}
+\]
+where we used that \(\hat V(s_T)=0\). Comparing (3) and (4) yields
+\[
+\sum_{t=k}^{T-1} (\gamma\lambda)^{t-k}\delta_t
+= g_k^{(\lambda)} - \hat V(s_k).
+\tag{5}
+\]
+
+Substituting (5) into (1) and multiplying by \(\alpha\) completes the proof.
+:::
+:::
+
+<!-- **Remarks.**
+1. The equivalence above is **exact** when the value function \(\hat V\) is held fixed throughout the episode (offline/episodic view).  
+2. With *online* updates (changing \(\hat V\) within the episode), the standard accumulating-trace TD(\(\lambda\)) is only approximately forward-equivalent; the discrepancy is \(O(\alpha)\). An exactly online-equivalent variant is known as **true online TD(\(\lambda\))** (not covered here). -->
+
+
+## Function Approximation {#function-approximation}
