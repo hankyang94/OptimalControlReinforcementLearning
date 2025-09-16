@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+<head>
+
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>Chapter 2 Value-based Reinforcement Learning | Optimal Control and Reinforcement Learning</title>
+  <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  <meta name="generator" content="bookdown 0.44 and GitBook 2.6.7" />
+
+  <meta property="og:title" content="Chapter 2 Value-based Reinforcement Learning | Optimal Control and Reinforcement Learning" />
+  <meta property="og:type" content="book" />
+  
+  <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  <meta name="github-repo" content="hankyang94/OptimalControlReinforcementLearning" />
+
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Chapter 2 Value-based Reinforcement Learning | Optimal Control and Reinforcement Learning" />
+  
+  <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
+  
+
+<meta name="author" content="Heng Yang" />
+
+
+<meta name="date" content="2025-09-16" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+  
+  
+<link rel="prev" href="mdp.html"/>
+<link rel="next" href="policy-gradient.html"/>
+<script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
+<link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-table.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-bookdown.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-highlight.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-search.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-fontsettings.css" rel="stylesheet" />
+<link href="libs/gitbook-2.6.7/css/plugin-clipboard.css" rel="stylesheet" />
+
+
+
+
+
+
+
+
+<link href="libs/anchor-sections-1.1.0/anchor-sections.css" rel="stylesheet" />
+<link href="libs/anchor-sections-1.1.0/anchor-sections-hash.css" rel="stylesheet" />
+<script src="libs/anchor-sections-1.1.0/anchor-sections.js"></script>
+
+
+<style type="text/css">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+<style type="text/css">
+  
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+</style>
+<style type="text/css">
+/* Used with Pandoc 2.11+ new --citeproc when CSL is used */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+  margin-bottom: 0em;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
+</style>
+
+<link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+
+<body>
+
+
+
+  <div class="book without-animation with-summary font-size-2 font-family-1" data-basepath=".">
+
+    <div class="book-summary">
+      <nav role="navigation">
+
+<ul class="summary">
+<li><a href="./">Optimal Control and Reinforcement Learning</a></li>
+
+<li class="divider"></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html"><i class="fa fa-check"></i>Preface</a>
+<ul>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#feedback"><i class="fa fa-check"></i>Feedback</a></li>
+<li class="chapter" data-level="" data-path="index.html"><a href="index.html#offerings"><i class="fa fa-check"></i>Offerings</a></li>
+</ul></li>
+<li class="chapter" data-level="1" data-path="mdp.html"><a href="mdp.html"><i class="fa fa-check"></i><b>1</b> Markov Decision Process</a>
+<ul>
+<li class="chapter" data-level="1.1" data-path="mdp.html"><a href="mdp.html#FiniteHorizonMDP"><i class="fa fa-check"></i><b>1.1</b> Finite-Horizon MDP</a>
+<ul>
+<li class="chapter" data-level="1.1.1" data-path="mdp.html"><a href="mdp.html#FiniteHorizonMDP-Value"><i class="fa fa-check"></i><b>1.1.1</b> Value Functions</a></li>
+<li class="chapter" data-level="1.1.2" data-path="mdp.html"><a href="mdp.html#policy-evaluation"><i class="fa fa-check"></i><b>1.1.2</b> Policy Evaluation</a></li>
+<li class="chapter" data-level="1.1.3" data-path="mdp.html"><a href="mdp.html#optimality"><i class="fa fa-check"></i><b>1.1.3</b> Principle of Optimality</a></li>
+<li class="chapter" data-level="1.1.4" data-path="mdp.html"><a href="mdp.html#dp"><i class="fa fa-check"></i><b>1.1.4</b> Dynamic Programming</a></li>
+</ul></li>
+<li class="chapter" data-level="1.2" data-path="mdp.html"><a href="mdp.html#InfiniteHorizonMDP"><i class="fa fa-check"></i><b>1.2</b> Infinite-Horizon MDP</a>
+<ul>
+<li class="chapter" data-level="1.2.1" data-path="mdp.html"><a href="mdp.html#value-functions"><i class="fa fa-check"></i><b>1.2.1</b> Value Functions</a></li>
+<li class="chapter" data-level="1.2.2" data-path="mdp.html"><a href="mdp.html#policy-evaluation-1"><i class="fa fa-check"></i><b>1.2.2</b> Policy Evaluation</a></li>
+<li class="chapter" data-level="1.2.3" data-path="mdp.html"><a href="mdp.html#principle-of-optimality"><i class="fa fa-check"></i><b>1.2.3</b> Principle of Optimality</a></li>
+<li class="chapter" data-level="1.2.4" data-path="mdp.html"><a href="mdp.html#policy-improvement"><i class="fa fa-check"></i><b>1.2.4</b> Policy Improvement</a></li>
+<li class="chapter" data-level="1.2.5" data-path="mdp.html"><a href="mdp.html#policy-iteration"><i class="fa fa-check"></i><b>1.2.5</b> Policy Iteration</a></li>
+<li class="chapter" data-level="1.2.6" data-path="mdp.html"><a href="mdp.html#value-iteration"><i class="fa fa-check"></i><b>1.2.6</b> Value Iteration</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="2" data-path="value-rl.html"><a href="value-rl.html"><i class="fa fa-check"></i><b>2</b> Value-based Reinforcement Learning</a>
+<ul>
+<li class="chapter" data-level="2.1" data-path="value-rl.html"><a href="value-rl.html#tabular-methods"><i class="fa fa-check"></i><b>2.1</b> Tabular Methods</a>
+<ul>
+<li class="chapter" data-level="2.1.1" data-path="value-rl.html"><a href="value-rl.html#policy-evaluation-2"><i class="fa fa-check"></i><b>2.1.1</b> Policy Evaluation</a></li>
+</ul></li>
+<li class="chapter" data-level="2.2" data-path="value-rl.html"><a href="value-rl.html#function-approximation"><i class="fa fa-check"></i><b>2.2</b> Function Approximation</a></li>
+</ul></li>
+<li class="chapter" data-level="3" data-path="policy-gradient.html"><a href="policy-gradient.html"><i class="fa fa-check"></i><b>3</b> Policy Gradients</a></li>
+<li class="appendix"><span><b>Appendix</b></span></li>
+<li class="chapter" data-level="A" data-path="appconvex.html"><a href="appconvex.html"><i class="fa fa-check"></i><b>A</b> Convex Analysis and Optimization</a>
+<ul>
+<li class="chapter" data-level="A.1" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory"><i class="fa fa-check"></i><b>A.1</b> Theory</a>
+<ul>
+<li class="chapter" data-level="A.1.1" data-path="appconvex.html"><a href="appconvex.html#sets"><i class="fa fa-check"></i><b>A.1.1</b> Sets</a></li>
+<li class="chapter" data-level="A.1.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-convexfunction"><i class="fa fa-check"></i><b>A.1.2</b> Convex function</a></li>
+<li class="chapter" data-level="A.1.3" data-path="appconvex.html"><a href="appconvex.html#lagrange-dual"><i class="fa fa-check"></i><b>A.1.3</b> Lagrange dual</a></li>
+<li class="chapter" data-level="A.1.4" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-kkt"><i class="fa fa-check"></i><b>A.1.4</b> KKT condition</a></li>
+</ul></li>
+<li class="chapter" data-level="A.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-practice"><i class="fa fa-check"></i><b>A.2</b> Practice</a>
+<ul>
+<li class="chapter" data-level="A.2.1" data-path="appconvex.html"><a href="appconvex.html#cvx-introduction"><i class="fa fa-check"></i><b>A.2.1</b> CVX Introduction</a></li>
+<li class="chapter" data-level="A.2.2" data-path="appconvex.html"><a href="appconvex.html#linear-programming-lp"><i class="fa fa-check"></i><b>A.2.2</b> Linear Programming (LP)</a></li>
+<li class="chapter" data-level="A.2.3" data-path="appconvex.html"><a href="appconvex.html#quadratic-programming-qp"><i class="fa fa-check"></i><b>A.2.3</b> Quadratic Programming (QP)</a></li>
+<li class="chapter" data-level="A.2.4" data-path="appconvex.html"><a href="appconvex.html#quadratically-constrained-quadratic-programming-qcqp"><i class="fa fa-check"></i><b>A.2.4</b> Quadratically Constrained Quadratic Programming (QCQP)</a></li>
+<li class="chapter" data-level="A.2.5" data-path="appconvex.html"><a href="appconvex.html#second-order-cone-programming-socp"><i class="fa fa-check"></i><b>A.2.5</b> Second-Order Cone Programming (SOCP)</a></li>
+<li class="chapter" data-level="A.2.6" data-path="appconvex.html"><a href="appconvex.html#semidefinite-programming-sdp"><i class="fa fa-check"></i><b>A.2.6</b> Semidefinite Programming (SDP)</a></li>
+<li class="chapter" data-level="A.2.7" data-path="appconvex.html"><a href="appconvex.html#cvxpy-introduction-and-examples"><i class="fa fa-check"></i><b>A.2.7</b> CVXPY Introduction and Examples</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="B" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html"><i class="fa fa-check"></i><b>B</b> Linear System Theory</a>
+<ul>
+<li class="chapter" data-level="B.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability"><i class="fa fa-check"></i><b>B.1</b> Stability</a>
+<ul>
+<li class="chapter" data-level="B.1.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability-ct"><i class="fa fa-check"></i><b>B.1.1</b> Continuous-Time Stability</a></li>
+<li class="chapter" data-level="B.1.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-stability-dt"><i class="fa fa-check"></i><b>B.1.2</b> Discrete-Time Stability</a></li>
+<li class="chapter" data-level="B.1.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#lyapunov-analysis"><i class="fa fa-check"></i><b>B.1.3</b> Lyapunov Analysis</a></li>
+</ul></li>
+<li class="chapter" data-level="B.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#app-lti-controllable-observable"><i class="fa fa-check"></i><b>B.2</b> Controllability and Observability</a>
+<ul>
+<li class="chapter" data-level="B.2.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#cayley-hamilton-theorem"><i class="fa fa-check"></i><b>B.2.1</b> Cayley-Hamilton Theorem</a></li>
+<li class="chapter" data-level="B.2.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-controllability"><i class="fa fa-check"></i><b>B.2.2</b> Equivalent Statements for Controllability</a></li>
+<li class="chapter" data-level="B.2.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#duality"><i class="fa fa-check"></i><b>B.2.3</b> Duality</a></li>
+<li class="chapter" data-level="B.2.4" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-observability"><i class="fa fa-check"></i><b>B.2.4</b> Equivalent Statements for Observability</a></li>
+</ul></li>
+<li class="chapter" data-level="B.3" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#stabilizability-and-detectability"><i class="fa fa-check"></i><b>B.3</b> Stabilizability And Detectability</a>
+<ul>
+<li class="chapter" data-level="B.3.1" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-stabilizability"><i class="fa fa-check"></i><b>B.3.1</b> Equivalent Statements for Stabilizability</a></li>
+<li class="chapter" data-level="B.3.2" data-path="app-lti-system-theory.html"><a href="app-lti-system-theory.html#equivalent-statements-for-detectability"><i class="fa fa-check"></i><b>B.3.2</b> Equivalent Statements for Detectability</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="" data-path="references.html"><a href="references.html"><i class="fa fa-check"></i>References</a></li>
+<li class="divider"></li>
+<li><a href="https://github.com/rstudio/bookdown" target="blank">Published with bookdown</a></li>
+
+</ul>
+
+      </nav>
+    </div>
+
+    <div class="book-body">
+      <div class="body-inner">
+        <div class="book-header" role="navigation">
+          <h1>
+            <i class="fa fa-circle-o-notch fa-spin"></i><a href="./">Optimal Control and Reinforcement Learning</a>
+          </h1>
+        </div>
+
+        <div class="page-wrapper" tabindex="-1" role="main">
+          <div class="page-inner">
+
+            <section class="normal" id="section-">
+<div id="value-rl" class="section level1 hasAnchor" number="2">
+<h1><span class="header-section-number">Chapter 2</span> Value-based Reinforcement Learning<a href="value-rl.html#value-rl" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>In Chapter <a href="mdp.html#mdp">1</a>, we introduced algorithms for policy evaluation, policy improvement, and computing optimal policies in the tabular setting when the model is known. These dynamic-programming methods are grounded in Bellman consistency and optimality and come with strong convergence guarantees.</p>
+<p>A key limitation of the methods in Chapter <a href="mdp.html#mdp">1</a> is that they require the transition dynamics <span class="math inline">\(P(s&#39; \mid s, a)\)</span> to be known. While in some applications modeling the dynamics is feasible (e.g., the inverted pendulum), in many others it is costly or impractical to obtain an accurate model of the environment (e.g., a humanoid robot interacting with everyday objects).</p>
+<p>This motivates relaxing the known-dynamics assumption and asking whether we can design algorithms that learn purely from interaction—i.e., by collecting data through environment interaction. This brings us to <strong>model-free reinforcement learning</strong>.</p>
+<p>In this chapter we focus on <strong>value-based</strong> RL methods. The central idea is to learn the value functions—<span class="math inline">\(V(s)\)</span> and <span class="math inline">\(Q(s,a)\)</span>—from interaction with the environment and then leverage these estimates to derive (approximately) optimal policies. We begin with tabular methods and then move to function-approximation approaches (e.g., neural networks) for problems where a tabular representation is intractable.</p>
+<div id="tabular-methods" class="section level2 hasAnchor" number="2.1">
+<h2><span class="header-section-number">2.1</span> Tabular Methods<a href="value-rl.html#tabular-methods" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Consider an infinite-horizon Markov decision process (MDP)<br />
+<span class="math display">\[
+\mathcal{M} = (\mathcal{S}, \mathcal{A}, P, R, \gamma),
+\]</span>
+with a discount factor <span class="math inline">\(\gamma \in [0,1)\)</span>. We focus on the <em>tabular setting</em> where both the state space <span class="math inline">\(\mathcal{S}\)</span> and the action space <span class="math inline">\(\mathcal{A}\)</span> are finite, with cardinalities <span class="math inline">\(|\mathcal{S}|\)</span> and <span class="math inline">\(|\mathcal{A}|\)</span>, respectively.</p>
+<p>A policy is a stationary stochastic mapping<br />
+<span class="math display">\[
+\pi: \mathcal{S} \to \Delta(\mathcal{A}),
+\]</span>
+where <span class="math inline">\(\pi(a \mid s)\)</span> denotes the probability of selecting action <span class="math inline">\(a\)</span> in state <span class="math inline">\(s\)</span>.</p>
+<p>Unlike in Chapter <a href="mdp.html#mdp">1</a>, here we do not assume knowledge of the transition dynamics <span class="math inline">\(P\)</span> or the reward function <span class="math inline">\(R\)</span> (other than that <span class="math inline">\(R\)</span> is deterministic). Instead, we assume we can interact with the environment and obtain <em>trajectories</em> of the form<br />
+<span class="math display">\[
+\tau = (s_0, a_0, r_0, s_1, a_1, r_1, \dots),
+\]</span>
+by following a policy <span class="math inline">\(\pi\)</span>.</p>
+<div id="policy-evaluation-2" class="section level3 hasAnchor" number="2.1.1">
+<h3><span class="header-section-number">2.1.1</span> Policy Evaluation<a href="value-rl.html#policy-evaluation-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We first consider the problem of estimating the value function of a given policy <span class="math inline">\(\pi\)</span>. Recall the definition of the state-value function associated with <span class="math inline">\(\pi\)</span> is:
+<span class="math display" id="eq:InfiniteHorizonStateValueRestate">\[\begin{equation}
+V^{\pi}(s) = \mathbb{E}\left[ \sum_{t=0}^{\infty} \gamma^t R(s_t, a_t) \mid s_0 = s \right],
+\tag{2.1}
+\end{equation}\]</span>
+where the expectation is taken over the randomness of both the policy <span class="math inline">\(\pi\)</span> and the transition dynamics <span class="math inline">\(P\)</span>.</p>
+<div id="monte-carlo-estimation" class="section level4 hasAnchor" number="2.1.1.1">
+<h4><span class="header-section-number">2.1.1.1</span> Monte Carlo Estimation<a href="value-rl.html#monte-carlo-estimation" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>The basic idea of Monte Carlo (MC) estimation is to approximate the value function <span class="math inline">\(V^\pi\)</span> by averaging <em>empirical returns</em> observed from sampled trajectories generated under policy <span class="math inline">\(\pi\)</span>. Since the return is defined as the discounted sum of future rewards, MC methods replace the expectation in the definition of <span class="math inline">\(V^\pi\)</span> with an average over sampled trajectories.</p>
+<p><strong>Episodic Assumption.</strong> To make Monte Carlo methods well-defined, we restrict attention to the <em>episodic setup</em>, where each trajectory terminates upon reaching a terminal state (and the rewards thereafter are always zero). This ensures that the return is finite and can be computed exactly for each trajectory. Concretely, if an episode terminates at time <span class="math inline">\(T\)</span>, the return starting from time <span class="math inline">\(t\)</span> is
+<span class="math display" id="eq:return-MC">\[\begin{equation}
+g_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k} = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \dots + \gamma^{T-t-1} r_{T-1}.
+\tag{2.2}
+\end{equation}\]</span></p>
+<p><strong>Algorithmic Form.</strong> Let <span class="math inline">\(\mathcal{D}(s)\)</span> denote the set of all time indices at which state <span class="math inline">\(s\)</span> is visited across sampled episodes. Then the Monte Carlo estimate of the value function is
+<span class="math display" id="eq:StateValueMCEstimate">\[\begin{equation}
+\hat{V}(s) = \frac{1}{|\mathcal{D}(s)|} \sum_{t \in \mathcal{D}(s)} g_t.
+\tag{2.3}
+\end{equation}\]</span></p>
+<p>There are two common variants:</p>
+<ul>
+<li><strong>First-visit MC:</strong> use only the first occurrence of <span class="math inline">\(s\)</span> in each episode.<br />
+</li>
+<li><strong>Every-visit MC:</strong> use all occurrences of <span class="math inline">\(s\)</span> within an episode.</li>
+</ul>
+<p>Both variants converge to the same value function in the limit of infinitely many episodes.</p>
+<p><strong>Theoretical Guarantees.</strong></p>
+<ol style="list-style-type: decimal">
+<li><strong>Unbiasedness:</strong> For any state <span class="math inline">\(s\)</span>, the return <span class="math inline">\(g_t\)</span> is an unbiased sample of <span class="math inline">\(V^\pi(s)\)</span>.<br />
+<span class="math display">\[
+\mathbb{E}[g_t \mid s_t = s] = V^\pi(s).
+\]</span></li>
+<li><strong>Consistency:</strong> By the law of large numbers, as the number of episodes grows,
+<span class="math display">\[
+\hat{V}(s) \xrightarrow{\text{a.s.}} V^\pi(s).
+\]</span></li>
+<li><strong>Asymptotic Normality:</strong> The MC estimator converges at rate <span class="math inline">\(O(1/\sqrt{N})\)</span>, where <span class="math inline">\(N\)</span> is the number of episodes used for the estimation.</li>
+</ol>
+<p><strong>Limitations.</strong> Despite its conceptual simplicity, MC estimation suffers from several drawbacks:</p>
+<ul>
+<li><p>It requires <em>episodes to terminate</em>, making it unsuitable for continuing tasks without artificial truncation.</p></li>
+<li><p>It can only update value estimates <em>after an episode ends</em>, which is data-inefficient.</p></li>
+<li><p>While unbiased, MC estimates often have <em>high variance</em>, leading to slow convergence.</p></li>
+</ul>
+<p>These limitations motivate the study of <em>Temporal-Difference (TD) learning</em>, which updates value estimates online and can handle continuing tasks.</p>
+</div>
+<div id="temporal-difference-learning" class="section level4 hasAnchor" number="2.1.1.2">
+<h4><span class="header-section-number">2.1.1.2</span> Temporal-Difference Learning<a href="value-rl.html#temporal-difference-learning" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>While Monte Carlo methods estimate value functions by averaging full returns from complete episodes, Temporal-Difference (TD) learning provides an alternative approach that updates value estimates <em>incrementally</em> after each step of interaction with the environment. The key idea is to combine the sampling of Monte Carlo with the <em>bootstrapping</em> of dynamic programming.</p>
+<p><strong>High-Level Intuition.</strong> TD learning avoids waiting until the end of an episode by using the Bellman consistency equation as a basis for updates. Recall that for any policy <span class="math inline">\(\pi\)</span>, the Bellman consistency equation reads:
+<span class="math display" id="eq:InfiniteHorizonBellmanConsistencyRestate">\[\begin{equation}
+V^\pi(s) = \mathbb{E}_{a \sim \pi(\cdot \mid s)} \left[ R(s,a) + \gamma \mathbb{E}_{s&#39; \sim P(s&#39; \mid s, a)} V(s&#39;)  \right].
+\tag{2.4}
+\end{equation}\]</span>
+At a high level, TD learning turns the expectation in Bellman equation into sampling.
+At each step, it updates the current estimate of the value function toward a <em>one-step bootstrap target</em>: the immediate reward plus the discounted value of the next state. This makes TD methods more data-efficient and applicable to continuing tasks without terminal states.</p>
+<p><strong>Algorithmic Form.</strong> Suppose the agent is in state <span class="math inline">\(s_t\)</span>, takes action <span class="math inline">\(a_t \sim \pi(\cdot \mid s_t)\)</span>, receives reward <span class="math inline">\(r_t\)</span>, and transitions to <span class="math inline">\(s_{t+1}\)</span>. The TD(0) update rule is
+<span class="math display" id="eq:TDZeroUpdate">\[\begin{equation}
+\hat{V}(s_t) \;\leftarrow\; \hat{V}(s_t) + \alpha \big[ r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t) \big],
+\tag{2.5}
+\end{equation}\]</span>
+where <span class="math inline">\(\alpha \in (0,1]\)</span> is the learning rate.</p>
+<p>The term inside the brackets,
+<span class="math display" id="eq:TDError">\[\begin{equation}
+\delta_t = r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t),
+\tag{2.6}
+\end{equation}\]</span>
+is called the TD error. It measures the discrepancy between the current value estimate and the bootstrap target. The algorithm updates <span class="math inline">\(\hat{V}(s_t)\)</span> in the direction of reducing this error.</p>
+<p><strong>Theoretical Guarantees.</strong></p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Convergence in the Tabular Case:</strong> If each state is visited infinitely often and the learning rate sequence satisfies
+<span class="math display">\[
+\sum_t \alpha_t = \infty, \; \sum_t \alpha_t^2 &lt; \infty
+\]</span>
+then TD(0) converges almost surely to the true value function <span class="math inline">\(V^\pi\)</span>. For example, choosing <span class="math inline">\(\alpha_t = 1/(t+1)\)</span> satisfies this condition.</p></li>
+<li><p><strong>Bias–Variance Tradeoff:</strong></p>
+<ul>
+<li><p>The TD target uses the current estimate <span class="math inline">\(\hat{V}(s_{t+1})\)</span> rather than the true value, which introduces <em>bias</em>.</p></li>
+<li><p>However, it has significantly <em>lower variance</em> than Monte Carlo estimates, often leading to faster convergence in practice.</p></li>
+</ul>
+<p>To see this, note that for TD(0), the target is a one-step bootstrap:
+<span class="math display">\[
+Y_t = r_t + \gamma \hat{V}(s_{t+1}).
+\]</span>
+This replaces the true value <span class="math inline">\(V^\pi(s_{t+1})\)</span> with the <em>current estimate</em> <span class="math inline">\(\hat{V}(s_{t+1})\)</span>. As a result, <span class="math inline">\(Y_t\)</span> is <em>biased</em> relative to the true return. However, since it depends only on the immediate reward and the next state, the variance of <span class="math inline">\(Y_t\)</span> is <em>much lower</em> than that of the Monte Carlo target.</p></li>
+</ol>
+<p><strong>Limitations.</strong></p>
+<ul>
+<li><p>TD(0) relies on bootstrapping, which introduces bias relative to Monte Carlo methods.</p></li>
+<li><p>Convergence can be slow if the learning rate is not chosen carefully.</p></li>
+</ul>
+<p>In summary, Temporal-Difference learning addresses the major limitations of Monte Carlo estimation: it works in <em>continuing tasks</em>, updates <em>online</em> at each step, and is generally more <em>sample-efficient</em>. However, it trades away unbiasedness for bias–variance efficiency, motivating further extensions such as multi-step TD and TD(<span class="math inline">\(\lambda\)</span>).</p>
+</div>
+<div id="multi-step-td-learning" class="section level4 hasAnchor" number="2.1.1.3">
+<h4><span class="header-section-number">2.1.1.3</span> Multi-Step TD Learning<a href="value-rl.html#multi-step-td-learning" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>Monte Carlo methods use the <em>full return</em> <span class="math inline">\(g_t\)</span>, while TD(0) uses a <em>one-step bootstrap</em>. Multi-step TD learning generalizes these two extremes by using <span class="math inline">\(n\)</span>-step returns as targets. In this way, multi-step TD interpolates between Monte Carlo and TD(0).</p>
+<p><strong>High-Level Intuition.</strong> The motivation is to balance the high variance of Monte Carlo with the bias of TD(0). Instead of waiting for a full return (MC) or using only one step of bootstrapping (TD(0)), multi-step TD uses partial returns spanning <span class="math inline">\(n\)</span> steps of real rewards, followed by a bootstrap. This provides a flexible tradeoff between bias and variance.</p>
+<p><strong>Algorithmic Form.</strong> The <span class="math inline">\(n\)</span>-step return starting from time <span class="math inline">\(t\)</span> is defined as
+<span class="math display" id="eq:nStepReturn">\[\begin{equation}
+g_t^{(n)} = r_t + \gamma r_{t+1} + \dots + \gamma^{n-1} r_{t+n-1} + \gamma^n \hat{V}(s_{t+n}).
+\tag{2.7}
+\end{equation}\]</span></p>
+<p>The <span class="math inline">\(n\)</span>-step TD update is
+<span class="math display" id="eq:nStepTDUpdate">\[\begin{equation}
+\hat{V}(s_t) \;\leftarrow\; \hat{V}(s_t) + \alpha \big[ g_t^{(n)} - \hat{V}(s_t) \big],
+\tag{2.8}
+\end{equation}\]</span>
+where <span class="math inline">\(g_t^{(n)}\)</span> replaces the one-step target in TD(0) <a href="value-rl.html#eq:TDZeroUpdate">(2.5)</a>.</p>
+<ul>
+<li><p>For <span class="math inline">\(n=1\)</span>: the method reduces to TD(0).</p></li>
+<li><p>For <span class="math inline">\(n=T-t\)</span> (the full episode length): the method reduces to Monte Carlo.</p></li>
+</ul>
+<p><strong>Theoretical Guarantees.</strong></p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Convergence in the Tabular Case:</strong> With suitable learning rates and sufficient exploration, <span class="math inline">\(n\)</span>-step TD converges to <span class="math inline">\(V^\pi\)</span>.</p></li>
+<li><p><strong>Bias–Variance Tradeoff:</strong></p>
+<ul>
+<li><p>Larger <span class="math inline">\(n\)</span>: lower bias, higher variance (closer to Monte Carlo).</p></li>
+<li><p>Smaller <span class="math inline">\(n\)</span>: higher bias, lower variance (closer to TD(0)).</p></li>
+<li><p>Intermediate <span class="math inline">\(n\)</span> provides a balance that often yields faster learning in practice.</p></li>
+</ul></li>
+</ol>
+<p><strong>Limitations.</strong></p>
+<ul>
+<li><p>Choosing the right <span class="math inline">\(n\)</span> is problem-dependent: too small and bias dominates; too large and variance grows.</p></li>
+<li><p>Requires storing <span class="math inline">\(n\)</span>-step reward sequences before updating, which can increase memory and computation.</p></li>
+</ul>
+<p>In summary, multi-step TD unifies Monte Carlo and TD(0) by introducing <span class="math inline">\(n\)</span>-step returns. It allows practitioners to <em>tune the bias–variance tradeoff</em> by selecting <span class="math inline">\(n\)</span>. Later, we will see how TD(<span class="math inline">\(\lambda\)</span>) averages over all <span class="math inline">\(n\)</span>-step returns in a principled way, further smoothing this tradeoff.</p>
+</div>
+<div id="eligibility-traces-and-tdlambda" class="section level4 hasAnchor" number="2.1.1.4">
+<h4><span class="header-section-number">2.1.1.4</span> Eligibility Traces and TD(<span class="math inline">\(\lambda\)</span>)<a href="value-rl.html#eligibility-traces-and-tdlambda" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>So far, we have seen that Monte Carlo methods use <em>full returns</em> <span class="math inline">\(g_t\)</span>, while TD(0) uses a <em>one-step bootstrap</em>. Multi-step TD methods generalize between these two extremes by using <span class="math inline">\(n\)</span>-step returns. However, a natural question arises: <em>can we combine information from all possible <span class="math inline">\(n\)</span>-step returns in a principled way?</em></p>
+<p>This motivates TD(<span class="math inline">\(\lambda\)</span>), which blends multi-step TD methods into a single algorithm using <em>eligibility traces</em>.</p>
+<p><strong>High-Level Intuition.</strong> TD(<span class="math inline">\(\lambda\)</span>) introduces a parameter <span class="math inline">\(\lambda \in [0,1]\)</span> that controls the weighting of <span class="math inline">\(n\)</span>-step returns:</p>
+<ul>
+<li><p><span class="math inline">\(\lambda = 0\)</span>: reduces to TD(0), relying only on one-step bootstrapping.</p></li>
+<li><p><span class="math inline">\(\lambda = 1\)</span>: reduces to Monte Carlo, relying on full returns.</p></li>
+<li><p><span class="math inline">\(0 &lt; \lambda &lt; 1\)</span>: interpolates smoothly between these two extremes by averaging all <span class="math inline">\(n\)</span>-step returns with exponentially decaying weights.</p></li>
+</ul>
+<p>Formally, the <span class="math inline">\(\lambda\)</span>-return is
+<span class="math display" id="eq:LambdaReturn">\[\begin{equation}
+g_t^{(\lambda)} = (1-\lambda) \sum_{n=1}^{\infty} \lambda^{n-1} g_t^{(n)},
+\tag{2.9}
+\end{equation}\]</span>
+where <span class="math inline">\(g_t^{(n)}\)</span> is the <span class="math inline">\(n\)</span>-step return defined in <a href="value-rl.html#eq:nStepReturn">(2.7)</a>.</p>
+<p><strong>Eligibility Traces.</strong> Naively computing <span class="math inline">\(g_t^{(\lambda)}\)</span> would require storing and combining infinitely many <span class="math inline">\(n\)</span>-step returns, which is impractical. Instead, TD(<span class="math inline">\(\lambda\)</span>) uses eligibility traces to implement this efficiently online.</p>
+<p>An eligibility trace is a temporary record that tracks how much each state is “eligible” for updates based on how recently and frequently it has been visited. Specifically, for each state <span class="math inline">\(s\)</span>, we maintain a trace <span class="math inline">\(z_t(s)\)</span> that evolves as
+<span class="math display" id="eq:EligibilityTrace">\[\begin{equation}
+z_t(s) = \gamma \lambda z_{t-1}(s) + \mathbf{1}\{s_t = s\},
+\tag{2.10}
+\end{equation}\]</span>
+where <span class="math inline">\(\mathbf{1}\{s_t = s\}\)</span> is an indicator that equals 1 if state <span class="math inline">\(s\)</span> is visited at time <span class="math inline">\(t\)</span>, and 0 otherwise.</p>
+<p><strong>TD(<span class="math inline">\(\lambda\)</span>) Update Rule.</strong> At each time step <span class="math inline">\(t\)</span>, we compute the TD error
+<span class="math display">\[
+\delta_t = r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t),
+\]</span>
+as in <a href="value-rl.html#eq:TDError">(2.6)</a>. Then, for each state <span class="math inline">\(s\)</span>, we update
+<span class="math display" id="eq:TDLambdaUpdate">\[\begin{equation}
+\hat{V}(s) \;\leftarrow\; \hat{V}(s) + \alpha \, \delta_t \, z_t(s).
+\tag{2.11}
+\end{equation}\]</span></p>
+<p>Thus, all states with nonzero eligibility traces are updated simultaneously, with the magnitude of the update determined by both the TD error and the eligibility trace. See Proposition <a href="value-rl.html#prp:ForwardBackwardEquivalence">2.1</a> below for a justification.</p>
+<p><strong>Theoretical Guarantees.</strong></p>
+<ol style="list-style-type: decimal">
+<li><p>In the tabular case, TD(<span class="math inline">\(\lambda\)</span>) converges almost surely to the true value function <span class="math inline">\(V^\pi\)</span> under the usual stochastic approximation conditions (sufficient exploration, decaying step sizes).</p></li>
+<li><p>The parameter <span class="math inline">\(\lambda\)</span> directly controls the bias–variance tradeoff:</p>
+<ul>
+<li><p>Smaller <span class="math inline">\(\lambda\)</span>: more bootstrapping, more bias but lower variance.</p></li>
+<li><p>Larger <span class="math inline">\(\lambda\)</span>: less bootstrapping, less bias but higher variance.</p></li>
+</ul></li>
+<li><p>TD(<span class="math inline">\(\lambda\)</span>) can be shown to converge to the fixed point of the <span class="math inline">\(\lambda\)</span>-operator, which is itself a contraction mapping.</p></li>
+</ol>
+<p>In summary, eligibility traces provide an elegant mechanism to combine the advantages of Monte Carlo and TD learning. TD(<span class="math inline">\(\lambda\)</span>) introduces a spectrum of algorithms: at one end TD(0), at the other Monte Carlo, and in between a family of methods balancing bias and variance. In practice, intermediate values such as <span class="math inline">\(\lambda \approx 0.9\)</span> often work well.</p>
+<div class="theorembox">
+<div class="proposition">
+<p><span id="prp:ForwardBackwardEquivalence" class="proposition"><strong>Proposition 2.1  (Forward–Backward Equivalence) </strong></span>Consider one episode <span class="math inline">\(s_0,a_0,r_0,\ldots,s_T\)</span> with <span class="math inline">\(\hat V(s_T)=0\)</span>. Let the <strong>forward view</strong> apply updates at the end of the episode:
+<span class="math display">\[
+\hat V(s_t) \leftarrow \hat V(s_t) + \alpha \big[g_t^{(\lambda)}-\hat V(s_t)\big],
+\quad t=0,\ldots,T-1,
+\]</span>
+where <span class="math inline">\(g_t^{(\lambda)}\)</span> is the <span class="math inline">\(\lambda\)</span>-return in <a href="value-rl.html#eq:LambdaReturn">(2.9)</a> with the <span class="math inline">\(n\)</span>-step returns <span class="math inline">\(g_t^{(n)}\)</span> from <a href="value-rl.html#eq:nStepReturn">(2.7)</a>, and where <span class="math inline">\(\hat V\)</span> is kept fixed while computing all <span class="math inline">\(g_t^{(\lambda)}\)</span>.</p>
+<p>Let the <strong>backward view</strong> run through the episode once, using the TD error <span class="math inline">\(\delta_t\)</span> from <a href="value-rl.html#eq:TDError">(2.6)</a> and eligibility traces <span class="math inline">\(z_t(s)\)</span> from <a href="value-rl.html#eq:EligibilityTrace">(2.10)</a>, and then apply the cumulative update
+<span class="math display">\[
+\Delta_{\text{back}} \hat V(s) \;=\; \alpha \sum_{t=0}^{T-1} \delta_t\, z_t(s).
+\]</span></p>
+<p>Then, for every state <span class="math inline">\(s\)</span>,
+<span class="math display">\[
+\Delta_{\text{back}} \hat V(s)
+\;=\;
+\alpha \sum_{t:\, s_t=s}\big[g_t^{(\lambda)}-\hat V(s_t)\big],
+\]</span>
+i.e., the net parameter change produced by <a href="value-rl.html#eq:TDLambdaUpdate">(2.11)</a> equals that of the <span class="math inline">\(\lambda\)</span>-return updates.</p>
+</div>
+</div>
+<div class="proofbox">
+<div class="proof">
+<p><span id="unlabeled-div-9" class="proof"><em>Proof</em>. </span>Fix a state <span class="math inline">\(s\)</span>. Using <a href="value-rl.html#eq:EligibilityTrace">(2.10)</a>,
+<span class="math display">\[
+z_t(s)=\sum_{k=0}^{t}(\gamma\lambda)^{\,t-k}\,\mathbf{1}\{s_k=s\}.
+\]</span>
+Hence
+<span class="math display">\[
+\sum_{t=0}^{T-1}\delta_t z_t(s)
+=\sum_{t=0}^{T-1}\delta_t \sum_{k=0}^{t}(\gamma\lambda)^{\,t-k}\mathbf{1}\{s_k=s\}
+=\sum_{k:\,s_k=s}\; \sum_{t=k}^{T-1} (\gamma\lambda)^{\,t-k}\delta_t .
+\tag{1}
+\]</span></p>
+<p>Write <span class="math inline">\(\delta_t=r_t+\gamma\hat V(s_{t+1})-\hat V(s_t)\)</span> and split the inner sum:
+<span class="math display">\[
+\sum_{t=k}^{T-1} (\gamma\lambda)^{t-k}\delta_t
+= \underbrace{\sum_{t=k}^{T-1} \gamma^{t-k}\lambda^{t-k} r_t}_{\text{(A)}}
++ \underbrace{\sum_{t=k}^{T-1}\gamma^{t-k}\lambda^{t-k}(\gamma\hat V(s_{t+1})-\hat V(s_t))}_{\text{(B)}}.
+\]</span></p>
+<p>Term (B) telescopes. Shifting index in the first part of (B),
+<span class="math display">\[
+\sum_{t=k}^{T-1}\gamma^{t-k}\lambda^{t-k}\gamma \hat V(s_{t+1})
+= \sum_{t=k+1}^{T}\gamma^{t-k}\lambda^{t-1-k}\hat V(s_t).
+\]</span>
+Therefore
+<span class="math display">\[
+\text{(B)}=
+-\hat V(s_k)
++ \sum_{t=k+1}^{T-1}\gamma^{t-k}\lambda^{t-1-k}(1-\lambda)\hat V(s_t)
++ \underbrace{\gamma^{T-k}\lambda^{T-1-k}\hat V(s_T)}_{=\,0}.
+\tag{2}
+\]</span></p>
+<p>Combining (A) and (2), and reindexing with <span class="math inline">\(n=t-k\)</span>,
+<span class="math display">\[
+\sum_{t=k}^{T-1} (\gamma\lambda)^{t-k}\delta_t
+= -\hat V(s_k)
++ \sum_{n=0}^{T-1-k}\gamma^{n}\lambda^{n} r_{k+n}
++ (1-\lambda)\sum_{n=1}^{T-1-k}\gamma^{n}\lambda^{n-1}\hat V(s_{k+n}).
+\tag{3}
+\]</span></p>
+<p>On the other hand, expanding the <span class="math inline">\(\lambda\)</span>-return <a href="value-rl.html#eq:LambdaReturn">(2.9)</a>,
+<span class="math display">\[
+\begin{aligned}
+g_k^{(\lambda)}
+&amp;=(1-\lambda)\sum_{n=1}^{T-k}\lambda^{n-1}
+\Bigg(\sum_{m=0}^{n-1}\gamma^{m} r_{k+m} + \gamma^{n}\hat V(s_{k+n})\Bigg)\\
+&amp;= \sum_{n=0}^{T-1-k}\gamma^{n}\lambda^{n} r_{k+n}
++ (1-\lambda)\sum_{n=1}^{T-1-k}\gamma^{n}\lambda^{n-1}\hat V(s_{k+n}),
+\end{aligned}
+\tag{4}
+\]</span>
+where we used that <span class="math inline">\(\hat V(s_T)=0\)</span>. Comparing (3) and (4) yields
+<span class="math display">\[
+\sum_{t=k}^{T-1} (\gamma\lambda)^{t-k}\delta_t
+= g_k^{(\lambda)} - \hat V(s_k).
+\tag{5}
+\]</span></p>
+<p>Substituting (5) into (1) and multiplying by <span class="math inline">\(\alpha\)</span> completes the proof.</p>
+</div>
+</div>
+<!-- **Remarks.**
+1. The equivalence above is **exact** when the value function \(\hat V\) is held fixed throughout the episode (offline/episodic view).  
+2. With *online* updates (changing \(\hat V\) within the episode), the standard accumulating-trace TD(\(\lambda\)) is only approximately forward-equivalent; the discrepancy is \(O(\alpha)\). An exactly online-equivalent variant is known as **true online TD(\(\lambda\))** (not covered here). -->
+</div>
+</div>
+</div>
+<div id="function-approximation" class="section level2 hasAnchor" number="2.2">
+<h2><span class="header-section-number">2.2</span> Function Approximation<a href="value-rl.html#function-approximation" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+
+</div>
+</div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+<a href="mdp.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="policy-gradient.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+    </div>
+  </div>
+<script src="libs/gitbook-2.6.7/js/app.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/clipboard.min.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-search.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-sharing.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-fontsettings.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-bookdown.js"></script>
+<script src="libs/gitbook-2.6.7/js/jquery.highlight.js"></script>
+<script src="libs/gitbook-2.6.7/js/plugin-clipboard.js"></script>
+<script>
+gitbook.require(["gitbook"], function(gitbook) {
+gitbook.start({
+  "sharing": {
+    "github": false,
+    "facebook": true,
+    "twitter": true,
+    "linkedin": false,
+    "weibo": false,
+    "instapaper": false,
+    "vk": false,
+    "whatsapp": false,
+    "all": ["facebook", "twitter", "linkedin", "weibo", "instapaper"]
+  },
+  "fontsettings": {
+    "theme": "white",
+    "family": "sans",
+    "size": 2
+  },
+  "edit": {
+    "link": "https://github.com/hankyang94/OptimalControlReinforcementLearning/blob/main/02-value-rl.Rmd",
+    "text": "Edit"
+  },
+  "history": {
+    "link": null,
+    "text": null
+  },
+  "view": {
+    "link": null,
+    "text": null
+  },
+  "download": ["optimal-control-reinforcement-learning.pdf"],
+  "search": {
+    "engine": "fuse",
+    "options": null
+  },
+  "toc": {
+    "collapse": "subsection"
+  }
+});
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    var src = "true";
+    if (src === "" || src === "true") src = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.9/latest.js?config=TeX-MML-AM_CHTML";
+    if (location.protocol !== "file:")
+      if (/^https?:/.test(src))
+        src = src.replace(/^https?:/, '');
+    script.src = src;
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+</body>
+
+</html>

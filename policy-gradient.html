@@ -4,18 +4,18 @@
 
   <meta charset="utf-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-  <title>Optimal Control and Reinforcement Learning</title>
+  <title>Chapter 3 Policy Gradients | Optimal Control and Reinforcement Learning</title>
   <meta name="description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   <meta name="generator" content="bookdown 0.44 and GitBook 2.6.7" />
 
-  <meta property="og:title" content="Optimal Control and Reinforcement Learning" />
+  <meta property="og:title" content="Chapter 3 Policy Gradients | Optimal Control and Reinforcement Learning" />
   <meta property="og:type" content="book" />
   
   <meta property="og:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   <meta name="github-repo" content="hankyang94/OptimalControlReinforcementLearning" />
 
   <meta name="twitter:card" content="summary" />
-  <meta name="twitter:title" content="Optimal Control and Reinforcement Learning" />
+  <meta name="twitter:title" content="Chapter 3 Policy Gradients | Optimal Control and Reinforcement Learning" />
   
   <meta name="twitter:description" content="Lecture notes for Harvard ES/AM 158 Introduction to Optimal Control and Reinforcement Learning." />
   
@@ -30,8 +30,8 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black" />
   
   
-
-<link rel="next" href="mdp.html"/>
+<link rel="prev" href="value-rl.html"/>
+<link rel="next" href="appconvex.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -259,48 +259,21 @@ div.csl-indent {
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="header">
-<h1 class="title">Optimal Control and Reinforcement Learning</h1>
-<p class="author"><em>Heng Yang</em></p>
-<p class="date"><em>2025-09-16</em></p>
-</div>
-<div id="preface" class="section level1 unnumbered hasAnchor">
-<h1>Preface<a href="index.html#preface" class="anchor-section" aria-label="Anchor link to header"></a></h1>
-<p>This is the textbook for Harvard ES/AM 158: Introduction to Optimal Control and Reinforcement Learning.</p>
-<div id="feedback" class="section level2 unnumbered hasAnchor">
-<h2>Feedback<a href="index.html#feedback" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<p>I would like to invite you to provide feedback to the textbook via inline comments with Hypothesis:</p>
-<ul>
-<li><p>Go to <a href="https://hypothes.is">Hypothesis</a> and create an account</p></li>
-<li><p>Install the <a href="https://chrome.google.com/webstore/detail/hypothesis-web-pdf-annota/bjfhmglciegochdpefhhlphglcehbmek">Chrome extension of Hypothesis</a></p></li>
-<li><p>Provide public comments to textbook contents and I will try to address them</p></li>
-</ul>
-</div>
-<div id="offerings" class="section level2 unnumbered hasAnchor">
-<h2>Offerings<a href="index.html#offerings" class="anchor-section" aria-label="Anchor link to header"></a></h2>
-<div id="fall" class="section level4 unnumbered hasAnchor">
-<h4>2025 Fall<a href="index.html#fall" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p><strong>Time</strong>: Mon/Wed 2:15 - 3:30pm</p>
-<p><strong>Location</strong>: SEC 1.413</p>
-<p><strong>Instructor</strong>: Heng Yang</p>
-<p><strong>Teaching Fellow</strong>: Haoyu Han, Han Qi</p>
-<p><a href="https://docs.google.com/document/d/1dIRYQZZJDx8K2q1TrodDDLg-bKJWWmj7o7yzOGlIs7o/edit?usp=sharing">[Syllabus]</a>, <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-PSET">[Problem Sets]</a>, <a href="https://canvas.harvard.edu/courses/153422">[Canvas]</a></p>
-</div>
-<div id="fall-1" class="section level4 unnumbered hasAnchor">
-<h4>2023 Fall<a href="index.html#fall-1" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>The course was previously offered as <a href="https://hankyang.seas.harvard.edu/OptimalControlEstimation/">Introduction to Optimal Control and Estimation</a>.</p>
-<p>Starting Fall 2025, contents about reinforcement learning have been added to the course.</p>
+<div id="policy-gradient" class="section level1 hasAnchor" number="3">
+<h1><span class="header-section-number">Chapter 3</span> Policy Gradients<a href="policy-gradient.html#policy-gradient" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 
 </div>
-</div>
+
+
+
 </div>
             </section>
 
           </div>
         </div>
       </div>
-
-<a href="mdp.html" class="navigation navigation-next navigation-unique" aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="value-rl.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
+<a href="appconvex.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
@@ -331,7 +304,7 @@ gitbook.start({
     "size": 2
   },
   "edit": {
-    "link": "https://github.com/hankyang94/OptimalControlReinforcementLearning/blob/main/index.Rmd",
+    "link": "https://github.com/hankyang94/OptimalControlReinforcementLearning/blob/main/03-policy-gradient.Rmd",
     "text": "Edit"
   },
   "history": {
