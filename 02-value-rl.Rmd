@@ -64,6 +64,26 @@ There are two common variants:
 
 Both variants converge to the same value function in the limit of infinitely many episodes.
 
+**Incremental Implementation.** Monte Carlo can be written as an incremental stochastic-approximation update that uses the return \(g_t\) as the *target* and a *diminishing step size*. Let \(N(s)\) be the number of (first- or every-) visits to state \(s\) that have been used to update \(\hat V(s)\) so far, and let \(g_t\) be the return computed at a particular visit time \(t\in\mathcal{D}(s)\). Then the MC update is
+\begin{equation}
+\hat V(s) \;\leftarrow\; \hat V(s) + \alpha_{N(s)}\,\big( g_t - \hat V(s) \big),
+\qquad \alpha_{N(s)} > 0 \text{ diminishing.}
+(\#eq:mc-incremental)
+\end{equation}
+A canonical choice is the *sample-average* step size \(\alpha_{N(s)} = 1/N(s)\), which yields the recurrence
+\begin{align}
+\hat V_{N}(s) = \hat V_{N-1}(s) + \tfrac{1}{N}\big(g_t - \hat V_{N-1}(s)\big)
+& = \Big(1-\tfrac{1}{N}\Big)\hat V_{N-1}(s) + \tfrac{1}{N}\, g_t \\
+& = \frac{N-1}{N} \frac{1}{N-1} \sum_{i=1}^{N-1} g_{t,i} + \frac{1}{N} g_t \\
+& = \frac{1}{N} \sum_{i=1}^N g_{t,i}
+\end{align}
+so that \(\hat V_{N}(s)\) equals the average of the \(N\) observed returns for \(s\) (i.e., Eq. \@ref(eq:StateValueMCEstimate)). In the above equation, I have used $g_{t,i}$ to denote the $i$-th return before $g_t$ was collected (and $g_t = g_{t,N}$). More generally, any diminishing schedule satisfying
+\[
+\sum_{n=1}^\infty \alpha_n = \infty, \qquad \sum_{n=1}^\infty \alpha_n^2 < \infty
+\]
+(e.g., \(\alpha_n = c/(n+t_0)^p\) with \(1/2 < p \le 1\)) also ensures consistency in the tabular setting. In first-visit MC, \(N(s)\) increases by one per episode at most; in every-visit MC, \(N(s)\) increases at each occurrence of \(s\) within an episode.
+
+
 **Theoretical Guarantees.**
 
 1. **Unbiasedness:** For any state \(s\), the return \(g_t\) is an unbiased sample of \(V^\pi(s)\).  

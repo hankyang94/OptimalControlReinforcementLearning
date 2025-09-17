@@ -357,7 +357,7 @@ def R(s: State, a: Action) -> float:
 # --- Policy: time-invariant, state-independent ------------------------------
 
 def pi(a: Action, s: State, alpha: float) -> float:
-    """π(a|s): Lazy with prob α, Productive with prob 1-α."""
+    """pi(a|s): Lazy with prob alpha, Productive with prob 1-alpha."""
     return alpha if a == "Lazy" else (1.0 - alpha)
 
 # --- Policy evaluation -------------------------------------------------------
@@ -392,7 +392,7 @@ def policy_evaluation(T: int, alpha: float):
             for a in A:
                 exp_next = sum(p * V[t + 1][s_next] for s_next, p in P[(s, a)])
                 Q[t][(s, a)] = R(s, a) + exp_next
-            # Then V_t(s) = E_{a~π}[Q_t(s,a)]
+            # Then V_t(s) = E_{a~pi}[Q_t(s,a)]
             V[t][s] = sum(pi(a, s, alpha) * Q[t][(s, a)] for a in A)
 
     return V, Q
