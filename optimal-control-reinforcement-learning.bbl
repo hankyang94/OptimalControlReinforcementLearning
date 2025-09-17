@@ -10,6 +10,11 @@ Davison, E. and Wonham, W. (1968).
 \newblock On pole assignment in multivariable linear systems.
 \newblock {\em IEEE Transactions on Automatic Control}, 13(6):747--748.
 
+\bibitem[Kearns and Singh, 2000]{kearns2000bias}
+Kearns, M.~J. and Singh, S. (2000).
+\newblock Bias-variance error bounds for temporal difference updates.
+\newblock In {\em COLT}, pages 142--147.
+
 \bibitem[Zhou et~al., 1996]{zhou1996book-robust}
 Zhou, K., Doyle, J., and Glover, K. (1996).
 \newblock Robust and optimal control.
