@@ -646,7 +646,7 @@ The following Python code performs policy evaluation for this MDP, with \(T=10\)
 \CommentTok{\# {-}{-}{-} Policy: time{-}invariant, state{-}independent {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
 
 \KeywordTok{def}\NormalTok{ pi(a: Action, s: State, alpha: }\BuiltInTok{float}\NormalTok{) }\OperatorTok{{-}\textgreater{}} \BuiltInTok{float}\NormalTok{:}
-    \CommentTok{"""π(a|s): Lazy with prob α, Productive with prob 1{-}α."""}
+    \CommentTok{"""pi(a|s): Lazy with prob alpha, Productive with prob 1{-}alpha."""}
     \ControlFlowTok{return}\NormalTok{ alpha }\ControlFlowTok{if}\NormalTok{ a }\OperatorTok{==} \StringTok{"Lazy"} \ControlFlowTok{else}\NormalTok{ (}\FloatTok{1.0} \OperatorTok{{-}}\NormalTok{ alpha)}
 
 \CommentTok{\# {-}{-}{-} Policy evaluation {-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}{-}}
@@ -681,7 +681,7 @@ The following Python code performs policy evaluation for this MDP, with \(T=10\)
             \ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ A:}
 \NormalTok{                exp\_next }\OperatorTok{=} \BuiltInTok{sum}\NormalTok{(p }\OperatorTok{*}\NormalTok{ V[t }\OperatorTok{+} \DecValTok{1}\NormalTok{][s\_next] }\ControlFlowTok{for}\NormalTok{ s\_next, p }\KeywordTok{in}\NormalTok{ P[(s, a)])}
 \NormalTok{                Q[t][(s, a)] }\OperatorTok{=}\NormalTok{ R(s, a) }\OperatorTok{+}\NormalTok{ exp\_next}
-            \CommentTok{\# Then V\_t(s) = E\_\{a\textasciitilde{}π\}[Q\_t(s,a)]}
+            \CommentTok{\# Then V\_t(s) = E\_\{a\textasciitilde{}pi\}[Q\_t(s,a)]}
 \NormalTok{            V[t][s] }\OperatorTok{=} \BuiltInTok{sum}\NormalTok{(pi(a, s, alpha) }\OperatorTok{*}\NormalTok{ Q[t][(s, a)] }\ControlFlowTok{for}\NormalTok{ a }\KeywordTok{in}\NormalTok{ A)}
 
     \ControlFlowTok{return}\NormalTok{ V, Q}
@@ -2153,6 +2153,25 @@ There are two common variants:
 \end{itemize}
 
 Both variants converge to the same value function in the limit of infinitely many episodes.
+
+\textbf{Incremental Implementation.} Monte Carlo can be written as an incremental stochastic-approximation update that uses the return \(g_t\) as the \emph{target} and a \emph{diminishing step size}. Let \(N(s)\) be the number of (first- or every-) visits to state \(s\) that have been used to update \(\hat V(s)\) so far, and let \(g_t\) be the return computed at a particular visit time \(t\in\mathcal{D}(s)\). Then the MC update is
+\begin{equation}
+\hat V(s) \;\leftarrow\; \hat V(s) + \alpha_{N(s)}\,\big( g_t - \hat V(s) \big),
+\qquad \alpha_{N(s)} > 0 \text{ diminishing.}
+\label{eq:mc-incremental}
+\end{equation}
+A canonical choice is the \emph{sample-average} step size \(\alpha_{N(s)} = 1/N(s)\), which yields the recurrence
+\begin{align}
+\hat V_{N}(s) = \hat V_{N-1}(s) + \tfrac{1}{N}\big(g_t - \hat V_{N-1}(s)\big)
+& = \Big(1-\tfrac{1}{N}\Big)\hat V_{N-1}(s) + \tfrac{1}{N}\, g_t \\
+& = \frac{N-1}{N} \frac{1}{N-1} \sum_{i=1}^{N-1} g_{t,i} + \frac{1}{N} g_t \\
+& = \frac{1}{N} \sum_{i=1}^N g_{t,i}
+\end{align}
+so that \(\hat V_{N}(s)\) equals the average of the \(N\) observed returns for \(s\) (i.e., Eq. \eqref{eq:StateValueMCEstimate}). In the above equation, I have used \(g_{t,i}\) to denote the \(i\)-th return before \(g_t\) was collected (and \(g_t = g_{t,N}\)). More generally, any diminishing schedule satisfying
+\[
+\sum_{n=1}^\infty \alpha_n = \infty, \qquad \sum_{n=1}^\infty \alpha_n^2 < \infty
+\]
+(e.g., \(\alpha_n = c/(n+t_0)^p\) with \(1/2 < p \le 1\)) also ensures consistency in the tabular setting. In first-visit MC, \(N(s)\) increases by one per episode at most; in every-visit MC, \(N(s)\) increases at each occurrence of \(s\) within an episode.
 
 \textbf{Theoretical Guarantees.}
 

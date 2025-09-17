@@ -310,6 +310,24 @@ g_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k} = r_t + \gamma r_{t+1} + \gamma^2 r_{t
 <li><strong>Every-visit MC:</strong> use all occurrences of <span class="math inline">\(s\)</span> within an episode.</li>
 </ul>
 <p>Both variants converge to the same value function in the limit of infinitely many episodes.</p>
+<p><strong>Incremental Implementation.</strong> Monte Carlo can be written as an incremental stochastic-approximation update that uses the return <span class="math inline">\(g_t\)</span> as the <em>target</em> and a <em>diminishing step size</em>. Let <span class="math inline">\(N(s)\)</span> be the number of (first- or every-) visits to state <span class="math inline">\(s\)</span> that have been used to update <span class="math inline">\(\hat V(s)\)</span> so far, and let <span class="math inline">\(g_t\)</span> be the return computed at a particular visit time <span class="math inline">\(t\in\mathcal{D}(s)\)</span>. Then the MC update is
+<span class="math display" id="eq:mc-incremental">\[\begin{equation}
+\hat V(s) \;\leftarrow\; \hat V(s) + \alpha_{N(s)}\,\big( g_t - \hat V(s) \big),
+\qquad \alpha_{N(s)} &gt; 0 \text{ diminishing.}
+\tag{2.4}
+\end{equation}\]</span>
+A canonical choice is the <em>sample-average</em> step size <span class="math inline">\(\alpha_{N(s)} = 1/N(s)\)</span>, which yields the recurrence
+<span class="math display">\[\begin{align}
+\hat V_{N}(s) = \hat V_{N-1}(s) + \tfrac{1}{N}\big(g_t - \hat V_{N-1}(s)\big)
+&amp; = \Big(1-\tfrac{1}{N}\Big)\hat V_{N-1}(s) + \tfrac{1}{N}\, g_t \\
+&amp; = \frac{N-1}{N} \frac{1}{N-1} \sum_{i=1}^{N-1} g_{t,i} + \frac{1}{N} g_t \\
+&amp; = \frac{1}{N} \sum_{i=1}^N g_{t,i}
+\end{align}\]</span>
+so that <span class="math inline">\(\hat V_{N}(s)\)</span> equals the average of the <span class="math inline">\(N\)</span> observed returns for <span class="math inline">\(s\)</span> (i.e., Eq. <a href="value-rl.html#eq:StateValueMCEstimate">(2.3)</a>). In the above equation, I have used <span class="math inline">\(g_{t,i}\)</span> to denote the <span class="math inline">\(i\)</span>-th return before <span class="math inline">\(g_t\)</span> was collected (and <span class="math inline">\(g_t = g_{t,N}\)</span>). More generally, any diminishing schedule satisfying
+<span class="math display">\[
+\sum_{n=1}^\infty \alpha_n = \infty, \qquad \sum_{n=1}^\infty \alpha_n^2 &lt; \infty
+\]</span>
+(e.g., <span class="math inline">\(\alpha_n = c/(n+t_0)^p\)</span> with <span class="math inline">\(1/2 &lt; p \le 1\)</span>) also ensures consistency in the tabular setting. In first-visit MC, <span class="math inline">\(N(s)\)</span> increases by one per episode at most; in every-visit MC, <span class="math inline">\(N(s)\)</span> increases at each occurrence of <span class="math inline">\(s\)</span> within an episode.</p>
 <p><strong>Theoretical Guarantees.</strong></p>
 <ol style="list-style-type: decimal">
 <li><strong>Unbiasedness:</strong> For any state <span class="math inline">\(s\)</span>, the return <span class="math inline">\(g_t\)</span> is an unbiased sample of <span class="math inline">\(V^\pi(s)\)</span>.<br />
@@ -336,20 +354,20 @@ g_t = \sum_{k=0}^{T-t-1} \gamma^k r_{t+k} = r_t + \gamma r_{t+1} + \gamma^2 r_{t
 <p><strong>High-Level Intuition.</strong> TD learning avoids waiting until the end of an episode by using the Bellman consistency equation as a basis for updates. Recall that for any policy <span class="math inline">\(\pi\)</span>, the Bellman consistency equation reads:
 <span class="math display" id="eq:InfiniteHorizonBellmanConsistencyRestate">\[\begin{equation}
 V^\pi(s) = \mathbb{E}_{a \sim \pi(\cdot \mid s)} \left[ R(s,a) + \gamma \mathbb{E}_{s&#39; \sim P(s&#39; \mid s, a)} V(s&#39;)  \right].
-\tag{2.4}
+\tag{2.5}
 \end{equation}\]</span>
 At a high level, TD learning turns the expectation in Bellman equation into sampling.
 At each step, it updates the current estimate of the value function toward a <em>one-step bootstrap target</em>: the immediate reward plus the discounted value of the next state. This makes TD methods more data-efficient and applicable to continuing tasks without terminal states.</p>
 <p><strong>Algorithmic Form.</strong> Suppose the agent is in state <span class="math inline">\(s_t\)</span>, takes action <span class="math inline">\(a_t \sim \pi(\cdot \mid s_t)\)</span>, receives reward <span class="math inline">\(r_t\)</span>, and transitions to <span class="math inline">\(s_{t+1}\)</span>. The TD(0) update rule is
 <span class="math display" id="eq:TDZeroUpdate">\[\begin{equation}
 \hat{V}(s_t) \;\leftarrow\; \hat{V}(s_t) + \alpha \big[ r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t) \big],
-\tag{2.5}
+\tag{2.6}
 \end{equation}\]</span>
 where <span class="math inline">\(\alpha \in (0,1]\)</span> is the learning rate.</p>
 <p>The term inside the brackets,
 <span class="math display" id="eq:TDError">\[\begin{equation}
 \delta_t = r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t),
-\tag{2.6}
+\tag{2.7}
 \end{equation}\]</span>
 is called the TD error. It measures the discrepancy between the current value estimate and the bootstrap target. The algorithm updates <span class="math inline">\(\hat{V}(s_t)\)</span> in the direction of reducing this error.</p>
 <p><strong>Theoretical Guarantees.</strong></p>
@@ -384,14 +402,14 @@ This replaces the true value <span class="math inline">\(V^\pi(s_{t+1})\)</span>
 <p><strong>Algorithmic Form.</strong> The <span class="math inline">\(n\)</span>-step return starting from time <span class="math inline">\(t\)</span> is defined as
 <span class="math display" id="eq:nStepReturn">\[\begin{equation}
 g_t^{(n)} = r_t + \gamma r_{t+1} + \dots + \gamma^{n-1} r_{t+n-1} + \gamma^n \hat{V}(s_{t+n}).
-\tag{2.7}
+\tag{2.8}
 \end{equation}\]</span></p>
 <p>The <span class="math inline">\(n\)</span>-step TD update is
 <span class="math display" id="eq:nStepTDUpdate">\[\begin{equation}
 \hat{V}(s_t) \;\leftarrow\; \hat{V}(s_t) + \alpha \big[ g_t^{(n)} - \hat{V}(s_t) \big],
-\tag{2.8}
+\tag{2.9}
 \end{equation}\]</span>
-where <span class="math inline">\(g_t^{(n)}\)</span> replaces the one-step target in TD(0) <a href="value-rl.html#eq:TDZeroUpdate">(2.5)</a>.</p>
+where <span class="math inline">\(g_t^{(n)}\)</span> replaces the one-step target in TD(0) <a href="value-rl.html#eq:TDZeroUpdate">(2.6)</a>.</p>
 <ul>
 <li><p>For <span class="math inline">\(n=1\)</span>: the method reduces to TD(0).</p></li>
 <li><p>For <span class="math inline">\(n=T-t\)</span> (the full episode length): the method reduces to Monte Carlo.</p></li>
@@ -426,9 +444,9 @@ where <span class="math inline">\(g_t^{(n)}\)</span> replaces the one-step targe
 <p>Formally, the <span class="math inline">\(\lambda\)</span>-return is
 <span class="math display" id="eq:LambdaReturn">\[\begin{equation}
 g_t^{(\lambda)} = (1-\lambda) \sum_{n=1}^{\infty} \lambda^{n-1} g_t^{(n)},
-\tag{2.9}
+\tag{2.10}
 \end{equation}\]</span>
-where <span class="math inline">\(g_t^{(n)}\)</span> is the <span class="math inline">\(n\)</span>-step return defined in <a href="value-rl.html#eq:nStepReturn">(2.7)</a>.</p>
+where <span class="math inline">\(g_t^{(n)}\)</span> is the <span class="math inline">\(n\)</span>-step return defined in <a href="value-rl.html#eq:nStepReturn">(2.8)</a>.</p>
 <div class="exercisebox">
 <div class="remark">
 <p><span id="unlabeled-div-9" class="remark"><em>Remark</em>. </span>To make the <span class="math inline">\(\lambda\)</span>-return well defined, we consider two cases.</p>
@@ -439,15 +457,15 @@ g_t^{(\lambda)}
 (1-\lambda)\sum_{n=1}^{N-1}\lambda^{\,n-1} \, g_t^{(n)}
 \;+\;
 \lambda^{\,N-1}\, g_t^{(N)},
-\tag{2.10}
+\tag{2.11}
 \end{equation}\]</span>
-where <span class="math inline">\(g_t^{(n)}\)</span> is the <span class="math inline">\(n\)</span>-step return (Eq. <a href="value-rl.html#eq:nStepReturn">(2.7)</a>) and <span class="math inline">\(g_t^{(N)}\)</span> is the <em>full</em> Monte Carlo return (Eq. <a href="value-rl.html#eq:return-MC">(2.2)</a>).</p>
+where <span class="math inline">\(g_t^{(n)}\)</span> is the <span class="math inline">\(n\)</span>-step return (Eq. <a href="value-rl.html#eq:nStepReturn">(2.8)</a>) and <span class="math inline">\(g_t^{(N)}\)</span> is the <em>full</em> Monte Carlo return (Eq. <a href="value-rl.html#eq:return-MC">(2.2)</a>).</p>
 <p>This expression is well-defined for all <span class="math inline">\(\lambda\in[0,1]\)</span>. Note that the weights form a convex combination:
 <span class="math display">\[
 (1-\lambda)\sum_{n=1}^{N-1}\lambda^{n-1} + \lambda^{N-1}
 = 1-\lambda^{N-1}+\lambda^{N-1} = 1.
 \]</span></p>
-<p><strong>Continuing Case: Limit.</strong> Taking <span class="math inline">\(\lambda\uparrow 1\)</span> in <a href="value-rl.html#eq:lambda-return-episodic">(2.10)</a> gives
+<p><strong>Continuing Case: Limit.</strong> Taking <span class="math inline">\(\lambda\uparrow 1\)</span> in <a href="value-rl.html#eq:lambda-return-episodic">(2.11)</a> gives
 <span class="math display">\[
 \lim_{\lambda\uparrow 1} g_t^{(\lambda)}
 = g_t^{(N)} = g_t,
@@ -459,17 +477,17 @@ so the <span class="math inline">\(\lambda\)</span>-return <em>reduces to the Mo
 <p>An eligibility trace is a temporary record that tracks how much each state is “eligible” for updates based on how recently and frequently it has been visited. Specifically, for each state <span class="math inline">\(s\)</span>, we maintain a trace <span class="math inline">\(z_t(s)\)</span> that evolves as
 <span class="math display" id="eq:EligibilityTrace">\[\begin{equation}
 z_t(s) = \gamma \lambda z_{t-1}(s) + \mathbf{1}\{s_t = s\},
-\tag{2.11}
+\tag{2.12}
 \end{equation}\]</span>
 where <span class="math inline">\(\mathbf{1}\{s_t = s\}\)</span> is an indicator that equals 1 if state <span class="math inline">\(s\)</span> is visited at time <span class="math inline">\(t\)</span>, and 0 otherwise.</p>
 <p><strong>TD(<span class="math inline">\(\lambda\)</span>) Update Rule.</strong> At each time step <span class="math inline">\(t\)</span>, we compute the TD error
 <span class="math display">\[
 \delta_t = r_t + \gamma \hat{V}(s_{t+1}) - \hat{V}(s_t),
 \]</span>
-as in <a href="value-rl.html#eq:TDError">(2.6)</a>. Then, for each state <span class="math inline">\(s\)</span>, we update
+as in <a href="value-rl.html#eq:TDError">(2.7)</a>. Then, for each state <span class="math inline">\(s\)</span>, we update
 <span class="math display" id="eq:TDLambdaUpdate">\[\begin{equation}
 \hat{V}(s) \;\leftarrow\; \hat{V}(s) + \alpha \, \delta_t \, z_t(s).
-\tag{2.12}
+\tag{2.13}
 \end{equation}\]</span></p>
 <p>Thus, all states with nonzero eligibility traces are updated simultaneously, with the magnitude of the update determined by both the TD error and the eligibility trace. See Proposition <a href="value-rl.html#prp:ForwardBackwardEquivalence">2.1</a> below for a justification.</p>
 <p><strong>Theoretical Guarantees.</strong></p>
@@ -490,8 +508,8 @@ as in <a href="value-rl.html#eq:TDError">(2.6)</a>. Then, for each state <span c
 \hat V(s_t) \leftarrow \hat V(s_t) + \alpha \big[g_t^{(\lambda)}-\hat V(s_t)\big],
 \quad t=0,\ldots,T-1,
 \]</span>
-where <span class="math inline">\(g_t^{(\lambda)}\)</span> is the <span class="math inline">\(\lambda\)</span>-return in <a href="value-rl.html#eq:LambdaReturn">(2.9)</a> with the <span class="math inline">\(n\)</span>-step returns <span class="math inline">\(g_t^{(n)}\)</span> from <a href="value-rl.html#eq:nStepReturn">(2.7)</a>, and where <span class="math inline">\(\hat V\)</span> is kept fixed while computing all <span class="math inline">\(g_t^{(\lambda)}\)</span>.</p>
-<p>Let the <strong>backward view</strong> run through the episode once, using the TD error <span class="math inline">\(\delta_t\)</span> from <a href="value-rl.html#eq:TDError">(2.6)</a> and eligibility traces <span class="math inline">\(z_t(s)\)</span> from <a href="value-rl.html#eq:EligibilityTrace">(2.11)</a>, and then apply the cumulative update
+where <span class="math inline">\(g_t^{(\lambda)}\)</span> is the <span class="math inline">\(\lambda\)</span>-return in <a href="value-rl.html#eq:LambdaReturn">(2.10)</a> with the <span class="math inline">\(n\)</span>-step returns <span class="math inline">\(g_t^{(n)}\)</span> from <a href="value-rl.html#eq:nStepReturn">(2.8)</a>, and where <span class="math inline">\(\hat V\)</span> is kept fixed while computing all <span class="math inline">\(g_t^{(\lambda)}\)</span>.</p>
+<p>Let the <strong>backward view</strong> run through the episode once, using the TD error <span class="math inline">\(\delta_t\)</span> from <a href="value-rl.html#eq:TDError">(2.7)</a> and eligibility traces <span class="math inline">\(z_t(s)\)</span> from <a href="value-rl.html#eq:EligibilityTrace">(2.12)</a>, and then apply the cumulative update
 <span class="math display">\[
 \Delta_{\text{back}} \hat V(s) \;=\; \alpha \sum_{t=0}^{T-1} \delta_t\, z_t(s).
 \]</span></p>
@@ -501,12 +519,12 @@ where <span class="math inline">\(g_t^{(\lambda)}\)</span> is the <span class="m
 \;=\;
 \alpha \sum_{t:\, s_t=s}\big[g_t^{(\lambda)}-\hat V(s_t)\big],
 \]</span>
-i.e., the net parameter change produced by <a href="value-rl.html#eq:TDLambdaUpdate">(2.12)</a> equals that of the <span class="math inline">\(\lambda\)</span>-return updates.</p>
+i.e., the net parameter change produced by <a href="value-rl.html#eq:TDLambdaUpdate">(2.13)</a> equals that of the <span class="math inline">\(\lambda\)</span>-return updates.</p>
 </div>
 </div>
 <div class="proofbox">
 <div class="proof">
-<p><span id="unlabeled-div-10" class="proof"><em>Proof</em>. </span>Fix a state <span class="math inline">\(s\)</span>. Using <a href="value-rl.html#eq:EligibilityTrace">(2.11)</a>,
+<p><span id="unlabeled-div-10" class="proof"><em>Proof</em>. </span>Fix a state <span class="math inline">\(s\)</span>. Using <a href="value-rl.html#eq:EligibilityTrace">(2.12)</a>,
 <span class="math display">\[
 z_t(s)=\sum_{k=0}^{t}(\gamma\lambda)^{\,t-k}\,\mathbf{1}\{s_k=s\}.
 \]</span>
@@ -544,7 +562,7 @@ Therefore
 + (1-\lambda)\sum_{n=1}^{T-1-k}\gamma^{n}\lambda^{n-1}\hat V(s_{k+n}).
 \tag{3}
 \]</span></p>
-<p>On the other hand, expanding the <span class="math inline">\(\lambda\)</span>-return <a href="value-rl.html#eq:LambdaReturn">(2.9)</a>,
+<p>On the other hand, expanding the <span class="math inline">\(\lambda\)</span>-return <a href="value-rl.html#eq:LambdaReturn">(2.10)</a>,
 <span class="math display">\[
 \begin{aligned}
 g_k^{(\lambda)}
@@ -580,7 +598,7 @@ where we used that <span class="math inline">\(\hat V(s_T)=0\)</span>. Comparing
 <p>We evaluate the <em>equiprobable policy</em> <span class="math inline">\(\pi\)</span> that chooses Left/Right with probability <span class="math inline">\(1/2\)</span> each at every nonterminal state. Under this policy, the true state-value function on nonterminal states <span class="math inline">\(s\in\{1,\dots,5\}\)</span> is
 <span class="math display" id="eq:trueV-rw">\[\begin{equation}
 V^\pi(s) \;=\; \frac{s}{6}.
-\tag{2.13}
+\tag{2.14}
 \end{equation}\]</span></p>
 <p>We compare four <em>tabular policy-evaluation</em> methods:</p>
 <ol style="list-style-type: decimal">
@@ -595,17 +613,17 @@ To ensure convergence in the tabular setting and to make the comparison fair (si
 <span class="math display" id="eq:per-state-decay">\[\begin{equation}
 \alpha_t(s) \;=\; \frac{c}{\big(N_t(s)+t_0\big)^p},
 \qquad \tfrac{1}{2} &lt; p \le 1,
-\tag{2.14}
+\tag{2.15}
 \end{equation}\]</span>
 where <span class="math inline">\(N_t(s)\)</span> counts how many times <span class="math inline">\(V(s)\)</span> has been updated up to time <span class="math inline">\(t\)</span>. A common choice is <span class="math inline">\(p=1\)</span> with moderate <span class="math inline">\(c&gt;0\)</span> and <span class="math inline">\(t_0&gt;0\)</span>.</p>
 <p><strong>Error Metric.</strong>
 We report the <em>mean-squared error (MSE)</em> over nonterminal states after each episode:
 <span class="math display" id="eq:mse-metric">\[\begin{equation}
 \mathrm{MSE}_t \;=\; \frac{1}{5}\sum_{s=1}^{5}\big(\hat V_t(s)-V^\pi(s)\big)^2,
-\tag{2.15}
+\tag{2.16}
 \end{equation}\]</span>
-where <span class="math inline">\(V^\pi\)</span> is given by <a href="value-rl.html#eq:trueV-rw">(2.13)</a>. Curves are averaged over multiple random seeds.</p>
-<p>Fig. <a href="value-rl.html#fig:policy-evaluation-random-walk">2.1</a> shows the MSE versus episodes for MC, TD(0), 3-step TD, and TD(<span class="math inline">\(\lambda\)</span>) under the diminishing step-size schedule <a href="value-rl.html#eq:per-state-decay">(2.14)</a>.</p>
+where <span class="math inline">\(V^\pi\)</span> is given by <a href="value-rl.html#eq:trueV-rw">(2.14)</a>. Curves are averaged over multiple random seeds.</p>
+<p>Fig. <a href="value-rl.html#fig:policy-evaluation-random-walk">2.1</a> shows the MSE versus episodes for MC, TD(0), 3-step TD, and TD(<span class="math inline">\(\lambda\)</span>) under the diminishing step-size schedule <a href="value-rl.html#eq:per-state-decay">(2.15)</a>.</p>
 <p>You are encouraged to play with the parameters of these algorithms in the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/policy_evaluation_mc_td.py">here</a>.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:policy-evaluation-random-walk"></span>
 <img src="images/Value-RL/mc_td_comparison.png" alt="Policy Evaluation, MC versus TD Family" width="90%" />
