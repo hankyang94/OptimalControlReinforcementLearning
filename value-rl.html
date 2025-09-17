@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-09-16" />
+<meta name="date" content="2025-09-17" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -429,11 +429,37 @@ g_t^{(\lambda)} = (1-\lambda) \sum_{n=1}^{\infty} \lambda^{n-1} g_t^{(n)},
 \tag{2.9}
 \end{equation}\]</span>
 where <span class="math inline">\(g_t^{(n)}\)</span> is the <span class="math inline">\(n\)</span>-step return defined in <a href="value-rl.html#eq:nStepReturn">(2.7)</a>.</p>
+<div class="exercisebox">
+<div class="remark">
+<p><span id="unlabeled-div-9" class="remark"><em>Remark</em>. </span>To make the <span class="math inline">\(\lambda\)</span>-return well defined, we consider two cases.</p>
+<p><strong>Episodic Case: Well-posed.</strong> If an episode terminates at time <span class="math inline">\(T\)</span>, let <span class="math inline">\(N=T-t\)</span> be the remaining steps. Then
+<span class="math display" id="eq:lambda-return-episodic">\[\begin{equation}
+g_t^{(\lambda)}
+\;=\;
+(1-\lambda)\sum_{n=1}^{N-1}\lambda^{\,n-1} \, g_t^{(n)}
+\;+\;
+\lambda^{\,N-1}\, g_t^{(N)},
+\tag{2.10}
+\end{equation}\]</span>
+where <span class="math inline">\(g_t^{(n)}\)</span> is the <span class="math inline">\(n\)</span>-step return (Eq. <a href="value-rl.html#eq:nStepReturn">(2.7)</a>) and <span class="math inline">\(g_t^{(N)}\)</span> is the <em>full</em> Monte Carlo return (Eq. <a href="value-rl.html#eq:return-MC">(2.2)</a>).</p>
+<p>This expression is well-defined for all <span class="math inline">\(\lambda\in[0,1]\)</span>. Note that the weights form a convex combination:
+<span class="math display">\[
+(1-\lambda)\sum_{n=1}^{N-1}\lambda^{n-1} + \lambda^{N-1}
+= 1-\lambda^{N-1}+\lambda^{N-1} = 1.
+\]</span></p>
+<p><strong>Continuing Case: Limit.</strong> Taking <span class="math inline">\(\lambda\uparrow 1\)</span> in <a href="value-rl.html#eq:lambda-return-episodic">(2.10)</a> gives
+<span class="math display">\[
+\lim_{\lambda\uparrow 1} g_t^{(\lambda)}
+= g_t^{(N)} = g_t,
+\]</span>
+so the <span class="math inline">\(\lambda\)</span>-return <em>reduces to the Monte Carlo return</em> at <span class="math inline">\(\lambda=1\)</span>. For continuing tasks (no terminal <span class="math inline">\(T\)</span>), <span class="math inline">\(\lambda=1\)</span> is conventionally defined by this same limiting argument, yielding the infinite-horizon discounted return when <span class="math inline">\(\gamma&lt;1\)</span>.</p>
+</div>
+</div>
 <p><strong>Eligibility Traces.</strong> Naively computing <span class="math inline">\(g_t^{(\lambda)}\)</span> would require storing and combining infinitely many <span class="math inline">\(n\)</span>-step returns, which is impractical. Instead, TD(<span class="math inline">\(\lambda\)</span>) uses eligibility traces to implement this efficiently online.</p>
 <p>An eligibility trace is a temporary record that tracks how much each state is “eligible” for updates based on how recently and frequently it has been visited. Specifically, for each state <span class="math inline">\(s\)</span>, we maintain a trace <span class="math inline">\(z_t(s)\)</span> that evolves as
 <span class="math display" id="eq:EligibilityTrace">\[\begin{equation}
 z_t(s) = \gamma \lambda z_{t-1}(s) + \mathbf{1}\{s_t = s\},
-\tag{2.10}
+\tag{2.11}
 \end{equation}\]</span>
 where <span class="math inline">\(\mathbf{1}\{s_t = s\}\)</span> is an indicator that equals 1 if state <span class="math inline">\(s\)</span> is visited at time <span class="math inline">\(t\)</span>, and 0 otherwise.</p>
 <p><strong>TD(<span class="math inline">\(\lambda\)</span>) Update Rule.</strong> At each time step <span class="math inline">\(t\)</span>, we compute the TD error
@@ -443,7 +469,7 @@ where <span class="math inline">\(\mathbf{1}\{s_t = s\}\)</span> is an indicator
 as in <a href="value-rl.html#eq:TDError">(2.6)</a>. Then, for each state <span class="math inline">\(s\)</span>, we update
 <span class="math display" id="eq:TDLambdaUpdate">\[\begin{equation}
 \hat{V}(s) \;\leftarrow\; \hat{V}(s) + \alpha \, \delta_t \, z_t(s).
-\tag{2.11}
+\tag{2.12}
 \end{equation}\]</span></p>
 <p>Thus, all states with nonzero eligibility traces are updated simultaneously, with the magnitude of the update determined by both the TD error and the eligibility trace. See Proposition <a href="value-rl.html#prp:ForwardBackwardEquivalence">2.1</a> below for a justification.</p>
 <p><strong>Theoretical Guarantees.</strong></p>
@@ -465,7 +491,7 @@ as in <a href="value-rl.html#eq:TDError">(2.6)</a>. Then, for each state <span c
 \quad t=0,\ldots,T-1,
 \]</span>
 where <span class="math inline">\(g_t^{(\lambda)}\)</span> is the <span class="math inline">\(\lambda\)</span>-return in <a href="value-rl.html#eq:LambdaReturn">(2.9)</a> with the <span class="math inline">\(n\)</span>-step returns <span class="math inline">\(g_t^{(n)}\)</span> from <a href="value-rl.html#eq:nStepReturn">(2.7)</a>, and where <span class="math inline">\(\hat V\)</span> is kept fixed while computing all <span class="math inline">\(g_t^{(\lambda)}\)</span>.</p>
-<p>Let the <strong>backward view</strong> run through the episode once, using the TD error <span class="math inline">\(\delta_t\)</span> from <a href="value-rl.html#eq:TDError">(2.6)</a> and eligibility traces <span class="math inline">\(z_t(s)\)</span> from <a href="value-rl.html#eq:EligibilityTrace">(2.10)</a>, and then apply the cumulative update
+<p>Let the <strong>backward view</strong> run through the episode once, using the TD error <span class="math inline">\(\delta_t\)</span> from <a href="value-rl.html#eq:TDError">(2.6)</a> and eligibility traces <span class="math inline">\(z_t(s)\)</span> from <a href="value-rl.html#eq:EligibilityTrace">(2.11)</a>, and then apply the cumulative update
 <span class="math display">\[
 \Delta_{\text{back}} \hat V(s) \;=\; \alpha \sum_{t=0}^{T-1} \delta_t\, z_t(s).
 \]</span></p>
@@ -475,12 +501,12 @@ where <span class="math inline">\(g_t^{(\lambda)}\)</span> is the <span class="m
 \;=\;
 \alpha \sum_{t:\, s_t=s}\big[g_t^{(\lambda)}-\hat V(s_t)\big],
 \]</span>
-i.e., the net parameter change produced by <a href="value-rl.html#eq:TDLambdaUpdate">(2.11)</a> equals that of the <span class="math inline">\(\lambda\)</span>-return updates.</p>
+i.e., the net parameter change produced by <a href="value-rl.html#eq:TDLambdaUpdate">(2.12)</a> equals that of the <span class="math inline">\(\lambda\)</span>-return updates.</p>
 </div>
 </div>
 <div class="proofbox">
 <div class="proof">
-<p><span id="unlabeled-div-9" class="proof"><em>Proof</em>. </span>Fix a state <span class="math inline">\(s\)</span>. Using <a href="value-rl.html#eq:EligibilityTrace">(2.10)</a>,
+<p><span id="unlabeled-div-10" class="proof"><em>Proof</em>. </span>Fix a state <span class="math inline">\(s\)</span>. Using <a href="value-rl.html#eq:EligibilityTrace">(2.11)</a>,
 <span class="math display">\[
 z_t(s)=\sum_{k=0}^{t}(\gamma\lambda)^{\,t-k}\,\mathbf{1}\{s_k=s\}.
 \]</span>
@@ -541,6 +567,54 @@ where we used that <span class="math inline">\(\hat V(s_T)=0\)</span>. Comparing
 <!-- **Remarks.**
 1. The equivalence above is **exact** when the value function \(\hat V\) is held fixed throughout the episode (offline/episodic view).  
 2. With *online* updates (changing \(\hat V\) within the episode), the standard accumulating-trace TD(\(\lambda\)) is only approximately forward-equivalent; the discrepancy is \(O(\alpha)\). An exactly online-equivalent variant is known as **true online TD(\(\lambda\))** (not covered here). -->
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:PolicyEvaluationRandomWalk" class="example"><strong>Example 2.1  (Policy Evaluation (MC and TD Family)) </strong></span>We consider the classic random-walk MDP with terminal states:</p>
+<ul>
+<li><strong>States:</strong> <span class="math inline">\(\{0,1,2,3,4,5,6\}\)</span>, where <span class="math inline">\(0\)</span> and <span class="math inline">\(6\)</span> are terminal; nonterminal states are <span class="math inline">\(1{:}5\)</span>.</li>
+<li><strong>Actions:</strong> <span class="math inline">\(\{-1,+1\}\)</span> (“Left”/“Right”).</li>
+<li><strong>Dynamics:</strong> From a nonterminal state <span class="math inline">\(s\in\{1,\dots,5\}\)</span>, action <span class="math inline">\(-1\)</span> moves to <span class="math inline">\(s-1\)</span>, and action <span class="math inline">\(+1\)</span> moves to <span class="math inline">\(s+1\)</span>.</li>
+<li><strong>Rewards:</strong> Transitioning into state <span class="math inline">\(6\)</span> yields reward <span class="math inline">\(+1\)</span>; all other transitions yield <span class="math inline">\(0\)</span>.</li>
+<li><strong>Discount:</strong> <span class="math inline">\(\gamma=1\)</span> (episodic task). Episodes start at state <span class="math inline">\(s_0=3\)</span> and terminate upon reaching <span class="math inline">\(\{0,6\}\)</span>.</li>
+</ul>
+<p>We evaluate the <em>equiprobable policy</em> <span class="math inline">\(\pi\)</span> that chooses Left/Right with probability <span class="math inline">\(1/2\)</span> each at every nonterminal state. Under this policy, the true state-value function on nonterminal states <span class="math inline">\(s\in\{1,\dots,5\}\)</span> is
+<span class="math display" id="eq:trueV-rw">\[\begin{equation}
+V^\pi(s) \;=\; \frac{s}{6}.
+\tag{2.13}
+\end{equation}\]</span></p>
+<p>We compare four <em>tabular policy-evaluation</em> methods:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Monte Carlo (MC), first-visit</strong> — episodic, sample-average updates.</p></li>
+<li><p><strong>TD(0)</strong> — one-step bootstrap.</p></li>
+<li><p><strong><span class="math inline">\(n\)</span>-step TD</strong> — here we use <span class="math inline">\(n=3\)</span> (intermediate between MC and TD(0)).</p></li>
+<li><p><strong>TD(<span class="math inline">\(\lambda\)</span>)</strong> — accumulating eligibility traces (we illustrate with <span class="math inline">\(\lambda=0.9\)</span>).</p></li>
+</ol>
+<p>All methods estimate <span class="math inline">\(V^\pi\)</span> from trajectories generated by <span class="math inline">\(\pi\)</span>.</p>
+<p><strong>Diminishing Step Sizes.</strong>
+To ensure convergence in the tabular setting and to make the comparison fair (since MC uses sample averages), the TD-family methods use <em>per-state diminishing step sizes</em> of the form
+<span class="math display" id="eq:per-state-decay">\[\begin{equation}
+\alpha_t(s) \;=\; \frac{c}{\big(N_t(s)+t_0\big)^p},
+\qquad \tfrac{1}{2} &lt; p \le 1,
+\tag{2.14}
+\end{equation}\]</span>
+where <span class="math inline">\(N_t(s)\)</span> counts how many times <span class="math inline">\(V(s)\)</span> has been updated up to time <span class="math inline">\(t\)</span>. A common choice is <span class="math inline">\(p=1\)</span> with moderate <span class="math inline">\(c&gt;0\)</span> and <span class="math inline">\(t_0&gt;0\)</span>.</p>
+<p><strong>Error Metric.</strong>
+We report the <em>mean-squared error (MSE)</em> over nonterminal states after each episode:
+<span class="math display" id="eq:mse-metric">\[\begin{equation}
+\mathrm{MSE}_t \;=\; \frac{1}{5}\sum_{s=1}^{5}\big(\hat V_t(s)-V^\pi(s)\big)^2,
+\tag{2.15}
+\end{equation}\]</span>
+where <span class="math inline">\(V^\pi\)</span> is given by <a href="value-rl.html#eq:trueV-rw">(2.13)</a>. Curves are averaged over multiple random seeds.</p>
+<p>Fig. <a href="value-rl.html#fig:policy-evaluation-random-walk">2.1</a> shows the MSE versus episodes for MC, TD(0), 3-step TD, and TD(<span class="math inline">\(\lambda\)</span>) under the diminishing step-size schedule <a href="value-rl.html#eq:per-state-decay">(2.14)</a>.</p>
+<p>You are encouraged to play with the parameters of these algorithms in the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/policy_evaluation_mc_td.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:policy-evaluation-random-walk"></span>
+<img src="images/Value-RL/mc_td_comparison.png" alt="Policy Evaluation, MC versus TD Family" width="90%" />
+<p class="caption">
+Figure 2.1: Policy Evaluation, MC versus TD Family
+</p>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
