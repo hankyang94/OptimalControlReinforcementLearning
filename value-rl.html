@@ -701,7 +701,7 @@ applied only on the first occurrence of <span class="math inline">\((s_t,a_t)\)<
 <p><strong>Theoretical Guarantees.</strong></p>
 <p>Assume a tabular episodic MDP and <span class="math inline">\(\gamma \in [0,1)\)</span>.</p>
 <ul>
-<li><p><strong>Convergence with Exploring Starts.</strong> If every state–action pair has nonzero probability of being the <em>first</em> pair of an episode (ES), and each <span class="math inline">\(Q(s,a)\)</span> is updated toward the true mean return from <span class="math inline">\((s,a)\)</span> (e.g., via sample averages), then repeated policy evaluation and greedy improvement converge with probability 1 to an optimal deterministic policy. (If one uses an <span class="math inline">\(\varepsilon\)</span>-greedy improvement, then it converges to the optimal <span class="math inline">\(\varepsilon\)</span>-soft policy.)</p></li>
+<li><p><strong>Convergence with Exploring Starts.</strong> If every state–action pair has nonzero probability of being the <em>first</em> pair of an episode (using ES), and each <span class="math inline">\(Q(s,a)\)</span> is updated toward the true mean return from <span class="math inline">\((s,a)\)</span> (e.g., via sample averages), then repeated policy evaluation and greedy improvement converge with probability 1 to an optimal deterministic policy. (If one uses an <span class="math inline">\(\varepsilon\)</span>-greedy improvement, then it converges to an optimal <span class="math inline">\(\varepsilon\)</span>-soft policy.)</p></li>
 <li><p><strong>Convergence with <span class="math inline">\(\varepsilon\)</span>-soft GLIE behavior.</strong> If the behavior policy is GLIE—every <span class="math inline">\((s,a)\)</span> is visited infinitely often and <span class="math inline">\(\epsilon_t \to 0\)</span>—and the stepsizes for each <span class="math inline">\((s,a)\)</span> satisfy the Robbins–Monro conditions <span class="math inline">\(\sum_{t} \alpha_t(s,a) = \infty,\sum_{t} \alpha_t(s,a)^2 &lt; \infty\)</span>, then <span class="math inline">\(Q(s,a)\)</span> converges to <span class="math inline">\(Q^\star(s,a)\)</span> for all pairs visited infinitely often, and the <span class="math inline">\(\varepsilon\)</span>-greedy policy converges almost surely to an optimal policy.</p></li>
 </ul>
 <div class="remark">
@@ -857,7 +857,7 @@ and analogously for action values when conditioning on \((s_t,a_t)\). These can 
 <li><p>For <span class="math inline">\(t=T-1,\dots,0\)</span> compute episode-wise likelihood ratio <span class="math inline">\(\rho_{t:T-1}\)</span> and return <span class="math inline">\(g_t\)</span>,</p></li>
 <li><p>For first visits of <span class="math inline">\((s_t,a_t)\)</span>, update
 <span class="math display">\[
-Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha_{N(s_t,a_t)}\big(\rho_{t:T-1} G_t - Q(s_t,a_t)\big).
+Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha_{N(s_t,a_t)}\big(\rho_{t:T-1} g_t - Q(s_t,a_t)\big).
 \]</span>
 Use sample averages <span class="math inline">\(\alpha_n=1/n\)</span> or Robbins-Monro stepsizes.</p></li>
 </ol>
@@ -942,11 +942,24 @@ Use <span class="math inline">\(\varepsilon_t\)</span>-greedy with <span class="
 </div>
 <div id="double-q-learning" class="section level4 hasAnchor" number="2.1.4.4">
 <h4><span class="header-section-number">2.1.4.4</span> Double Q-Learning<a href="value-rl.html#double-q-learning" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p><strong>Motivation.</strong> Max operators tend to be optimistically biased when action values are noisy. In Q-Learning the target
+<p><strong>Motivation.</strong> Max operators tend to be optimistically biased when action values are noisy. Consider an example where in state <span class="math inline">\(s\)</span> one can take two actions <span class="math inline">\(1\)</span> and <span class="math inline">\(2\)</span>. The estimated Q function <span class="math inline">\(\hat{Q}(s, \cdot)\)</span> has two values <span class="math inline">\(+1\)</span> and <span class="math inline">\(-1\)</span> with equal probability. In this case we have <span class="math inline">\(Q(s,1) = Q(s,2) = \mathbb{E}[\hat{Q}(s,\cdot)] = 0\)</span>. Therefore, <span class="math inline">\(\max Q(s,a) = 0\)</span>. However, the noisy estimated <span class="math inline">\(\hat{Q}(s,\cdot)\)</span> has four outcomes with equal probabilities:
+<span class="math display">\[
+(+1,-1), (+1,+1), (-1, +1), (-1,-1).
+\]</span>
+Therefore, we have
+<span class="math display">\[
+\mathbb{E}[\max_a \hat{Q}(s,a)] = \frac{1}{4} (1 + 1 + 1 -1) = 1/2 &gt; \max_a Q(s,a),
+\]</span>
+which overestimates the max <span class="math inline">\(Q\)</span> value. In general, we have
+<span class="math display">\[
+\mathbb{E}[\max_a \hat{Q}(s,a)] \geq \max_a \mathbb{E} [\hat{Q}(s,a)] = \max_a Q(s,a),
+\]</span>
+where the estimates <span class="math inline">\(\hat{Q}\)</span> are noisy (try to prove this on your own).
+In Q-Learning the target
 <span class="math display">\[
 y_t = r_{t} + \gamma \max_{a&#39;} Q(s_{t+1}, a&#39;)
 \]</span>
-uses the same estimates to both select and evaluate the maximizing action. With noise, <span class="math inline">\(\mathbb E[\max_a \hat q_a] \ge \max_a \mathbb E[\hat q_a]\)</span>, which overestimates action values. This can slow learning or push policies toward risky actions.</p>
+can therefore overestimate action values and slow learning or push policies toward risky actions.</p>
 <p>Double Q-Learning reduces this bias by decoupling selection from evaluation: maintain two independent estimators <span class="math inline">\(Q^A\)</span> and <span class="math inline">\(Q^B\)</span>. Use one to select the greedy action and the other to evaluate it, and alternate which table you update. This weakens the statistical coupling that creates overestimation.</p>
 <p><strong>Algorithmic Form.</strong> Keep two tables <span class="math inline">\(Q^A, Q^B\)</span>. Use an <span class="math inline">\(\varepsilon\)</span>-greedy behavior policy with respect to a combined estimate, e.g., <span class="math inline">\(Q^{\text{avg}}= \tfrac12(Q^A+Q^B)\)</span> or <span class="math inline">\(Q^A+Q^B\)</span>.</p>
 <p>At each step observe <span class="math inline">\((s_t, a_t, r_{t}, s_{t+1})\)</span>. With probability <span class="math inline">\(1/2\)</span> update <span class="math inline">\(Q^A\)</span>, else update <span class="math inline">\(Q^B\)</span>.</p>
@@ -973,9 +986,9 @@ A GLIE schedule <span class="math inline">\(\varepsilon_t \downarrow 0\)</span> 
 </ul>
 <p><strong>Convergence.</strong></p>
 <ul>
-<li><p><strong>Tabular setting.</strong> In a finite MDP with <span class="math inline">\(\gamma \in [0,1)\)</span>, bounded rewards, sufficient exploration so that every <span class="math inline">\((s,a)\)</span> is updated infinitely often, and Robbins–Monro stepsizes for each pair. Double Q-Learning converges with probability 1 to <span class="math inline">\(Q^\star\)</span>.</p></li>
-<li><p><strong>Bias reduction, not elimination.</strong> Decoupling selection and evaluation markedly reduces overestimation; it does not guarantee a perfectly unbiased max estimate at all times, but empirically it stabilizes and often improves learning compared to standard Q-Learning.</p></li>
+<li><strong>Tabular setting.</strong> In a finite MDP with <span class="math inline">\(\gamma \in [0,1)\)</span>, bounded rewards, sufficient exploration so that every <span class="math inline">\((s,a)\)</span> is updated infinitely often, and Robbins–Monro stepsizes for each pair. Double Q-Learning converges with probability 1 to <span class="math inline">\(Q^\star\)</span>.</li>
 </ul>
+<!-- - **Bias reduction, not elimination.** Decoupling selection and evaluation markedly reduces overestimation; it does not guarantee a perfectly unbiased max estimate at all times, but empirically it stabilizes and often improves learning compared to standard Q-Learning. -->
 <!-- **Practical Notes**
 
 - **Tie handling.** Break \(\arg\max\) ties uniformly at random to avoid systematic bias.
@@ -984,13 +997,53 @@ A GLIE schedule <span class="math inline">\(\varepsilon_t \downarrow 0\)</span> 
 - **Function approximation.** Double Q reduces overestimation in deep RL (e.g., Double DQN) when paired with target networks and replay, but it does not by itself prevent the off-policy bootstrapping instabilities of the deadly triad. -->
 <div class="examplebox">
 <div class="example">
-<p><span id="exm:GridWorldMCControl" class="example"><strong>Example 2.2  (Value-based RL for Grid World) </strong></span>Consider the following <span class="math inline">\(5 \times 5\)</span> grid with <span class="math inline">\((0,4)\)</span> being the goal and the terminal state. At every state, the agent can take four actions: left, right, up, and down. There is a wall in the gray area shown in Fig. <a href="value-rl.html#fig:grid-world">2.3</a>. Every action incurs a reward of <span class="math inline">\(-1\)</span>. Once the agent arrives at the goal state, reward stays at 0.</p>
+<p><span id="exm:GridWorldMCControl" class="example"><strong>Example 2.2  (Value-based RL for Grid World) </strong></span>Consider the following <span class="math inline">\(5 \times 5\)</span> grid with <span class="math inline">\((0,4)\)</span> being the goal and the terminal state. At every state, the agent can take four actions: left, right, up, and down. There is a wall in the gray area shown in Fig. <a href="value-rl.html#fig:grid-world">2.3</a>. Upon hitting the wall, the agent stays in the original cell. Every action incurs a reward of <span class="math inline">\(-1\)</span>. Once the agent arrives at the goal state, reward stays at 0.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:grid-world"></span>
 <img src="images/Value-RL/grid-world.png" alt="Grid World" width="40%" />
 <p class="caption">
 Figure 2.3: Grid World
 </p>
 </div>
+<p>We run Generalized Policy Iteration (GPI) with Monte Carlo (on-policy), SARSA, Expected SARSA, Q-Learning, and Double Q-Learning on this problem with diminishing learning rates.</p>
+<p>Fig. <a href="value-rl.html#fig:grid-world-Q-convergence">2.4</a> plots the error between the estimated Q values (of different algorithms) and the ground-truth optimal Q value (obtained from value iteration with known transition dynamics). Except Monte Carlo control which converges slowly, the other methods converge fast.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:grid-world-Q-convergence"></span>
+<img src="images/Value-RL/Q-Value-Convergence.png" alt="Convergence of Estimated Q Values." width="90%" />
+<p class="caption">
+Figure 2.4: Convergence of Estimated Q Values.
+</p>
+</div>
+<p>From the final estimated Q value, we can extract a greedy policy, visualized below.</p>
+<p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/GPI_GridWorld.py">here</a>.</p>
+<pre><code>MC Control:
+ &gt; &gt; &gt; &gt; G
+^ # ^ ^ ^
+v # ^ ^ ^
+v # &gt; ^ ^
+&gt; &gt; &gt; &gt; ^
+SARSA:
+ &gt; &gt; &gt; &gt; G
+^ # &gt; &gt; ^
+^ # ^ ^ ^
+^ # ^ ^ ^
+&gt; &gt; ^ ^ ^
+Expected SARSA:
+ &gt; &gt; &gt; &gt; G
+^ # &gt; &gt; ^
+^ # ^ ^ ^
+^ # &gt; &gt; ^
+&gt; &gt; ^ ^ ^
+Q-Learning:
+ &gt; &gt; &gt; &gt; G
+^ # ^ ^ ^
+^ # ^ ^ ^
+^ # ^ ^ ^
+&gt; &gt; ^ ^ ^
+Double Q-Learning:
+ &gt; &gt; &gt; &gt; G
+^ # &gt; ^ ^
+^ # &gt; ^ ^
+^ # ^ ^ ^
+&gt; &gt; &gt; &gt; ^</code></pre>
 </div>
 </div>
 </div>
