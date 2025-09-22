@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-09-17}
+\date{2025-09-22}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -2590,6 +2590,384 @@ Fig. \ref{fig:policy-evaluation-random-walk-diminishing-step-size} shows the MSE
 \end{figure}
 
 You are encouraged to play with the parameters of these algorithms in the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/policy_evaluation_mc_td.py}{here}.
+\end{example}
+
+\subsection{Convergence Proof of TD Learning}\label{convergence-proof-of-td-learning}
+
+TBD.
+
+\subsection{On-Policy Control}\label{on-policy-control}
+
+Monte Carlo (MC) estimation and the TD family evaluate policies directly from interaction---no model required. We now turn evaluation into control via generalized policy iteration (GPI): repeatedly (i) evaluate the current policy from data and (ii) improve it by acting greedily with respect to the new estimates. We first cover on-policy control methods, which estimate and improve the same (typically \(\varepsilon\)-greedy) policy, and then off-policy methods, which learn about a target policy while behaving with a different one.
+
+\subsubsection{Monte Carlo Control}\label{monte-carlo-control}
+
+\textbf{High-level Intuition.}
+
+\begin{itemize}
+\item
+  \textbf{Goal.} Learn an (approximately) optimal policy by alternating \emph{policy evaluation} and \emph{policy improvement} using only sampled episodes.
+\item
+  \textbf{Why action-values?} Estimating \(Q^\pi(s,a)\) lets us improve the policy \emph{without a model} by choosing ``\(\arg\max_a Q(s,a)\)''.
+\item
+  \textbf{Exploration.} Pure greedy improvement can get stuck. MC control keeps the policy \emph{\(\varepsilon\)-soft} (e.g., \(\varepsilon\)-greedy) so that every action has nonzero probability and all state-action pairs continue to be sampled. An \(\varepsilon\)-soft policy is one that never rules out any action: in every state \(s\), each action \(a\) gets at least a small fraction of probability. Formally, in the tabular setup, we have that a policy \(\pi\) is \(\varepsilon\)-soft if and only if
+  \begin{equation}
+  \forall s, \forall a: \quad \pi(a \mid s) \geq \frac{\varepsilon}{|\mathcal{A}(s)|}, \quad \varepsilon \in (0,1],
+  \label{eq:epsilon-soft-policy}
+  \end{equation}
+  where \(\mathcal{A}(s)\) denotes the set of actions the agent can select at state \(s\).
+\item
+  \textbf{Coverage mechanisms.} Classic guarantees use either:
+
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi})}
+  \tightlist
+  \item
+    \textbf{Exploring starts (ES):} start each episode from a randomly chosen \((s,a)\) with nonzero probability; or\\
+  \item
+    \textbf{\(\varepsilon\)-soft / GLIE (Greedy in the Limit with Infinite Exploration):} use \(\varepsilon\)-greedy behavior with \(\varepsilon_t \downarrow 0\) so every \((s,a)\) is visited infinitely often while the policy becomes greedy in the limit.
+  \end{enumerate}
+\end{itemize}
+
+\textbf{Algorithmic Form.}
+We maintain tabular action-value estimates \(Q(s,a)\) and an \emph{\(\varepsilon\)-soft} policy \(\pi\) (\(\varepsilon\)-greedy w.r.t. \(Q\)). After each episode we update \(Q\) from \emph{empirical returns} and then improve \(\pi\).
+
+\textbf{Return from time \(t\):}
+\[
+g_t = r_t + \gamma r_{t+1} + \dots + \gamma^{T-t} r_T = \sum_{k=0}^{T-t} \gamma^{k} r_{t+k}.
+\]
+
+\textbf{First-visit MC update (common choice):}
+\begin{equation}
+Q(s_t,a_t) \;\leftarrow\; Q(s_t,a_t) + \alpha_{N(s_t,a_t)}\!\left(g_t - Q(s_t,a_t)\right),
+\label{eq:MCControl-QUpdate}
+\end{equation}
+applied only on the first occurrence of \((s_t,a_t)\) in the episode. \emph{Sample-average} learning uses \(\alpha_n = 1/n\) per pair; more generally, use diminishing stepsizes.
+
+\textbf{Policy improvement (\(\varepsilon\)-greedy):}
+\begin{equation}
+\pi(a|s) \;=\;
+\begin{cases}
+1-\varepsilon + \dfrac{\varepsilon}{|\mathcal{A}(s)|}, & a \in \arg\max_{a'} Q(s,a'), \\
+\dfrac{\varepsilon}{|\mathcal{A}(s)|}, & \text{otherwise}.
+\end{cases}
+\label{eq:MCControl-PI}
+\end{equation}
+
+\textbf{Theoretical Guarantees.}
+
+Assume a tabular episodic MDP and \(\gamma \in [0,1)\).
+
+\begin{itemize}
+\item
+  \textbf{Convergence with Exploring Starts.} If every state--action pair has nonzero probability of being the \emph{first} pair of an episode (ES), and each \(Q(s,a)\) is updated toward the true mean return from \((s,a)\) (e.g., via sample averages), then repeated policy evaluation and greedy improvement converge with probability 1 to an optimal deterministic policy. (If one uses an \(\varepsilon\)-greedy improvement, then it converges to the optimal \(\varepsilon\)-soft policy.)
+\item
+  \textbf{Convergence with \(\varepsilon\)-soft GLIE behavior.} If the behavior policy is GLIE---every \((s,a)\) is visited infinitely often and \(\epsilon_t \to 0\)---and the stepsizes for each \((s,a)\) satisfy the Robbins--Monro conditions \(\sum_{t} \alpha_t(s,a) = \infty,\sum_{t} \alpha_t(s,a)^2 < \infty\), then \(Q(s,a)\) converges to \(Q^\star(s,a)\) for all pairs visited infinitely often, and the \(\varepsilon\)-greedy policy converges almost surely to an optimal policy.
+\end{itemize}
+
+\begin{remark}
+\textbf{Unbiased but high-variance.} MC targets \(g_t\) are unbiased estimates of action values under the current policy, but can have high variance---especially for long horizons---so convergence can be slower than TD methods. Keeping \(\varepsilon>0\) ensures exploration but limits asymptotic optimality to the best \(\varepsilon\)-soft policy; hence \(\varepsilon_t \downarrow 0\) (GLIE) is recommended for optimality.
+\end{remark}
+
+\subsubsection{SARSA (On-Policy TD Control)}\label{sarsa-on-policy-td-control}
+
+\textbf{High-level Intuition.}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Goal.} Turn evaluation into control by updating action values online and improving the same policy that generates data.
+\item
+  \textbf{Key idea.} Replace Monte Carlo returns with a bootstrapped target. After taking action \(a_t\) in state \(s_t\) and observing \(r_{t}, s_{t+1}\), sample the next action \(a_{t+1}\) from the current policy and update toward \(r_{t} + \gamma Q(s_{t+1}, a_{t+1})\).
+\item
+  \textbf{On-policy nature.} SARSA evaluates the behavior policy itself, typically an \(\varepsilon\)-greedy policy w.r.t. \(Q\).
+\item
+  \textbf{Exploration.} Use \(\varepsilon\)-soft behavior so every action keeps nonzero probability. For optimality, let \(\varepsilon_t \downarrow 0\) to obtain GLIE (Greedy in the Limit with Infinite Exploration).
+\end{itemize}
+
+\textbf{Algorithmic Form.}
+
+Let \(Q\) be a tabular action-value function and \(\pi_t\) be \(\varepsilon_t\)-greedy w.r.t. \(Q_t\).
+
+\textbf{TD target and error:}
+\begin{equation}
+y_t = r_{t} + \gamma Q(s_{t+1}, a_{t+1}), \qquad
+\delta_t = y_t - Q(s_t, a_t).
+\label{eq:SARSA-TDTarget}
+\end{equation}
+
+\textbf{SARSA update (one-step):}
+\begin{equation}
+Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha_t(s_t,a_t)\, \delta_t.
+\label{eq:SARSA-QUpdate}
+\end{equation}
+
+\textbf{\(\varepsilon\)-greedy policy improvement:}
+\begin{equation}
+\pi_{t+1}(a\mid s) =
+\begin{cases}
+1-\varepsilon_{t+1} + \dfrac{\varepsilon_{t+1}}{|\mathcal A(s)|}, & a \in \arg\max_{a'} Q_{t+1}(s,a'),\\
+\dfrac{\varepsilon_{t+1}}{|\mathcal A(s)|}, & \text{otherwise.}
+\end{cases}
+\label{eq:SARSA-PolicyUpdate}
+\end{equation}
+
+\textbf{Variants.}
+
+\begin{itemize}
+\item
+  \textbf{Expected SARSA} replaces the sampled \(a_{t+1}\) by its expectation under \(\pi_t\) for lower variance:
+  \begin{equation}
+  y_t = r_{t} + \gamma \sum_a \pi_t(a\mid s_{t+1}) Q(s_{t+1}, a).
+  \label{eq:ExpectedSARSA-Target}
+  \end{equation}
+\item
+  \textbf{\(n\)-step SARSA} and \textbf{SARSA(\(\lambda\))} blend multi-step targets; these trade bias and variance similarly to MC vs TD.
+\end{itemize}
+
+\textbf{Convergence Guarantees.}
+
+Assume a finite MDP, \(\gamma \in [0,1)\), asynchronous updates, and that each state--action pair is visited infinitely often.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{GLIE convergence to optimal policy.} If the behavior is GLIE, i.e., \(\varepsilon_t \downarrow 0\) while ensuring infinite exploration, and stepsizes satisfy the Robbins--Monro conditions, then \(Q_t \to Q^\star\) almost surely and the \(\varepsilon_t\)-greedy behavior becomes greedy in the limit, yielding an optimal policy almost surely.
+\end{itemize}
+
+\subsection{Off-Policy Control}\label{off-policy-control}
+
+Off-policy methods learn about a \emph{target} policy \(\pi\) while following a (potentially different) \emph{behavior} policy \(b\) to gather data. This decoupling is useful when:
+
+\begin{itemize}
+\item
+  you want to \emph{reuse logged data} collected by some \(b\) (e.g., a rule-based controller or a past system),
+\item
+  you need \emph{safer exploration} by restricting behavior \(b\) while aiming to evaluate or improve a different \(\pi\),
+\item
+  you want to learn about the \emph{greedy} policy without executing it, which motivates algorithms like Q-learning.
+\end{itemize}
+
+In this section we first cover off-policy policy evaluation with \emph{importance sampling}, then show how it can be used to construct an off-policy \emph{Monte Carlo control} scheme in the tabular case. Finally, we present Q-learning.
+
+\subsubsection{Importance Sampling for Policy Evaluation}\label{importance-sampling-for-policy-evaluation}
+
+\textbf{Motivation.} Suppose we have episodes generated by a behavior policy \(b\), but we want the value of a different target policy \(\pi\). For a state value this is \(V^\pi(s) = \mathbb{E}_\pi[g_t \mid s_t=s]\), and for action values \(Q^\pi(s,a) = \mathbb{E}_\pi[g_t \mid s_t=s, a_t=a]\), where
+\[
+g_t = \sum_{k=0}^{T-t} \gamma^{k} r_{t+k}.
+\]
+Because the data come from \(b\), the naive sample average is biased. Importance sampling (IS) reweights returns so that expectations under \(b\) equal those under \(\pi\).
+
+A basic \emph{support condition} is required:
+\begin{equation}
+\text{If } \pi(a\mid s) > 0 \text{ then } b(a\mid s) > 0 \quad \text{for all visited } (s,a).
+\label{eq:IS-SupportCondition}
+\end{equation}
+This ensures that \(\pi\) is absolutely continuous with respect to \(b\) on the experienced trajectories.
+
+\textbf{Importance Sampling (episode-wise).} Consider a trajectory starting at time \(t\):
+\[
+\tau_t = (s_t, a_t, r_t, s_{t+1}, a_{t+1}, \dots, s_{T-1}, a_{T-1}, r_{T-1}, s_T).
+\]
+The probability of observing this trajectory conditioned on \(s_t = s\), under policy \(\pi\), is
+\[
+\mathbb{P}_{\pi}[\tau_t \mid s_t = s] = \pi(a_t \mid s_t) P(s_{t+1} \mid s_t, a_t) \pi(a_{t+1} \mid s_{t+1}) \cdots \pi(a_{T-1} \mid s_{T-1}) P(s_T \mid s_{T-1}, a_{T-1}).
+\]
+The probability of observing the same trajectory conditioned on \(s_t = s\), under policy \(b\), is
+\[
+\mathbb{P}_{b}[\tau_t \mid s_t = s] = b(a_t \mid s_t) P(s_{t+1} \mid s_t, a_t) b(a_{t+1} \mid s_{t+1}) \cdots b(a_{T-1} \mid s_{T-1}) P(s_T \mid s_{T-1}, a_{T-1}).
+\]
+Since the return \(g_t\) is a deterministic function of \(\tau_t\), i.e., applying the reward function \(R\) to state-action pairs, we have that
+\begin{equation}
+\begin{split}
+V^\pi (s) & = \mathbb{E}_{\pi}[g_t \mid s_t = s] = \sum_{\tau_t} g_t \mathbb{P}_\pi [\tau_t \mid s_t = s] \\
+& = \sum_{\tau_t} g_t \mathbb{P}_b[\tau_t \mid s_t = s] \left(\frac{\mathbb{P}_\pi [\tau_t \mid s_t = s]}{\mathbb{P}_b[\tau_t \mid s_t = s]} \right) \\
+& = \sum_{\tau_t} \left( \frac{\pi(a_t \mid s_t) \pi(a_{t+1} \mid s_{t+1}) \cdots \pi(a_{T-1} \mid s_{T-1}) }{b(a_t \mid s_t)  b(a_{t+1} \mid s_{t+1}) \cdots b(a_{T-1} \mid s_{T-1})} \right) g_t \mathbb{P}_b [\tau_t \mid s_t = s]
+\end{split}
+\label{eq:IS-Trajectory-LikelihoodRatio}
+\end{equation}
+Therefore, define the \emph{likelihood ratio}
+\begin{equation}
+\rho_{t:T-1} = \prod_{k=t}^{T-1} \frac{\pi(a_k \mid s_k)}{b(a_k \mid s_k)},
+\label{eq:IS-LikelihoodRatio}
+\end{equation}
+we have
+\begin{equation}
+V^\pi(s) = \mathbb{E}_b\left[\rho_{t:T-1} g_t \mid s_t=s\right]. 
+\label{eq:IS-Value}
+\end{equation}
+Similarly, we have
+\begin{equation}
+Q^\pi(s,a) =  \mathbb{E}_b\!\left[\rho_{t:T-1} g_t \mid s_t=s, a_t=a\right].
+\label{eq:IS-ActionValue}
+\end{equation}
+Given \(n\) episodes, the ordinary IS estimator for \(Q^\pi\) at the first visit of \((s,a)\) is
+\[
+\hat Q_n^{\text{IS}}(s,a) = \frac{1}{N_n(s,a)} \sum_{i=1}^n \mathbf{1}\{(s,a)\text{ visited}\}\, \rho_{t_i:T_i-1}^{(i)}\, g_{t_i}^{(i)},
+\]
+where \(N_n(s,a)\) counts the number of first visits of \((s,a)\). In words, to estimate the \(Q\) value of the target policy \(\pi\) using trajectories of the behavior policy \(b\), we need to reweight the return \(g_t\) by the likelihood ratio \(\rho_{t:T-1}\). Note that the likelihood ratio does not require knowledge about the transition dynamics.
+
+\textbf{Algorithmic Form: Off-policy Monte Carlo Policy Evaluation.}
+
+\textbf{Input:} behavior \(b\), target \(\pi\), episodes from \(b\)\\
+\textbf{For each episode} \((s_0,a_0,r_0,s_1,\dots,s_{T-1},a_{T-1},r_{T-1},s_T)\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  For \(t=T-1,\dots,0\) compute episode-wise likelihood ratio \(\rho_{t:T-1}\) and return \(g_t\),
+\item
+  For first visits of \((s_t,a_t)\), update
+  \[
+  Q(s_t,a_t) \leftarrow Q(s_t,a_t) + \alpha_{N(s_t,a_t)}\big(\rho_{t:T-1} G_t - Q(s_t,a_t)\big).
+  \]
+  Use sample averages \(\alpha_n=1/n\) or Robbins-Monro stepsizes.
+\end{enumerate}
+
+\textbf{Guarantees.} Under the support condition and finite variance assumptions, ordinary IS is \emph{unbiased} and converges almost surely to \(Q^\pi\).
+
+\subsubsection{Off-Policy Monte Carlo Control}\label{off-policy-monte-carlo-control}
+
+\textbf{High-level Intuition.} We wish to improve a target policy \(\pi\) toward optimality while behaving with a different exploratory policy \(b\). We evaluate \(Q^\pi\) off-policy using IS on data from \(b\), then set \(\pi\) greedy with respect to the updated \(Q\). Keep \(b\) sufficiently exploratory (for coverage), for example \(\varepsilon\)-greedy with a fixed \(\varepsilon>0\) or a GLIE schedule.
+
+\textbf{Algorithmic Form.}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Initialize \(Q(s,a)\) arbitrarily. Set target \(\pi\) to be greedy w.r.t. \(Q\). Choose an exploratory behavior \(b\) that ensures coverage, e.g., \(\varepsilon\)-greedy w.r.t. \(Q\) with \(\varepsilon>0\).
+\item
+  Loop over iterations \(i=0,1,2,\dots\):
+
+  \begin{enumerate}
+  \def\labelenumii{\arabic{enumii}.}
+  \tightlist
+  \item
+    Data collection under \(b\): generate a batch of episodes using \(b\).
+  \item
+    Off-policy evaluation of \(\pi\): for each episode, compute IS targets for first visits of \((s_t,a_t)\) and update \(Q\) using either ordinary IS
+  \item
+    Policy improvement: set for all states
+    \[
+    \pi_{i+1}(s) \in \arg\max_{a} Q(s,a).
+    \]
+  \item
+    Optionally update \(b\) to remain exploratory, for example \(b\) \(\leftarrow\) \(\varepsilon\)-greedy w.r.t. \(Q\) with a chosen \(\varepsilon\) or a GLIE decay.
+  \end{enumerate}
+\end{enumerate}
+
+\textbf{Convergence Guarantees.}
+
+\begin{itemize}
+\item
+  \textbf{Evaluation step:} With the support condition and appropriate stepsizes, off-policy MC prediction converges almost surely to \(Q^\pi\) when using ordinary IS.
+\item
+  \textbf{Control in the batch GPI limit:} If each evaluation step produces estimates that converge to the exact \(Q^{\pi_i}\) before improvement, then by the policy improvement theorem the sequence of greedy target policies \(\pi_i\) converges to an optimal policy in finite MDPs.
+\end{itemize}
+
+\begin{remark}
+\textbf{Choice of \(b\).} A common and simple choice is an \(\varepsilon\)-greedy behavior \(b\) w.r.t. current \(Q\) that maintains \(\varepsilon>0\) for coverage or uses GLIE so that \(\varepsilon_t \downarrow 0\) while all pairs are still visited infinitely often.
+\end{remark}
+
+\subsubsection{Q-Learning}\label{q-learning}
+
+\textbf{High-Level Intuition.}
+
+\begin{itemize}
+\item
+  \textbf{What it learns.} Q-Learning seeks the fixed point of the Bellman optimality operator
+  \[
+  (\mathcal T^\star Q)(s,a) = \mathbb E\big[ r_{t} + \gamma \max_{a'} Q(s_{t+1}, a') \mid s_t=s, a_t=a \big],
+  \]
+  whose unique fixed point is \(Q^\star\). Because \(\mathcal T^\star\) is a \(\gamma\)-contraction in \(\|\cdot\|_\infty\), repeatedly applying it converges to \(Q^\star\) in the tabular case.
+\item
+  \textbf{Why off-policy.} We can behave with any sufficiently exploratory policy \(b\) (e.g., \(\varepsilon\)-greedy w.r.t. current \(Q\)) but learn from the greedy target \(\max_{a'} Q(s',a')\). No importance sampling is needed.
+\end{itemize}
+
+\textbf{Algorithmic Form.} Let \(Q\) be a tabular action-value function. At each step observe a transition \((s_t, a_t, r_{t}, s_{t+1})\) generated by a behavior policy \(b_t\) (typically \(\varepsilon_t\)-greedy w.r.t. \(Q_t\)).
+
+\begin{itemize}
+\item
+  \textbf{Target and TD error}
+  \[
+  y_t = r_{t} + \gamma \max_{a'} Q(s_{t+1}, a'), \qquad
+  \delta_t = y_t - Q(s_t, a_t).
+  \]
+\item
+  \textbf{Update}
+  \[
+  Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha_t(s_t,a_t)\, \delta_t.
+  \]
+\item
+  \textbf{Behavior (exploration)}
+  Use \(\varepsilon_t\)-greedy with \(\varepsilon_t\) decaying (GLIE) or any scheme that ensures each \((s,a)\) is updated infinitely often.
+\end{itemize}
+
+\textbf{Convergence.} In a finite MDP with \(\gamma \in [0,1)\), if each \((s,a)\) is updated infinitely often (sufficient exploration) and stepsizes satisfy Robbins-Monro conditions, then Q-Learning converges to \(Q^\star\) with probability 1.
+
+\subsubsection{Double Q-Learning}\label{double-q-learning}
+
+\textbf{Motivation.} Max operators tend to be optimistically biased when action values are noisy. In Q-Learning the target
+\[
+y_t = r_{t} + \gamma \max_{a'} Q(s_{t+1}, a')
+\]
+uses the same estimates to both select and evaluate the maximizing action. With noise, \(\mathbb E[\max_a \hat q_a] \ge \max_a \mathbb E[\hat q_a]\), which overestimates action values. This can slow learning or push policies toward risky actions.
+
+Double Q-Learning reduces this bias by decoupling selection from evaluation: maintain two independent estimators \(Q^A\) and \(Q^B\). Use one to select the greedy action and the other to evaluate it, and alternate which table you update. This weakens the statistical coupling that creates overestimation.
+
+\textbf{Algorithmic Form.} Keep two tables \(Q^A, Q^B\). Use an \(\varepsilon\)-greedy behavior policy with respect to a combined estimate, e.g., \(Q^{\text{avg}}= \tfrac12(Q^A+Q^B)\) or \(Q^A+Q^B\).
+
+At each step observe \((s_t, a_t, r_{t}, s_{t+1})\). With probability \(1/2\) update \(Q^A\), else update \(Q^B\).
+
+\begin{itemize}
+\item
+  \textbf{Update \(Q^A\):}
+  \[
+  a^\star = \arg\max_{a'} Q^A(s_{t+1}, a'),\qquad
+  y_t = r_{t} + \gamma\, Q^B(s_{t+1}, a^\star),
+  \]
+  \[
+  Q^A(s_t, a_t) \leftarrow Q^A(s_t, a_t) + \alpha_t(s_t,a_t)\big[y_t - Q^A(s_t, a_t)\big].
+  \]
+\item
+  \textbf{Update \(Q^B\):}
+  \[
+  a^\star = \arg\max_{a'} Q^B(s_{t+1}, a'),\qquad
+  y_t = r_{t} + \gamma\, Q^A(s_{t+1}, a^\star),
+  \]
+  \[
+  Q^B(s_t, a_t) \leftarrow Q^B(s_t, a_t) + \alpha_t(s_t,a_t)\big[y_t - Q^B(s_t, a_t)\big].
+  \]
+\item
+  \textbf{Behavior policy (\(\varepsilon\)-greedy):} choose \(a_t \sim \varepsilon\)-greedy with respect to \(Q^{\text{avg}}(s_t,\cdot)\).
+  A GLIE schedule \(\varepsilon_t \downarrow 0\) is standard.
+\item
+  \textbf{Acting and planning:} for greedy actions or plotting a single estimate, use \(Q^{\text{avg}} = \tfrac12(Q^A+Q^B)\).
+\end{itemize}
+
+\textbf{Convergence.}
+
+\begin{itemize}
+\item
+  \textbf{Tabular setting.} In a finite MDP with \(\gamma \in [0,1)\), bounded rewards, sufficient exploration so that every \((s,a)\) is updated infinitely often, and Robbins--Monro stepsizes for each pair. Double Q-Learning converges with probability 1 to \(Q^\star\).
+\item
+  \textbf{Bias reduction, not elimination.} Decoupling selection and evaluation markedly reduces overestimation; it does not guarantee a perfectly unbiased max estimate at all times, but empirically it stabilizes and often improves learning compared to standard Q-Learning.
+\end{itemize}
+
+\begin{example}[Value-based RL for Grid World]
+\protect\hypertarget{exm:GridWorldMCControl}{}\label{exm:GridWorldMCControl}
+
+Consider the following \(5 \times 5\) grid with \((0,4)\) being the goal and the terminal state. At every state, the agent can take four actions: left, right, up, and down. There is a wall in the gray area shown in Fig. \ref{fig:grid-world}. Every action incurs a reward of \(-1\). Once the agent arrives at the goal state, reward stays at 0.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.4\linewidth]{images/Value-RL/grid-world} 
+
+}
+
+\caption{Grid World}\label{fig:grid-world}
+\end{figure}
+
 \end{example}
 
 \section{Function Approximation}\label{function-approximation}
