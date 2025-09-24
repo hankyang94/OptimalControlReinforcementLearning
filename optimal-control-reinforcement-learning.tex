@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-09-22}
+\date{2025-09-24}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -3033,6 +3033,319 @@ Double Q-Learning:
 \end{example}
 
 \section{Function Approximation}\label{function-approximation}
+
+Many reinforcement learning problems have continuous state spaces--think of mechanical systems like robot arms, legged locomotion, drones, and autonomous vehicles. In these domains the state \(s\) (e.g., joint angles/velocities, poses) lives in \(\mathbb{R}^n\), which makes a tabular representation of the value functions impossible. In this case, we must approximate values with parameterized functions.
+
+\subsection{Basics of Continuous MDP}\label{basics-of-continuous-mdp}
+
+In a continuous MDP, at least one of the state space or the action space is a continuous space. Suppose \(\mathcal{S} \subseteq \mathbb{R}^n\) and \(\mathcal{A} \subseteq \mathbb{R}^{m}\) are both continuous spaces.
+
+The environment kernel \(P(\cdot \mid s, a)\) is a Markov kernel from \(\mathcal{S} \times \mathcal{A}\) to \(\mathcal{S}\): for each state-action pair \((s,a)\), \(P(\cdot \mid s,a)\) is a probability measure on \(\mathcal{S}\). For each Borel set \(B \subseteq \mathcal{S}\), the map \((s,a) \mapsto P(B \mid s, a)\) is measurable. For example, \(P(\mathcal{S} \mid s, a) = 1\) for any \((s,a)\).
+
+The policy kernel \(\pi(\cdot \mid s)\) is a stochastic kernel from \(\mathcal{S}\) to \(\mathcal{A}\): for each \(s\), \(\pi(\cdot \mid s)\) is a probability measure on \(\mathcal{A}\).
+
+\textbf{Induced State-Transition Kernel.} For notational convenience, given a policy and the environment kernel \(P\), we define a state-only Markov kernel
+\begin{equation}
+P^\pi(B \mid s) := \int_{\mathcal{A}} P(B \mid s, a) \pi(da \mid s), \quad B \subseteq \mathcal{S}.
+\label{eq:StateOnlyMarkovKernel}
+\end{equation}
+In words, \(P^\pi(B \mid s)\) measures the probability of landing at a set \(B\) starting from state \(s\), under all actions possible for the policy \(\pi\).
+
+If densities exist, i.e., \(P(ds' \mid s, a) = p(s' \mid s, a) ds'\) and \(\pi(da \mid s) = \pi(a \mid s) da\), then,
+\begin{equation}
+p^\pi(s' \mid s) := \int_{\mathcal{A}} p(s' \mid s, a) \pi(a \mid s) da \quad\text{and}\quad P^{\pi}(d s' \mid s) = p^\pi(s' \mid s) ds'.
+\label{eq:StateOnlyMarkovKernel-density}
+\end{equation}
+
+\textbf{Stationary State Distribution.} A probability measure \(\mu^\pi\) on \(\mathcal{S}\) is called \emph{stationary} for the state-transition kernel \(P^\pi\) if and only if
+\begin{equation}
+\mu^{\pi}(B) = \int_{\mathcal{S}} P^\pi(B \mid s) \mu^{\pi}(ds), \quad \forall B \subseteq \mathcal{S}.
+\label{eq:StationaryDistribution-definition}
+\end{equation}
+If a density \(\mu^\pi(s)\) exists, then the above equation is the followng condition
+\begin{equation}
+\mu^{\pi}(s') = \int_{\mathcal{S}} p^\pi(s' \mid s) \mu^{\pi}(s) ds.
+\label{eq:StationaryDistribution-definition-density}
+\end{equation}
+In words, the state distribution \(\mu^\pi\) does not change under the state-transition kernel \(P^\pi\) (e.g., if a state \(A\) has probability \(0.1\) of being visited at time \(t\), the probability of visiting \(A\) in the next time step remains \(0.1\), under policy \(\pi\)).
+Under standard ergodicity assumptions, this stationary state distribution \(\mu^\pi\) exists and is unique (after sufficient steps, the initial state distribution does not matter and the state distribution follows \(\mu^\pi\)). Moreover, the empirical state distribution converge to \(\mu^\pi\).
+
+\subsection{Policy Evaluation}\label{policy-evaluation-3}
+
+For simplicity, let us first relax the state space to be a continuous space \(\mathcal{S} \subseteq \mathbb{R}^n\). We assume the action space \(\mathcal{A}\) is still finite with \(|\mathcal{A}|\) elements. We first consider the problem of policy evaluation, i.e., estimate the value functions associated with a policy \(\pi\) from interaction data with the environment.
+
+\textbf{Bellman Consistency.} Given a policy \(\pi: \mathcal{S} \mapsto \Delta(\mathcal{A})\), its associated state-value function \(V^\pi\) must satisfy the following Bellman Consistency equation
+\begin{equation}
+V^{\pi}(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \int_{\mathcal{S}} V(s') P(d s' \mid s, a)  \right].
+\label{eq:BellmanConsistencyContinuousStateFiniteAction}
+\end{equation}
+Notice that since \(\mathcal{S}\) is a continuous space, we need to replace ``\(\sum_{s' \in \mathcal{S}}\)'' with ``\(\int_{\mathcal{S}}\)''. If \(P(d s' \mid s, a)\) has a density \(p(s' \mid s, a)\), the above Bellman consistency equation also reads
+\begin{equation}
+V^{\pi}(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \int_{\mathcal{S}} V(s') p(s' \mid s, a) ds'  \right].
+\label{eq:BellmanConsistencyContinuousStateFiniteAction-1}
+\end{equation}
+
+\textbf{Bellman Operator.} Define the Bellman operator \(T^\pi\) acting on any bounded measurable function \(V:\mathcal{S}\to\mathbb{R}\) by
+\begin{equation}
+(T^\pi V)(s) = \sum_{a\in\mathcal{A}} \pi(a\mid s)\left[ R(s,a) + \gamma \int_{\mathcal{S}} V(s') P(ds'\mid s,a)\right].
+\label{eq:BellmanOperator}
+\end{equation}
+Then \(V^\pi\) is the unique fixed point of \(T^\pi\), i.e., \(V^\pi = T^\pi V^\pi\). Moreover, when rewards are uniformly bounded and \(\gamma\in[0,1)\), \(T^\pi\) is a \(\gamma\)-contraction under the sup-norm and is monotone.
+
+\textbf{Approximate Value Function.} In large/continuous state spaces we restrict attention to a parametric family \({V(\cdot;\theta): \theta\in\mathbb{R}^d}\) and learn \(\theta\) from data. We use \(\nabla_\theta V(s;\theta) \in \mathbb{R}^d\) to denote the gradient of \(V\) with respect to \(\theta\) at state \(s\).
+
+A special and very important case is linear function approximation
+\begin{equation}
+V(s;\theta) = \theta^\top \phi(s),
+\label{eq:LinearV}
+\end{equation}
+where \(\phi(s) = [\phi_1(s),\ldots,\phi_d(s)]^\top\) are fixed basis functions (e.g., neural network last-layer features). When \(V(s;\theta) = \theta^{\top} \phi(s)\), we have
+\[
+\nabla_\theta V(s;\theta) = \phi(s).
+\]
+When we restrict the value function to a function class (e.g., linear features or a neural network), it is generally not guaranteed that the unique fixed point of the Bellman operator \eqref{eq:BellmanOperator}, namely \(V^\pi\), belongs to that class. This misspecification (or realizability gap) means we typically cannot recover \(V^\pi\) exactly; instead, we seek its \emph{best approximation} according to a chosen criterion.
+
+\subsubsection{Monte Carlo Estimation}\label{monte-carlo-estimation-1}
+
+Given an episode \((s_t,a_t,r_t,\dots,s_T)\) collected by policy \(\pi\), its discounted return
+\[
+g_t = r_t + \gamma r_{t+1} + \gamma^2 r_{t+2} + \dots + \gamma^{T-t} r_T
+\]
+is an unbiased estimate of the value at \(s_t\), i.e., \(V^{\pi}(s_t)\).
+
+Therefore, Monte Carlo estimation follows the intuitive idea to make the approximate value function \(V(\cdot, \theta)\) fit the returns from these episodes as close as possible:
+\begin{equation}
+\min_{\theta} \frac{1}{\mathcal{D}} \sum_{t \in \mathcal{D}} \frac{1}{2} (g_t - V(s_t, \theta))^2,
+\label{eq:MCEstimationGoal}
+\end{equation}
+where \(\mathcal{D}\) denotes the dataset of episodes collected under policy \(\pi\). The formulation \eqref{eq:MCEstimationGoal} is a \emph{batch} formulation in the sense that it waits until all episodes are collected before performing the optimization.
+
+In an online formulation, we can optimize after every episode the objective function
+\[
+\min_{\theta} \frac{1}{2} (g_t - V(s_t, \theta))^2,
+\]
+which leads to one step of gradient descent:
+\begin{equation}
+\theta \ \ \leftarrow \ \ \theta + \alpha_t (g_t - V(s_t;\theta)) \nabla_\theta V(s_t; \theta).
+\label{eq:MCOneStepGD}
+\end{equation}
+To connect the above update back to the MC update \eqref{eq:mc-incremental} in the tabular case, we see that the term \(g_t - V(s_t;\theta\) is similar as before the difference between the target and the current estimate. However, in the case of function approximation, the error is multiplied by the gradient \(\nabla_\theta V (s_t; \theta)\).
+
+It is worth noting that when using function approximation, the update on \(\theta\) caused by one episode \((s_t,\dots)\) will affect the values at all other states even if the policy only visited state \(s_t\).
+
+\textbf{Convergence Guarantees.} Assume on-policy sampling under \(\pi\), bounded rewards, and step sizes \(\alpha_t\) satisfying Robbins--Monro conditions.
+
+\begin{itemize}
+\item
+  For \emph{linear} \(V(s;\theta)=\theta^\top\phi(s)\) with full-rank features, i.e.,
+  \[
+  \mathbb{E}_{s \sim \mu^\pi} \left[ \phi(s) \phi(s)^\top \right] \succ 0,
+  \]
+  and \(\mathbb{E}_{s \sim \mu^\pi}\|\phi(s)\|^2<\infty\), the iterates converge almost surely to the unique global minimizer of the convex objective
+  \begin{equation}
+  \theta_{\text{MC}}^\star \in \arg\min_\theta \;  \frac{1}{2}\mathbb{E}_{s_t \sim \mu^\pi}\!\left[ \big(V(s_t;\theta)-V^\pi(s_t)\big)^2 \right],
+  \label{eq:convergence-of-MC}
+  \end{equation}
+  where the expectation is with respect to stationary state distribution \(\mu^\pi\) under \(\pi\).
+\item
+  For \emph{nonlinear} differentiable function classes with bounded gradients, the iterates converge almost surely to a stationary point of the same objective.
+\end{itemize}
+
+\subsubsection{Semi-Gradient TD(0)}\label{semi-gradient-td0}
+
+We know from previous discussion that MC uses the full return \(g_t\) as the target and thus can have high variance. A straightforward idea is to replace the MC target \(g_t\) in the update \eqref{eq:MCOneStepGD} by the one-step bootstrap target
+\[
+r_t + \gamma V(s_{t+1};\theta),
+\]
+which yields the \emph{semi-gradient TD(0)} update
+\begin{equation}
+\theta \ \leftarrow\ \theta \;+\; \alpha_t \,\big(r_t + \gamma V(s_{t+1};\theta) - V(s_t;\theta)\big)\, \nabla_\theta V(s_t;\theta).
+\label{eq:SemiGradientTD0}
+\end{equation}
+(At terminal \(s_{t+1}\), use \(V(s_{t+1};\theta)=0\) or equivalently set \(\gamma=0\) for that step.)
+
+\textbf{Why call it ``semi-gradient''?} Let the TD error be
+\[
+\delta_t(\theta) \;:=\; r_t + \gamma V(s_{t+1};\theta) - V(s_t;\theta).
+\]
+Consider the per-sample squared TD error objective
+\[
+\min_{\theta}\; \frac{1}{2} \,\delta_t(\theta)^2.
+\]
+Its \textbf{true gradient} (a.k.a. the \emph{residual gradient}) is
+\[
+\nabla_\theta \frac{1}{2} \delta_t(\theta)^2
+\;=\;
+\delta_t(\theta)\,\big(\gamma \nabla_\theta V(s_{t+1};\theta) - \nabla_\theta V(s_t;\theta)\big).
+\]
+Thus a \textbf{true-gradient (residual-gradient) TD(0)} step would be
+\begin{equation}
+\theta \ \leftarrow\ \theta \;-\; \alpha_t \,\delta_t(\theta)\,\big(\gamma \nabla_\theta V(s_{t+1};\theta) - \nabla_\theta V(s_t;\theta)\big).
+\label{eq:ResidualGradientTD0}
+\end{equation}
+
+By contrast, the semi-gradient TD(0) step in \eqref{eq:SemiGradientTD0} ignores the dependence of the target on \(\theta\) (i.e., it drops the \(\gamma \nabla_\theta V(s_{t+1};\theta)\) term) and treats the target \(r_t+\gamma V(s_{t+1};\theta)\) as a \emph{constant} when differentiating. Concretely,
+\[
+\nabla_\theta \frac{1}{2} \big( \text{target} - V(s_t;\theta)\big)^2
+\;\approx\;
+-\big(\text{target} - V(s_t;\theta)\big)\,\nabla_\theta V(s_t;\theta).
+\]
+This approximation yields the simpler update \eqref{eq:SemiGradientTD0}.
+
+\textbf{Convergence Guarantees.} When using linear approximation, the Monte Carlo estimator converges to \(\theta^\star_{\text{MC}}\) in \eqref{eq:convergence-of-MC}. We now study what the semi-gradient TD(0) updates \eqref{eq:SemiGradientTD0} converge to.
+
+\textbf{Projected Bellman Operator.} Fix a weighting/visitation distribution \(\mu\) on \(\mathcal S\) (e.g., the stationary distribution \(\mu^\pi\)) and the associated inner product
+\[
+\langle f,g\rangle_\mu := \mathbb{E}_{s\sim \mu}[\,f(s)g(s)\,], 
+\qquad 
+\|f\|_\mu := \sqrt{\langle f,f\rangle_\mu}.
+\]
+Let \(\mathcal V := \{V(s;\theta)=\theta^\top\phi(s)\;:\;\theta\in\mathbb{R}^d\}\) be the linear function class spanned by features \(\phi:\mathcal S\to\mathbb{R}^d\). The \emph{\(\mu\)-orthogonal projection} \(\Pi_\mu:\mathcal{F}\to\mathcal V\) is
+\[
+\Pi_\mu f \;:=\; \arg\min_{V\in\mathcal V}\, \| V - f\|_\mu .
+\]
+In words, given any function \(f \in \mathcal{F}: \mathcal{S} \mapsto \mathbb{R}\), \(\Pi_\mu f\) returns the closest function \(V\) to \(f\) that belongs to the subset of linearly representable functions \(\mathcal{V}\), where the ``closest'' is defined by the weighting distribution \(\mu\).
+The Projected Bellman Operator is the composition
+\begin{equation}
+\mathcal{T}^\pi_{\!\text{proj}} \;:=\; \Pi_\mu \, T^\pi,
+\qquad\text{i.e.,}\qquad
+\big(\mathcal{T}^\pi_{\!\text{proj}} V\big)(\cdot) \;=\; \Pi_\mu \!\left[\, T^\pi V \,\right](\cdot).
+\label{eq:ProjectedBellmanOperator}
+\end{equation}
+
+\begin{itemize}
+\item
+  \(T^\pi\) is the Bellman operator defined in \eqref{eq:BellmanOperator}.
+\item
+  \(\Pi_\mu\) projects any function onto \(\mathcal V\) using the \(\mu\)-weighted \(L^2\) norm.
+\item
+  In discrete \(\mathcal S\), write \(\Phi\in\mathbb{R}^{|\mathcal S|\times d}\) with rows \(\phi(s)^\top\) and \(D=\mathrm{diag}(\mu(s))\). Then
+  \[
+  \Pi_\mu f \;=\; \Phi\,(\Phi^\top D \Phi)^{-1}\Phi^\top D f.
+  \]
+\item
+  \(T^\pi\) is a \(\gamma\)-contraction under \(\|\cdot\|_\mu\), and \(\Pi_\mu\) is nonexpansive under \(\|\cdot\|_\mu\), hence \(\mathcal{T}^\pi_{\!\text{proj}}\) is a \(\gamma\)-contraction:
+  \[
+  \|\Pi_\mu T^\pi V - \Pi_\mu T^\pi U\|_\mu \;\le\; \|T^\pi V - T^\pi U\|_\mu \;\le\; \gamma \|V-U\|_\mu.
+  \]
+\end{itemize}
+
+Therefore, \eqref{eq:ProjectedBellmanOperator}, the projected Bellman equation (PBE), has a unique fixed point \(V_{\text{TD}}^\star\in\mathcal V\) satisfying
+\begin{equation}
+V_{\text{TD}}^\star \;=\; \Pi_\mu\, T^\pi V_{\text{TD}}^\star.
+\label{eq:PBEFixedPoint}
+\end{equation}
+
+\textbf{Semi-gradient TD(0) Converges to the PBE Fixed Point (linear case).} Assume on-policy sampling under an ergodic chain, bounded second moments, Robbins--Monro stepsizes, and full-rank features under \(\mu = \mu^\pi\). In the linear case \(V(s;\theta)=\theta^\top\phi(s)\), define
+\[
+\delta_t(\theta) := r_t + \gamma \theta^\top \phi(s_{t+1}) - \theta^\top \phi(s_t).
+\]
+The semi-gradient TD(0) update \eqref{eq:SemiGradientTD0} becomes
+\[
+\theta \leftarrow \theta + \alpha_t\, \delta_t(\theta)\,\phi(s_t).
+\]
+Taking conditional expectation w.r.t. the stationary visitation (and using the Markov property) yields the mean update:
+\[
+\mathbb{E}\!\left[\delta_t(\theta)\,\phi(s_t)\right] \;=\; b \;-\; A\theta,
+\]
+with the standard TD system
+\begin{equation}
+A \;:=\; \mathbb{E}_{\mu}\!\big[\phi(s_t)\big(\phi(s_t)-\gamma \phi(s_{t+1})\big)^\top\big],
+\qquad
+b \;:=\; \mathbb{E}_{\mu}\!\big[r_{t}\,\phi(s_t)\big].
+\label{eq:TDLinearSystem-again}
+\end{equation}
+Thus, in expectation, TD(0) performs a stochastic approximation to the ODE
+\[
+\dot\theta \;=\; b - A\theta,
+\]
+whose unique globally asymptotically stable equilibrium is
+\[
+\theta^\star_{\text{TD}} \;=\; A^{-1} b,
+\]
+provided the symmetric part of \(A\) is positive definite (guaranteed on-policy with full-rank features). Standard stochastic approximation theory then gives
+\[
+\theta_t \xrightarrow{\text{a.s.}} \theta^\star_{\text{TD}}.
+\]
+Finally, one can show the equivalence with the PBE: \(V(\cdot; \theta) \in\mathcal V\) satisfies \(V(\cdot; \theta)=\Pi_\mu T^\pi V(\cdot; \theta)\) if and only if \(A\theta \;=\; b\) (see a proof below).
+Hence the almost-sure limit \(V(\cdot; \theta^\star_{\text{TD}})\) is exactly the fixed point \eqref{eq:PBEFixedPoint}.
+
+\begin{proof}
+The projected Bellman equation reads
+\[
+V(\cdot;\theta) = \Pi_\mu T^\pi V(\cdot; \theta).
+\]
+Since \(V(\cdot; \theta) = \theta^\top \phi(\cdot)\) is the orthogonal projection of \(T^\pi V(\cdot; \theta)\) onto \(\mathcal V\) weighted by \(\mu\), we have that
+\[
+\mathbb{E}_\mu \left[ \phi(s_t) (T^\pi V(s_t;\theta) - V(s_t;\theta)) \right] = 0 = \mathbb{E}_\mu \left[ \phi(s_t) (r_t + \gamma \theta^\top \phi(s_{t+1}) - \theta^\top \phi(s_t) )\right],
+\]
+which reduces to \(A \theta = b\) with \(A\) and \(b\) defined in \eqref{eq:TDLinearSystem-again}.
+\end{proof}
+
+\textbf{What does convergence to the PBE fixed point imply?}
+
+\begin{itemize}
+\item
+  \textbf{Best fixed point in the feature subspace (good).} \(V_{\text{TD}}^\star\) is the unique function in \(\mathcal V\) whose Bellman update \(T^\pi V\) projects back to itself under \(\Pi_\mu\). If \(V^\pi\in\mathcal V\) (realisable case), then \(V_{\text{TD}}^\star=V^\pi\).
+\item
+  \textbf{Different target than least squares (mixed).} TD(0) solves the Projected Bellman Equation \eqref{eq:ProjectedBellmanOperator}; Monte Carlo least-squares solves
+  \[
+  \min_{V\in\mathcal V} \frac{1}{2} \|V - V^\pi\|_\mu^2.
+  \]
+  When \(V^\pi\notin\mathcal V\), these solutions generally differ. Either can have lower \(\mu\)-weighted prediction error depending on features and dynamics; in practice TD often wins due to lower variance and online bootstrapping.
+\end{itemize}
+
+\subsection{On-Policy Control}\label{on-policy-control-1}
+
+\subsubsection{Semi-Gradient SARSA(0)}\label{semi-gradient-sarsa0}
+
+\textbf{High-level Intuition.} Semi-gradient SARSA(0) is an on-policy value-based control method. It learns an action-value function \(Q(s,a;\theta)\) by bootstrapping one step ahead and using the next action actually selected by the current behavior policy (e.g., \(\varepsilon\)-greedy). Because the target uses \(Q(s_{t+1},a_{t+1};\theta)\), SARSA trades some bias for substantially lower variance than Monte Carlo, updates online from each transition, and naturally couples policy evaluation (of the current policy) with policy improvement (by making the policy greedy/soft-greedy w.r.t. the current \(Q\)).
+
+\textbf{Algorithmic Form (On-policy, Finite \(\mathcal A\)).} Let the behavior policy at time \(t\) be \(\pi_t(\cdot\mid s)\) (e.g., \(\varepsilon_t\)-greedy w.r.t. \(Q(\cdot,\cdot;\theta_t)\)). For each step:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Given \(s_t\), pick \(a_t \sim \pi_t(\cdot \mid s_t)\); observe \(r_t\) and \(s_{t+1}\).
+\item
+  Pick the next action \(a_{t+1} \sim \pi_t(\cdot\mid s_{t+1})\).
+\item
+  Form the TD error
+  \begin{equation}
+  \delta_t \;=\; r_t \;+\; \gamma\, Q(s_{t+1},a_{t+1};\theta) \;-\; Q(s_t,a_t;\theta).
+  \label{eq:SARSA-TDerror}
+  \end{equation}
+\item
+  Update parameters with a semi-gradient step
+  \begin{equation}
+  \theta \;\leftarrow\; \theta \;+\; \alpha_t\, \delta_t \,\nabla_\theta Q(s_t,a_t;\theta).
+  \label{eq:SARSA-Update}
+  \end{equation}
+  For terminal \(s_{t+1}\), use \(Q(s_{t+1},a_{t+1};\theta)=0\) (equivalently, set \(\gamma=0\) on terminal transitions).
+\end{enumerate}
+
+\begin{itemize}
+\item
+  \textbf{Linear special case.} If \(Q(s,a;\theta)=\theta^\top \phi(s,a)\), then \(\nabla_\theta Q(s_t,a_t;\theta)=\phi(s_t,a_t)\) and the update becomes
+  \[
+  \theta \leftarrow \theta + \alpha_t\, \delta_t\, \phi(s_t,a_t).
+  \]
+\item
+  \textbf{Expected SARSA (variance reduction).} Replace the sample bootstrap by its expectation under \(\pi_t\):
+  \begin{equation}
+  \delta_t^{\text{exp}} \;=\; r_t \;+\; \gamma \sum_{a'\in\mathcal A} \pi_t(a'\mid s_{t+1})\, Q(s_{t+1},a';\theta) \;-\; Q(s_t,a_t;\theta),
+  \label{eq:ExpectedSARSA}
+  \end{equation}
+  then update \(\theta \leftarrow \theta + \alpha_t\, \delta_t^{\text{exp}}\, \nabla_\theta Q(s_t,a_t;\theta)\).
+\end{itemize}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\setcounter{enumi}{4}
+\tightlist
+\item
+  Update the next policy to be \(\varepsilon_{t+1}\)-greedy w.r.t. the new Q value \(Q(\cdot, \cdot; \theta_{t+1})\). (\(\varepsilon_t\) follows GLIE.)
+\end{enumerate}
 
 \chapter{Policy Gradients}\label{policy-gradient}
 
