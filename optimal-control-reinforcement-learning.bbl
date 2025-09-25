@@ -15,6 +15,12 @@ Kearns, M.~J. and Singh, S. (2000).
 \newblock Bias-variance error bounds for temporal difference updates.
 \newblock In {\em COLT}, pages 142--147.
 
+\bibitem[Robbins and Siegmund, 1971]{robbins1971convergence}
+Robbins, H. and Siegmund, D. (1971).
+\newblock A convergence theorem for non negative almost supermartingales and
+  some applications.
+\newblock In {\em Optimizing methods in statistics}, pages 233--257. Elsevier.
+
 \bibitem[Zhou et~al., 1996]{zhou1996book-robust}
 Zhou, K., Doyle, J., and Glover, K. (1996).
 \newblock Robust and optimal control.

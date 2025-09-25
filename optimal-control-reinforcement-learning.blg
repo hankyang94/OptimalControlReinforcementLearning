@@ -4,44 +4,44 @@ The top-level auxiliary file: optimal-control-reinforcement-learning.aux
 The style file: apalike.bst
 Database file #1: book.bib
 Database file #2: packages.bib
-You've used 4 entries,
+You've used 5 entries,
             1935 wiz_defined-function locations,
-            499 strings with 4297 characters,
-and the built_in function-call counts, 1655 in all, are:
-= -- 165
-> -- 51
-< -- 4
-+ -- 16
-- -- 16
-* -- 131
-:= -- 276
-add.period$ -- 12
-call.type$ -- 4
-change.case$ -- 27
-chr.to.int$ -- 4
-cite$ -- 4
-duplicate$ -- 69
-empty$ -- 128
-format.name$ -- 24
-if$ -- 337
+            506 strings with 4491 characters,
+and the built_in function-call counts, 2196 in all, are:
+= -- 224
+> -- 64
+< -- 6
++ -- 22
+- -- 20
+* -- 167
+:= -- 354
+add.period$ -- 16
+call.type$ -- 5
+change.case$ -- 34
+chr.to.int$ -- 5
+cite$ -- 5
+duplicate$ -- 96
+empty$ -- 172
+format.name$ -- 31
+if$ -- 459
 int.to.chr$ -- 1
 int.to.str$ -- 0
-missing$ -- 5
-newline$ -- 23
-num.names$ -- 12
-pop$ -- 28
+missing$ -- 6
+newline$ -- 28
+num.names$ -- 15
+pop$ -- 37
 preamble$ -- 1
-purify$ -- 28
+purify$ -- 35
 quote$ -- 0
-skip$ -- 54
+skip$ -- 76
 stack$ -- 0
-substring$ -- 132
-swap$ -- 13
-text.length$ -- 1
+substring$ -- 178
+swap$ -- 23
+text.length$ -- 2
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 22
+type$ -- 28
 warning$ -- 0
-while$ -- 14
+while$ -- 19
 width$ -- 0
-write$ -- 53
+write$ -- 67
