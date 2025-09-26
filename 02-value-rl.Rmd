@@ -140,7 +140,7 @@ is called the TD error. It measures the discrepancy between the current value es
    $$
    \sum_t \alpha_t = \infty, \; \sum_t \alpha_t^2 < \infty
    $$
-   then TD(0) converges almost surely to the true value function \(V^\pi\). For example, choosing $\alpha_t = 1/(t+1)$ satisfies this condition.
+   then TD(0) converges almost surely to the true value function \(V^\pi\). For example, choosing $\alpha_t = 1/(t+1)$ satisfies this condition. Section \@ref(value-rl-convergence-td) provides a detailed proof of the convergence of TD learning.
    
 2. **Bias–Variance Tradeoff:**  
 
@@ -461,7 +461,7 @@ You are encouraged to play with the parameters of these algorithms in the code [
 :::
 :::
 
-### Convergence Proof of TD Learning
+### Convergence Proof of TD Learning {#value-rl-convergence-td}
 
 **Setup.** Consider a tabular MDP with finite state space $\mathcal{S}$ and action space $\mathcal{A}$, and a discount factor $\gamma \in [0,1)$. Assume the reward function is bounded, for example, $R(s,a) \in [0,1]$ for any $(s,a) \in \mathcal{S} \times \mathcal{A}$. Let $\pi$ be a stochastic policy and $V^\pi$ be the true value function associated with $\pi$, the target we wish to estimate from interaction data. Denote
 $$
@@ -484,7 +484,25 @@ The update \@ref(eq:TD0update-proof) only changes the value at $s_t$, leaving th
 $$
 \alpha_t(s) >0, \quad \sum_{t: s_t = s} \alpha_t(s) = \infty, \quad \sum_{t: s_t = s} \alpha^2_t(s) < \infty.
 $$
-Assume the Markov chain over $\mathcal{S}$ induced by $\pi$ is ergodic with a stationary distribution $\mu^\pi$ (see \@ref(eq:StationaryDistribution-definition)), so that so every state is visited infinitely often almost surely. 
+
+**Stationary Distribution.**
+Assume the Markov chain over $\mathcal{S}$ induced by $\pi$ is ergodic, then a unique stationary state distribution $\mu^\pi$ exists and satisfy:
+\begin{equation}
+\mu^\pi(s') = \sum_{s \in \mathcal{S}} \mu^\pi(s) \left( \sum_{a \in \mathcal{A}}  \pi(a \mid s) P(s' \mid s, a) \right), \quad \forall s' \in \mathcal{S}.
+(\#eq:StationaryDistribution-Tabular)
+\end{equation}
+If we denote
+\begin{equation}
+P^\pi(s' \mid s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) P(s' \mid s,a),
+(\#eq:TabularStateOnlyTransition)
+\end{equation}
+as the $\pi$-induced state-only transition dynamics, then condition \@ref(eq:StationaryDistribution-Tabular) is equivalent to 
+\begin{equation}
+\mu^\pi(s') = \sum_{s \in \mathcal{S}} \mu^\pi(s) P^\pi (s' \mid s), \quad \forall s' \in \mathcal{S}.
+(\#eq:StationaryDistribution-Tabular-State-Only)
+\end{equation}
+
+See \@ref(eq:StationaryDistribution-definition) for a generalization to continuous MDP. 
 
 **Bellman Operator.** For any \(V:\mathcal S\to\mathbb R\), define the Bellman operator associated with $\pi$ as \(T^\pi V:\mathcal S\to\mathbb R\) by
 \begin{equation}
@@ -517,7 +535,7 @@ This lemma is from [@robbins1971convergence].
 
 ::: {.theorembox}
 ::: {.lemma #TDConvergenceLemma}
-Let \(D=\mathrm{diag}(\mu^\pi)\) and \(w:=V-V^\pi\). Then
+Let $\mu^\pi$ be the stationary distribution in \@ref(eq:StationaryDistribution-Tabular-State-Only), \(D=\mathrm{diag}(\mu^\pi)\), and \(w:=V-V^\pi\). Then
 \[
 \langle w,\,D\,(T^\pi V - V)\rangle\;\le\;-(1-\gamma)\,\|w\|_D^2,
 \]
@@ -535,9 +553,10 @@ $$
 T^\pi V - T^\pi U = \gamma \widetilde P (V - U),
 $$
 with 
-$$
+\begin{equation}
 (\widetilde P u)(s):=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\,u(s').
-$$
+(\#eq:def-tilde-P)
+\end{equation}
 With this, we can write 
 \begin{equation}
 \begin{split}
@@ -549,12 +568,44 @@ T^\pi V - V & = T^\pi V - V^\pi + V^\pi - V \\
 \end{split}
 \end{equation} 
 Thus,
-\[
+\begin{equation}
 \langle w, D(T^\pi V - V)\rangle
 = -\,w^\top D\,(I-\gamma \widetilde P)\,w
 = -\|w\|_D^2 + \gamma\,\langle w, D\,\widetilde P w\rangle.
-\]
-By Cauchy–Schwarz and Jensen, \(\|\widetilde P w\|_D\le \|w\|_D\), hence \(\langle w, D\widetilde P w\rangle\le \|w\|_D^2\).
+(\#eq:InnerProductInequality)
+\end{equation}
+
+Next, we prove \(\langle w, D\widetilde P w\rangle\le \|w\|_D^2\).
+
+- First, we show \(\|\widetilde P w\|_D\le \|w\|_D\). For any state $s \in \mathcal{S}$, from \@ref(eq:def-tilde-P), we have
+$$
+(\widetilde P w)(s) = \sum_{s'} P^\pi (s' \mid s) w(s'),
+$$
+where $P^\pi(s' \mid s)$ is the $\pi$-induced state-only transition in \@ref(eq:TabularStateOnlyTransition). Since $P^\pi(\cdot \mid s)$ is a probability distribution, and $x \mapsto x^2$ is convex, we have 
+$$
+((\widetilde P w)(s))^2 = \left( \sum_{s'} P^\pi (s' \mid s) w(s') \right)^2 \leq \sum_{s'} P^\pi (s' \mid s) w^2(s').
+$$
+Therefore, we have 
+\begin{equation}
+\begin{split}
+\Vert \widetilde P w \Vert_D^2 & = \sum_s \mu^{\pi}(s) ((\widetilde P w)(s))^2 \\
+& \leq \sum_s \mu^{\pi}(s) \left( \sum_{s'} P^\pi (s' \mid s) w^2(s') \right) \\
+& = \sum_{s'} \left( \sum_{s} \mu^\pi(s) P^\pi(s' \mid s) \right) w^2(s') \\
+& = \sum_{s'} \mu^\pi (s') w^2 (s') = \Vert w \Vert_D^2.
+\end{split}
+\end{equation}
+where the second-from-last equality holds because $\mu^\pi$ is the stationary distribution and satisfies \@ref(eq:StationaryDistribution-Tabular-State-Only).
+
+- Second, we write
+$$
+\langle w, D\widetilde P w\rangle = \langle D^{0.5} w, D^{0.5} \widetilde P w \rangle \leq \Vert D^{0.5} w \Vert \cdot \Vert D^{0.5} \widetilde P w \Vert = \Vert w \Vert_D \cdot \Vert \widetilde P w \Vert_D \leq \Vert w \Vert_D^2.
+$$
+
+Plugging this back to \@ref(eq:InnerProductInequality), we obtain
+$$
+\langle w, D(T^\pi V - V) \rangle \leq - \Vert w \Vert_D^2 + \gamma \Vert w \Vert_D^2,
+$$
+proving the desired result in the lemma.
 :::
 :::
 
@@ -592,7 +643,7 @@ Let \(w_t:=V_t - V^\pi\). Since only the \(s_t\)-coordinate changes at time \(t\
 \begin{split}
 \mathcal L(V_{t+1})-\mathcal L(V_t)
 &=\frac{1}{2} \mu^\pi(s_t)\Big(( \underbrace{V_t(s_t)+\alpha_t\delta_t}_{V_{t+1}(s_t)} - V^\pi(s_t) )^2 -(V_t(s_t)-V^\pi(s_t))^2\Big)\\
-&= \mu^\pi(s_t)\,\alpha_t\,\delta_t\,w_t(s_t)\;+\;\frac{1}{2} d^\pi(s_t)\,\alpha_t^2\,\delta_t^{\,2}.
+&= \mu^\pi(s_t)\,\alpha_t\,\delta_t\,w_t(s_t)\;+\;\frac{1}{2} \mu^\pi(s_t)\,\alpha_t^2\,\delta_t^{\,2}.
 \end{split}
 (\#eq:DifferenceBetweenLyapunov)
 \end{equation}
