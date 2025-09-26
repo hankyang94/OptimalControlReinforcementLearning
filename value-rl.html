@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-09-25" />
+<meta name="date" content="2025-09-26" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -192,7 +192,7 @@ div.csl-indent {
 <li class="chapter" data-level="2.1" data-path="value-rl.html"><a href="value-rl.html#tabular-methods"><i class="fa fa-check"></i><b>2.1</b> Tabular Methods</a>
 <ul>
 <li class="chapter" data-level="2.1.1" data-path="value-rl.html"><a href="value-rl.html#policy-evaluation-2"><i class="fa fa-check"></i><b>2.1.1</b> Policy Evaluation</a></li>
-<li class="chapter" data-level="2.1.2" data-path="value-rl.html"><a href="value-rl.html#convergence-proof-of-td-learning"><i class="fa fa-check"></i><b>2.1.2</b> Convergence Proof of TD Learning</a></li>
+<li class="chapter" data-level="2.1.2" data-path="value-rl.html"><a href="value-rl.html#value-rl-convergence-td"><i class="fa fa-check"></i><b>2.1.2</b> Convergence Proof of TD Learning</a></li>
 <li class="chapter" data-level="2.1.3" data-path="value-rl.html"><a href="value-rl.html#on-policy-control"><i class="fa fa-check"></i><b>2.1.3</b> On-Policy Control</a></li>
 <li class="chapter" data-level="2.1.4" data-path="value-rl.html"><a href="value-rl.html#off-policy-control"><i class="fa fa-check"></i><b>2.1.4</b> Off-Policy Control</a></li>
 </ul></li>
@@ -384,7 +384,7 @@ is called the TD error. It measures the discrepancy between the current value es
 <span class="math display">\[
 \sum_t \alpha_t = \infty, \; \sum_t \alpha_t^2 &lt; \infty
 \]</span>
-then TD(0) converges almost surely to the true value function <span class="math inline">\(V^\pi\)</span>. For example, choosing <span class="math inline">\(\alpha_t = 1/(t+1)\)</span> satisfies this condition.</p></li>
+then TD(0) converges almost surely to the true value function <span class="math inline">\(V^\pi\)</span>. For example, choosing <span class="math inline">\(\alpha_t = 1/(t+1)\)</span> satisfies this condition. Section <a href="value-rl.html#value-rl-convergence-td">2.1.2</a> provides a detailed proof of the convergence of TD learning.</p></li>
 <li><p><strong>Bias–Variance Tradeoff:</strong></p>
 <ul>
 <li><p>The TD target uses the current estimate <span class="math inline">\(\hat{V}(s_{t+1})\)</span> rather than the true value, which introduces <em>bias</em>.</p></li>
@@ -656,8 +656,8 @@ Figure 2.2: Policy Evaluation, MC versus TD Family, Diminishing Step Size
 </div>
 </div>
 </div>
-<div id="convergence-proof-of-td-learning" class="section level3 hasAnchor" number="2.1.2">
-<h3><span class="header-section-number">2.1.2</span> Convergence Proof of TD Learning<a href="value-rl.html#convergence-proof-of-td-learning" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="value-rl-convergence-td" class="section level3 hasAnchor" number="2.1.2">
+<h3><span class="header-section-number">2.1.2</span> Convergence Proof of TD Learning<a href="value-rl.html#value-rl-convergence-td" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><strong>Setup.</strong> Consider a tabular MDP with finite state space <span class="math inline">\(\mathcal{S}\)</span> and action space <span class="math inline">\(\mathcal{A}\)</span>, and a discount factor <span class="math inline">\(\gamma \in [0,1)\)</span>. Assume the reward function is bounded, for example, <span class="math inline">\(R(s,a) \in [0,1]\)</span> for any <span class="math inline">\((s,a) \in \mathcal{S} \times \mathcal{A}\)</span>. Let <span class="math inline">\(\pi\)</span> be a stochastic policy and <span class="math inline">\(V^\pi\)</span> be the true value function associated with <span class="math inline">\(\pi\)</span>, the target we wish to estimate from interaction data. Denote
 <span class="math display">\[
 \mathcal{F}_t = \sigma(s_0,a_0,r_0,\dots,s_{t-1},a_{t-1},r_{t-1}),
@@ -676,12 +676,28 @@ The update <a href="value-rl.html#eq:TD0update-proof">(2.17)</a> only changes th
 <p><strong>Robbins–Monro Step Size.</strong> We assume the step size <span class="math inline">\(\alpha\)</span> satisfy the Robbins–Monro condition. That is, for any <span class="math inline">\(s \in \mathcal{S}\)</span>:
 <span class="math display">\[
 \alpha_t(s) &gt;0, \quad \sum_{t: s_t = s} \alpha_t(s) = \infty, \quad \sum_{t: s_t = s} \alpha^2_t(s) &lt; \infty.
-\]</span>
-Assume the Markov chain over <span class="math inline">\(\mathcal{S}\)</span> induced by <span class="math inline">\(\pi\)</span> is ergodic with a stationary distribution <span class="math inline">\(\mu^\pi\)</span> (see <a href="value-rl.html#eq:StationaryDistribution-definition">(2.37)</a>), so that so every state is visited infinitely often almost surely.</p>
+\]</span></p>
+<p><strong>Stationary Distribution.</strong>
+Assume the Markov chain over <span class="math inline">\(\mathcal{S}\)</span> induced by <span class="math inline">\(\pi\)</span> is ergodic, then a unique stationary state distribution <span class="math inline">\(\mu^\pi\)</span> exists and satisfy:
+<span class="math display" id="eq:StationaryDistribution-Tabular">\[\begin{equation}
+\mu^\pi(s&#39;) = \sum_{s \in \mathcal{S}} \mu^\pi(s) \left( \sum_{a \in \mathcal{A}}  \pi(a \mid s) P(s&#39; \mid s, a) \right), \quad \forall s&#39; \in \mathcal{S}.
+\tag{2.18}
+\end{equation}\]</span>
+If we denote
+<span class="math display" id="eq:TabularStateOnlyTransition">\[\begin{equation}
+P^\pi(s&#39; \mid s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) P(s&#39; \mid s,a),
+\tag{2.19}
+\end{equation}\]</span>
+as the <span class="math inline">\(\pi\)</span>-induced state-only transition dynamics, then condition <a href="value-rl.html#eq:StationaryDistribution-Tabular">(2.18)</a> is equivalent to
+<span class="math display" id="eq:StationaryDistribution-Tabular-State-Only">\[\begin{equation}
+\mu^\pi(s&#39;) = \sum_{s \in \mathcal{S}} \mu^\pi(s) P^\pi (s&#39; \mid s), \quad \forall s&#39; \in \mathcal{S}.
+\tag{2.20}
+\end{equation}\]</span></p>
+<p>See <a href="value-rl.html#eq:StationaryDistribution-definition">(2.42)</a> for a generalization to continuous MDP.</p>
 <p><strong>Bellman Operator.</strong> For any <span class="math inline">\(V:\mathcal S\to\mathbb R\)</span>, define the Bellman operator associated with <span class="math inline">\(\pi\)</span> as <span class="math inline">\(T^\pi V:\mathcal S\to\mathbb R\)</span> by
 <span class="math display" id="eq:BellmanOperatorRestate-TDConvergenceProof">\[\begin{equation}
 (T^\pi V)(s)\;=\;\sum_{a\in\mathcal A}\pi(a\mid s)\sum_{s&#39;\in\mathcal S} P(s&#39;\mid s,a)\,\Big( R(s,a)+\gamma\,V(s&#39;)\Big).
-\tag{2.18}
+\tag{2.21}
 \end{equation}\]</span>
 We know that the operator <span class="math inline">\(T^\pi\)</span> is a <span class="math inline">\(\gamma\)</span>-contraction in <span class="math inline">\(\|\cdot\|_\infty\)</span>. Hence it has a unique fixed point <span class="math inline">\(V^\pi\)</span> satisfying <span class="math inline">\(V^\pi=T^\pi V^\pi\)</span>.</p>
 <p>The following theorem states the almost sure convergence of TD learning iterates to the true value function.</p>
@@ -703,7 +719,7 @@ Then <span class="math inline">\(X_t\)</span> converges almost surely to a finit
 <p>This lemma is from <span class="citation">(<a href="#ref-robbins1971convergence">Robbins and Siegmund 1971</a>)</span>.</p>
 <div class="theorembox">
 <div class="lemma">
-<p><span id="lem:TDConvergenceLemma" class="lemma"><strong>Lemma 2.2  </strong></span>Let <span class="math inline">\(D=\mathrm{diag}(\mu^\pi)\)</span> and <span class="math inline">\(w:=V-V^\pi\)</span>. Then
+<p><span id="lem:TDConvergenceLemma" class="lemma"><strong>Lemma 2.2  </strong></span>Let <span class="math inline">\(\mu^\pi\)</span> be the stationary distribution in <a href="value-rl.html#eq:StationaryDistribution-Tabular-State-Only">(2.20)</a>, <span class="math inline">\(D=\mathrm{diag}(\mu^\pi)\)</span>, and <span class="math inline">\(w:=V-V^\pi\)</span>. Then
 <span class="math display">\[
 \langle w,\,D\,(T^\pi V - V)\rangle\;\le\;-(1-\gamma)\,\|w\|_D^2,
 \]</span>
@@ -721,9 +737,10 @@ Therefore,
 T^\pi V - T^\pi U = \gamma \widetilde P (V - U),
 \]</span>
 with
-<span class="math display">\[
+<span class="math display" id="eq:def-tilde-P">\[\begin{equation}
 (\widetilde P u)(s):=\sum_a\pi(a\mid s)\sum_{s&#39;}P(s&#39;\mid s,a)\,u(s&#39;).
-\]</span>
+\tag{2.22}
+\end{equation}\]</span>
 With this, we can write
 <span class="math display">\[\begin{equation}
 \begin{split}
@@ -735,12 +752,42 @@ T^\pi V - V &amp; = T^\pi V - V^\pi + V^\pi - V \\
 \end{split}
 \end{equation}\]</span>
 Thus,
-<span class="math display">\[
+<span class="math display" id="eq:InnerProductInequality">\[\begin{equation}
 \langle w, D(T^\pi V - V)\rangle
 = -\,w^\top D\,(I-\gamma \widetilde P)\,w
 = -\|w\|_D^2 + \gamma\,\langle w, D\,\widetilde P w\rangle.
+\tag{2.23}
+\end{equation}\]</span></p>
+<p>Next, we prove <span class="math inline">\(\langle w, D\widetilde P w\rangle\le \|w\|_D^2\)</span>.</p>
+<ul>
+<li><p>First, we show <span class="math inline">\(\|\widetilde P w\|_D\le \|w\|_D\)</span>. For any state <span class="math inline">\(s \in \mathcal{S}\)</span>, from <a href="value-rl.html#eq:def-tilde-P">(2.22)</a>, we have
+<span class="math display">\[
+(\widetilde P w)(s) = \sum_{s&#39;} P^\pi (s&#39; \mid s) w(s&#39;),
 \]</span>
-By Cauchy–Schwarz and Jensen, <span class="math inline">\(\|\widetilde P w\|_D\le \|w\|_D\)</span>, hence <span class="math inline">\(\langle w, D\widetilde P w\rangle\le \|w\|_D^2\)</span>.</p>
+where <span class="math inline">\(P^\pi(s&#39; \mid s)\)</span> is the <span class="math inline">\(\pi\)</span>-induced state-only transition in <a href="value-rl.html#eq:TabularStateOnlyTransition">(2.19)</a>. Since <span class="math inline">\(P^\pi(\cdot \mid s)\)</span> is a probability distribution, and <span class="math inline">\(x \mapsto x^2\)</span> is convex, we have
+<span class="math display">\[
+((\widetilde P w)(s))^2 = \left( \sum_{s&#39;} P^\pi (s&#39; \mid s) w(s&#39;) \right)^2 \leq \sum_{s&#39;} P^\pi (s&#39; \mid s) w^2(s&#39;).
+\]</span>
+Therefore, we have
+<span class="math display">\[\begin{equation}
+\begin{split}
+\Vert \widetilde P w \Vert_D^2 &amp; = \sum_s \mu^{\pi}(s) ((\widetilde P w)(s))^2 \\
+&amp; \leq \sum_s \mu^{\pi}(s) \left( \sum_{s&#39;} P^\pi (s&#39; \mid s) w^2(s&#39;) \right) \\
+&amp; = \sum_{s&#39;} \left( \sum_{s} \mu^\pi(s) P^\pi(s&#39; \mid s) \right) w^2(s&#39;) \\
+&amp; = \sum_{s&#39;} \mu^\pi (s&#39;) w^2 (s&#39;) = \Vert w \Vert_D^2.
+\end{split}
+\end{equation}\]</span>
+where the second-from-last equality holds because <span class="math inline">\(\mu^\pi\)</span> is the stationary distribution and satisfies <a href="value-rl.html#eq:StationaryDistribution-Tabular-State-Only">(2.20)</a>.</p></li>
+<li><p>Second, we write
+<span class="math display">\[
+\langle w, D\widetilde P w\rangle = \langle D^{0.5} w, D^{0.5} \widetilde P w \rangle \leq \Vert D^{0.5} w \Vert \cdot \Vert D^{0.5} \widetilde P w \Vert = \Vert w \Vert_D \cdot \Vert \widetilde P w \Vert_D \leq \Vert w \Vert_D^2.
+\]</span></p></li>
+</ul>
+<p>Plugging this back to <a href="value-rl.html#eq:InnerProductInequality">(2.23)</a>, we obtain
+<span class="math display">\[
+\langle w, D(T^\pi V - V) \rangle \leq - \Vert w \Vert_D^2 + \gamma \Vert w \Vert_D^2,
+\]</span>
+proving the desired result in the lemma.</p>
 </div>
 </div>
 <p>We are now ready to prove Theorem <a href="value-rl.html#thm:TD0ConvergenceTabular">2.1</a>.</p>
@@ -762,9 +809,9 @@ Define the “noise”:
 Then <span class="math inline">\(\mathbb E[\eta_{t+1}\mid \mathcal F_t,s_t]=0\)</span> and the TD update is equivalent to
 <span class="math display" id="eq:TDStochasticApproximation">\[\begin{equation}
 V_{t+1}(s_t)=V_t(s_t)+\alpha_t(s_t)\Big( \big(T^\pi V_t - V_t\big)(s_t) + \eta_{t+1}\Big),
-\tag{2.19}
+\tag{2.24}
 \end{equation}\]</span>
-while learving all other coordinates unchanged. Because rewards are uniformly bounded, we know that <span class="math inline">\(V_t\)</span> remains bounded. Hence, <span class="math inline">\(\mathbb E[\eta_{t+1}^2\mid \mathcal F_t, s_t]\)</span> is uniformly bounded. Equation <a href="value-rl.html#eq:TDStochasticApproximation">(2.19)</a> shows that the TD update can be seen as a stochastic approximation to the Bellman operator <a href="value-rl.html#eq:BellmanOperatorRestate-TDConvergenceProof">(2.18)</a>.</p>
+while learving all other coordinates unchanged. Because rewards are uniformly bounded, we know that <span class="math inline">\(V_t\)</span> remains bounded. Hence, <span class="math inline">\(\mathbb E[\eta_{t+1}^2\mid \mathcal F_t, s_t]\)</span> is uniformly bounded. Equation <a href="value-rl.html#eq:TDStochasticApproximation">(2.24)</a> shows that the TD update can be seen as a stochastic approximation to the Bellman operator <a href="value-rl.html#eq:BellmanOperatorRestate-TDConvergenceProof">(2.21)</a>.</p>
 <p><strong>Step 2 (Lyapunov drift).</strong> Let <span class="math inline">\(D=\mathrm{diag}(\mu^\pi)\)</span>, a diagonal matrix whose diagonal entries are the probabilities in <span class="math inline">\(\mu^\pi\)</span>.
 Define the Lyapunov function
 <span class="math display">\[
@@ -775,9 +822,9 @@ Let <span class="math inline">\(w_t:=V_t - V^\pi\)</span>. Since only the <span 
 \begin{split}
 \mathcal L(V_{t+1})-\mathcal L(V_t)
 &amp;=\frac{1}{2} \mu^\pi(s_t)\Big(( \underbrace{V_t(s_t)+\alpha_t\delta_t}_{V_{t+1}(s_t)} - V^\pi(s_t) )^2 -(V_t(s_t)-V^\pi(s_t))^2\Big)\\
-&amp;= \mu^\pi(s_t)\,\alpha_t\,\delta_t\,w_t(s_t)\;+\;\frac{1}{2} d^\pi(s_t)\,\alpha_t^2\,\delta_t^{\,2}.
+&amp;= \mu^\pi(s_t)\,\alpha_t\,\delta_t\,w_t(s_t)\;+\;\frac{1}{2} \mu^\pi(s_t)\,\alpha_t^2\,\delta_t^{\,2}.
 \end{split}
-\tag{2.20}
+\tag{2.25}
 \end{equation}\]</span>
 Define <span class="math inline">\(g_t := T^\pi V_t - V_t\)</span>. Taking conditional expectation given <span class="math inline">\(\mathcal F_t\)</span> and i.i.d. <span class="math inline">\(s_t\sim \mu^\pi\)</span>,
 <span class="math display" id="eq:DifferenceBetweenLyapunov-ConditionalExpectation">\[\begin{equation}
@@ -787,7 +834,7 @@ Define <span class="math inline">\(g_t := T^\pi V_t - V_t\)</span>. Taking condi
 + \frac{1}{2} \alpha_t^2\,\mathbb E\!\left[\mu^\pi(s_t)\,\delta_t^{\,2}\mid \mathcal F_t\right]\\
 &amp;= \alpha_t\,\sum_s \mu^\pi(s)\,w_t(s)\,g_t(s) \;+\; \frac{1}{2} \alpha_t^2\,C_t,
 \end{split}
-\tag{2.21}
+\tag{2.26}
 \end{equation}\]</span>
 where <span class="math inline">\(C_t:=\mathbb E\!\left[\mu^\pi(s_t)\,\delta_t^{\,2}\mid \mathcal F_t\right]\)</span> is finite because rewards are bounded and <span class="math inline">\(V_t\)</span> stays bounded. Assume <span class="math inline">\(C_t \leq C\)</span>.</p>
 <p>At the same time, by Lemma <a href="value-rl.html#lem:TDConvergenceLemma">2.2</a>
@@ -796,12 +843,12 @@ where <span class="math inline">\(C_t:=\mathbb E\!\left[\mu^\pi(s_t)\,\delta_t^{
 =\langle w_t, D g_t\rangle
 \le -(1-\gamma)\,\|w_t\|_D^2.
 \]</span>
-Plugging into <a href="value-rl.html#eq:DifferenceBetweenLyapunov-ConditionalExpectation">(2.21)</a> yields
+Plugging into <a href="value-rl.html#eq:DifferenceBetweenLyapunov-ConditionalExpectation">(2.26)</a> yields
 <span class="math display" id="eq:TD0ConvergenceProof-RS-Form">\[\begin{equation}
 \mathbb E\!\left[\mathcal L(V_{t+1})\mid \mathcal F_t\right]
 \;\le\;
 \mathcal L(V_t)\;-\;\alpha_t\,(1-\gamma)\,\|w_t\|_D^2\;+\;\frac{1}{2} \alpha_t^2\,C.
-\tag{2.22}
+\tag{2.27}
 \end{equation}\]</span>
 This is in Robbins–Siegmund form with
 <span class="math display">\[
@@ -811,7 +858,7 @@ X_t:=\mathcal L(V_t),\qquad
 \xi_t:=\frac{1}{2} C\,\alpha_t^2.
 \]</span>
 We have <span class="math inline">\(\sum_t \xi_t&lt;\infty\)</span> by <span class="math inline">\(\sum_t \alpha_t^2&lt;\infty\)</span>. Therefore <span class="math inline">\(X_t\)</span> converges a.s. and <span class="math inline">\(\sum_t \beta_t&lt;\infty\)</span> a.s., which implies <span class="math inline">\(\sum_t \alpha_t \|w_t\|_D^2&lt;\infty\)</span>. Since <span class="math inline">\(\sum_t \alpha_t=\infty\)</span>, it must be that <span class="math inline">\(\liminf_t \|w_t\|_D=0\)</span>.<br />
-Finally, using <a href="value-rl.html#eq:TD0ConvergenceProof-RS-Form">(2.22)</a> again and the continuity of the drift, one shows that any subsequential limit of <span class="math inline">\(V_t\)</span> must satisfy <span class="math inline">\(T^\pi V - V=0\)</span>; by uniqueness of the fixed point, the only possible limit is <span class="math inline">\(V^\pi\)</span>. Hence <span class="math inline">\(V_t\to V^\pi\)</span> almost surely.</p>
+Finally, using <a href="value-rl.html#eq:TD0ConvergenceProof-RS-Form">(2.27)</a> again and the continuity of the drift, one shows that any subsequential limit of <span class="math inline">\(V_t\)</span> must satisfy <span class="math inline">\(T^\pi V - V=0\)</span>; by uniqueness of the fixed point, the only possible limit is <span class="math inline">\(V^\pi\)</span>. Hence <span class="math inline">\(V_t\to V^\pi\)</span> almost surely.</p>
 </div>
 </div>
 <div id="on-policy-control" class="section level3 hasAnchor" number="2.1.3">
@@ -826,7 +873,7 @@ Finally, using <a href="value-rl.html#eq:TD0ConvergenceProof-RS-Form">(2.22)</a>
 <li><p><strong>Exploration.</strong> Pure greedy improvement can get stuck. MC control keeps the policy <em><span class="math inline">\(\varepsilon\)</span>-soft</em> (e.g., <span class="math inline">\(\varepsilon\)</span>-greedy) so that every action has nonzero probability and all state-action pairs continue to be sampled. An <span class="math inline">\(\varepsilon\)</span>-soft policy is one that never rules out any action: in every state <span class="math inline">\(s\)</span>, each action <span class="math inline">\(a\)</span> gets at least a small fraction of probability. Formally, in the tabular setup, we have that a policy <span class="math inline">\(\pi\)</span> is <span class="math inline">\(\varepsilon\)</span>-soft if and only if
 <span class="math display" id="eq:epsilon-soft-policy">\[\begin{equation}
 \forall s, \forall a: \quad \pi(a \mid s) \geq \frac{\varepsilon}{|\mathcal{A}(s)|}, \quad \varepsilon \in (0,1],
-\tag{2.23}
+\tag{2.28}
 \end{equation}\]</span>
 where <span class="math inline">\(\mathcal{A}(s)\)</span> denotes the set of actions the agent can select at state <span class="math inline">\(s\)</span>.</p></li>
 <li><p><strong>Coverage mechanisms.</strong> Classic guarantees use either:</p>
@@ -845,7 +892,7 @@ g_t = r_t + \gamma r_{t+1} + \dots + \gamma^{T-t} r_T = \sum_{k=0}^{T-t} \gamma^
 <p><strong>First-visit MC update (common choice):</strong>
 <span class="math display" id="eq:MCControl-QUpdate">\[\begin{equation}
 Q(s_t,a_t) \;\leftarrow\; Q(s_t,a_t) + \alpha_{N(s_t,a_t)}\!\left(g_t - Q(s_t,a_t)\right),
-\tag{2.24}
+\tag{2.29}
 \end{equation}\]</span>
 applied only on the first occurrence of <span class="math inline">\((s_t,a_t)\)</span> in the episode. <em>Sample-average</em> learning uses <span class="math inline">\(\alpha_n = 1/n\)</span> per pair; more generally, use diminishing stepsizes.</p>
 <p><strong>Policy improvement (<span class="math inline">\(\varepsilon\)</span>-greedy):</strong>
@@ -855,7 +902,7 @@ applied only on the first occurrence of <span class="math inline">\((s_t,a_t)\)<
 1-\varepsilon + \dfrac{\varepsilon}{|\mathcal{A}(s)|}, &amp; a \in \arg\max_{a&#39;} Q(s,a&#39;), \\
 \dfrac{\varepsilon}{|\mathcal{A}(s)|}, &amp; \text{otherwise}.
 \end{cases}
-\tag{2.25}
+\tag{2.30}
 \end{equation}\]</span></p>
 <p><strong>Theoretical Guarantees.</strong></p>
 <p>Assume a tabular episodic MDP and <span class="math inline">\(\gamma \in [0,1)\)</span>.</p>
@@ -882,12 +929,12 @@ applied only on the first occurrence of <span class="math inline">\((s_t,a_t)\)<
 <span class="math display" id="eq:SARSA-TDTarget">\[\begin{equation}
 y_t = r_{t} + \gamma Q(s_{t+1}, a_{t+1}), \qquad
 \delta_t = y_t - Q(s_t, a_t).
-\tag{2.26}
+\tag{2.31}
 \end{equation}\]</span></p>
 <p><strong>SARSA update (one-step):</strong>
 <span class="math display" id="eq:SARSA-QUpdate">\[\begin{equation}
 Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha_t(s_t,a_t)\, \delta_t.
-\tag{2.27}
+\tag{2.32}
 \end{equation}\]</span></p>
 <p><strong><span class="math inline">\(\varepsilon\)</span>-greedy policy improvement:</strong>
 <span class="math display" id="eq:SARSA-PolicyUpdate">\[\begin{equation}
@@ -896,7 +943,7 @@ Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha_t(s_t,a_t)\, \delta_t.
 1-\varepsilon_{t+1} + \dfrac{\varepsilon_{t+1}}{|\mathcal A(s)|}, &amp; a \in \arg\max_{a&#39;} Q_{t+1}(s,a&#39;),\\
 \dfrac{\varepsilon_{t+1}}{|\mathcal A(s)|}, &amp; \text{otherwise.}
 \end{cases}
-\tag{2.28}
+\tag{2.33}
 \end{equation}\]</span></p>
 <!-- ### Algorithm 2 — SARSA (tabular, \(\varepsilon\)-greedy) {#alg:sarsa}
 1. Initialize \(Q(s,a)\) arbitrarily. Choose an exploration schedule \(\varepsilon_t\).
@@ -914,7 +961,7 @@ Q(s_t, a_t) \leftarrow Q(s_t, a_t) + \alpha_t(s_t,a_t)\, \delta_t.
 <li><p><strong>Expected SARSA</strong> replaces the sampled <span class="math inline">\(a_{t+1}\)</span> by its expectation under <span class="math inline">\(\pi_t\)</span> for lower variance:
 <span class="math display" id="eq:ExpectedSARSA-Target">\[\begin{equation}
 y_t = r_{t} + \gamma \sum_a \pi_t(a\mid s_{t+1}) Q(s_{t+1}, a).
-\tag{2.29}
+\tag{2.34}
 \end{equation}\]</span></p></li>
 <li><p><strong><span class="math inline">\(n\)</span>-step SARSA</strong> and <strong>SARSA(<span class="math inline">\(\lambda\)</span>)</strong> blend multi-step targets; these trade bias and variance similarly to MC vs TD.</p></li>
 </ul>
@@ -944,7 +991,7 @@ Because the data come from <span class="math inline">\(b\)</span>, the naive sam
 <p>A basic <em>support condition</em> is required:
 <span class="math display" id="eq:IS-SupportCondition">\[\begin{equation}
 \text{If } \pi(a\mid s) &gt; 0 \text{ then } b(a\mid s) &gt; 0 \quad \text{for all visited } (s,a).
-\tag{2.30}
+\tag{2.35}
 \end{equation}\]</span>
 This ensures that <span class="math inline">\(\pi\)</span> is absolutely continuous with respect to <span class="math inline">\(b\)</span> on the experienced trajectories.</p>
 <p><strong>Importance Sampling (episode-wise).</strong> Consider a trajectory starting at time <span class="math inline">\(t\)</span>:
@@ -966,22 +1013,22 @@ V^\pi (s) &amp; = \mathbb{E}_{\pi}[g_t \mid s_t = s] = \sum_{\tau_t} g_t \mathbb
 &amp; = \sum_{\tau_t} g_t \mathbb{P}_b[\tau_t \mid s_t = s] \left(\frac{\mathbb{P}_\pi [\tau_t \mid s_t = s]}{\mathbb{P}_b[\tau_t \mid s_t = s]} \right) \\
 &amp; = \sum_{\tau_t} \left( \frac{\pi(a_t \mid s_t) \pi(a_{t+1} \mid s_{t+1}) \cdots \pi(a_{T-1} \mid s_{T-1}) }{b(a_t \mid s_t)  b(a_{t+1} \mid s_{t+1}) \cdots b(a_{T-1} \mid s_{T-1})} \right) g_t \mathbb{P}_b [\tau_t \mid s_t = s]
 \end{split}
-\tag{2.31}
+\tag{2.36}
 \end{equation}\]</span>
 Therefore, define the <em>likelihood ratio</em>
 <span class="math display" id="eq:IS-LikelihoodRatio">\[\begin{equation}
 \rho_{t:T-1} = \prod_{k=t}^{T-1} \frac{\pi(a_k \mid s_k)}{b(a_k \mid s_k)},
-\tag{2.32}
+\tag{2.37}
 \end{equation}\]</span>
 we have
 <span class="math display" id="eq:IS-Value">\[\begin{equation}
 V^\pi(s) = \mathbb{E}_b\left[\rho_{t:T-1} g_t \mid s_t=s\right].
-\tag{2.33}
+\tag{2.38}
 \end{equation}\]</span>
 Similarly, we have
 <span class="math display" id="eq:IS-ActionValue">\[\begin{equation}
 Q^\pi(s,a) =  \mathbb{E}_b\!\left[\rho_{t:T-1} g_t \mid s_t=s, a_t=a\right].
-\tag{2.34}
+\tag{2.39}
 \end{equation}\]</span>
 Given <span class="math inline">\(n\)</span> episodes, the ordinary IS estimator for <span class="math inline">\(Q^\pi\)</span> at the first visit of <span class="math inline">\((s,a)\)</span> is
 <span class="math display">\[
@@ -1219,23 +1266,23 @@ Double Q-Learning:
 <p><strong>Induced State-Transition Kernel.</strong> For notational convenience, given a policy and the environment kernel <span class="math inline">\(P\)</span>, we define a state-only Markov kernel
 <span class="math display" id="eq:StateOnlyMarkovKernel">\[\begin{equation}
 P^\pi(B \mid s) := \int_{\mathcal{A}} P(B \mid s, a) \pi(da \mid s), \quad B \subseteq \mathcal{S}.
-\tag{2.35}
+\tag{2.40}
 \end{equation}\]</span>
 In words, <span class="math inline">\(P^\pi(B \mid s)\)</span> measures the probability of landing at a set <span class="math inline">\(B\)</span> starting from state <span class="math inline">\(s\)</span>, under all actions possible for the policy <span class="math inline">\(\pi\)</span>.</p>
 <p>If densities exist, i.e., <span class="math inline">\(P(ds&#39; \mid s, a) = p(s&#39; \mid s, a) ds&#39;\)</span> and <span class="math inline">\(\pi(da \mid s) = \pi(a \mid s) da\)</span>, then,
 <span class="math display" id="eq:StateOnlyMarkovKernel-density">\[\begin{equation}
 p^\pi(s&#39; \mid s) := \int_{\mathcal{A}} p(s&#39; \mid s, a) \pi(a \mid s) da \quad\text{and}\quad P^{\pi}(d s&#39; \mid s) = p^\pi(s&#39; \mid s) ds&#39;.
-\tag{2.36}
+\tag{2.41}
 \end{equation}\]</span></p>
 <p><strong>Stationary State Distribution.</strong> A probability measure <span class="math inline">\(\mu^\pi\)</span> on <span class="math inline">\(\mathcal{S}\)</span> is called <em>stationary</em> for the state-transition kernel <span class="math inline">\(P^\pi\)</span> if and only if
 <span class="math display" id="eq:StationaryDistribution-definition">\[\begin{equation}
 \mu^{\pi}(B) = \int_{\mathcal{S}} P^\pi(B \mid s) \mu^{\pi}(ds), \quad \forall B \subseteq \mathcal{S}.
-\tag{2.37}
+\tag{2.42}
 \end{equation}\]</span>
 If a density <span class="math inline">\(\mu^\pi(s)\)</span> exists, then the above equation is the followng condition
 <span class="math display" id="eq:StationaryDistribution-definition-density">\[\begin{equation}
 \mu^{\pi}(s&#39;) = \int_{\mathcal{S}} p^\pi(s&#39; \mid s) \mu^{\pi}(s) ds.
-\tag{2.38}
+\tag{2.43}
 \end{equation}\]</span>
 In words, the state distribution <span class="math inline">\(\mu^\pi\)</span> does not change under the state-transition kernel <span class="math inline">\(P^\pi\)</span> (e.g., if a state <span class="math inline">\(A\)</span> has probability <span class="math inline">\(0.1\)</span> of being visited at time <span class="math inline">\(t\)</span>, the probability of visiting <span class="math inline">\(A\)</span> in the next time step remains <span class="math inline">\(0.1\)</span>, under policy <span class="math inline">\(\pi\)</span>).
 Under standard ergodicity assumptions, this stationary state distribution <span class="math inline">\(\mu^\pi\)</span> exists and is unique (after sufficient steps, the initial state distribution does not matter and the state distribution follows <span class="math inline">\(\mu^\pi\)</span>). Moreover, the empirical state distribution converge to <span class="math inline">\(\mu^\pi\)</span>.</p>
@@ -1246,30 +1293,30 @@ Under standard ergodicity assumptions, this stationary state distribution <span 
 <p><strong>Bellman Consistency.</strong> Given a policy <span class="math inline">\(\pi: \mathcal{S} \mapsto \Delta(\mathcal{A})\)</span>, its associated state-value function <span class="math inline">\(V^\pi\)</span> must satisfy the following Bellman Consistency equation
 <span class="math display" id="eq:BellmanConsistencyContinuousStateFiniteAction">\[\begin{equation}
 V^{\pi}(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \int_{\mathcal{S}} V(s&#39;) P(d s&#39; \mid s, a)  \right].
-\tag{2.39}
+\tag{2.44}
 \end{equation}\]</span>
 Notice that since <span class="math inline">\(\mathcal{S}\)</span> is a continuous space, we need to replace “<span class="math inline">\(\sum_{s&#39; \in \mathcal{S}}\)</span>” with “<span class="math inline">\(\int_{\mathcal{S}}\)</span>”. If <span class="math inline">\(P(d s&#39; \mid s, a)\)</span> has a density <span class="math inline">\(p(s&#39; \mid s, a)\)</span>, the above Bellman consistency equation also reads
 <span class="math display" id="eq:BellmanConsistencyContinuousStateFiniteAction-1">\[\begin{equation}
 V^{\pi}(s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) \left[ R(s, a) + \gamma \int_{\mathcal{S}} V(s&#39;) p(s&#39; \mid s, a) ds&#39;  \right].
-\tag{2.40}
+\tag{2.45}
 \end{equation}\]</span></p>
 <p><strong>Bellman Operator.</strong> Define the Bellman operator <span class="math inline">\(T^\pi\)</span> acting on any bounded measurable function <span class="math inline">\(V:\mathcal{S}\to\mathbb{R}\)</span> by
 <span class="math display" id="eq:BellmanOperator">\[\begin{equation}
 (T^\pi V)(s) = \sum_{a\in\mathcal{A}} \pi(a\mid s)\left[ R(s,a) + \gamma \int_{\mathcal{S}} V(s&#39;) P(ds&#39;\mid s,a)\right].
-\tag{2.41}
+\tag{2.46}
 \end{equation}\]</span>
 Then <span class="math inline">\(V^\pi\)</span> is the unique fixed point of <span class="math inline">\(T^\pi\)</span>, i.e., <span class="math inline">\(V^\pi = T^\pi V^\pi\)</span>. Moreover, when rewards are uniformly bounded and <span class="math inline">\(\gamma\in[0,1)\)</span>, <span class="math inline">\(T^\pi\)</span> is a <span class="math inline">\(\gamma\)</span>-contraction under the sup-norm and is monotone.</p>
 <p><strong>Approximate Value Function.</strong> In large/continuous state spaces we restrict attention to a parametric family <span class="math inline">\({V(\cdot;\theta): \theta\in\mathbb{R}^d}\)</span> and learn <span class="math inline">\(\theta\)</span> from data. We use <span class="math inline">\(\nabla_\theta V(s;\theta) \in \mathbb{R}^d\)</span> to denote the gradient of <span class="math inline">\(V\)</span> with respect to <span class="math inline">\(\theta\)</span> at state <span class="math inline">\(s\)</span>.</p>
 <p>A special and very important case is linear function approximation
 <span class="math display" id="eq:LinearV">\[\begin{equation}
 V(s;\theta) = \theta^\top \phi(s),
-\tag{2.42}
+\tag{2.47}
 \end{equation}\]</span>
 where <span class="math inline">\(\phi(s) = [\phi_1(s),\ldots,\phi_d(s)]^\top\)</span> are fixed basis functions (e.g., neural network last-layer features). When <span class="math inline">\(V(s;\theta) = \theta^{\top} \phi(s)\)</span>, we have
 <span class="math display">\[
 \nabla_\theta V(s;\theta) = \phi(s).
 \]</span>
-When we restrict the value function to a function class (e.g., linear features or a neural network), it is generally not guaranteed that the unique fixed point of the Bellman operator <a href="value-rl.html#eq:BellmanOperator">(2.41)</a>, namely <span class="math inline">\(V^\pi\)</span>, belongs to that class. This misspecification (or realizability gap) means we typically cannot recover <span class="math inline">\(V^\pi\)</span> exactly; instead, we seek its <em>best approximation</em> according to a chosen criterion.</p>
+When we restrict the value function to a function class (e.g., linear features or a neural network), it is generally not guaranteed that the unique fixed point of the Bellman operator <a href="value-rl.html#eq:BellmanOperator">(2.46)</a>, namely <span class="math inline">\(V^\pi\)</span>, belongs to that class. This misspecification (or realizability gap) means we typically cannot recover <span class="math inline">\(V^\pi\)</span> exactly; instead, we seek its <em>best approximation</em> according to a chosen criterion.</p>
 <!-- For analysis and algorithm design it is convenient to fix a weighting distribution $d$ over $\mathcal{S}$ (e.g., the on-policy stationary visitation density under $\pi$) and define the inner product $\langle f,g\rangle_d := \mathbb{E}_{s\sim d}[f(s)g(s)]$ with norm $|f|_d := \sqrt{\langle f,f\rangle_d}$. The mean-squared value error (MSVE) is
 \begin{equation}
 J(\theta) ;=; \tfrac12 , | V(\cdot;\theta) - V^\pi(\cdot)|d^2 ;=; \tfrac12,\mathbb{E}{s\sim d}!\left[ \big(V(s;\theta)-V^\pi(s)\big)^2\right].
@@ -1296,9 +1343,9 @@ is an unbiased estimate of the value at <span class="math inline">\(s_t\)</span>
 <p>Therefore, Monte Carlo estimation follows the intuitive idea to make the approximate value function <span class="math inline">\(V(\cdot, \theta)\)</span> fit the returns from these episodes as close as possible:
 <span class="math display" id="eq:MCEstimationGoal">\[\begin{equation}
 \min_{\theta} \frac{1}{\mathcal{D}} \sum_{t \in \mathcal{D}} \frac{1}{2} (g_t - V(s_t, \theta))^2,
-\tag{2.43}
+\tag{2.48}
 \end{equation}\]</span>
-where <span class="math inline">\(\mathcal{D}\)</span> denotes the dataset of episodes collected under policy <span class="math inline">\(\pi\)</span>. The formulation <a href="value-rl.html#eq:MCEstimationGoal">(2.43)</a> is a formulation in the sense that it waits until all episodes are collected before performing the optimization.</p>
+where <span class="math inline">\(\mathcal{D}\)</span> denotes the dataset of episodes collected under policy <span class="math inline">\(\pi\)</span>. The formulation <a href="value-rl.html#eq:MCEstimationGoal">(2.48)</a> is a formulation in the sense that it waits until all episodes are collected before performing the optimization.</p>
 <p>In an online formulation, we can optimize after every episode the objective function
 <span class="math display">\[
 \min_{\theta} \frac{1}{2} (g_t - V(s_t, \theta))^2,
@@ -1306,7 +1353,7 @@ where <span class="math inline">\(\mathcal{D}\)</span> denotes the dataset of ep
 which leads to one step of gradient descent:
 <span class="math display" id="eq:MCOneStepGD">\[\begin{equation}
 \theta \ \ \leftarrow \ \ \theta + \alpha_t (g_t - V(s_t;\theta)) \nabla_\theta V(s_t; \theta).
-\tag{2.44}
+\tag{2.49}
 \end{equation}\]</span>
 To connect the above update back to the MC update <a href="value-rl.html#eq:mc-incremental">(2.4)</a> in the tabular case, we see that the term <span class="math inline">\(g_t - V(s_t;\theta\)</span> is similar as before the difference between the target and the current estimate. However, in the case of function approximation, the error is multiplied by the gradient <span class="math inline">\(\nabla_\theta V (s_t; \theta)\)</span>.</p>
 <p>It is worth noting that when using function approximation, the update on <span class="math inline">\(\theta\)</span> caused by one episode <span class="math inline">\((s_t,\dots)\)</span> will affect the values at all other states even if the policy only visited state <span class="math inline">\(s_t\)</span>.</p>
@@ -1319,7 +1366,7 @@ To connect the above update back to the MC update <a href="value-rl.html#eq:mc-i
 and <span class="math inline">\(\mathbb{E}_{s \sim \mu^\pi}\|\phi(s)\|^2&lt;\infty\)</span>, the iterates converge almost surely to the unique global minimizer of the convex objective
 <span class="math display" id="eq:convergence-of-MC">\[\begin{equation}
 \theta_{\text{MC}}^\star \in \arg\min_\theta \;  \frac{1}{2}\mathbb{E}_{s_t \sim \mu^\pi}\!\left[ \big(V(s_t;\theta)-V^\pi(s_t)\big)^2 \right],
-\tag{2.45}
+\tag{2.50}
 \end{equation}\]</span>
 where the expectation is with respect to stationary state distribution <span class="math inline">\(\mu^\pi\)</span> under <span class="math inline">\(\pi\)</span>.</p></li>
 <li><p>For <em>nonlinear</em> differentiable function classes with bounded gradients, the iterates converge almost surely to a stationary point of the same objective.</p></li>
@@ -1327,14 +1374,14 @@ where the expectation is with respect to stationary state distribution <span cla
 </div>
 <div id="semi-gradient-td0" class="section level4 hasAnchor" number="2.2.2.2">
 <h4><span class="header-section-number">2.2.2.2</span> Semi-Gradient TD(0)<a href="value-rl.html#semi-gradient-td0" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>We know from previous discussion that MC uses the full return <span class="math inline">\(g_t\)</span> as the target and thus can have high variance. A straightforward idea is to replace the MC target <span class="math inline">\(g_t\)</span> in the update <a href="value-rl.html#eq:MCOneStepGD">(2.44)</a> by the one-step bootstrap target
+<p>We know from previous discussion that MC uses the full return <span class="math inline">\(g_t\)</span> as the target and thus can have high variance. A straightforward idea is to replace the MC target <span class="math inline">\(g_t\)</span> in the update <a href="value-rl.html#eq:MCOneStepGD">(2.49)</a> by the one-step bootstrap target
 <span class="math display">\[
 r_t + \gamma V(s_{t+1};\theta),
 \]</span>
 which yields the <em>semi-gradient TD(0)</em> update
 <span class="math display" id="eq:SemiGradientTD0">\[\begin{equation}
 \theta \ \leftarrow\ \theta \;+\; \alpha_t \,\big(r_t + \gamma V(s_{t+1};\theta) - V(s_t;\theta)\big)\, \nabla_\theta V(s_t;\theta).
-\tag{2.46}
+\tag{2.51}
 \end{equation}\]</span>
 (At terminal <span class="math inline">\(s_{t+1}\)</span>, use <span class="math inline">\(V(s_{t+1};\theta)=0\)</span> or equivalently set <span class="math inline">\(\gamma=0\)</span> for that step.)</p>
 <p><strong>Why call it “semi-gradient”?</strong> Let the TD error be
@@ -1354,16 +1401,16 @@ Its <strong>true gradient</strong> (a.k.a. the <em>residual gradient</em>) is
 Thus a <strong>true-gradient (residual-gradient) TD(0)</strong> step would be
 <span class="math display" id="eq:ResidualGradientTD0">\[\begin{equation}
 \theta \ \leftarrow\ \theta \;-\; \alpha_t \,\delta_t(\theta)\,\big(\gamma \nabla_\theta V(s_{t+1};\theta) - \nabla_\theta V(s_t;\theta)\big).
-\tag{2.47}
+\tag{2.52}
 \end{equation}\]</span></p>
-<p>By contrast, the semi-gradient TD(0) step in <a href="value-rl.html#eq:SemiGradientTD0">(2.46)</a> ignores the dependence of the target on <span class="math inline">\(\theta\)</span> (i.e., it drops the <span class="math inline">\(\gamma \nabla_\theta V(s_{t+1};\theta)\)</span> term) and treats the target <span class="math inline">\(r_t+\gamma V(s_{t+1};\theta)\)</span> as a <em>constant</em> when differentiating. Concretely,
+<p>By contrast, the semi-gradient TD(0) step in <a href="value-rl.html#eq:SemiGradientTD0">(2.51)</a> ignores the dependence of the target on <span class="math inline">\(\theta\)</span> (i.e., it drops the <span class="math inline">\(\gamma \nabla_\theta V(s_{t+1};\theta)\)</span> term) and treats the target <span class="math inline">\(r_t+\gamma V(s_{t+1};\theta)\)</span> as a <em>constant</em> when differentiating. Concretely,
 <span class="math display">\[
 \nabla_\theta \frac{1}{2} \big( \text{target} - V(s_t;\theta)\big)^2
 \;\approx\;
 -\big(\text{target} - V(s_t;\theta)\big)\,\nabla_\theta V(s_t;\theta).
 \]</span>
-This approximation yields the simpler update <a href="value-rl.html#eq:SemiGradientTD0">(2.46)</a>.</p>
-<p><strong>Convergence Guarantees.</strong> When using linear approximation, the Monte Carlo estimator converges to <span class="math inline">\(\theta^\star_{\text{MC}}\)</span> in <a href="value-rl.html#eq:convergence-of-MC">(2.45)</a>. We now study what the semi-gradient TD(0) updates <a href="value-rl.html#eq:SemiGradientTD0">(2.46)</a> converge to.</p>
+This approximation yields the simpler update <a href="value-rl.html#eq:SemiGradientTD0">(2.51)</a>.</p>
+<p><strong>Convergence Guarantees.</strong> When using linear approximation, the Monte Carlo estimator converges to <span class="math inline">\(\theta^\star_{\text{MC}}\)</span> in <a href="value-rl.html#eq:convergence-of-MC">(2.50)</a>. We now study what the semi-gradient TD(0) updates <a href="value-rl.html#eq:SemiGradientTD0">(2.51)</a> converge to.</p>
 <p><strong>Projected Bellman Operator.</strong> Fix a weighting/visitation distribution <span class="math inline">\(\mu\)</span> on <span class="math inline">\(\mathcal S\)</span> (e.g., the stationary distribution <span class="math inline">\(\mu^\pi\)</span>) and the associated inner product
 <span class="math display">\[
 \langle f,g\rangle_\mu := \mathbb{E}_{s\sim \mu}[\,f(s)g(s)\,],
@@ -1380,10 +1427,10 @@ The Projected Bellman Operator is the composition
 \mathcal{T}^\pi_{\!\text{proj}} \;:=\; \Pi_\mu \, T^\pi,
 \qquad\text{i.e.,}\qquad
 \big(\mathcal{T}^\pi_{\!\text{proj}} V\big)(\cdot) \;=\; \Pi_\mu \!\left[\, T^\pi V \,\right](\cdot).
-\tag{2.48}
+\tag{2.53}
 \end{equation}\]</span></p>
 <ul>
-<li><p><span class="math inline">\(T^\pi\)</span> is the Bellman operator defined in <a href="value-rl.html#eq:BellmanOperator">(2.41)</a>.</p></li>
+<li><p><span class="math inline">\(T^\pi\)</span> is the Bellman operator defined in <a href="value-rl.html#eq:BellmanOperator">(2.46)</a>.</p></li>
 <li><p><span class="math inline">\(\Pi_\mu\)</span> projects any function onto <span class="math inline">\(\mathcal V\)</span> using the <span class="math inline">\(\mu\)</span>-weighted <span class="math inline">\(L^2\)</span> norm.</p></li>
 <li><p>In discrete <span class="math inline">\(\mathcal S\)</span>, write <span class="math inline">\(\Phi\in\mathbb{R}^{|\mathcal S|\times d}\)</span> with rows <span class="math inline">\(\phi(s)^\top\)</span> and <span class="math inline">\(D=\mathrm{diag}(\mu(s))\)</span>. Then
 <span class="math display">\[
@@ -1394,16 +1441,16 @@ The Projected Bellman Operator is the composition
 \|\Pi_\mu T^\pi V - \Pi_\mu T^\pi U\|_\mu \;\le\; \|T^\pi V - T^\pi U\|_\mu \;\le\; \gamma \|V-U\|_\mu.
 \]</span></p></li>
 </ul>
-<p>Therefore, <a href="value-rl.html#eq:ProjectedBellmanOperator">(2.48)</a>, the projected Bellman equation (PBE), has a unique fixed point <span class="math inline">\(V_{\text{TD}}^\star\in\mathcal V\)</span> satisfying
+<p>Therefore, <a href="value-rl.html#eq:ProjectedBellmanOperator">(2.53)</a>, the projected Bellman equation (PBE), has a unique fixed point <span class="math inline">\(V_{\text{TD}}^\star\in\mathcal V\)</span> satisfying
 <span class="math display" id="eq:PBEFixedPoint">\[\begin{equation}
 V_{\text{TD}}^\star \;=\; \Pi_\mu\, T^\pi V_{\text{TD}}^\star.
-\tag{2.49}
+\tag{2.54}
 \end{equation}\]</span></p>
 <p><strong>Semi-gradient TD(0) Converges to the PBE Fixed Point (linear case).</strong> Assume on-policy sampling under an ergodic chain, bounded second moments, Robbins–Monro stepsizes, and full-rank features under <span class="math inline">\(\mu = \mu^\pi\)</span>. In the linear case <span class="math inline">\(V(s;\theta)=\theta^\top\phi(s)\)</span>, define
 <span class="math display">\[
 \delta_t(\theta) := r_t + \gamma \theta^\top \phi(s_{t+1}) - \theta^\top \phi(s_t).
 \]</span>
-The semi-gradient TD(0) update <a href="value-rl.html#eq:SemiGradientTD0">(2.46)</a> becomes
+The semi-gradient TD(0) update <a href="value-rl.html#eq:SemiGradientTD0">(2.51)</a> becomes
 <span class="math display">\[
 \theta \leftarrow \theta + \alpha_t\, \delta_t(\theta)\,\phi(s_t).
 \]</span>
@@ -1416,7 +1463,7 @@ with the standard TD system
 A \;:=\; \mathbb{E}_{\mu}\!\big[\phi(s_t)\big(\phi(s_t)-\gamma \phi(s_{t+1})\big)^\top\big],
 \qquad
 b \;:=\; \mathbb{E}_{\mu}\!\big[r_{t}\,\phi(s_t)\big].
-\tag{2.50}
+\tag{2.55}
 \end{equation}\]</span>
 Thus, in expectation, TD(0) performs a stochastic approximation to the ODE
 <span class="math display">\[
@@ -1431,7 +1478,7 @@ provided the symmetric part of <span class="math inline">\(A\)</span> is positiv
 \theta_t \xrightarrow{\text{a.s.}} \theta^\star_{\text{TD}}.
 \]</span>
 Finally, one can show the equivalence with the PBE: <span class="math inline">\(V(\cdot; \theta) \in\mathcal V\)</span> satisfies <span class="math inline">\(V(\cdot; \theta)=\Pi_\mu T^\pi V(\cdot; \theta)\)</span> if and only if <span class="math inline">\(A\theta \;=\; b\)</span> (see a proof below).
-Hence the almost-sure limit <span class="math inline">\(V(\cdot; \theta^\star_{\text{TD}})\)</span> is exactly the fixed point <a href="value-rl.html#eq:PBEFixedPoint">(2.49)</a>.</p>
+Hence the almost-sure limit <span class="math inline">\(V(\cdot; \theta^\star_{\text{TD}})\)</span> is exactly the fixed point <a href="value-rl.html#eq:PBEFixedPoint">(2.54)</a>.</p>
 <div class="proofbox">
 <div class="proof">
 <p><span id="unlabeled-div-15" class="proof"><em>Proof</em>. </span>The projected Bellman equation reads
@@ -1442,13 +1489,13 @@ Since <span class="math inline">\(V(\cdot; \theta) = \theta^\top \phi(\cdot)\)</
 <span class="math display">\[
 \mathbb{E}_\mu \left[ \phi(s_t) (T^\pi V(s_t;\theta) - V(s_t;\theta)) \right] = 0 = \mathbb{E}_\mu \left[ \phi(s_t) (r_t + \gamma \theta^\top \phi(s_{t+1}) - \theta^\top \phi(s_t) )\right],
 \]</span>
-which reduces to <span class="math inline">\(A \theta = b\)</span> with <span class="math inline">\(A\)</span> and <span class="math inline">\(b\)</span> defined in <a href="value-rl.html#eq:TDLinearSystem-again">(2.50)</a>.</p>
+which reduces to <span class="math inline">\(A \theta = b\)</span> with <span class="math inline">\(A\)</span> and <span class="math inline">\(b\)</span> defined in <a href="value-rl.html#eq:TDLinearSystem-again">(2.55)</a>.</p>
 </div>
 </div>
 <p><strong>What does convergence to the PBE fixed point imply?</strong></p>
 <ul>
 <li><p><strong>Best fixed point in the feature subspace (good).</strong> <span class="math inline">\(V_{\text{TD}}^\star\)</span> is the unique function in <span class="math inline">\(\mathcal V\)</span> whose Bellman update <span class="math inline">\(T^\pi V\)</span> projects back to itself under <span class="math inline">\(\Pi_\mu\)</span>. If <span class="math inline">\(V^\pi\in\mathcal V\)</span> (realisable case), then <span class="math inline">\(V_{\text{TD}}^\star=V^\pi\)</span>.</p></li>
-<li><p><strong>Different target than least squares (mixed).</strong> TD(0) solves the Projected Bellman Equation <a href="value-rl.html#eq:ProjectedBellmanOperator">(2.48)</a>; Monte Carlo least-squares solves
+<li><p><strong>Different target than least squares (mixed).</strong> TD(0) solves the Projected Bellman Equation <a href="value-rl.html#eq:ProjectedBellmanOperator">(2.53)</a>; Monte Carlo least-squares solves
 <span class="math display">\[
 \min_{V\in\mathcal V} \frac{1}{2} \|V - V^\pi\|_\mu^2.
 \]</span>
@@ -1468,12 +1515,12 @@ When <span class="math inline">\(V^\pi\notin\mathcal V\)</span>, these solutions
 <li><p>Form the TD error
 <span class="math display" id="eq:SARSA-TDerror">\[\begin{equation}
 \delta_t \;=\; r_t \;+\; \gamma\, Q(s_{t+1},a_{t+1};\theta) \;-\; Q(s_t,a_t;\theta).
-\tag{2.51}
+\tag{2.56}
 \end{equation}\]</span></p></li>
 <li><p>Update parameters with a semi-gradient step
 <span class="math display" id="eq:SARSA-Update">\[\begin{equation}
 \theta \;\leftarrow\; \theta \;+\; \alpha_t\, \delta_t \,\nabla_\theta Q(s_t,a_t;\theta).
-\tag{2.52}
+\tag{2.57}
 \end{equation}\]</span>
 For terminal <span class="math inline">\(s_{t+1}\)</span>, use <span class="math inline">\(Q(s_{t+1},a_{t+1};\theta)=0\)</span> (equivalently, set <span class="math inline">\(\gamma=0\)</span> on terminal transitions).</p></li>
 </ol>
@@ -1485,7 +1532,7 @@ For terminal <span class="math inline">\(s_{t+1}\)</span>, use <span class="math
 <li><p><strong>Expected SARSA (variance reduction).</strong> Replace the sample bootstrap by its expectation under <span class="math inline">\(\pi_t\)</span>:
 <span class="math display" id="eq:ExpectedSARSA">\[\begin{equation}
 \delta_t^{\text{exp}} \;=\; r_t \;+\; \gamma \sum_{a&#39;\in\mathcal A} \pi_t(a&#39;\mid s_{t+1})\, Q(s_{t+1},a&#39;;\theta) \;-\; Q(s_t,a_t;\theta),
-\tag{2.53}
+\tag{2.58}
 \end{equation}\]</span>
 then update <span class="math inline">\(\theta \leftarrow \theta + \alpha_t\, \delta_t^{\text{exp}}\, \nabla_\theta Q(s_t,a_t;\theta)\)</span>.</p></li>
 </ul>

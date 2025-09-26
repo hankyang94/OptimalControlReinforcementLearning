@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-09-25}
+\date{2025-09-26}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -2240,7 +2240,7 @@ is called the TD error. It measures the discrepancy between the current value es
   \[
   \sum_t \alpha_t = \infty, \; \sum_t \alpha_t^2 < \infty
   \]
-  then TD(0) converges almost surely to the true value function \(V^\pi\). For example, choosing \(\alpha_t = 1/(t+1)\) satisfies this condition.
+  then TD(0) converges almost surely to the true value function \(V^\pi\). For example, choosing \(\alpha_t = 1/(t+1)\) satisfies this condition. Section \ref{value-rl-convergence-td} provides a detailed proof of the convergence of TD learning.
 \item
   \textbf{Bias--Variance Tradeoff:}
 
@@ -2592,7 +2592,7 @@ Fig. \ref{fig:policy-evaluation-random-walk-diminishing-step-size} shows the MSE
 You are encouraged to play with the parameters of these algorithms in the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/policy_evaluation_mc_td.py}{here}.
 \end{example}
 
-\subsection{Convergence Proof of TD Learning}\label{convergence-proof-of-td-learning}
+\subsection{Convergence Proof of TD Learning}\label{value-rl-convergence-td}
 
 \textbf{Setup.} Consider a tabular MDP with finite state space \(\mathcal{S}\) and action space \(\mathcal{A}\), and a discount factor \(\gamma \in [0,1)\). Assume the reward function is bounded, for example, \(R(s,a) \in [0,1]\) for any \((s,a) \in \mathcal{S} \times \mathcal{A}\). Let \(\pi\) be a stochastic policy and \(V^\pi\) be the true value function associated with \(\pi\), the target we wish to estimate from interaction data. Denote
 \[
@@ -2615,7 +2615,25 @@ The update \eqref{eq:TD0update-proof} only changes the value at \(s_t\), leaving
 \[
 \alpha_t(s) >0, \quad \sum_{t: s_t = s} \alpha_t(s) = \infty, \quad \sum_{t: s_t = s} \alpha^2_t(s) < \infty.
 \]
-Assume the Markov chain over \(\mathcal{S}\) induced by \(\pi\) is ergodic with a stationary distribution \(\mu^\pi\) (see \eqref{eq:StationaryDistribution-definition}), so that so every state is visited infinitely often almost surely.
+
+\textbf{Stationary Distribution.}
+Assume the Markov chain over \(\mathcal{S}\) induced by \(\pi\) is ergodic, then a unique stationary state distribution \(\mu^\pi\) exists and satisfy:
+\begin{equation}
+\mu^\pi(s') = \sum_{s \in \mathcal{S}} \mu^\pi(s) \left( \sum_{a \in \mathcal{A}}  \pi(a \mid s) P(s' \mid s, a) \right), \quad \forall s' \in \mathcal{S}.
+\label{eq:StationaryDistribution-Tabular}
+\end{equation}
+If we denote
+\begin{equation}
+P^\pi(s' \mid s) = \sum_{a \in \mathcal{A}} \pi(a \mid s) P(s' \mid s,a),
+\label{eq:TabularStateOnlyTransition}
+\end{equation}
+as the \(\pi\)-induced state-only transition dynamics, then condition \eqref{eq:StationaryDistribution-Tabular} is equivalent to
+\begin{equation}
+\mu^\pi(s') = \sum_{s \in \mathcal{S}} \mu^\pi(s) P^\pi (s' \mid s), \quad \forall s' \in \mathcal{S}.
+\label{eq:StationaryDistribution-Tabular-State-Only}
+\end{equation}
+
+See \eqref{eq:StationaryDistribution-definition} for a generalization to continuous MDP.
 
 \textbf{Bellman Operator.} For any \(V:\mathcal S\to\mathbb R\), define the Bellman operator associated with \(\pi\) as \(T^\pi V:\mathcal S\to\mathbb R\) by
 \begin{equation}
@@ -2643,7 +2661,7 @@ Then \(X_t\) converges almost surely to a finite random variable and \(\sum_t \b
 This lemma is from \citep{robbins1971convergence}.
 
 \begin{lemma}
-\protect\hypertarget{lem:TDConvergenceLemma}{}\label{lem:TDConvergenceLemma}Let \(D=\mathrm{diag}(\mu^\pi)\) and \(w:=V-V^\pi\). Then
+\protect\hypertarget{lem:TDConvergenceLemma}{}\label{lem:TDConvergenceLemma}Let \(\mu^\pi\) be the stationary distribution in \eqref{eq:StationaryDistribution-Tabular-State-Only}, \(D=\mathrm{diag}(\mu^\pi)\), and \(w:=V-V^\pi\). Then
 \[
 \langle w,\,D\,(T^\pi V - V)\rangle\;\le\;-(1-\gamma)\,\|w\|_D^2,
 \]
@@ -2660,9 +2678,10 @@ Therefore,
 T^\pi V - T^\pi U = \gamma \widetilde P (V - U),
 \]
 with
-\[
+\begin{equation}
 (\widetilde P u)(s):=\sum_a\pi(a\mid s)\sum_{s'}P(s'\mid s,a)\,u(s').
-\]
+\label{eq:def-tilde-P}
+\end{equation}
 With this, we can write
 \begin{equation}
 \begin{split}
@@ -2674,12 +2693,47 @@ T^\pi V - V & = T^\pi V - V^\pi + V^\pi - V \\
 \end{split}
 \end{equation}
 Thus,
-\[
+\begin{equation}
 \langle w, D(T^\pi V - V)\rangle
 = -\,w^\top D\,(I-\gamma \widetilde P)\,w
 = -\|w\|_D^2 + \gamma\,\langle w, D\,\widetilde P w\rangle.
+\label{eq:InnerProductInequality}
+\end{equation}
+
+Next, we prove \(\langle w, D\widetilde P w\rangle\le \|w\|_D^2\).
+
+\begin{itemize}
+\item
+  First, we show \(\|\widetilde P w\|_D\le \|w\|_D\). For any state \(s \in \mathcal{S}\), from \eqref{eq:def-tilde-P}, we have
+  \[
+  (\widetilde P w)(s) = \sum_{s'} P^\pi (s' \mid s) w(s'),
+  \]
+  where \(P^\pi(s' \mid s)\) is the \(\pi\)-induced state-only transition in \eqref{eq:TabularStateOnlyTransition}. Since \(P^\pi(\cdot \mid s)\) is a probability distribution, and \(x \mapsto x^2\) is convex, we have
+  \[
+  ((\widetilde P w)(s))^2 = \left( \sum_{s'} P^\pi (s' \mid s) w(s') \right)^2 \leq \sum_{s'} P^\pi (s' \mid s) w^2(s').
+  \]
+  Therefore, we have
+  \begin{equation}
+  \begin{split}
+  \Vert \widetilde P w \Vert_D^2 & = \sum_s \mu^{\pi}(s) ((\widetilde P w)(s))^2 \\
+  & \leq \sum_s \mu^{\pi}(s) \left( \sum_{s'} P^\pi (s' \mid s) w^2(s') \right) \\
+  & = \sum_{s'} \left( \sum_{s} \mu^\pi(s) P^\pi(s' \mid s) \right) w^2(s') \\
+  & = \sum_{s'} \mu^\pi (s') w^2 (s') = \Vert w \Vert_D^2.
+  \end{split}
+  \end{equation}
+  where the second-from-last equality holds because \(\mu^\pi\) is the stationary distribution and satisfies \eqref{eq:StationaryDistribution-Tabular-State-Only}.
+\item
+  Second, we write
+  \[
+  \langle w, D\widetilde P w\rangle = \langle D^{0.5} w, D^{0.5} \widetilde P w \rangle \leq \Vert D^{0.5} w \Vert \cdot \Vert D^{0.5} \widetilde P w \Vert = \Vert w \Vert_D \cdot \Vert \widetilde P w \Vert_D \leq \Vert w \Vert_D^2.
+  \]
+\end{itemize}
+
+Plugging this back to \eqref{eq:InnerProductInequality}, we obtain
+\[
+\langle w, D(T^\pi V - V) \rangle \leq - \Vert w \Vert_D^2 + \gamma \Vert w \Vert_D^2,
 \]
-By Cauchy--Schwarz and Jensen, \(\|\widetilde P w\|_D\le \|w\|_D\), hence \(\langle w, D\widetilde P w\rangle\le \|w\|_D^2\).
+proving the desired result in the lemma.
 \end{proof}
 
 We are now ready to prove Theorem \ref{thm:TD0ConvergenceTabular}.
@@ -2716,7 +2770,7 @@ Let \(w_t:=V_t - V^\pi\). Since only the \(s_t\)-coordinate changes at time \(t\
 \begin{split}
 \mathcal L(V_{t+1})-\mathcal L(V_t)
 &=\frac{1}{2} \mu^\pi(s_t)\Big(( \underbrace{V_t(s_t)+\alpha_t\delta_t}_{V_{t+1}(s_t)} - V^\pi(s_t) )^2 -(V_t(s_t)-V^\pi(s_t))^2\Big)\\
-&= \mu^\pi(s_t)\,\alpha_t\,\delta_t\,w_t(s_t)\;+\;\frac{1}{2} d^\pi(s_t)\,\alpha_t^2\,\delta_t^{\,2}.
+&= \mu^\pi(s_t)\,\alpha_t\,\delta_t\,w_t(s_t)\;+\;\frac{1}{2} \mu^\pi(s_t)\,\alpha_t^2\,\delta_t^{\,2}.
 \end{split}
 \label{eq:DifferenceBetweenLyapunov}
 \end{equation}
