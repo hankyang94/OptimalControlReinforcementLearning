@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-09-26" />
+<meta name="date" content="2025-09-29" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -201,6 +201,7 @@ div.csl-indent {
 <li class="chapter" data-level="2.2.1" data-path="value-rl.html"><a href="value-rl.html#basics-of-continuous-mdp"><i class="fa fa-check"></i><b>2.2.1</b> Basics of Continuous MDP</a></li>
 <li class="chapter" data-level="2.2.2" data-path="value-rl.html"><a href="value-rl.html#policy-evaluation-3"><i class="fa fa-check"></i><b>2.2.2</b> Policy Evaluation</a></li>
 <li class="chapter" data-level="2.2.3" data-path="value-rl.html"><a href="value-rl.html#on-policy-control-1"><i class="fa fa-check"></i><b>2.2.3</b> On-Policy Control</a></li>
+<li class="chapter" data-level="2.2.4" data-path="value-rl.html"><a href="value-rl.html#off-policy-control-1"><i class="fa fa-check"></i><b>2.2.4</b> Off-Policy Control</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="3" data-path="policy-gradient.html"><a href="policy-gradient.html"><i class="fa fa-check"></i><b>3</b> Policy Gradients</a></li>
@@ -1539,42 +1540,158 @@ then update <span class="math inline">\(\theta \leftarrow \theta + \alpha_t\, \d
 <ol start="5" style="list-style-type: decimal">
 <li>Update the next policy to be <span class="math inline">\(\varepsilon_{t+1}\)</span>-greedy w.r.t. the new Q value <span class="math inline">\(Q(\cdot, \cdot; \theta_{t+1})\)</span>. (<span class="math inline">\(\varepsilon_t\)</span> follows GLIE.)</li>
 </ol>
-<!-- ::: {.examplebox}
-::: {.example #MountainCarSemiGradientSARSA name="Semi-Gradient SARSA for Mountain Car"}
-Mountain car
-
-
-
-:::
-::: -->
-<!-- **Convergence guarantees.**
-
-- **Prediction (fixed policy, linear function approximation, on-policy).**  
-  Assume an ergodic Markov chain under a fixed policy \(\pi\), bounded rewards/features, Robbins–Monro stepsizes \(\sum_t \alpha_t=\infty\), \(\sum_t \alpha_t^2<\infty\), and **full-rank features** under the visitation distribution \(d^\pi\). Let
-  \[
-  A \;:=\; \mathbb{E}_{d^\pi}\!\Big[\phi(S_t,A_t)\big(\phi(S_t,A_t) - \gamma\,\phi(S_{t+1},A_{t+1})\big)^\top\Big],\quad
-  b \;:=\; \mathbb{E}_{d^\pi}\!\big[ R_t\, \phi(S_t,A_t)\big],
-  \tag{\#eq:SARSA-LinearSystem}
-  \]
-  where \(A_t\sim\pi(\cdot\mid S_t)\) and \(A_{t+1}\sim\pi(\cdot\mid S_{t+1})\). Then semi-gradient SARSA(0) is a stochastic approximation to \(\dot\theta = b - A\theta\) and
-  \[
-  \theta_t \xrightarrow{\text{a.s.}} \ \theta^\star \;=\; A^{-1}b,
-  \]
-  so \(Q(\cdot,\cdot;\theta^\star)\) is the unique solution of the **Projected Bellman Equation** for action-values:
-  \[
-  Q(\cdot,\cdot;\theta^\star) \;=\; \Pi_d \, T^\pi Q(\cdot,\cdot;\theta^\star),
-  \]
-  where \(\Pi_d\) is the \(d^\pi\)-orthogonal projection onto the linear span of \(\phi\), and \(T^\pi\) is the action-value Bellman operator.
-
-- **Control (changing policy via \(\varepsilon\)-greedy).**  
-  In the **tabular** case, with GLIE exploration and suitable stepsizes, SARSA(0) converges to an **optimal policy**. With **function approximation**, general convergence to the globally optimal policy is **not guaranteed**; however, on-policy semi-gradient SARSA is typically **stable** and converges to a fixed point of the projected Bellman operator for the (slowly varying/limiting) policies. Using **Expected SARSA** often improves stability by reducing target variance.
-
-- **Nonlinear approximation.**  
-  For general nonlinear \(Q(s,a;\theta)\), global convergence guarantees are lacking; the algorithm may converge to a local fixed point or may diverge. In practice, standard stabilizers (target networks, replay, regularization) are often employed.
-
-**Remarks.**  
-- SARSA is **on-policy**: it evaluates and improves the *same* behavior policy. This avoids the classic off-policy instability (“deadly triad”) seen in Q-learning with function approximation.  
-- Compared to Monte Carlo control, SARSA learns **online** with **lower variance** per update; compared to off-policy Q-learning, it is usually more **stable** with function approximation but may converge more slowly to near-greedy behavior. -->
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:MountainCarSemiGradientSARSA" class="example"><strong>Example 2.3  (Semi-Gradient SARSA for Mountain Car) </strong></span>Mountain car</p>
+</div>
+</div>
+</div>
+</div>
+<div id="off-policy-control-1" class="section level3 hasAnchor" number="2.2.4">
+<h3><span class="header-section-number">2.2.4</span> Off-Policy Control<a href="value-rl.html#off-policy-control-1" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Off-policy control seeks to learn the optimal action–value function while collecting data under a different behavior policy (e.g., an <span class="math inline">\(\varepsilon\)</span>-soft policy). As in the tabular setting, Q-learning is the canonical off-policy control method. With function approximation, however, off-policy control becomes substantially harder than in the tabular case.</p>
+<p>To illustrate why, we first present off-policy semi-gradient TD(0) for policy evaluation and use Baird’s counterexample <span class="citation">(<a href="#ref-baird1995residual">Baird et al. 1995</a>)</span> to highlight the deadly triad: bootstrapping + function approximation + off-policy sampling can cause divergence.</p>
+<p>We then turn to the Deep Q-Network (DQN) <span class="citation">(<a href="#ref-mnih2015human">Mnih et al. 2015</a>)</span>, which stabilizes Q-learning with two key mechanisms—experience replay and a target network—leading to landmark Atari results. Finally, we connect DQN to fitted Q-iteration (FQI) <span class="citation">(<a href="#ref-riedmiller2005neural">Riedmiller 2005</a>)</span>, a batch method with theoretical guarantees, to clarify why these stabilizations work <span class="citation">(<a href="#ref-fan2020theoretical">Fan et al. 2020</a>)</span>.</p>
+<div id="off-policy-semi-gradient-td0" class="section level4 hasAnchor" number="2.2.4.1">
+<h4><span class="header-section-number">2.2.4.1</span> Off-Policy Semi-Gradient TD(0)<a href="value-rl.html#off-policy-semi-gradient-td0" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p><strong>Setup.</strong> We aim to estimate the state-value function of a target policy <span class="math inline">\(\pi\)</span> using a different behavior policy <span class="math inline">\(b\)</span>. Since the state space is continuous, we employ function approximation to represent the value function as <span class="math inline">\(V(s;\theta)\)</span> with <span class="math inline">\(\theta \in \mathbb{R}^d\)</span>. In the case of linear approximation, we have <span class="math inline">\(V(s;\theta) = \theta^\top \phi(s)\)</span> where <span class="math inline">\(\phi(s)\)</span> is a function that featurizes the state.</p>
+<p><strong>Semi-Gradient TD(0).</strong> Given a transition <span class="math inline">\((s_t,a_t,r_t,s_{t+1})\)</span> collected under the behavior policy <span class="math inline">\(b\)</span>, form the TD error
+<span class="math display">\[
+\delta_t = r_t + \gamma V(s_{t+1}; \theta) - V(s_t;\theta).
+\]</span>
+The off-policy Semi-Gradient TD(0) update reads
+<span class="math display" id="eq:FAOffPolicySemiGradientTD0">\[\begin{equation}
+\theta \quad \leftarrow \quad \theta + \alpha_t \rho_t \delta_t \nabla_\theta V(s_t; \theta),
+\tag{2.59}
+\end{equation}\]</span>
+where <span class="math inline">\(\rho_t\)</span> is the likelihood ratio as in <a href="value-rl.html#eq:IS-LikelihoodRatio">(2.37)</a>:
+<span class="math display">\[
+\rho_t = \frac{\pi(a_t \mid s_t)}{b(a_t \mid s_t)}.
+\]</span>
+This off-policy semi-gradient TD(0) update <a href="value-rl.html#eq:FAOffPolicySemiGradientTD0">(2.59)</a> looks perfectly reasonable. However, the following Baird’s counterexample illustrates the instability of the algorithm.</p>
+<p><strong>Baird’s Counterexample.</strong> Consider an MDP with 7 states containing 6 upper states and 1 lower state, as shown in Fig. <a href="value-rl.html#fig:Baird-example">2.5</a> (the figure comes from <span class="citation">(<a href="#ref-sutton1998reinforcement">Sutton and Barto 1998</a>)</span>). There are two actions, one called “solid” and the other called “dashed”. If the agent picks “solid” at any state, then the system transitons to the lower state with probability 1. If the agent picks “dashed” at any state, then the system transitions to any one of the upper states with equal probability. All rewards are zero, and the discount factor is <span class="math inline">\(\gamma=0.99\)</span>.</p>
+<p>The target policy <span class="math inline">\(\pi\)</span> always picks “solid”, while the behavior policy <span class="math inline">\(b\)</span> picks “solid” with probability <span class="math inline">\(1/7\)</span> and “dashed” with probability <span class="math inline">\(6/7\)</span>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Baird-example"></span>
+<img src="images/Value-RL/Baird.png" alt="Baird Counterexample" width="70%" />
+<p class="caption">
+Figure 2.5: Baird Counterexample
+</p>
+</div>
+<p>Consider the case of linear function approximation where <span class="math inline">\(V(s;w) = w^\top \phi(s)\)</span> where <span class="math inline">\(w \in \mathbb{R}^8\)</span>. For the upper states, the feature <span class="math inline">\(\phi(s)\)</span> leads to <span class="math inline">\(V(s;w) = 2 w_1 + w_8\)</span>, and for the lower state, the feature <span class="math inline">\(\phi(s)\)</span> leads to <span class="math inline">\(V(s;w) = w_7 + 2w_8\)</span>.</p>
+<p>This <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/BairdExample.py">Python script</a> implements the off-policy semi-gradient TD(0) algorithm with importance sampling for policy evaluation.</p>
+<p>Fig. <a href="value-rl.html#fig:Baird-example-value">2.6</a> plots <span class="math inline">\(\Vert w \Vert_2\)</span>, the magnitude of <span class="math inline">\(w\)</span>, with respect to iterations. Clearly, we see the parameter <span class="math inline">\(w\)</span> diverges under the off-policy semi-gradient TD(0) algorithm.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Baird-example-value"></span>
+<img src="images/Value-RL/Baird-w.png" alt="Baird Counterexample: divergence" width="60%" />
+<p class="caption">
+Figure 2.6: Baird Counterexample: divergence
+</p>
+</div>
+<p><strong>The Deadly Triad.</strong> Three ingredients were used together in Baird’s example:</p>
+<ul>
+<li><p>Off-policy: a different behavior policy <span class="math inline">\(b\)</span> is used to collect data for the evaluation of the target policy <span class="math inline">\(\pi\)</span>;</p></li>
+<li><p>Function approximation: the value function employs function approximation;</p></li>
+<li><p>Bootstrapping: the TD error uses the bootstrapped target “<span class="math inline">\(r_t + \gamma V(s_{t+1}; \theta)\)</span>” instead of the full return as in Monte Carlo.</p></li>
+</ul>
+<p>The “deadly triad” is used to illustrate that using all three ingredients together will lead to the potential divergence of policy evaluation.</p>
+<p><strong>Why?</strong> Recall that, using linear approximation, the on-policy Semi-Gradient TD(0) algorithm guarantees convergence to the unique fixed point of the projected Bellman equation (PBE) <a href="value-rl.html#eq:PBEFixedPoint">(2.54)</a>, restated here
+<span class="math display">\[
+V^\star_{\text{TD}} = \Pi_{\mu} T^\pi V^\star_{\text{TD}},
+\]</span>
+where <span class="math inline">\(\mu\)</span> is the stationary distribution induced by the policy <span class="math inline">\(\pi\)</span>.
+A central reason for the guaranteed convergence is that the projected Bellman operator
+<span class="math display">\[
+\Pi_{\mu} T^\pi
+\]</span>
+is a <span class="math inline">\(\gamma\)</span>-contraction and has a unique fixed point. Therefore, the on-policy Semi-Gradient TD(0) algorithm—can be seen as a stochastic approximation of the projected Bellman operator—enjoys convergence guarantees.</p>
+<p>However, in the off-policy case, the orthogonal projection <span class="math inline">\(\Pi_\mu\)</span> needs to be modified as <span class="math inline">\(\Pi_{\nu}\)</span>, where <span class="math inline">\(\nu\)</span> is the stationary distribution induced by the behavior policy <span class="math inline">\(b\)</span>. The new operator
+<span class="math display">\[
+\Pi_{\nu} T^\pi
+\]</span>
+is not guaranteed to be a <span class="math inline">\(\gamma\)</span>-contraction, due to the mismatch between <span class="math inline">\(\nu\)</span>—induced by <span class="math inline">\(b\)</span>—and the target policy <span class="math inline">\(\pi\)</span>. Therefore, divergence can potentially happen.</p>
+<p><strong>How to Fix?</strong> Multiple algorithms have been proposed to fix the deadly triad. Notable examples include the gradient TD (GTD) family of algorithms <span class="citation">(<a href="#ref-sutton2008convergent">Sutton, Szepesvári, and Maei 2008</a>)</span>, <span class="citation">(<a href="#ref-sutton2009fast">Sutton et al. 2009</a>)</span>, and the Emphatic TD (ETD) learning algorithm <span class="citation">(<a href="#ref-mahmood2015emphatic">Mahmood et al. 2015</a>)</span>. They are influential and widely cited, but they are not (yet) mainstream in deep RL practice. Their main appeal is theoretical—they provide off-policy evaluation algorithms with convergence guarantees under linear function approximation. Moreover, GTD/TDC require two-time-scale step-sizes and ETD’s emphatic weights can have high variance, making them less attractive for large-scale control with neural networks. I encourage you to read the papers to understand the algorithms. However, in the next, I will explain the deep Q network (DQN) approach that is more popular in practice.</p>
+<!-- As a result, GTD/ETD are most common as research baselines or educational tools, not as go-to algorithms for deep off-policy control. -->
+</div>
+<div id="deep-q-network" class="section level4 hasAnchor" number="2.2.4.2">
+<h4><span class="header-section-number">2.2.4.2</span> Deep Q Network<a href="value-rl.html#deep-q-network" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>We consider continuous state spaces with a finite action set, and a parametric action–value function <span class="math inline">\(Q(s,a; \theta)\)</span>.</p>
+<p><strong>Naive (semi-gradient) Q-Learning with Function Approximation.</strong> The goal is to learn <span class="math inline">\(Q^\star\)</span> and act <span class="math inline">\(\varepsilon\)</span>-greedily w.r.t. <span class="math inline">\(Q(\cdot,\cdot; \theta)\)</span>. The update uses a bootstrapped optimality target built from the current network.
+<span class="math display" id="eq:naiveQLearningFA">\[\begin{equation}
+\begin{split}
+y_t &amp; = r_t + \gamma \max_{a&#39;} Q(s_{t+1}, a&#39;;\theta) \\
+\theta &amp; \leftarrow \theta + \alpha \,\big(y_t - Q(s_t,a_t;\theta)\big)\,\nabla_\theta Q(s_t,a_t; \theta).
+\end{split}
+\tag{2.60}
+\end{equation}\]</span>
+The transitions <span class="math inline">\((s_t,a_t,r_t,s_{t+1})\)</span> are generated using a <span class="math inline">\(\varepsilon\)</span>-greedy policy with respect to <span class="math inline">\(Q(s,a;\theta)\)</span>.</p>
+<p>This naive variant is <strong>off-policy + bootstrapping + function approximation</strong> (i.e., the deadly triad) and thus can be unstable.</p>
+<p><strong>Deep Q Network (DQN) with Experience Replay (ER) and Target Network (TN).</strong> DQN augments the above naive Q learning with two stabilizers:</p>
+<ul>
+<li><p><strong>Experience Replay (ER):</strong> store transitions in a buffer <span class="math inline">\(\mathcal{D}\)</span>; train on i.i.d.-like mini-batches to decorrelate updates and reuse data.</p></li>
+<li><p><strong>Target Network (TN):</strong> maintain a delayed copy <span class="math inline">\(Q(\cdot,\cdot; \theta^-)\)</span> to compute targets
+<span class="math display">\[
+y_t = r_t + \gamma \max_{a&#39;} Q(s_{t+1},a&#39;;\theta^-),
+\]</span>
+keeping the target fixed for many gradient steps.</p></li>
+</ul>
+<p>The full DQN algorithm is presented below.</p>
+<div class="highlightbox">
+<ul>
+<li>Initialize replay buffer <span class="math inline">\(\mathcal{D}\)</span> with capacity <span class="math inline">\(N\)</span></li>
+<li>Initialize approximate Q value <span class="math inline">\(Q(s,a;\theta)\)</span></li>
+<li>Initialize target <span class="math inline">\(Q_T(s,a;\theta^-)\)</span> with <span class="math inline">\(\theta^- = \theta\)</span></li>
+<li>For episode <span class="math inline">\(=1,\dots,M\)</span> do:
+<ul>
+<li>Initialize <span class="math inline">\(s_0\)</span></li>
+<li>For <span class="math inline">\(t=0,\dots,T\)</span> do:
+<ul>
+<li><span class="math inline">\(\varepsilon\)</span>-greedy policy:
+<ul>
+<li>With probability <span class="math inline">\(\varepsilon\)</span> select a random action <span class="math inline">\(a_t \in \mathcal{A}\)</span></li>
+<li>Otherwise select <span class="math inline">\(a_t = \arg\max_a Q(s_t,a_t;\theta)\)</span></li>
+</ul></li>
+<li>Observe transition <span class="math inline">\(\tau_t = (s_t, a_t, r_t, s_{t+1})\)</span></li>
+<li>Put <span class="math inline">\(\tau_t\)</span> inside replay buffer <span class="math inline">\(\mathcal{D}\)</span></li>
+<li>Sample a random minibatch of transitions <span class="math inline">\(\{(s_i, a_i, r_i, s_{i+1})\}_{i \in \mathcal{I}}\)</span> from <span class="math inline">\(\mathcal{D}\)</span></li>
+<li>For <span class="math inline">\(i \in \mathcal{I}\)</span> do:
+<ul>
+<li>Set target <span class="math inline">\(y_i = r_i + \gamma \max_a Q_T(s_{i+1}, a; \theta^-)\)</span> using the target network</li>
+<li>Update <span class="math inline">\(\theta \leftarrow \theta + \alpha (y_i - Q(s_i,a_i;\theta)) \nabla_\theta Q(s_i, a_i; \theta)\)</span></li>
+</ul></li>
+<li>Every <span class="math inline">\(C\)</span> steps synchronize the target network with the <span class="math inline">\(Q\)</span> net: <span class="math inline">\(\theta^- = \theta\)</span></li>
+</ul></li>
+</ul></li>
+</ul>
+</div>
+<p>Although the naive Q-leanring with function approximation can be unstable, DQN has achieved great success and is also very efficient <span class="citation">(<a href="#ref-mnih2015human">Mnih et al. 2015</a>)</span>.</p>
+<p><strong>Fitted Q Iteration (FQI).</strong> To understand why DQN can achieve stabilized training compared to naive Q-learning with function approximation. It is insightful to look at the fitted Q iteration (FQI) algorithm, presented below.</p>
+<div class="highlightbox">
+<ul>
+<li>Initialize <span class="math inline">\(Q^{(0)} = Q(s,a;\theta_0)\)</span></li>
+<li>For <span class="math inline">\(k=0,1,2,\dots,K-1\)</span> do:
+<ul>
+<li>Sample i.i.d. transitions <span class="math inline">\(\{ (s_i,a_i,r_i,s_{i+1}) \}_{i=1}^N\)</span> with <span class="math inline">\((s_i, a_i)\)</span> drawn from a distribution <span class="math inline">\(\mu\)</span></li>
+<li>Compute targets <span class="math inline">\(y_i = r_i + \gamma \max_a Q^{(k)}(s_{t+1},a;\theta_k),i=1,\dots,N\)</span></li>
+<li>Update the action-value function:
+<span class="math display">\[
+Q^{(k+1)} = Q(s,a;\theta_{k+1}), \quad \theta_{k+1} \in \arg\min_{\theta}  \frac{1}{N} \sum_{i=1}^N (y_i - Q(s_i,a_i;\theta))^2
+\]</span></li>
+</ul></li>
+</ul>
+</div>
+<p>The FQI algorithm samples trajectories from a fixed distribution <span class="math inline">\(\mu\)</span> and optimizes the parameter using targets generated from those trajectories. Under reasonable coverage and approximation assumptions, it converges and admits finite-sample error bounds <span class="citation">(<a href="#ref-antos2007fitted">Antos, Szepesvári, and Munos 2007</a>)</span>, <span class="citation">(<a href="#ref-munos2008finite">Munos and Szepesvári 2008</a>)</span>.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:MountainCarQLearningFA" class="example"><strong>Example 2.4  (DQN for Mountain Car) </strong></span>Consider again the Mountain car problem.</p>
+</div>
+</div>
+<p><strong>Connection to DQN.</strong> DQN is similar to FQI in the following aspects.</p>
+<ul>
+<li><p><strong>Frozen targets:</strong> DQN’s target network <span class="math inline">\(Q(\cdot,\cdot; \theta^-)\)</span> plays the role of <span class="math inline">\(Q^{(k-1)}\)</span> in FQI.</p></li>
+<li><p><strong>Supervised fit:</strong> DQN’s mini-batch loss minimizes <span class="math inline">\(\sum (Q(s_i,a_i; \theta) - y_i)^2\)</span>, just like FQI’s regression step.</p></li>
+<li><p><strong>Data usage:</strong> FQI trains on a fixed dataset; DQN’s replay buffer approximates training on an (ever-growing) <em>quasi-fixed</em> dataset by repeatedly sampling past transitions.</p></li>
+<li><p><strong>Iteration vs. updates:</strong> FQI alternates <em>full</em> regressions and <em>target recomputation</em>; DQN alternates <em>many SGD steps</em> with <em>periodic target updates</em>. In the limit of many SGD steps per target update and a large replay buffer, DQN <span class="math inline">\(\approx\)</span> online, incremental FQI.</p></li>
+</ul>
+<p>This perspective explains why <strong>ER + TN</strong> make DQN far more stable than naive Q-learning with function approximation: they make the optimization behave like a sequence of supervised fits to <strong>fixed</strong> targets drawn from a nearly <strong>stationary</strong> dataset.</p>
 
 </div>
 </div>
@@ -1582,11 +1699,41 @@ Mountain car
 </div>
 <h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-antos2007fitted" class="csl-entry">
+Antos, András, Csaba Szepesvári, and Rémi Munos. 2007. <span>“Fitted q-Iteration in Continuous Action-Space MDPs.”</span> <em>Advances in Neural Information Processing Systems</em> 20.
+</div>
+<div id="ref-baird1995residual" class="csl-entry">
+Baird, Leemon et al. 1995. <span>“Residual Algorithms: Reinforcement Learning with Function Approximation.”</span> In <em>Proceedings of the Twelfth International Conference on Machine Learning</em>, 30–37.
+</div>
+<div id="ref-fan2020theoretical" class="csl-entry">
+Fan, Jianqing, Zhaoran Wang, Yuchen Xie, and Zhuoran Yang. 2020. <span>“A Theoretical Analysis of Deep q-Learning.”</span> In <em>Learning for Dynamics and Control</em>, 486–89. PMLR.
+</div>
 <div id="ref-kearns2000bias" class="csl-entry">
 Kearns, Michael J, and Satinder Singh. 2000. <span>“Bias-Variance Error Bounds for Temporal Difference Updates.”</span> In <em>COLT</em>, 142–47.
 </div>
+<div id="ref-mahmood2015emphatic" class="csl-entry">
+Mahmood, A Rupam, Huizhen Yu, Martha White, and Richard S Sutton. 2015. <span>“Emphatic Temporal-Difference Learning.”</span> <em>arXiv Preprint arXiv:1507.01569</em>.
+</div>
+<div id="ref-mnih2015human" class="csl-entry">
+Mnih, Volodymyr, Koray Kavukcuoglu, David Silver, Andrei A Rusu, Joel Veness, Marc G Bellemare, Alex Graves, et al. 2015. <span>“Human-Level Control Through Deep Reinforcement Learning.”</span> <em>Nature</em> 518 (7540): 529–33.
+</div>
+<div id="ref-munos2008finite" class="csl-entry">
+Munos, Rémi, and Csaba Szepesvári. 2008. <span>“Finite-Time Bounds for Fitted Value Iteration.”</span> <em>Journal of Machine Learning Research</em> 9 (5).
+</div>
+<div id="ref-riedmiller2005neural" class="csl-entry">
+Riedmiller, Martin. 2005. <span>“Neural Fitted q Iteration–First Experiences with a Data Efficient Neural Reinforcement Learning Method.”</span> In <em>European Conference on Machine Learning</em>, 317–28. Springer.
+</div>
 <div id="ref-robbins1971convergence" class="csl-entry">
 Robbins, Herbert, and David Siegmund. 1971. <span>“A Convergence Theorem for Non Negative Almost Supermartingales and Some Applications.”</span> In <em>Optimizing Methods in Statistics</em>, 233–57. Elsevier.
+</div>
+<div id="ref-sutton1998reinforcement" class="csl-entry">
+Sutton, Richard S, and Andrew G Barto. 1998. <em>Reinforcement Learning: An Introduction</em>. Vol. 1. 1. MIT press Cambridge.
+</div>
+<div id="ref-sutton2009fast" class="csl-entry">
+Sutton, Richard S, Hamid Reza Maei, Doina Precup, Shalabh Bhatnagar, David Silver, Csaba Szepesvári, and Eric Wiewiora. 2009. <span>“Fast Gradient-Descent Methods for Temporal-Difference Learning with Linear Function Approximation.”</span> In <em>Proceedings of the 26th Annual International Conference on Machine Learning</em>, 993–1000.
+</div>
+<div id="ref-sutton2008convergent" class="csl-entry">
+Sutton, Richard S, Csaba Szepesvári, and Hamid Reza Maei. 2008. <span>“A Convergent o(n) Algorithm for Off-Policy Temporal-Difference Learning with Linear Function Approximation.”</span> <em>Advances in Neural Information Processing Systems</em> 21 (21): 1609–16.
 </div>
 </div>
             </section>
