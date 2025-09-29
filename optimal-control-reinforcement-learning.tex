@@ -3562,7 +3562,72 @@ which reduces to \(A \theta = b\) with \(A\) and \(b\) defined in \eqref{eq:TDLi
 \end{enumerate}
 
 \begin{example}[Semi-Gradient SARSA for Mountain Car]
-\protect\hypertarget{exm:MountainCarSemiGradientSARSA}{}\label{exm:MountainCarSemiGradientSARSA}Mountain car
+\protect\hypertarget{exm:MountainCarSemiGradientSARSA}{}\label{exm:MountainCarSemiGradientSARSA}
+
+Consider the Mountain Car problem from Gym illustrated in Fig. \ref{fig:Mountain-car-plot}. The state space \(\mathcal{S} \subset \mathbb{R}^2\) is continuous and contains the position of the car along the \(x\)-axis as well as the car's velocity. The action space \(\mathcal{A}\) is discrete and contains three elements: ``\(0\): Accelerate to the left'', ``\(1\): Don't accelerate'', and ``\(2\): Accelerate to the right''. The transition dynamics of the mountain car is:
+\begin{equation}
+\begin{split}
+v_{t+1} &= v_t + (a_t - 1) F - \cos (3 p_t) g \\
+p_{t+1} &= p_t + v_{t+1}
+\end{split}
+\end{equation}
+where \((p_t, v_t)\) denotes the state at time \(t\) with position and velocity, \(a_t\) denotes the action at time \(t\), \(F=0.001\) is the force and \(g = 0.0025\) is the gravitational constant.
+
+The goal is for the mountain car to reach the flag placed on top of the right hill as quickly as possible. Therefore, the agent is penalised with a reward of \(-1\) for each timestep. The position of the car is assigned a uniform random value in \([-0.6 , -0.4]\). The starting velocity of the car is always assigned to 0. In every episode, the agent is allowed a maximum of \(200\) steps (therefore, the worst per-episode return is \(-200\)).
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.5\linewidth]{images/Value-RL/mountain_car} 
+
+}
+
+\caption{Mountain Car from Gym}\label{fig:Mountain-car-plot}
+\end{figure}
+
+\textbf{Naive Semi-Gradient SARSA.} We first apply the semi-gradient SARSA algorithm introduced above to the mountain car problem. We parameterize the action value \(Q\) as a 2-layer multi-layer perceptron (MLP). Fig. \ref{fig:Mountain-car-sarsa-episode-return} shows the average return per episode as training progreses. Clearly, the return stagnates at \(-200\) and the algorithm failed to learn. The rollout in Fig. \ref{fig:Mountain-car-sarsa-rollout} confirms that the final policy is not able to achieve the goal.
+
+You can find code for the naive semi-gradient SARSA algorithm \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mountaincar_sarsa.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_sarsa_eps3000_seed50_returns} 
+
+}
+
+\caption{Average return w.r.t. episode (Semi-Gradient SARSA)}\label{fig:Mountain-car-sarsa-episode-return}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_sarsa_eps3000_seed50_greedy-episode-0} 
+
+}
+
+\caption{Example rollout (Semi-Gradient SARSA)}\label{fig:Mountain-car-sarsa-rollout}
+\end{figure}
+
+\textbf{Semi-Gradient SARSA with Experience Replay.} Inspired by the technique of experience replay (ER) popularized by DQN (see \ref{DQN}), we incorporated ER into semi-gradient SARSA, which breaks its on-policy nature. Fig. \ref{fig:Mountain-car-sarsa-er-episode-return} displays the learning curve, which shows steady increase of the per-episode return. Applying the final learned policy to the mountain car yields a successful trajectory to the top of the mountain.
+
+You can find code for the semi-gradient SARSA with experience replay algorithm \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mountaincar_sarsa_er.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_sarsa+er_eps3000_seed50_returns} 
+
+}
+
+\caption{Average return w.r.t. episode (Semi-Gradient SARSA + Experience Replay)}\label{fig:Mountain-car-sarsa-er-episode-return}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_sarsa+er_eps3000_seed50_greedy-episode-0} 
+
+}
+
+\caption{Example rollout (Semi-Gradient SARSA + Experience Replay)}\label{fig:Mountain-car-sarsa-er-rollout}
+\end{figure}
+
 \end{example}
 
 \subsection{Off-Policy Control}\label{off-policy-control-1}
@@ -3652,7 +3717,7 @@ is not guaranteed to be a \(\gamma\)-contraction, due to the mismatch between \(
 
 \textbf{How to Fix?} Multiple algorithms have been proposed to fix the deadly triad. Notable examples include the gradient TD (GTD) family of algorithms \citep{sutton2008convergent}, \citep{sutton2009fast}, and the Emphatic TD (ETD) learning algorithm \citep{mahmood2015emphatic}. They are influential and widely cited, but they are not (yet) mainstream in deep RL practice. Their main appeal is theoretical---they provide off-policy evaluation algorithms with convergence guarantees under linear function approximation. Moreover, GTD/TDC require two-time-scale step-sizes and ETD's emphatic weights can have high variance, making them less attractive for large-scale control with neural networks. I encourage you to read the papers to understand the algorithms. However, in the next, I will explain the deep Q network (DQN) approach that is more popular in practice.
 
-\subsubsection{Deep Q Network}\label{deep-q-network}
+\subsubsection{Deep Q Network}\label{DQN}
 
 We consider continuous state spaces with a finite action set, and a parametric action--value function \(Q(s,a; \theta)\).
 
@@ -3762,10 +3827,6 @@ Although the naive Q-leanring with function approximation can be unstable, DQN h
 
 The FQI algorithm samples trajectories from a fixed distribution \(\mu\) and optimizes the parameter using targets generated from those trajectories. Under reasonable coverage and approximation assumptions, it converges and admits finite-sample error bounds \citep{antos2007fitted}, \citep{munos2008finite}.
 
-\begin{example}[DQN for Mountain Car]
-\protect\hypertarget{exm:MountainCarQLearningFA}{}\label{exm:MountainCarQLearningFA}Consider again the Mountain car problem.
-\end{example}
-
 \textbf{Connection to DQN.} DQN is similar to FQI in the following aspects.
 
 \begin{itemize}
@@ -3780,6 +3841,55 @@ The FQI algorithm samples trajectories from a fixed distribution \(\mu\) and opt
 \end{itemize}
 
 This perspective explains why \textbf{ER + TN} make DQN far more stable than naive Q-learning with function approximation: they make the optimization behave like a sequence of supervised fits to \textbf{fixed} targets drawn from a nearly \textbf{stationary} dataset.
+
+\begin{example}[DQN for Mountain Car]
+\protect\hypertarget{exm:MountainCarQLearningFA}{}\label{exm:MountainCarQLearningFA}
+
+Consider again the Mountain car problem from Example \ref{exm:MountainCarSemiGradientSARSA}.
+
+\textbf{Naive Q-Learning with Function Approximation.} As shown in Fig. \ref{fig:Mountain-car-q-episode-return} and Fig. \ref{fig:Mountain-car-q-rollout}, naive Q-leanring with function approximation fails to learn a good policy.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_qlearn_naive_eps2500_seed123_returns} 
+
+}
+
+\caption{Average return w.r.t. episode (Naive Q Learning)}\label{fig:Mountain-car-q-episode-return}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_qlearn_naive_eps2500_seed123_greedy-episode-0} 
+
+}
+
+\caption{Example rollout (Naive Q Learning)}\label{fig:Mountain-car-q-rollout}
+\end{figure}
+
+\textbf{DQN with Experience Replay and Target Network.} Adding ER and TN to Q-learning leads to steady learning (Fig. \ref{fig:Mountain-car-dqn-episode-return}) and a successful final policy (Fig. \ref{fig:Mountain-car-dqn-rollout}).
+
+You can find code for these experiments \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mountaincar_q_learning.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_dqn_eps2500_seed123_returns} 
+
+}
+
+\caption{Average return w.r.t. episode (DQN)}\label{fig:Mountain-car-dqn-episode-return}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Value-RL/mountain-car_dqn_eps2500_seed123_greedy-episode-0} 
+
+}
+
+\caption{Example rollout (DQN)}\label{fig:Mountain-car-dqn-rollout}
+\end{figure}
+
+\end{example}
 
 \chapter{Policy Gradients}\label{policy-gradient}
 

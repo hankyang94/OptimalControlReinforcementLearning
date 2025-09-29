@@ -1542,7 +1542,49 @@ then update <span class="math inline">\(\theta \leftarrow \theta + \alpha_t\, \d
 </ol>
 <div class="examplebox">
 <div class="example">
-<p><span id="exm:MountainCarSemiGradientSARSA" class="example"><strong>Example 2.3  (Semi-Gradient SARSA for Mountain Car) </strong></span>Mountain car</p>
+<p><span id="exm:MountainCarSemiGradientSARSA" class="example"><strong>Example 2.3  (Semi-Gradient SARSA for Mountain Car) </strong></span>Consider the Mountain Car problem from Gym illustrated in Fig. <a href="value-rl.html#fig:Mountain-car-plot">2.5</a>. The state space <span class="math inline">\(\mathcal{S} \subset \mathbb{R}^2\)</span> is continuous and contains the position of the car along the <span class="math inline">\(x\)</span>-axis as well as the car’s velocity. The action space <span class="math inline">\(\mathcal{A}\)</span> is discrete and contains three elements: “<span class="math inline">\(0\)</span>: Accelerate to the left”, “<span class="math inline">\(1\)</span>: Don’t accelerate”, and “<span class="math inline">\(2\)</span>: Accelerate to the right”. The transition dynamics of the mountain car is:
+<span class="math display">\[\begin{equation}
+\begin{split}
+v_{t+1} &amp;= v_t + (a_t - 1) F - \cos (3 p_t) g \\
+p_{t+1} &amp;= p_t + v_{t+1}
+\end{split}
+\end{equation}\]</span>
+where <span class="math inline">\((p_t, v_t)\)</span> denotes the state at time <span class="math inline">\(t\)</span> with position and velocity, <span class="math inline">\(a_t\)</span> denotes the action at time <span class="math inline">\(t\)</span>, <span class="math inline">\(F=0.001\)</span> is the force and <span class="math inline">\(g = 0.0025\)</span> is the gravitational constant.</p>
+<p>The goal is for the mountain car to reach the flag placed on top of the right hill as quickly as possible. Therefore, the agent is penalised with a reward of <span class="math inline">\(-1\)</span> for each timestep. The position of the car is assigned a uniform random value in <span class="math inline">\([-0.6 , -0.4]\)</span>. The starting velocity of the car is always assigned to 0. In every episode, the agent is allowed a maximum of <span class="math inline">\(200\)</span> steps (therefore, the worst per-episode return is <span class="math inline">\(-200\)</span>).</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-plot"></span>
+<img src="images/Value-RL/mountain_car.gif" alt="Mountain Car from Gym" width="50%" />
+<p class="caption">
+Figure 2.5: Mountain Car from Gym
+</p>
+</div>
+<p><strong>Naive Semi-Gradient SARSA.</strong> We first apply the semi-gradient SARSA algorithm introduced above to the mountain car problem. We parameterize the action value <span class="math inline">\(Q\)</span> as a 2-layer multi-layer perceptron (MLP). Fig. <a href="value-rl.html#fig:Mountain-car-sarsa-episode-return">2.6</a> shows the average return per episode as training progreses. Clearly, the return stagnates at <span class="math inline">\(-200\)</span> and the algorithm failed to learn. The rollout in Fig. <a href="value-rl.html#fig:Mountain-car-sarsa-rollout">2.7</a> confirms that the final policy is not able to achieve the goal.</p>
+<p>You can find code for the naive semi-gradient SARSA algorithm <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mountaincar_sarsa.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-sarsa-episode-return"></span>
+<img src="images/Value-RL/mountain-car_sarsa_eps3000_seed50_returns.png" alt="Average return w.r.t. episode (Semi-Gradient SARSA)" width="60%" />
+<p class="caption">
+Figure 2.6: Average return w.r.t. episode (Semi-Gradient SARSA)
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-sarsa-rollout"></span>
+<img src="images/Value-RL/mountain-car_sarsa_eps3000_seed50_greedy-episode-0.mp4" alt="Example rollout (Semi-Gradient SARSA)" width="60%" />
+<p class="caption">
+Figure 2.7: Example rollout (Semi-Gradient SARSA)
+</p>
+</div>
+<p><strong>Semi-Gradient SARSA with Experience Replay.</strong> Inspired by the technique of experience replay (ER) popularized by DQN (see <a href="value-rl.html#DQN">2.2.4.2</a>), we incorporated ER into semi-gradient SARSA, which breaks its on-policy nature. Fig. <a href="value-rl.html#fig:Mountain-car-sarsa-er-episode-return">2.8</a> displays the learning curve, which shows steady increase of the per-episode return. Applying the final learned policy to the mountain car yields a successful trajectory to the top of the mountain.</p>
+<p>You can find code for the semi-gradient SARSA with experience replay algorithm <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mountaincar_sarsa_er.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-sarsa-er-episode-return"></span>
+<img src="images/Value-RL/mountain-car_sarsa+er_eps3000_seed50_returns.png" alt="Average return w.r.t. episode (Semi-Gradient SARSA + Experience Replay)" width="60%" />
+<p class="caption">
+Figure 2.8: Average return w.r.t. episode (Semi-Gradient SARSA + Experience Replay)
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-sarsa-er-rollout"></span>
+<img src="images/Value-RL/mountain-car_sarsa+er_eps3000_seed50_greedy-episode-0.mp4" alt="Example rollout (Semi-Gradient SARSA + Experience Replay)" width="60%" />
+<p class="caption">
+Figure 2.9: Example rollout (Semi-Gradient SARSA + Experience Replay)
+</p>
+</div>
 </div>
 </div>
 </div>
@@ -1569,21 +1611,21 @@ where <span class="math inline">\(\rho_t\)</span> is the likelihood ratio as in 
 \rho_t = \frac{\pi(a_t \mid s_t)}{b(a_t \mid s_t)}.
 \]</span>
 This off-policy semi-gradient TD(0) update <a href="value-rl.html#eq:FAOffPolicySemiGradientTD0">(2.59)</a> looks perfectly reasonable. However, the following Baird’s counterexample illustrates the instability of the algorithm.</p>
-<p><strong>Baird’s Counterexample.</strong> Consider an MDP with 7 states containing 6 upper states and 1 lower state, as shown in Fig. <a href="value-rl.html#fig:Baird-example">2.5</a> (the figure comes from <span class="citation">(<a href="#ref-sutton1998reinforcement">Sutton and Barto 1998</a>)</span>). There are two actions, one called “solid” and the other called “dashed”. If the agent picks “solid” at any state, then the system transitons to the lower state with probability 1. If the agent picks “dashed” at any state, then the system transitions to any one of the upper states with equal probability. All rewards are zero, and the discount factor is <span class="math inline">\(\gamma=0.99\)</span>.</p>
+<p><strong>Baird’s Counterexample.</strong> Consider an MDP with 7 states containing 6 upper states and 1 lower state, as shown in Fig. <a href="value-rl.html#fig:Baird-example">2.10</a> (the figure comes from <span class="citation">(<a href="#ref-sutton1998reinforcement">Sutton and Barto 1998</a>)</span>). There are two actions, one called “solid” and the other called “dashed”. If the agent picks “solid” at any state, then the system transitons to the lower state with probability 1. If the agent picks “dashed” at any state, then the system transitions to any one of the upper states with equal probability. All rewards are zero, and the discount factor is <span class="math inline">\(\gamma=0.99\)</span>.</p>
 <p>The target policy <span class="math inline">\(\pi\)</span> always picks “solid”, while the behavior policy <span class="math inline">\(b\)</span> picks “solid” with probability <span class="math inline">\(1/7\)</span> and “dashed” with probability <span class="math inline">\(6/7\)</span>.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:Baird-example"></span>
 <img src="images/Value-RL/Baird.png" alt="Baird Counterexample" width="70%" />
 <p class="caption">
-Figure 2.5: Baird Counterexample
+Figure 2.10: Baird Counterexample
 </p>
 </div>
 <p>Consider the case of linear function approximation where <span class="math inline">\(V(s;w) = w^\top \phi(s)\)</span> where <span class="math inline">\(w \in \mathbb{R}^8\)</span>. For the upper states, the feature <span class="math inline">\(\phi(s)\)</span> leads to <span class="math inline">\(V(s;w) = 2 w_1 + w_8\)</span>, and for the lower state, the feature <span class="math inline">\(\phi(s)\)</span> leads to <span class="math inline">\(V(s;w) = w_7 + 2w_8\)</span>.</p>
 <p>This <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/BairdExample.py">Python script</a> implements the off-policy semi-gradient TD(0) algorithm with importance sampling for policy evaluation.</p>
-<p>Fig. <a href="value-rl.html#fig:Baird-example-value">2.6</a> plots <span class="math inline">\(\Vert w \Vert_2\)</span>, the magnitude of <span class="math inline">\(w\)</span>, with respect to iterations. Clearly, we see the parameter <span class="math inline">\(w\)</span> diverges under the off-policy semi-gradient TD(0) algorithm.</p>
+<p>Fig. <a href="value-rl.html#fig:Baird-example-value">2.11</a> plots <span class="math inline">\(\Vert w \Vert_2\)</span>, the magnitude of <span class="math inline">\(w\)</span>, with respect to iterations. Clearly, we see the parameter <span class="math inline">\(w\)</span> diverges under the off-policy semi-gradient TD(0) algorithm.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:Baird-example-value"></span>
 <img src="images/Value-RL/Baird-w.png" alt="Baird Counterexample: divergence" width="60%" />
 <p class="caption">
-Figure 2.6: Baird Counterexample: divergence
+Figure 2.11: Baird Counterexample: divergence
 </p>
 </div>
 <p><strong>The Deadly Triad.</strong> Three ingredients were used together in Baird’s example:</p>
@@ -1611,8 +1653,8 @@ is not guaranteed to be a <span class="math inline">\(\gamma\)</span>-contractio
 <p><strong>How to Fix?</strong> Multiple algorithms have been proposed to fix the deadly triad. Notable examples include the gradient TD (GTD) family of algorithms <span class="citation">(<a href="#ref-sutton2008convergent">Sutton, Szepesvári, and Maei 2008</a>)</span>, <span class="citation">(<a href="#ref-sutton2009fast">Sutton et al. 2009</a>)</span>, and the Emphatic TD (ETD) learning algorithm <span class="citation">(<a href="#ref-mahmood2015emphatic">Mahmood et al. 2015</a>)</span>. They are influential and widely cited, but they are not (yet) mainstream in deep RL practice. Their main appeal is theoretical—they provide off-policy evaluation algorithms with convergence guarantees under linear function approximation. Moreover, GTD/TDC require two-time-scale step-sizes and ETD’s emphatic weights can have high variance, making them less attractive for large-scale control with neural networks. I encourage you to read the papers to understand the algorithms. However, in the next, I will explain the deep Q network (DQN) approach that is more popular in practice.</p>
 <!-- As a result, GTD/ETD are most common as research baselines or educational tools, not as go-to algorithms for deep off-policy control. -->
 </div>
-<div id="deep-q-network" class="section level4 hasAnchor" number="2.2.4.2">
-<h4><span class="header-section-number">2.2.4.2</span> Deep Q Network<a href="value-rl.html#deep-q-network" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="DQN" class="section level4 hasAnchor" number="2.2.4.2">
+<h4><span class="header-section-number">2.2.4.2</span> Deep Q Network<a href="value-rl.html#DQN" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>We consider continuous state spaces with a finite action set, and a parametric action–value function <span class="math inline">\(Q(s,a; \theta)\)</span>.</p>
 <p><strong>Naive (semi-gradient) Q-Learning with Function Approximation.</strong> The goal is to learn <span class="math inline">\(Q^\star\)</span> and act <span class="math inline">\(\varepsilon\)</span>-greedily w.r.t. <span class="math inline">\(Q(\cdot,\cdot; \theta)\)</span>. The update uses a bootstrapped optimality target built from the current network.
 <span class="math display" id="eq:naiveQLearningFA">\[\begin{equation}
@@ -1679,11 +1721,6 @@ Q^{(k+1)} = Q(s,a;\theta_{k+1}), \quad \theta_{k+1} \in \arg\min_{\theta}  \frac
 </ul>
 </div>
 <p>The FQI algorithm samples trajectories from a fixed distribution <span class="math inline">\(\mu\)</span> and optimizes the parameter using targets generated from those trajectories. Under reasonable coverage and approximation assumptions, it converges and admits finite-sample error bounds <span class="citation">(<a href="#ref-antos2007fitted">Antos, Szepesvári, and Munos 2007</a>)</span>, <span class="citation">(<a href="#ref-munos2008finite">Munos and Szepesvári 2008</a>)</span>.</p>
-<div class="examplebox">
-<div class="example">
-<p><span id="exm:MountainCarQLearningFA" class="example"><strong>Example 2.4  (DQN for Mountain Car) </strong></span>Consider again the Mountain car problem.</p>
-</div>
-</div>
 <p><strong>Connection to DQN.</strong> DQN is similar to FQI in the following aspects.</p>
 <ul>
 <li><p><strong>Frozen targets:</strong> DQN’s target network <span class="math inline">\(Q(\cdot,\cdot; \theta^-)\)</span> plays the role of <span class="math inline">\(Q^{(k-1)}\)</span> in FQI.</p></li>
@@ -1692,6 +1729,38 @@ Q^{(k+1)} = Q(s,a;\theta_{k+1}), \quad \theta_{k+1} \in \arg\min_{\theta}  \frac
 <li><p><strong>Iteration vs. updates:</strong> FQI alternates <em>full</em> regressions and <em>target recomputation</em>; DQN alternates <em>many SGD steps</em> with <em>periodic target updates</em>. In the limit of many SGD steps per target update and a large replay buffer, DQN <span class="math inline">\(\approx\)</span> online, incremental FQI.</p></li>
 </ul>
 <p>This perspective explains why <strong>ER + TN</strong> make DQN far more stable than naive Q-learning with function approximation: they make the optimization behave like a sequence of supervised fits to <strong>fixed</strong> targets drawn from a nearly <strong>stationary</strong> dataset.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:MountainCarQLearningFA" class="example"><strong>Example 2.4  (DQN for Mountain Car) </strong></span>Consider again the Mountain car problem from Example <a href="value-rl.html#exm:MountainCarSemiGradientSARSA">2.3</a>.</p>
+<p><strong>Naive Q-Learning with Function Approximation.</strong> As shown in Fig. <a href="value-rl.html#fig:Mountain-car-q-episode-return">2.12</a> and Fig. <a href="value-rl.html#fig:Mountain-car-q-rollout">2.13</a>, naive Q-leanring with function approximation fails to learn a good policy.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-q-episode-return"></span>
+<img src="images/Value-RL/mountain-car_qlearn_naive_eps2500_seed123_returns.png" alt="Average return w.r.t. episode (Naive Q Learning)" width="60%" />
+<p class="caption">
+Figure 2.12: Average return w.r.t. episode (Naive Q Learning)
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-q-rollout"></span>
+<img src="images/Value-RL/mountain-car_qlearn_naive_eps2500_seed123_greedy-episode-0.mp4" alt="Example rollout (Naive Q Learning)" width="60%" />
+<p class="caption">
+Figure 2.13: Example rollout (Naive Q Learning)
+</p>
+</div>
+<p><strong>DQN with Experience Replay and Target Network.</strong> Adding ER and TN to Q-learning leads to steady learning (Fig. <a href="value-rl.html#fig:Mountain-car-dqn-episode-return">2.14</a>) and a successful final policy (Fig. <a href="value-rl.html#fig:Mountain-car-dqn-rollout">2.15</a>).</p>
+<p>You can find code for these experiments <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mountaincar_q_learning.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-dqn-episode-return"></span>
+<img src="images/Value-RL/mountain-car_dqn_eps2500_seed123_returns.png" alt="Average return w.r.t. episode (DQN)" width="60%" />
+<p class="caption">
+Figure 2.14: Average return w.r.t. episode (DQN)
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:Mountain-car-dqn-rollout"></span>
+<img src="images/Value-RL/mountain-car_dqn_eps2500_seed123_greedy-episode-0.mp4" alt="Example rollout (DQN)" width="60%" />
+<p class="caption">
+Figure 2.15: Example rollout (DQN)
+</p>
+</div>
+</div>
+</div>
 
 </div>
 </div>
