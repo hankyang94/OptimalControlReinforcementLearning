@@ -1,3 +1,465 @@
 
+# Policy Gradient Methods {#policy-gradient}
 
-# Policy Gradients {#policy-gradient}
+In Chapter \@ref(value-rl), we relaxed two key assumptions of the MDP introduced in Chapter \@ref(mdp):
+
+- **Unknown dynamics**: the transition function $P$ was no longer assumed to be known.  
+- **Continuous states**: the state space $\mathcal{S}$ was extended from finite to continuous.
+
+When only the dynamics are unknown but the MDP remains tabular, we introduced generalized versions of policy iteration (e.g., SARSA) and value iteration (e.g., Q-learning). These algorithms can recover near-optimal value functions with strong convergence guarantees.
+
+When both the dynamics are unknown and the state space is continuous, tabular methods become infeasible. In this setting, we employed function approximation to represent value functions, and generalized SARSA and Q-learning accordingly. We also introduced stabilization techniques such as experience replay and target networks to ensure more reliable learning.
+
+---
+
+In this chapter, we relax a third assumption: the action space $\mathcal{A}$ is also continuous. This setting captures many important real-world systems, such as autonomous vehicles and robots. Handling continuous actions requires a departure from the value-based methods of Chapter \@ref(value-rl). The key difficulty is that even if we had access to a near-optimal action-value function $Q(s,a)$, selecting the control action requires solving
+\[
+\max_a Q(s,a),
+\]
+which is often computationally expensive and can lead to suboptimal solutions.
+
+To address this challenge, we introduce a new paradigm: policy gradient methods. Rather than learning value functions to derive policies indirectly, we directly optimize parameterized policies using gradient-based methods.
+
+We begin this chapter by reviewing the fundamentals of gradient-based optimization, and then build upon them to develop algorithms for searching optimal policies via policy gradients.
+
+## Gradient-based Optimization {#gradient-optimization}
+
+Gradient-based optimization is the workhorse behind most modern machine learning algorithms, including policy gradient methods. The central idea is to iteratively update the parameters of a model in the direction that most improves an objective function.
+
+### Basic Setup
+
+Suppose we have a differentiable objective function $J(\theta)$, where $\theta \in \mathbb{R}^d$ represents the parameter vector. The goal is to find
+\[
+\theta^\star \in \arg\max_\theta J(\theta).
+\]
+
+The gradient of the objective with respect to the parameters,
+\[
+\nabla_\theta J(\theta) = 
+\begin{bmatrix}
+\frac{\partial J}{\partial \theta_1} &
+\frac{\partial J}{\partial \theta_2} &
+\cdots &
+\frac{\partial J}{\partial \theta_d}
+\end{bmatrix}^\top,
+\]
+provides the local direction of steepest ascent. Gradient-based optimization uses this direction to iteratively update the parameters. Note that modern machine learning software tools such as PyTorch allow the user to conveniently query the gradient of any function $J$ defined by neural networks. 
+
+### Gradient Ascent and Descent
+
+The simplest method is **gradient ascent** (for maximization):
+\[
+\theta_{k+1} = \theta_k + \alpha \nabla_\theta J(\theta_k),
+\]
+where $\alpha > 0$ is the learning rate.  
+For minimization, the update rule uses **gradient descent**:
+\[
+\theta_{k+1} = \theta_k - \alpha \nabla_\theta J(\theta_k).
+\]
+
+The choice of learning rate $\alpha$ is critical:  
+
+- Too large $\alpha$ can cause divergence.  
+- Too small $\alpha$ leads to slow convergence.  
+
+
+#### Convergence Guarantees
+
+For convex functions $J(\theta)$, gradient descent (or ascent) can be shown to converge to the **global optimum** under appropriate conditions on the learning rate. 
+
+For non-convex functions—which are common in reinforcement learning—gradient methods may only find so-called **first-order stationary points**, i.e., points $\theta$ at which the gradient $\nabla_\theta J(\theta) = 0$. Nevertheless, they remain effective in practice.
+
+[TODO: graph different stationary points]{.red}
+
+We now formalize the convergence speed of Gradient Descent (GD) for minimizing a smooth convex function. We switch to the minimization convention and write the objective as $f:\mathbb{R}^d \to \mathbb{R}$ (to avoid sign confusions with $J$ used for maximization). We assume exact gradients $\nabla f(\theta)$ are available.
+
+**Setup and Assumptions.**
+
+- (**Convexity**) For all $\theta,\vartheta\in\mathbb{R}^d$,
+  \begin{equation}
+  f(\vartheta) \;\ge\; f(\theta) + \nabla f(\theta)^\top(\vartheta-\theta).
+  (\#eq:PG-GO-convexity)
+  \end{equation}
+
+- (**$L$-smoothness**) The gradient is $L$-Lipschitz: for all $\theta,\vartheta$,
+  \begin{equation}
+  \|\nabla f(\vartheta)-\nabla f(\theta)\| \;\le\; L\|\vartheta-\theta\|.
+  (\#eq:PG-GO-Lsmooth)
+  \end{equation}
+  Equivalently (the **descent lemma**), for all $\theta,\Delta$,
+  \begin{equation}
+  f(\theta+\Delta) \;\le\; f(\theta) + \nabla f(\theta)^\top \Delta + \frac{L}{2}\|\Delta\|^2.
+  (\#eq:PG-GO-descent-lemma)
+  \end{equation}
+
+Consider Gradient Descent with a constant stepsize $\alpha>0$:
+\[
+\theta_{k+1} \;=\; \theta_k \;-\; \alpha\, \nabla f(\theta_k).
+\]
+
+::: {.theorembox}
+::: {.theorem #gd-convex-smooth name="GD on smooth convex function"}
+Let $f$ be convex and $L$-smooth with a minimizer 
+$$
+\theta^\star\in\arg\min_\theta f(\theta).
+$$
+If $0<\alpha\le \frac{1}{L}$, then the GD iterates satisfy for all $k\ge 1$:
+\[
+f(\theta_k) - f(\theta^\star)
+\;\le\;
+\frac{\|\theta_0-\theta^\star\|^2}{2\alpha\,k}
+\;\le\;
+\frac{L\,\|\theta_0-\theta^\star\|^2}{2\,k}.
+\]
+In particular, choosing $\alpha=\frac{1}{L}$ yields the canonical $O(1/k)$ convergence rate in suboptimality.
+:::
+:::
+::: {.proofbox}
+::: {.proof}
+Using the descent lemma with $\Delta=-\alpha \nabla f(\theta_k)$,
+\[
+f(\theta_{k+1}) \;\le\; f(\theta_k) - \alpha \|\nabla f(\theta_k)\|^2 + \frac{L\alpha^2}{2}\|\nabla f(\theta_k)\|^2
+= f(\theta_k) - \alpha\Bigl(1-\frac{L\alpha}{2}\Bigr)\|\nabla f(\theta_k)\|^2.
+\]
+For $0<\alpha\le \frac{1}{L}$, the coefficient is at least $\frac{\alpha}{2}$, so
+\[
+f(\theta_k) - f(\theta_{k+1}) \;\ge\; \frac{\alpha}{2}\,\|\nabla f(\theta_k)\|^2.
+\]
+By convexity,
+\[
+f(\theta_k)-f(\theta^\star) \;\le\; \nabla f(\theta_k)^\top(\theta_k-\theta^\star)
+\;\le\; \|\nabla f(\theta_k)\|\,\|\theta_k-\theta^\star\|.
+\]
+Also, expand the squared distance after one GD step:
+\[
+\|\theta_{k+1}-\theta^\star\|^2
+= \|\theta_k-\theta^\star\|^2 - 2\alpha\,\nabla f(\theta_k)^\top(\theta_k-\theta^\star)
++ \alpha^2\|\nabla f(\theta_k)\|^2.
+\]
+Combining the convexity bound with Young's inequality (or substituting
+$\nabla f(\theta_k)^\top(\theta_k-\theta^\star)\ge f(\theta_k)-f(\theta^\star)$)
+and then eliminating $\|\nabla f(\theta_k)\|^2$ using the descent inequality above yields
+\[
+\|\theta_{k+1}-\theta^\star\|^2
+\;\le\; \|\theta_k-\theta^\star\|^2 - 2\alpha\bigl(f(\theta_k)-f(\theta^\star)\bigr)
++ 2\alpha\bigl(f(\theta_k)-f(\theta_{k+1})\bigr).
+\]
+Telescoping from $t=0$ to $k-1$ gives
+\[
+2\alpha\,\sum_{t=0}^{k-1} \bigl(f(\theta_t)-f(\theta^\star)\bigr)
+\;\le\; \|\theta_0-\theta^\star\|^2.
+\]
+By convexity of $f$ and monotonicity of GD (with $\alpha\le 1/L$), $f(\theta_k)$ is nonincreasing, so
+\[
+k\bigl(f(\theta_k)-f(\theta^\star)\bigr)
+\;\le\; \sum_{t=0}^{k-1} \bigl(f(\theta_t)-f(\theta^\star)\bigr)
+\;\le\; \frac{\|\theta_0-\theta^\star\|^2}{2\alpha},
+\]
+which yields the stated bound. Setting $\alpha=1/L$ gives the explicit $\frac{L\|\theta_0-\theta^\star\|^2}{2k}$ rate.
+:::
+:::
+
+**Strongly Convex Case (Linear Rate).** If, in addition, $f$ is $\mu$-strongly convex ($\mu>0$), i.e., for all $\theta,\vartheta\in\mathbb{R}^d$,
+\begin{equation}
+f(\vartheta)\;\ge\; f(\theta) + \nabla f(\theta)^\top(\vartheta-\theta) \;+\; \frac{\mu}{2}\,\|\vartheta-\theta\|^2.
+(\#eq:PG-GO-strongly-convex)
+\end{equation}
+Then, GD with $0<\alpha\le \frac{1}{L}$ enjoys a **linear** (geometric) rate:
+
+::: {.theorembox}
+::: {.corollary #gd-strongly-convex}
+If $f$ is $L$-smooth and $\mu$-strongly convex, then for $\alpha=\frac{1}{L}$,
+\[
+\|\theta_k-\theta^\star\|
+\;\le\;
+\Bigl(1-\frac{\mu}{L}\Bigr)^k \,\|\theta_0-\theta^\star\|,
+\qquad
+f(\theta_k)-f(\theta^\star)
+\;\le\;
+\frac{L}{2}\Bigl(1-\frac{\mu}{L}\Bigr)^{2k}\|\theta_0-\theta^\star\|^2.
+\]
+:::
+:::
+
+**Practical Notes.**
+
+- The step size $\alpha=\frac{1}{L}$ is **optimal among fixed stepsizes** for the above worst-case bounds on smooth convex $f$.  
+
+- In practice, backtracking line search or adaptive schedules can approach similar behavior without knowing $L$.  
+
+- For policy gradients (which maximize $J$), apply the results to $f=-J$ and flip the update sign (gradient ascent). The smooth/convex assumptions rarely hold globally in RL, but these results calibrate expectations about step sizes and motivate variance reduction and curvature-aware methods used later.
+
+
+### Stochastic Gradients
+
+In reinforcement learning and other large-scale machine learning problems, computing the exact gradient $\nabla_\theta J(\theta)$ is often infeasible. Instead, we use an unbiased estimator $\hat{\nabla}_\theta J(\theta)$ computed from a subset of data (or trajectories in RL). The update becomes
+\[
+\theta_{k+1} = \theta_k + \alpha \hat{\nabla}_\theta J(\theta_k).
+\]
+
+This approach, known as **stochastic gradient ascent/descent (SGD)**, trades off exactness for computational efficiency. Variance in the gradient estimates plays an important role in convergence speed and stability.
+
+#### Convergence Guarantees
+
+We now turn to the convergence guarantees of stochastic gradient methods, which replace exact gradients with unbiased noisy estimates. Throughout this section we consider the minimization problem $\min_\theta f(\theta)$ and assume $\nabla f$ is available only through a stochastic oracle.
+
+**Setup and Assumptions.**
+
+Let $f:\mathbb{R}^d\!\to\!\mathbb{R}$ be differentiable. At iterate $\theta_k$, we observe a random vector $g_k$ such that
+\[
+\mathbb{E}[\,g_k \mid \theta_k\,] = \nabla f(\theta_k)
+\quad\text{and}\quad
+\mathbb{E}\!\left[\|g_k-\nabla f(\theta_k)\|^2 \mid \theta_k\right] \le \sigma^2.
+\]
+We will also use one of the following standard regularity conditions:
+
+- (**Convex + $L$-smooth**) $f$ is convex and the gradient is $L$-Lipschitz.  
+- (**Strongly convex + $L$-smooth**) $f$ is $\mu$-strongly convex and $L$-smooth.
+
+We consider the SGD update
+\[
+\theta_{k+1} \;=\; \theta_k - \alpha_k\, g_k,
+\]
+and define the **averaged iterate** 
+$$
+\bar\theta_K := \frac{1}{K}\sum_{k=0}^{K-1}\theta_k.
+$$
+
+::: {.theorembox}
+::: {.theorem #sgd-convex-rate name="SGD on smooth convex function"}  
+Assume $f$ is convex and $L$-smooth. Suppose there exists $G\!>\!0$ with $\mathbb{E}\|g_k\|^2 \le G^2$ for all $k$. Choose stepsizes $\alpha_k = \frac{\eta}{\sqrt{k+1}}$ with $\eta>0$. Then for all $K\!\ge\!1$,
+\[
+\mathbb{E}\big[f(\bar\theta_K)\big] - f(\theta^\star)
+\;\le\;
+\frac{\|\theta_0-\theta^\star\|^2}{2\,\eta\,\sqrt{K}}
+\;+\;
+\frac{\eta\,G^2}{2\,\sqrt{K}},
+\]
+so choosing $\eta = \frac{\|\theta_0-\theta^\star\|}{G}$ yields
+\[
+\mathbb{E}\big[f(\bar\theta_K)\big] - f(\theta^\star)
+\;\le\;
+\frac{\|\theta_0-\theta^\star\|\,G}{\sqrt{K}}
+\;=\; O\!\left(\frac{1}{\sqrt{K}}\right).
+\]
+:::
+:::
+::: {.proofbox}
+::: {.proof}
+*Sketch.* Combine (i) the smoothness-based descent inequality for one noisy step, (ii) convexity to relate function error to gradient inner products, and (iii) the unbiasedness and bounded second moment of $g_k$, then sum over $k$ and apply Jensen's inequality to the average $\bar\theta_K$. The $1/\sqrt{K}$ rate follows from the harmonic growth of $\sum_k \alpha_k$ and boundedness of $\sum_k \alpha_k^2$.  
+:::
+:::
+
+**Remarks.**
+
+- The bound is on the *averaged* iterate $\bar\theta_K$ (the last iterate may be worse by constants without further assumptions).
+
+- Replacing the second-moment bound by a variance bound $\sigma^2$ yields the same rate with $G^2$ replaced by $\sigma^2 + \sup_k\|\nabla f(\theta_k)\|^2$.
+
+::: {.theorembox}
+::: {.theorem #sgd-strong-rate name="SGD on smooth strongly convex function"} 
+Assume $f$ is $\mu$-strongly convex and $L$-smooth, and $\mathbb{E}\!\left[\|g_k-\nabla f(\theta_k)\|^2 \mid \theta_k\right]\le \sigma^2$.  
+With stepsizes $\alpha_k = \frac{1}{\mu(k+1)}$, the SGD iterates satisfy for all $K\!\ge\!1$,
+\[
+\mathbb{E}\,\|\theta_K - \theta^\star\|^2
+\;\le\;
+\frac{C}{K}
+\quad\text{and}\quad
+\mathbb{E}\big[f(\theta_K)\big] - f(\theta^\star)
+\;\le\;
+\frac{L}{2}\,\frac{C}{K}
+\;=\; O\!\left(\frac{1}{K}\right),
+\]
+where $C := \max\!\Big\{\|\theta_0-\theta^\star\|^2,\; \frac{\sigma^2}{\mu^2}\Big\}$.
+:::
+:::
+::: {.proofbox}
+::: {.proof}
+*Sketch.* Strong convexity gives a contraction in expected squared distance after one step; smoothness converts distance to function error. Summing the resulting supermartingale inequality and using $\sum_k \alpha_k = \infty$ and $\sum_k \alpha_k^2 < \infty$ yields the stated $1/K$ decay with explicit constants.  
+:::
+:::
+
+
+With a constant stepsize, SGD converges linearly up to a neighborhood set by the gradient noise.
+
+::: {.theorembox}
+::: {.corollary #sgd-const-steps name="Noise-dominated steady state"}
+Under the assumptions of Theorem \@ref(thm:sgd-strong-rate), if $0<\alpha \le \frac{1}{2L}$ is constant, then
+\[
+\mathbb{E}\,\|\theta_k-\theta^\star\|^2
+\;\le\;
+(1-\mu\alpha)^k\,\|\theta_0-\theta^\star\|^2
+\;+\;
+\frac{\alpha\,\sigma^2}{\mu},
+\]
+and consequently, by $L$-smoothness,
+\[
+\mathbb{E}\big[f(\theta_k)\big]-f(\theta^\star)
+\;\le\;
+\frac{L}{2}(1-\mu\alpha)^k\,\|\theta_0-\theta^\star\|^2
+\;+\;
+\frac{L\,\alpha\,\sigma^2}{2\mu}.
+\]
+Thus the error contracts geometrically until it reaches an $O(\alpha\,\sigma^2)$ noise floor.
+:::
+:::
+
+
+**Practical Takeaways for Policy Gradients.**
+
+- Use **diminishing stepsizes** for theoretical convergence ($\alpha_k \propto 1/\sqrt{k}$ for general convex, $\alpha_k \propto 1/k$ for strongly convex surrogates).  
+
+- With **constant stepsizes**, expect fast initial progress down to a variance-limited plateau; lowering variance (e.g., via baselines/advantage estimation) is as important as tuning $\alpha$.  
+
+<!-- - **Averaging** (Polyak–Ruppert) typically improves last-iterate performance in the convex regime and is widely used in practice. -->
+
+[TODO: graph the different trajectories between minimizing a convex function using GD and SGD.]{.red}
+
+
+### Beyond Vanilla Gradient Methods
+
+Several refinements to basic gradient updates are widely used:
+
+- **Momentum methods**: incorporate past gradients to smooth updates and accelerate convergence.
+- **Adaptive learning rates (Adam, RMSProp, AdaGrad)**: adjust the learning rate per parameter based on historical gradient magnitudes.
+- **Second-order methods**: approximate or use curvature information (the Hessian) for more informed updates, though often impractical in high dimensions.
+
+
+<!-- ## Policy Gradients
+
+Policy gradients optimize a **parameterized stochastic policy** directly, without requiring an explicit action-value maximization step. They are applicable to both **finite** and **continuous** action spaces and are especially useful when actions are continuous or when argmax over $Q(s,a)$ is costly or ill-posed.
+
+### Setup: Objective and Policy Models
+
+We consider a Markov decision process (MDP) with (possibly continuous) state space $\mathcal{S}$, action space $\mathcal{A}$, unknown dynamics $P$, reward $r(s,a)$, and discount factor $\gamma\in[0,1)$. Let $\pi_\theta(a\mid s)$ be a differentiable stochastic policy with parameters $\theta\in\mathbb{R}^d$.
+
+- **Trajectory view.** A trajectory is $\tau=(s_0,a_0,s_1,a_1,\dots,s_{T})$ with probability density/mass
+  \[
+  p_\theta(\tau) = \rho(s_0)\prod_{t=0}^{T-1} \pi_\theta(a_t\mid s_t)\,P(s_{t+1}\mid s_t,a_t),
+  \]
+  where $\rho$ is the initial state distribution and $T$ is the (random or fixed) episode length.
+- **Return.** Define the (discounted) return
+  \[
+  R(\tau) \;=\; \sum_{t=0}^{T-1}\gamma^t r(s_t,a_t), 
+  \qquad
+  \text{and the return-to-go}\quad
+  G_t \;=\; \sum_{t'=t}^{T-1}\gamma^{t'-t} r(s_{t'},a_{t'}).
+  \]
+- **Optimization objective.** The goal is to maximize the expected return
+  \[
+  J(\theta) \;\equiv\; \mathbb{E}_{\tau\sim p_\theta}\!\left[R(\tau)\right]
+  \;=\; \mathbb{E}\!\left[\sum_{t=0}^{T-1}\gamma^t r(s_t,a_t)\right].
+  \]
+
+#### Policy models
+
+- **Finite action spaces ($\mathcal{A}$ discrete).** A common choice is a **softmax (categorical) policy** over a score (logit) function $f_\theta(s,a)$:
+  \[
+  \pi_\theta(a\mid s)
+  \;=\;
+  \frac{\exp\{f_\theta(s,a)\}}{\sum_{a'\in\mathcal{A}}\exp\{f_\theta(s,a')\}}.
+  \]
+  Typically $f_\theta$ is a neural network or a linear function over features.
+
+- **Continuous action spaces ($\mathcal{A}\subseteq\mathbb{R}^m$).** A standard choice is a **Gaussian policy**:
+  \[
+  \pi_\theta(a\mid s) \;=\; \mathcal{N}\!\big(a;\;\mu_\theta(s),\,\Sigma_\theta(s)\big),
+  \]
+  where $\mu_\theta(s)$ and (often diagonal) covariance $\Sigma_\theta(s)$ are differentiable functions (e.g., neural networks). Other choices include squashed Gaussians (e.g., $\tanh$) or Beta distributions for bounded actions.
+
+### The Policy Gradient Lemma
+
+The policy gradient has an elegant form that **does not** involve the derivative of the environment dynamics $P$.
+
+::: {.theorem #policy-gradient-lemma}
+**Lemma (Policy gradient / likelihood-ratio form).**  
+Let $J(\theta)=\mathbb{E}_{\tau\sim p_\theta}[R(\tau)]$. Then:
+\[
+\nabla_\theta J(\theta)
+\;=\;
+\mathbb{E}_{\tau\sim p_\theta}\!\Big[R(\tau)\,\nabla_\theta \log p_\theta(\tau)\Big]
+\;=\;
+\mathbb{E}_{\tau\sim p_\theta}\!\Bigg[\sum_{t=0}^{T-1}
+\nabla_\theta \log \pi_\theta(a_t\mid s_t)\;R(\tau)\Bigg].
+\]
+By **causality** (future rewards do not affect past actions), the full return can be replaced by return-to-go:
+\[
+\nabla_\theta J(\theta)
+\;=\;
+\mathbb{E}_{\tau\sim p_\theta}\!\Bigg[\sum_{t=0}^{T-1}
+\nabla_\theta \log \pi_\theta(a_t\mid s_t)\;G_t\Bigg].
+\]
+Equivalently, using value functions,
+\[
+\nabla_\theta J(\theta)
+\;=\;
+\mathbb{E}_{s\sim d_\theta,\;a\sim\pi_\theta}\!\Big[\nabla_\theta \log \pi_\theta(a\mid s)\,Q^{\pi_\theta}(s,a)\Big],
+\]
+where $d_\theta$ is the (discounted) on-policy state visitation distribution.
+:::
+
+::: {.proof}
+*Sketch.* Differentiate under the integral sign and apply the log-derivative trick:
+$\nabla_\theta p_\theta(\tau) = p_\theta(\tau)\nabla_\theta\log p_\theta(\tau)$.
+The $\theta$-dependence in $p_\theta(\tau)$ is only through $\pi_\theta(a_t\mid s_t)$ (the dynamics $P$ do not depend on $\theta$), hence $\log p_\theta(\tau)=\sum_t \log \pi_\theta(a_t\mid s_t)+\text{const}$.
+Causality follows by dropping reward terms $r_{t'}$ for $t'<t$ whose expectation against $\nabla\log\pi_\theta(a_t\mid s_t)$ is zero. The $Q^{\pi_\theta}$ form is obtained by conditioning on $(s_t,a_t)$ and using the law of total expectation.  
+:::
+
+#### Baselines and Variance Reduction
+
+A key variance-reduction device is a **baseline** $b:\mathcal{S}\to\mathbb{R}$:
+\[
+\mathbb{E}\!\left[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)\right] = 0
+\quad\Rightarrow\quad
+\nabla_\theta J(\theta) =
+\mathbb{E}\!\Big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(Q^{\pi_\theta}(s_t,a_t)-b(s_t)\big)\Big].
+\]
+A common choice is $b(s)=V^{\pi_\theta}(s)$, yielding the **advantage** $A^{\pi_\theta}(s,a)=Q^{\pi_\theta}(s,a)-V^{\pi_\theta}(s)$.
+
+### REINFORCE: Monte Carlo Policy Gradient
+
+REINFORCE is the canonical on-policy Monte Carlo estimator of the policy gradient (Williams, 1992). It uses sampled returns to form an unbiased gradient estimate.
+
+**Estimator (episodic form).**
+Given a batch of $N$ trajectories $\{\tau^{(i)}\}_{i=1}^N$ collected by $\pi_\theta$, define for each timestep the return-to-go
+\[
+G_t^{(i)} = \sum_{t'=t}^{T^{(i)}-1} \gamma^{t'-t} r\!\left(s_{t'}^{(i)},a_{t'}^{(i)}\right).
+\]
+An unbiased gradient estimator with a baseline $b$ is
+\[
+\widehat{\nabla_\theta J}
+\;=\;
+\frac{1}{N}\sum_{i=1}^N \sum_{t=0}^{T^{(i)}-1}
+\nabla_\theta \log \pi_\theta\!\big(a_t^{(i)}\mid s_t^{(i)}\big)
+\;\Big(G_t^{(i)} - b\!\big(s_t^{(i)}\big)\Big).
+\]
+
+**Algorithm (one update):**
+1. **Collect data.** Roll out $\pi_\theta$ to obtain $N$ episodes $\{\tau^{(i)}\}$.
+2. **Compute returns.** For each episode and timestep, compute $G_t^{(i)}$ by backward recursion.
+3. **(Optional) Baseline.** Choose $b(s)$ (e.g., running average of returns per state, or a learned value function; see actor–critic later).
+4. **Gradient estimate.** Form $\widehat{\nabla_\theta J}$ as above.
+5. **Update.** Perform a gradient ascent step
+   \[
+   \theta \leftarrow \theta + \alpha\, \widehat{\nabla_\theta J}.
+   \]
+
+**Practical details.**
+- **Normalization.** Normalize advantages $G_t - b(s_t)$ within a batch to stabilize updates.
+- **Entropy regularization.** Add $\beta\,\mathbb{E}_{s\sim d_\theta}\!\big[\mathcal{H}(\pi_\theta(\cdot\mid s))\big]$ to $J(\theta)$ for exploration; the gradient adds $+\beta\,\nabla_\theta \mathbb{E}[\log \pi_\theta]$.
+- **Continuous actions.** For Gaussian policies,
+  \[
+  \nabla_\theta \log \pi_\theta(a\mid s)
+  = \nabla_\theta\!\left[-\tfrac{1}{2}(a-\mu_\theta(s))^\top \Sigma_\theta(s)^{-1}(a-\mu_\theta(s)) - \tfrac{1}{2}\log\det\Sigma_\theta(s) \right],
+  \]
+  which is tractable via automatic differentiation.
+- **Sample efficiency.** REINFORCE is unbiased but high variance; later sections (actor–critic, GAE, trust region methods) reduce variance and improve stability.
+
+**Connection to Gradient-Based Optimization.**  
+REINFORCE performs **stochastic gradient ascent** on $J(\theta)$ using the score-function (likelihood-ratio) estimator. The baseline preserves unbiasedness while reducing variance, aligning with the SGD convergence insights discussed in Section \@ref(sgd-convergence). -->
+
+
+
+
+
+
