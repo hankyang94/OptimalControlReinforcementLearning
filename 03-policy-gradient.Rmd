@@ -325,31 +325,38 @@ Several refinements to basic gradient updates are widely used:
 - **Second-order methods**: approximate or use curvature information (the Hessian) for more informed updates, though often impractical in high dimensions.
 
 
-<!-- ## Policy Gradients
+## Policy Gradients
 
-Policy gradients optimize a **parameterized stochastic policy** directly, without requiring an explicit action-value maximization step. They are applicable to both **finite** and **continuous** action spaces and are especially useful when actions are continuous or when argmax over $Q(s,a)$ is costly or ill-posed.
+Policy gradients optimize a *parameterized stochastic policy* directly, without requiring an explicit action-value maximization step. They are applicable to both finite and continuous action spaces and are especially useful when actions are continuous or when "$\arg\max$" over $Q(s,a)$ is costly or ill-posed.
 
-### Setup: Objective and Policy Models
+### Setup
 
-We consider a Markov decision process (MDP) with (possibly continuous) state space $\mathcal{S}$, action space $\mathcal{A}$, unknown dynamics $P$, reward $r(s,a)$, and discount factor $\gamma\in[0,1)$. Let $\pi_\theta(a\mid s)$ be a differentiable stochastic policy with parameters $\theta\in\mathbb{R}^d$.
+We consider a Markov decision process (MDP) with (possibly continuous) state space $\mathcal{S}$, action space $\mathcal{A}$, unknown dynamics $P$, reward function $R(s,a)$, and discount factor $\gamma\in[0,1)$. Let $\pi_\theta(a\mid s)$ be a differentiable stochastic policy with parameters $\theta\in\mathbb{R}^d$.
 
-- **Trajectory view.** A trajectory is $\tau=(s_0,a_0,s_1,a_1,\dots,s_{T})$ with probability density/mass
-  \[
+- **Trajectory.** A state-action trajectory is $\tau=(s_0,a_0,s_1,a_1,\dots,s_{T})$ with probability density/mass
+  \begin{equation}
   p_\theta(\tau) = \rho(s_0)\prod_{t=0}^{T-1} \pi_\theta(a_t\mid s_t)\,P(s_{t+1}\mid s_t,a_t),
-  \]
+  (\#eq:trajectory-density)
+  \end{equation}
   where $\rho$ is the initial state distribution and $T$ is the (random or fixed) episode length.
 - **Return.** Define the (discounted) return
-  \[
-  R(\tau) \;=\; \sum_{t=0}^{T-1}\gamma^t r(s_t,a_t), 
-  \qquad
-  \text{and the return-to-go}\quad
-  G_t \;=\; \sum_{t'=t}^{T-1}\gamma^{t'-t} r(s_{t'},a_{t'}).
-  \]
+\begin{equation}
+R(\tau) \;=\; \sum_{t=0}^{T-1}\gamma^t R(s_t,a_t), 
+(\#eq:PG-Trajectory-Return)
+\end{equation}
+and the return-to-go
+\begin{equation}
+g_t \;=\; \sum_{t'=t}^{T-1}\gamma^{t'-t} R(s_{t'},a_{t'}).
+(\#eq:PG-return-to-go)
+\end{equation}
+
 - **Optimization objective.** The goal is to maximize the expected return
-  \[
-  J(\theta) \;\equiv\; \mathbb{E}_{\tau\sim p_\theta}\!\left[R(\tau)\right]
-  \;=\; \mathbb{E}\!\left[\sum_{t=0}^{T-1}\gamma^t r(s_t,a_t)\right].
-  \]
+\begin{equation}
+J(\theta) \;\equiv\; \mathbb{E}_{\tau\sim p_\theta}\!\left[R(\tau)\right]
+  \;=\; \mathbb{E}\!\left[\sum_{t=0}^{T-1}\gamma^t R(s_t,a_t)\right],
+(\#eq:PG-objective)
+\end{equation}
+where the expectation is taken over the randomness in (i) the initial state $s_0 \sim \rho$, (ii) the policy $\pi_\theta$, and (iii) the transition dynamics $P$.
 
 #### Policy models
 
@@ -359,53 +366,144 @@ We consider a Markov decision process (MDP) with (possibly continuous) state spa
   \;=\;
   \frac{\exp\{f_\theta(s,a)\}}{\sum_{a'\in\mathcal{A}}\exp\{f_\theta(s,a')\}}.
   \]
-  Typically $f_\theta$ is a neural network or a linear function over features.
+  Here we use $\exp\{f_\theta(s,a)\} = e^{f_\theta(s,a)}$ for pretty formatting. Typically $f_\theta$ is a neural network or a linear function over features.
 
 - **Continuous action spaces ($\mathcal{A}\subseteq\mathbb{R}^m$).** A standard choice is a **Gaussian policy**:
   \[
   \pi_\theta(a\mid s) \;=\; \mathcal{N}\!\big(a;\;\mu_\theta(s),\,\Sigma_\theta(s)\big),
   \]
-  where $\mu_\theta(s)$ and (often diagonal) covariance $\Sigma_\theta(s)$ are differentiable functions (e.g., neural networks). Other choices include squashed Gaussians (e.g., $\tanh$) or Beta distributions for bounded actions.
+  where $\mu_\theta(s)$ and (often diagonal) covariance $\Sigma_\theta(s)$ are differentiable functions (e.g., neural networks) parameterized by $\theta$. The policy $\pi_\theta(a \mid s)$ samples actions from the Gaussian parameterized by $\mu_\theta(s)$ and $\Sigma_\theta(s)$. Other choices include squashed Gaussians (e.g., $\tanh$) or Beta distributions for bounded actions.
 
 ### The Policy Gradient Lemma
 
-The policy gradient has an elegant form that **does not** involve the derivative of the environment dynamics $P$.
+With the gradient-based optimization machinery from Section \@ref(gradient-optimization), a natural strategy for the policy optimization problem in \@ref(eq:PG-objective) is gradient ascent on the objective $J(\theta)$.
+Consequently, the central task is to characterize the ascent direction, i.e., to compute $\nabla_\theta J(\theta)$.
 
-::: {.theorem #policy-gradient-lemma}
-**Lemma (Policy gradient / likelihood-ratio form).**  
-Let $J(\theta)=\mathbb{E}_{\tau\sim p_\theta}[R(\tau)]$. Then:
-\[
+The policy gradient lemma, stated below, provides exactly this characterization. Crucially, it expresses $\nabla_\theta J(\theta)$ in terms of the policy's score function $\nabla_\theta \log \pi_\theta(a\mid s)$ and returns, without differentiating through the environment dynamics. This likelihood-ratio form makes policy optimization feasible even when the transition model is unknown or non-differentiable.
+
+::: {.theorembox}
+::: {.theorem #policy-gradient-lemma name="Policy Gradient Lemma"}
+Let $J(\theta)=\mathbb{E}_{\tau \sim p_\theta}[R(\tau)]$ as defined in \@ref(eq:PG-objective) Then:
+\begin{equation}
 \nabla_\theta J(\theta)
 \;=\;
-\mathbb{E}_{\tau\sim p_\theta}\!\Big[R(\tau)\,\nabla_\theta \log p_\theta(\tau)\Big]
+\mathbb{E}_{\tau\sim p_\theta} \Big[R(\tau)\,\nabla_\theta \log p_\theta(\tau)\Big]
 \;=\;
-\mathbb{E}_{\tau\sim p_\theta}\!\Bigg[\sum_{t=0}^{T-1}
+\mathbb{E}_{\tau\sim p_\theta} \Bigg[\sum_{t=0}^{T-1}
 \nabla_\theta \log \pi_\theta(a_t\mid s_t)\;R(\tau)\Bigg].
-\]
-By **causality** (future rewards do not affect past actions), the full return can be replaced by return-to-go:
-\[
+(\#eq:PG-PGLemma-1)
+\end{equation}
+By causality (future rewards do not affect past actions), the full return can be replaced by return-to-go:
+\begin{equation}
 \nabla_\theta J(\theta)
 \;=\;
-\mathbb{E}_{\tau\sim p_\theta}\!\Bigg[\sum_{t=0}^{T-1}
-\nabla_\theta \log \pi_\theta(a_t\mid s_t)\;G_t\Bigg].
-\]
+\mathbb{E}_{\tau\sim p_\theta} \Bigg[\sum_{t=0}^{T-1} \gamma^t
+\nabla_\theta \log \pi_\theta(a_t\mid s_t)\;g_t\Bigg].
+(\#eq:PG-PGLemma-2)
+\end{equation}
 Equivalently, using value functions,
+\begin{equation}
+\nabla_\theta J(\theta)
+\;=\;
+ \frac{1}{1-\gamma} \mathbb{E}_{s\sim d_\theta,\;a\sim\pi_\theta} \Big[\nabla_\theta \log \pi_\theta(a\mid s)\,Q^{\pi_\theta}(s,a)\Big],
+(\#eq:PG-PGLemma-3)
+\end{equation}
+where $d_\theta$ is the (discounted) on-policy state visitation distribution for infinite-horizon MDPs:
+\begin{equation}
+d_\theta(s) = (1 - \gamma) \sum_{t=0}^{\infty} \gamma^t \Pr_\theta(s_t=s).
+(\#eq:state-visitation-distribution)
+\end{equation}
+:::
+:::
+::: {.proof}
+We prove the three equivalent forms step by step. Throughout, we assume $\theta$ parameterizes only the policy $\pi_\theta$ (not the dynamics $P$ nor the initial distribution $\rho$), and that interchanging $\nabla_\theta$ with the trajectory integral/sum is justified (e.g., bounded rewards and finite horizon or standard dominated-convergence conditions). 
+Let the return-to-go $g_t$ be defined as in \@ref(eq:PG-return-to-go).
+
+**Step 1 (Log-derivative trick).** Write the objective as an expectation over trajectories:
+\[
+J(\theta) \;=\; \int R(\tau)\, p_\theta(\tau)\, d\tau.
+\]
+Differentiate under the integral and use
+\begin{equation}
+\nabla_\theta p_\theta(\tau)=p_\theta(\tau)\nabla_\theta\log p_\theta(\tau)
+(\#eq:log-derivative-trick)
+\end{equation}
+we can write:
+\[
+\nabla_\theta J(\theta)
+= \int R(\tau)\,\nabla_\theta p_\theta(\tau)\, d\tau
+= \int R(\tau)\, p_\theta(\tau)\,\nabla_\theta \log p_\theta(\tau)\, d\tau
+= \mathbb{E}_{\tau\sim p_\theta}\!\big[R(\tau)\,\nabla_\theta \log p_\theta(\tau)\big],
+\]
+which is \@ref(eq:PG-PGLemma-1) up to expanding $\log p_\theta(\tau)$. To see why \@ref(eq:log-derivative-trick) is true, write
+$$
+\nabla_\theta \log p_\theta(\tau) = \frac{1}{p_\theta(\tau)} \nabla_\theta p_\theta(\tau),
+$$
+using the chain rule.
+
+**Step 2 (Policy-only dependence).** Factor the trajectory likelihood/mass:
+\[
+p_\theta(\tau)
+= \rho(s_0)\,\prod_{t=0}^{T-1}\pi_\theta(a_t\mid s_t)\,P(s_{t+1}\mid s_t,a_t).
+\]
+Since $\rho$ and $P$ do not depend on $\theta$,
+\[
+\log p_\theta(\tau)
+= \text{const} \;+\; \sum_{t=0}^{T-1}\log \pi_\theta(a_t\mid s_t)
+\quad\Rightarrow\quad
+\nabla_\theta \log p_\theta(\tau) \;=\; \sum_{t=0}^{T-1}\nabla_\theta \log \pi_\theta(a_t\mid s_t).
+\]
+Substitute into Step 1 to obtain the second equality in \@ref(eq:PG-PGLemma-1):
+\[
+\nabla_\theta J(\theta)
+= \mathbb{E}_{\tau\sim p_\theta}\!\Bigg[\sum_{t=0}^{T-1}\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,R(\tau)\Bigg].
+\]
+
+**Step 3 (Causality $\Rightarrow$ return-to-go).** Expand $R(\tau)=\sum_{t=0}^{T-1}\gamma^{t} r_{t}$ (with $r_{t}:=R(s_{t},a_{t})$) and swap sums:
+\[
+\mathbb{E} \Bigg[\sum_{t=0}^{T-1}\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,R(\tau)\Bigg]
+=
+\sum_{t=0}^{T-1}\sum_{t'=0}^{T-1}\mathbb{E} \big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\gamma^{t'} r_{t'}\big].
+\]
+For $t'<t$, the factor $\gamma^{t'} r_{t'}$ is measurable w.r.t. the history $\mathcal{F}_t=\sigma(s_0,a_0,\dots,s_t)$, while
+\[
+\mathbb{E} \big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big|\,\mathcal{F}_t\big]
+= \sum_{a} \pi_\theta(a\mid s_t)\,\nabla_\theta \log \pi_\theta(a\mid s_t) = \nabla_\theta \sum_{a}\pi_\theta(a\mid s_t) = \nabla_\theta 1 = 0,
+\]
+(and analogously with integrals for continuous $\mathcal{A}$). Hence by the tower property,
+\[
+\mathbb{E} \big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\gamma^{t'} r_{t'}\big]=0\quad\text{for all }t'<t.
+\]
+Therefore only the terms with $t'\ge t$ survive, and
+\[
+\nabla_\theta J(\theta)
+= \sum_{t=0}^{T-1}\mathbb{E} \Big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\sum_{t'=t}^{T-1}\gamma^{t'} r_{t'}\Big]
+= \mathbb{E} \Bigg[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,g_t\Bigg],
+\]
+which is \@ref(eq:PG-PGLemma-2).
+
+**Step 4 (Value-function form).** Condition on $(s_t,a_t)$ and use the definition of the action-value function:
+\[
+Q^{\pi_\theta}(s_t,a_t) \;\equiv\; \mathbb{E}\!\left[g_t \,\middle|\, s_t,a_t\right].
+\]
+Taking expectations then yields
+\[
+\mathbb{E} \big[\gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,g_t\big]
+= \mathbb{E} \big[\gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,Q^{\pi_\theta}(s_t,a_t)\big].
+\]
+Summing over $t$ and collecting terms with the (discounted) on-policy state visitation distribution $d_\theta$ (for the infinite-horizon case, e.g., $d_\theta(s)=(1-\gamma)\sum_{t=0}^\infty \gamma^t\,\Pr_\theta(s_t=s)$; for finite $T$, use the corresponding finite-horizon weighting), we obtain
 \[
 \nabla_\theta J(\theta)
 \;=\;
-\mathbb{E}_{s\sim d_\theta,\;a\sim\pi_\theta}\!\Big[\nabla_\theta \log \pi_\theta(a\mid s)\,Q^{\pi_\theta}(s,a)\Big],
+\mathbb{E}_{s\sim d_\theta,\;a\sim \pi_\theta} \Big[\nabla_\theta \log \pi_\theta(a\mid s)\,Q^{\pi_\theta}(s,a)\Big],
 \]
-where $d_\theta$ is the (discounted) on-policy state visitation distribution.
+which is \@ref(eq:PG-PGLemma-3).
+
+**Conclusion.** Combining Steps 1–4 proves all three stated forms of the policy gradient.
 :::
 
-::: {.proof}
-*Sketch.* Differentiate under the integral sign and apply the log-derivative trick:
-$\nabla_\theta p_\theta(\tau) = p_\theta(\tau)\nabla_\theta\log p_\theta(\tau)$.
-The $\theta$-dependence in $p_\theta(\tau)$ is only through $\pi_\theta(a_t\mid s_t)$ (the dynamics $P$ do not depend on $\theta$), hence $\log p_\theta(\tau)=\sum_t \log \pi_\theta(a_t\mid s_t)+\text{const}$.
-Causality follows by dropping reward terms $r_{t'}$ for $t'<t$ whose expectation against $\nabla\log\pi_\theta(a_t\mid s_t)$ is zero. The $Q^{\pi_\theta}$ form is obtained by conditioning on $(s_t,a_t)$ and using the law of total expectation.  
-:::
 
-#### Baselines and Variance Reduction
+<!-- #### Baselines and Variance Reduction
 
 A key variance-reduction device is a **baseline** $b:\mathcal{S}\to\mathbb{R}$:
 \[
@@ -414,37 +512,52 @@ A key variance-reduction device is a **baseline** $b:\mathcal{S}\to\mathbb{R}$:
 \nabla_\theta J(\theta) =
 \mathbb{E}\!\Big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(Q^{\pi_\theta}(s_t,a_t)-b(s_t)\big)\Big].
 \]
-A common choice is $b(s)=V^{\pi_\theta}(s)$, yielding the **advantage** $A^{\pi_\theta}(s,a)=Q^{\pi_\theta}(s,a)-V^{\pi_\theta}(s)$.
+A common choice is $b(s)=V^{\pi_\theta}(s)$, yielding the **advantage** $A^{\pi_\theta}(s,a)=Q^{\pi_\theta}(s,a)-V^{\pi_\theta}(s)$. -->
 
-### REINFORCE: Monte Carlo Policy Gradient
+### REINFORCE
 
-REINFORCE is the canonical on-policy Monte Carlo estimator of the policy gradient (Williams, 1992). It uses sampled returns to form an unbiased gradient estimate.
+The policy gradient lemma immediately gives us an algorithm. Specifically, the gradient receipe in \@ref(eq:PG-PGLemma-1) tells us that if we generate one trajectory $\tau$ by following the policy $\pi$, then
+\begin{equation}
+\widehat{\nabla_\theta J} = \sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t) R(\tau)
+(\#eq:PG-Estimator-1)
+\end{equation}
+is an unbiased estimator of the true gradient. 
 
-**Estimator (episodic form).**
-Given a batch of $N$ trajectories $\{\tau^{(i)}\}_{i=1}^N$ collected by $\pi_\theta$, define for each timestep the return-to-go
+With this sample gradient estimator, we obtain the classical REINFORCE algorithm.
+
+::: {.highlightbox}
+1. Initialize $\theta_0$ for the initial policy $\pi_{\theta_0}(a \mid s)$
+2. For $k=0,1,\dots,$ do:
+ - Obtain a trajectory $\tau \sim p_{\theta_k}$
+ - Compute the stochastic gradient $g_k$ as in \@ref(eq:PG-Estimator-1)
+ - Update $\theta_{k+1} = \theta_k + \alpha_k g_k$
+:::
+
+To reduce variance of the gradient estimator, we can use a minibatch of trajectories. For example, given a batch of $N$ trajectories $\{\tau^{(i)}\}_{i=1}^N$ collected by $\pi_\theta$, define for each timestep the return-to-go
 \[
-G_t^{(i)} = \sum_{t'=t}^{T^{(i)}-1} \gamma^{t'-t} r\!\left(s_{t'}^{(i)},a_{t'}^{(i)}\right).
+g_t^{(i)} = \sum_{t'=t}^{T^{(i)}-1} \gamma^{t'-t} R\!\left(s_{t'}^{(i)},a_{t'}^{(i)}\right).
 \]
-An unbiased gradient estimator with a baseline $b$ is
-\[
+An unbiased gradient estimator, from \@ref(eq:PG-PGLemma-2) is
+\begin{equation}
 \widehat{\nabla_\theta J}
 \;=\;
-\frac{1}{N}\sum_{i=1}^N \sum_{t=0}^{T^{(i)}-1}
-\nabla_\theta \log \pi_\theta\!\big(a_t^{(i)}\mid s_t^{(i)}\big)
-\;\Big(G_t^{(i)} - b\!\big(s_t^{(i)}\big)\Big).
-\]
+\frac{1}{N}\sum_{i=1}^N \sum_{t=0}^{T^{(i)}-1} \gamma^t
+\nabla_\theta \log \pi_\theta \big(a_t^{(i)}\mid s_t^{(i)}\big) g_t^{(i)}.
+(\#eq:PG-Estimator-2)
+\end{equation}
 
-**Algorithm (one update):**
-1. **Collect data.** Roll out $\pi_\theta$ to obtain $N$ episodes $\{\tau^{(i)}\}$.
-2. **Compute returns.** For each episode and timestep, compute $G_t^{(i)}$ by backward recursion.
-3. **(Optional) Baseline.** Choose $b(s)$ (e.g., running average of returns per state, or a learned value function; see actor–critic later).
-4. **Gradient estimate.** Form $\widehat{\nabla_\theta J}$ as above.
-5. **Update.** Perform a gradient ascent step
-   \[
-   \theta \leftarrow \theta + \alpha\, \widehat{\nabla_\theta J}.
-   \]
+This leads to the following minibatch REINFORCE algorithm.
 
-**Practical details.**
+::: {.highlightbox}
+1. Initialize $\theta_0$ for the initial policy $\pi_{\theta_0}(a \mid s)$
+2. For $k=0,1,\dots,$ do:
+ - Obtain N trajectories $\{ \tau^{(i)} \}_{i=1}^N \sim p_{\theta_k}$
+ - Compute the stochastic gradient $g_k$ as in \@ref(eq:PG-Estimator-2)
+ - Update $\theta_{k+1} = \theta_k + \alpha_k g_k$
+:::
+
+
+<!-- **Practical details.**
 - **Normalization.** Normalize advantages $G_t - b(s_t)$ within a batch to stabilize updates.
 - **Entropy regularization.** Add $\beta\,\mathbb{E}_{s\sim d_\theta}\!\big[\mathcal{H}(\pi_\theta(\cdot\mid s))\big]$ to $J(\theta)$ for exploration; the gradient adds $+\beta\,\nabla_\theta \mathbb{E}[\log \pi_\theta]$.
 - **Continuous actions.** For Gaussian policies,
@@ -453,9 +566,9 @@ An unbiased gradient estimator with a baseline $b$ is
   = \nabla_\theta\!\left[-\tfrac{1}{2}(a-\mu_\theta(s))^\top \Sigma_\theta(s)^{-1}(a-\mu_\theta(s)) - \tfrac{1}{2}\log\det\Sigma_\theta(s) \right],
   \]
   which is tractable via automatic differentiation.
-- **Sample efficiency.** REINFORCE is unbiased but high variance; later sections (actor–critic, GAE, trust region methods) reduce variance and improve stability.
+- **Sample efficiency.** REINFORCE is unbiased but high variance; later sections (actor–critic, GAE, trust region methods) reduce variance and improve stability. -->
 
-**Connection to Gradient-Based Optimization.**  
+<!-- **Connection to Gradient-Based Optimization.**  
 REINFORCE performs **stochastic gradient ascent** on $J(\theta)$ using the score-function (likelihood-ratio) estimator. The baseline preserves unbiasedness while reducing variance, aligning with the SGD convergence insights discussed in Section \@ref(sgd-convergence). -->
 
 

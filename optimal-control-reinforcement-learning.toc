@@ -50,35 +50,40 @@
 \contentsline {subsection}{\numberline {3.1.3}Stochastic Gradients}{93}{subsection.3.1.3}%
 \contentsline {subsubsection}{\numberline {3.1.3.1}Convergence Guarantees}{93}{subsubsection.3.1.3.1}%
 \contentsline {subsection}{\numberline {3.1.4}Beyond Vanilla Gradient Methods}{95}{subsection.3.1.4}%
-\contentsline {chapter}{\numberline {A}Convex Analysis and Optimization}{97}{appendix.A}%
-\contentsline {section}{\numberline {A.1}Theory}{97}{section.A.1}%
-\contentsline {subsection}{\numberline {A.1.1}Sets}{97}{subsection.A.1.1}%
-\contentsline {subsection}{\numberline {A.1.2}Convex function}{99}{subsection.A.1.2}%
-\contentsline {subsection}{\numberline {A.1.3}Lagrange dual}{100}{subsection.A.1.3}%
-\contentsline {subsection}{\numberline {A.1.4}KKT condition}{102}{subsection.A.1.4}%
-\contentsline {section}{\numberline {A.2}Practice}{103}{section.A.2}%
-\contentsline {subsection}{\numberline {A.2.1}CVX Introduction}{103}{subsection.A.2.1}%
-\contentsline {subsection}{\numberline {A.2.2}Linear Programming (LP)}{103}{subsection.A.2.2}%
-\contentsline {subsection}{\numberline {A.2.3}Quadratic Programming (QP)}{104}{subsection.A.2.3}%
-\contentsline {subsection}{\numberline {A.2.4}Quadratically Constrained Quadratic Programming (QCQP)}{106}{subsection.A.2.4}%
-\contentsline {subsection}{\numberline {A.2.5}Second-Order Cone Programming (SOCP)}{108}{subsection.A.2.5}%
-\contentsline {subsection}{\numberline {A.2.6}Semidefinite Programming (SDP)}{110}{subsection.A.2.6}%
-\contentsline {subsection}{\numberline {A.2.7}CVXPY Introduction and Examples}{112}{subsection.A.2.7}%
-\contentsline {subsubsection}{\numberline {A.2.7.1}LP}{112}{subsubsection.A.2.7.1}%
-\contentsline {subsubsection}{\numberline {A.2.7.2}QP}{113}{subsubsection.A.2.7.2}%
-\contentsline {subsubsection}{\numberline {A.2.7.3}QCQP}{114}{subsubsection.A.2.7.3}%
-\contentsline {subsubsection}{\numberline {A.2.7.4}SOCP}{115}{subsubsection.A.2.7.4}%
-\contentsline {subsubsection}{\numberline {A.2.7.5}SDP}{116}{subsubsection.A.2.7.5}%
-\contentsline {chapter}{\numberline {B}Linear System Theory}{119}{appendix.B}%
-\contentsline {section}{\numberline {B.1}Stability}{119}{section.B.1}%
-\contentsline {subsection}{\numberline {B.1.1}Continuous-Time Stability}{119}{subsection.B.1.1}%
-\contentsline {subsection}{\numberline {B.1.2}Discrete-Time Stability}{120}{subsection.B.1.2}%
-\contentsline {subsection}{\numberline {B.1.3}Lyapunov Analysis}{121}{subsection.B.1.3}%
-\contentsline {section}{\numberline {B.2}Controllability and Observability}{123}{section.B.2}%
-\contentsline {subsection}{\numberline {B.2.1}Cayley-Hamilton Theorem}{124}{subsection.B.2.1}%
-\contentsline {subsection}{\numberline {B.2.2}Equivalent Statements for Controllability}{128}{subsection.B.2.2}%
-\contentsline {subsection}{\numberline {B.2.3}Duality}{132}{subsection.B.2.3}%
-\contentsline {subsection}{\numberline {B.2.4}Equivalent Statements for Observability}{134}{subsection.B.2.4}%
-\contentsline {section}{\numberline {B.3}Stabilizability And Detectability}{134}{section.B.3}%
-\contentsline {subsection}{\numberline {B.3.1}Equivalent Statements for Stabilizability}{135}{subsection.B.3.1}%
-\contentsline {subsection}{\numberline {B.3.2}Equivalent Statements for Detectability}{137}{subsection.B.3.2}%
+\contentsline {section}{\numberline {3.2}Policy Gradients}{95}{section.3.2}%
+\contentsline {subsection}{\numberline {3.2.1}Setup}{95}{subsection.3.2.1}%
+\contentsline {subsubsection}{\numberline {3.2.1.1}Policy models}{96}{subsubsection.3.2.1.1}%
+\contentsline {subsection}{\numberline {3.2.2}The Policy Gradient Lemma}{97}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}REINFORCE}{99}{subsection.3.2.3}%
+\contentsline {chapter}{\numberline {A}Convex Analysis and Optimization}{101}{appendix.A}%
+\contentsline {section}{\numberline {A.1}Theory}{101}{section.A.1}%
+\contentsline {subsection}{\numberline {A.1.1}Sets}{101}{subsection.A.1.1}%
+\contentsline {subsection}{\numberline {A.1.2}Convex function}{103}{subsection.A.1.2}%
+\contentsline {subsection}{\numberline {A.1.3}Lagrange dual}{104}{subsection.A.1.3}%
+\contentsline {subsection}{\numberline {A.1.4}KKT condition}{106}{subsection.A.1.4}%
+\contentsline {section}{\numberline {A.2}Practice}{107}{section.A.2}%
+\contentsline {subsection}{\numberline {A.2.1}CVX Introduction}{107}{subsection.A.2.1}%
+\contentsline {subsection}{\numberline {A.2.2}Linear Programming (LP)}{107}{subsection.A.2.2}%
+\contentsline {subsection}{\numberline {A.2.3}Quadratic Programming (QP)}{108}{subsection.A.2.3}%
+\contentsline {subsection}{\numberline {A.2.4}Quadratically Constrained Quadratic Programming (QCQP)}{110}{subsection.A.2.4}%
+\contentsline {subsection}{\numberline {A.2.5}Second-Order Cone Programming (SOCP)}{112}{subsection.A.2.5}%
+\contentsline {subsection}{\numberline {A.2.6}Semidefinite Programming (SDP)}{114}{subsection.A.2.6}%
+\contentsline {subsection}{\numberline {A.2.7}CVXPY Introduction and Examples}{116}{subsection.A.2.7}%
+\contentsline {subsubsection}{\numberline {A.2.7.1}LP}{116}{subsubsection.A.2.7.1}%
+\contentsline {subsubsection}{\numberline {A.2.7.2}QP}{117}{subsubsection.A.2.7.2}%
+\contentsline {subsubsection}{\numberline {A.2.7.3}QCQP}{118}{subsubsection.A.2.7.3}%
+\contentsline {subsubsection}{\numberline {A.2.7.4}SOCP}{119}{subsubsection.A.2.7.4}%
+\contentsline {subsubsection}{\numberline {A.2.7.5}SDP}{120}{subsubsection.A.2.7.5}%
+\contentsline {chapter}{\numberline {B}Linear System Theory}{123}{appendix.B}%
+\contentsline {section}{\numberline {B.1}Stability}{123}{section.B.1}%
+\contentsline {subsection}{\numberline {B.1.1}Continuous-Time Stability}{123}{subsection.B.1.1}%
+\contentsline {subsection}{\numberline {B.1.2}Discrete-Time Stability}{124}{subsection.B.1.2}%
+\contentsline {subsection}{\numberline {B.1.3}Lyapunov Analysis}{125}{subsection.B.1.3}%
+\contentsline {section}{\numberline {B.2}Controllability and Observability}{127}{section.B.2}%
+\contentsline {subsection}{\numberline {B.2.1}Cayley-Hamilton Theorem}{128}{subsection.B.2.1}%
+\contentsline {subsection}{\numberline {B.2.2}Equivalent Statements for Controllability}{132}{subsection.B.2.2}%
+\contentsline {subsection}{\numberline {B.2.3}Duality}{136}{subsection.B.2.3}%
+\contentsline {subsection}{\numberline {B.2.4}Equivalent Statements for Observability}{138}{subsection.B.2.4}%
+\contentsline {section}{\numberline {B.3}Stabilizability And Detectability}{138}{section.B.3}%
+\contentsline {subsection}{\numberline {B.3.1}Equivalent Statements for Stabilizability}{139}{subsection.B.3.1}%
+\contentsline {subsection}{\numberline {B.3.2}Equivalent Statements for Detectability}{141}{subsection.B.3.2}%
