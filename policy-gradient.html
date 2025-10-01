@@ -373,79 +373,51 @@ f(\theta+\Delta) \;\le\; f(\theta) + \nabla f(\theta)^\top \Delta + \frac{L}{2}\
 <span class="math display">\[
 \theta^\star\in\arg\min_\theta f(\theta).
 \]</span>
-If <span class="math inline">\(0&lt;\alpha\le \frac{1}{L}\)</span>, then the GD iterates satisfy for all <span class="math inline">\(k\ge 1\)</span>:
-<span class="math display">\[
-f(\theta_k) - f(\theta^\star)
-\;\le\;
-\frac{\|\theta_0-\theta^\star\|^2}{2\alpha\,k}
-\;\le\;
-\frac{L\,\|\theta_0-\theta^\star\|^2}{2\,k}.
-\]</span>
-In particular, choosing <span class="math inline">\(\alpha=\frac{1}{L}\)</span> yields the canonical <span class="math inline">\(O(1/k)\)</span> convergence rate in suboptimality.</p>
+and the global minimum <span class="math inline">\(f^\star = f(\theta^\star)\)</span>.
+If <span class="math inline">\(0&lt;\alpha\le \frac{2}{L}\)</span>, then the GD iterates satisfy for all <span class="math inline">\(k\ge 0\)</span>:
+<span class="math display" id="eq:GD-SmoothConvex-Value">\[\begin{equation}
+f(\theta_k) - f^\star \leq \frac{2 (f(\theta_0) - f^\star) \Vert \theta_0 - \theta^\star \Vert^2 }{2 \Vert \theta_0 - \theta^\star \Vert^2 + k\alpha ( 2 - L \alpha) (f(\theta_0) - f^\star)}
+\tag{3.4}
+\end{equation}\]</span>
+In particular, choosing <span class="math inline">\(\alpha=\frac{1}{L}\)</span> yields the canonical <span class="math inline">\(O(1/k)\)</span> convergence rate in suboptimality:
+<span class="math display" id="eq:GD-SmoothConvex-optimal-rate">\[\begin{equation}
+f(\theta_k) - f^\star \leq \frac{2L \Vert \theta_0 - \theta^\star \Vert^2}{k+4}
+\tag{3.5}
+\end{equation}\]</span></p>
 </div>
 </div>
 <div class="proofbox">
 <div class="proof">
-<p><span id="unlabeled-div-16" class="proof"><em>Proof</em>. </span>Using the descent lemma with <span class="math inline">\(\Delta=-\alpha \nabla f(\theta_k)\)</span>,
-<span class="math display">\[
-f(\theta_{k+1}) \;\le\; f(\theta_k) - \alpha \|\nabla f(\theta_k)\|^2 + \frac{L\alpha^2}{2}\|\nabla f(\theta_k)\|^2
-= f(\theta_k) - \alpha\Bigl(1-\frac{L\alpha}{2}\Bigr)\|\nabla f(\theta_k)\|^2.
-\]</span>
-For <span class="math inline">\(0&lt;\alpha\le \frac{1}{L}\)</span>, the coefficient is at least <span class="math inline">\(\frac{\alpha}{2}\)</span>, so
-<span class="math display">\[
-f(\theta_k) - f(\theta_{k+1}) \;\ge\; \frac{\alpha}{2}\,\|\nabla f(\theta_k)\|^2.
-\]</span>
-By convexity,
-<span class="math display">\[
-f(\theta_k)-f(\theta^\star) \;\le\; \nabla f(\theta_k)^\top(\theta_k-\theta^\star)
-\;\le\; \|\nabla f(\theta_k)\|\,\|\theta_k-\theta^\star\|.
-\]</span>
-Also, expand the squared distance after one GD step:
-<span class="math display">\[
-\|\theta_{k+1}-\theta^\star\|^2
-= \|\theta_k-\theta^\star\|^2 - 2\alpha\,\nabla f(\theta_k)^\top(\theta_k-\theta^\star)
-+ \alpha^2\|\nabla f(\theta_k)\|^2.
-\]</span>
-Combining the convexity bound with Young’s inequality (or substituting
-<span class="math inline">\(\nabla f(\theta_k)^\top(\theta_k-\theta^\star)\ge f(\theta_k)-f(\theta^\star)\)</span>)
-and then eliminating <span class="math inline">\(\|\nabla f(\theta_k)\|^2\)</span> using the descent inequality above yields
-<span class="math display">\[
-\|\theta_{k+1}-\theta^\star\|^2
-\;\le\; \|\theta_k-\theta^\star\|^2 - 2\alpha\bigl(f(\theta_k)-f(\theta^\star)\bigr)
-+ 2\alpha\bigl(f(\theta_k)-f(\theta_{k+1})\bigr).
-\]</span>
-Telescoping from <span class="math inline">\(t=0\)</span> to <span class="math inline">\(k-1\)</span> gives
-<span class="math display">\[
-2\alpha\,\sum_{t=0}^{k-1} \bigl(f(\theta_t)-f(\theta^\star)\bigr)
-\;\le\; \|\theta_0-\theta^\star\|^2.
-\]</span>
-By convexity of <span class="math inline">\(f\)</span> and monotonicity of GD (with <span class="math inline">\(\alpha\le 1/L\)</span>), <span class="math inline">\(f(\theta_k)\)</span> is nonincreasing, so
-<span class="math display">\[
-k\bigl(f(\theta_k)-f(\theta^\star)\bigr)
-\;\le\; \sum_{t=0}^{k-1} \bigl(f(\theta_t)-f(\theta^\star)\bigr)
-\;\le\; \frac{\|\theta_0-\theta^\star\|^2}{2\alpha},
-\]</span>
-which yields the stated bound. Setting <span class="math inline">\(\alpha=1/L\)</span> gives the explicit <span class="math inline">\(\frac{L\|\theta_0-\theta^\star\|^2}{2k}\)</span> rate.</p>
+<p><span id="unlabeled-div-16" class="proof"><em>Proof</em>. </span>See Theorem 2.1.14 and Corollary 2.1.2 in <span class="citation">(<a href="#ref-nesterov2018lectures">Nesterov 2018</a>)</span>.</p>
 </div>
 </div>
 <p><strong>Strongly Convex Case (Linear Rate).</strong> If, in addition, <span class="math inline">\(f\)</span> is <span class="math inline">\(\mu\)</span>-strongly convex (<span class="math inline">\(\mu&gt;0\)</span>), i.e., for all <span class="math inline">\(\theta,\vartheta\in\mathbb{R}^d\)</span>,
 <span class="math display" id="eq:PG-GO-strongly-convex">\[\begin{equation}
 f(\vartheta)\;\ge\; f(\theta) + \nabla f(\theta)^\top(\vartheta-\theta) \;+\; \frac{\mu}{2}\,\|\vartheta-\theta\|^2.
-\tag{3.4}
+\tag{3.6}
 \end{equation}\]</span>
-Then, GD with <span class="math inline">\(0&lt;\alpha\le \frac{1}{L}\)</span> enjoys a <strong>linear</strong> (geometric) rate:</p>
+Then, GD with <span class="math inline">\(0&lt;\alpha\le \frac{2}{\mu + L}\)</span> enjoys a <strong>linear</strong> (geometric) rate:</p>
 <div class="theorembox">
-<div class="corollary">
-<p><span id="cor:gd-strongly-convex" class="corollary"><strong>Corollary 3.1  </strong></span>If <span class="math inline">\(f\)</span> is <span class="math inline">\(L\)</span>-smooth and <span class="math inline">\(\mu\)</span>-strongly convex, then for <span class="math inline">\(\alpha=\frac{1}{L}\)</span>,
-<span class="math display">\[
-\|\theta_k-\theta^\star\|
-\;\le\;
-\Bigl(1-\frac{\mu}{L}\Bigr)^k \,\|\theta_0-\theta^\star\|,
-\qquad
-f(\theta_k)-f(\theta^\star)
-\;\le\;
-\frac{L}{2}\Bigl(1-\frac{\mu}{L}\Bigr)^{2k}\|\theta_0-\theta^\star\|^2.
-\]</span></p>
+<div class="theorem">
+<p><span id="thm:gd-strongly-convex" class="theorem"><strong>Theorem 3.2  (GD on smooth strongly convex function) </strong></span>If <span class="math inline">\(f\)</span> is <span class="math inline">\(L\)</span>-smooth and <span class="math inline">\(\mu\)</span>-strongly convex, then for <span class="math inline">\(0&lt;\alpha\le \frac{2}{\mu + L}\)</span>,
+<span class="math display" id="eq:GD-Strongly-Convex-1">\[\begin{equation}
+\Vert \theta_k - \theta^\star \Vert^2 \leq \left( 1 - \frac{2\alpha \mu L}{\mu + L} \right)^k \Vert \theta_0 - \theta^\star \Vert^2.
+\tag{3.7}
+\end{equation}\]</span>
+If <span class="math inline">\(\alpha = \frac{2}{\mu + L}\)</span>, then
+<span class="math display" id="eq:GD-Strongly-Convex-2">\[\begin{equation}
+\begin{split}
+\Vert \theta_k - \theta^\star \Vert &amp; \leq \left( \frac{Q_f - 1}{Q_f + 1} \right)^k \Vert \theta_0 - \theta^\star \Vert \\
+f(\theta_k) - f^\star &amp; \leq \frac{L}{2} \left( \frac{Q_f - 1}{Q_f + 1} \right)^{2k} \Vert \theta_0 - \theta^\star \Vert^2,
+\end{split}
+\tag{3.8}
+\end{equation}\]</span>
+where <span class="math inline">\(Q_f = L/\mu\)</span>.</p>
+</div>
+</div>
+<div class="proofbox">
+<div class="proof">
+<p><span id="unlabeled-div-17" class="proof"><em>Proof</em>. </span>See Theorem 2.1.15 in <span class="citation">(<a href="#ref-nesterov2018lectures">Nesterov 2018</a>)</span>.</p>
 </div>
 </div>
 <p><strong>Practical Notes.</strong></p>
@@ -485,79 +457,53 @@ We will also use one of the following standard regularity conditions:</p>
 \]</span>
 and define the <strong>averaged iterate</strong>
 <span class="math display">\[
-\bar\theta_K := \frac{1}{K}\sum_{k=0}^{K-1}\theta_k.
+\bar\theta_K := \frac{1}{K+1}\sum_{k=0}^{K}\theta_k.
 \]</span></p>
 <div class="theorembox">
 <div class="theorem">
-<p><span id="thm:sgd-convex-rate" class="theorem"><strong>Theorem 3.2  (SGD on smooth convex function) </strong></span>Assume <span class="math inline">\(f\)</span> is convex and <span class="math inline">\(L\)</span>-smooth. Suppose there exists <span class="math inline">\(G\!&gt;\!0\)</span> with <span class="math inline">\(\mathbb{E}\|g_k\|^2 \le G^2\)</span> for all <span class="math inline">\(k\)</span>. Choose stepsizes <span class="math inline">\(\alpha_k = \frac{\eta}{\sqrt{k+1}}\)</span> with <span class="math inline">\(\eta&gt;0\)</span>. Then for all <span class="math inline">\(K\!\ge\!1\)</span>,
-<span class="math display">\[
-\mathbb{E}\big[f(\bar\theta_K)\big] - f(\theta^\star)
-\;\le\;
-\frac{\|\theta_0-\theta^\star\|^2}{2\,\eta\,\sqrt{K}}
-\;+\;
-\frac{\eta\,G^2}{2\,\sqrt{K}},
-\]</span>
-so choosing <span class="math inline">\(\eta = \frac{\|\theta_0-\theta^\star\|}{G}\)</span> yields
-<span class="math display">\[
-\mathbb{E}\big[f(\bar\theta_K)\big] - f(\theta^\star)
-\;\le\;
-\frac{\|\theta_0-\theta^\star\|\,G}{\sqrt{K}}
-\;=\; O\!\left(\frac{1}{\sqrt{K}}\right).
-\]</span></p>
+<p><span id="thm:sgd-convex-rate" class="theorem"><strong>Theorem 3.3  (SGD on smooth convex function) </strong></span>Assume <span class="math inline">\(f\)</span> is convex and <span class="math inline">\(L\)</span>-smooth. Suppose there exists <span class="math inline">\(G\!&gt;\!0\)</span> with <span class="math inline">\(\mathbb{E}\|g_k\|^2 \le G^2\)</span> for all <span class="math inline">\(k\)</span>.</p>
+<ul>
+<li><p>Choose a constant stepsize <span class="math inline">\(\alpha_k = \alpha &gt; 0\)</span>. Then for all <span class="math inline">\(K \ge 1\)</span>,
+<span class="math display" id="eq:SGD-convex-fixed-step-size">\[\begin{equation}
+\mathbb{E}\big[f(\bar\theta_K)\big] - f^\star \leq \frac{\Vert \theta_0 - \theta^\star \Vert^2}{2 \alpha (K+1)} + \frac{\alpha G^2}{2}.
+\tag{3.9}
+\end{equation}\]</span></p></li>
+<li><p>Choose a diminishing step size <span class="math inline">\(\alpha_k = \frac{\Vert \theta_0 - \theta^\star \Vert}{G \sqrt{k+1}}\)</span>, then
+<span class="math display" id="eq:SGD-convex-diminishing-step-size">\[\begin{equation}
+\mathbb{E}\big[f(\bar\theta_K)\big] - f^\star \leq \frac{\Vert \theta_0 - \theta^\star \Vert G}{\sqrt{K+1}} = \mathcal{O}\left(  \frac{1}{\sqrt{K}} \right).
+\tag{3.10}
+\end{equation}\]</span></p></li>
+</ul>
 </div>
 </div>
 <div class="proofbox">
 <div class="proof">
-<p><span id="unlabeled-div-17" class="proof"><em>Proof</em>. </span><em>Sketch.</em> Combine (i) the smoothness-based descent inequality for one noisy step, (ii) convexity to relate function error to gradient inner products, and (iii) the unbiasedness and bounded second moment of <span class="math inline">\(g_k\)</span>, then sum over <span class="math inline">\(k\)</span> and apply Jensen’s inequality to the average <span class="math inline">\(\bar\theta_K\)</span>. The <span class="math inline">\(1/\sqrt{K}\)</span> rate follows from the harmonic growth of <span class="math inline">\(\sum_k \alpha_k\)</span> and boundedness of <span class="math inline">\(\sum_k \alpha_k^2\)</span>.</p>
+<p><span id="unlabeled-div-18" class="proof"><em>Proof</em>. </span>See this <a href="https://people.eecs.berkeley.edu/~jiantao/227c2022spring/scribe/227C_Lecture_24.pdf">lecture note</a> and <span class="citation">(<a href="#ref-garrigos2023handbook">Garrigos and Gower 2023</a>)</span>.</p>
 </div>
 </div>
 <p><strong>Remarks.</strong></p>
 <ul>
 <li><p>The bound is on the <em>averaged</em> iterate <span class="math inline">\(\bar\theta_K\)</span> (the last iterate may be worse by constants without further assumptions).</p></li>
 <li><p>Replacing the second-moment bound by a variance bound <span class="math inline">\(\sigma^2\)</span> yields the same rate with <span class="math inline">\(G^2\)</span> replaced by <span class="math inline">\(\sigma^2 + \sup_k\|\nabla f(\theta_k)\|^2\)</span>.</p></li>
+<li><p>With a constant stepsize, SGD converges <span class="math inline">\(\mathcal{O}(1/k)\)</span> up to a neighborhood set by the gradient noise.</p></li>
 </ul>
+<p>The next theorem states the convergence rate of SGD for minimizing strongly convex functions.</p>
 <div class="theorembox">
 <div class="theorem">
-<p><span id="thm:sgd-strong-rate" class="theorem"><strong>Theorem 3.3  (SGD on smooth strongly convex function) </strong></span>Assume <span class="math inline">\(f\)</span> is <span class="math inline">\(\mu\)</span>-strongly convex and <span class="math inline">\(L\)</span>-smooth, and <span class="math inline">\(\mathbb{E}\!\left[\|g_k-\nabla f(\theta_k)\|^2 \mid \theta_k\right]\le \sigma^2\)</span>.<br />
-With stepsizes <span class="math inline">\(\alpha_k = \frac{1}{\mu(k+1)}\)</span>, the SGD iterates satisfy for all <span class="math inline">\(K\!\ge\!1\)</span>,
-<span class="math display">\[
-\mathbb{E}\,\|\theta_K - \theta^\star\|^2
-\;\le\;
-\frac{C}{K}
-\quad\text{and}\quad
-\mathbb{E}\big[f(\theta_K)\big] - f(\theta^\star)
-\;\le\;
-\frac{L}{2}\,\frac{C}{K}
-\;=\; O\!\left(\frac{1}{K}\right),
-\]</span>
-where <span class="math inline">\(C := \max\!\Big\{\|\theta_0-\theta^\star\|^2,\; \frac{\sigma^2}{\mu^2}\Big\}\)</span>.</p>
+<p><span id="thm:sgd-strong-rate" class="theorem"><strong>Theorem 3.4  (SGD on smooth strongly convex function) </strong></span>Assume <span class="math inline">\(f\)</span> is <span class="math inline">\(\mu\)</span>-strongly convex and <span class="math inline">\(L\)</span>-smooth, and <span class="math inline">\(\mathbb{E}\!\left[\|g_k\|^2 \right]\le G^2\)</span>.<br />
+With stepsize <span class="math inline">\(\alpha_k = \frac{1}{\mu(k+1)}\)</span>, the SGD iterates satisfy for all <span class="math inline">\(K\!\ge\!1\)</span>,
+<span class="math display" id="eq:SGD-Strongly-Convex">\[\begin{equation}
+\begin{split}
+\mathbb{E}[f(\bar\theta_K)] - f^\star &amp; \leq \frac{G^2}{2 \mu (K+1)} (1 + \log(K+1)), \\
+\mathbb{E} \Vert \bar\theta_K - \theta^\star \Vert^2 &amp; \leq \frac{Q}{K+1}, \ \ Q = \max \left( \frac{G^2}{\mu^2}, \Vert \theta_0 - \theta^\star \Vert^2 \right).
+\end{split}
+\tag{3.11}
+\end{equation}\]</span></p>
 </div>
 </div>
 <div class="proofbox">
 <div class="proof">
-<p><span id="unlabeled-div-18" class="proof"><em>Proof</em>. </span><em>Sketch.</em> Strong convexity gives a contraction in expected squared distance after one step; smoothness converts distance to function error. Summing the resulting supermartingale inequality and using <span class="math inline">\(\sum_k \alpha_k = \infty\)</span> and <span class="math inline">\(\sum_k \alpha_k^2 &lt; \infty\)</span> yields the stated <span class="math inline">\(1/K\)</span> decay with explicit constants.</p>
-</div>
-</div>
-<p>With a constant stepsize, SGD converges linearly up to a neighborhood set by the gradient noise.</p>
-<div class="theorembox">
-<div class="corollary">
-<p><span id="cor:sgd-const-steps" class="corollary"><strong>Corollary 3.2  (Noise-dominated steady state) </strong></span>Under the assumptions of Theorem <a href="policy-gradient.html#thm:sgd-strong-rate">3.3</a>, if <span class="math inline">\(0&lt;\alpha \le \frac{1}{2L}\)</span> is constant, then
-<span class="math display">\[
-\mathbb{E}\,\|\theta_k-\theta^\star\|^2
-\;\le\;
-(1-\mu\alpha)^k\,\|\theta_0-\theta^\star\|^2
-\;+\;
-\frac{\alpha\,\sigma^2}{\mu},
-\]</span>
-and consequently, by <span class="math inline">\(L\)</span>-smoothness,
-<span class="math display">\[
-\mathbb{E}\big[f(\theta_k)\big]-f(\theta^\star)
-\;\le\;
-\frac{L}{2}(1-\mu\alpha)^k\,\|\theta_0-\theta^\star\|^2
-\;+\;
-\frac{L\,\alpha\,\sigma^2}{2\mu}.
-\]</span>
-Thus the error contracts geometrically until it reaches an <span class="math inline">\(O(\alpha\,\sigma^2)\)</span> noise floor.</p>
+<p><span id="unlabeled-div-19" class="proof"><em>Proof</em>. </span>See this <a href="https://people.eecs.berkeley.edu/~jiantao/227c2022spring/scribe/227C_Lecture_24.pdf">lecture note</a> and <span class="citation">(<a href="#ref-garrigos2023handbook">Garrigos and Gower 2023</a>)</span>.</p>
 </div>
 </div>
 <p><strong>Practical Takeaways for Policy Gradients.</strong></p>
@@ -589,24 +535,24 @@ Thus the error contracts geometrically until it reaches an <span class="math inl
 <li><p><strong>Trajectory.</strong> A state-action trajectory is <span class="math inline">\(\tau=(s_0,a_0,s_1,a_1,\dots,s_{T})\)</span> with probability density/mass
 <span class="math display" id="eq:trajectory-density">\[\begin{equation}
 p_\theta(\tau) = \rho(s_0)\prod_{t=0}^{T-1} \pi_\theta(a_t\mid s_t)\,P(s_{t+1}\mid s_t,a_t),
-\tag{3.5}
+\tag{3.12}
 \end{equation}\]</span>
 where <span class="math inline">\(\rho\)</span> is the initial state distribution and <span class="math inline">\(T\)</span> is the (random or fixed) episode length.</p></li>
 <li><p><strong>Return.</strong> Define the (discounted) return
 <span class="math display" id="eq:PG-Trajectory-Return">\[\begin{equation}
 R(\tau) \;=\; \sum_{t=0}^{T-1}\gamma^t R(s_t,a_t),
-\tag{3.6}
+\tag{3.13}
 \end{equation}\]</span>
 and the return-to-go
 <span class="math display" id="eq:PG-return-to-go">\[\begin{equation}
 g_t \;=\; \sum_{t&#39;=t}^{T-1}\gamma^{t&#39;-t} R(s_{t&#39;},a_{t&#39;}).
-\tag{3.7}
+\tag{3.14}
 \end{equation}\]</span></p></li>
 <li><p><strong>Optimization objective.</strong> The goal is to maximize the expected return
 <span class="math display" id="eq:PG-objective">\[\begin{equation}
 J(\theta) \;\equiv\; \mathbb{E}_{\tau\sim p_\theta}\!\left[R(\tau)\right]
 \;=\; \mathbb{E}\!\left[\sum_{t=0}^{T-1}\gamma^t R(s_t,a_t)\right],
-\tag{3.8}
+\tag{3.15}
 \end{equation}\]</span>
 where the expectation is taken over the randomness in (i) the initial state <span class="math inline">\(s_0 \sim \rho\)</span>, (ii) the policy <span class="math inline">\(\pi_\theta\)</span>, and (iii) the transition dynamics <span class="math inline">\(P\)</span>.</p></li>
 </ul>
@@ -630,12 +576,12 @@ where <span class="math inline">\(\mu_\theta(s)\)</span> and (often diagonal) co
 </div>
 <div id="the-policy-gradient-lemma" class="section level3 hasAnchor" number="3.2.2">
 <h3><span class="header-section-number">3.2.2</span> The Policy Gradient Lemma<a href="policy-gradient.html#the-policy-gradient-lemma" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>With the gradient-based optimization machinery from Section <a href="policy-gradient.html#gradient-optimization">3.1</a>, a natural strategy for the policy optimization problem in <a href="policy-gradient.html#eq:PG-objective">(3.8)</a> is gradient ascent on the objective <span class="math inline">\(J(\theta)\)</span>.
+<p>With the gradient-based optimization machinery from Section <a href="policy-gradient.html#gradient-optimization">3.1</a>, a natural strategy for the policy optimization problem in <a href="policy-gradient.html#eq:PG-objective">(3.15)</a> is gradient ascent on the objective <span class="math inline">\(J(\theta)\)</span>.
 Consequently, the central task is to characterize the ascent direction, i.e., to compute <span class="math inline">\(\nabla_\theta J(\theta)\)</span>.</p>
 <p>The policy gradient lemma, stated below, provides exactly this characterization. Crucially, it expresses <span class="math inline">\(\nabla_\theta J(\theta)\)</span> in terms of the policy’s score function <span class="math inline">\(\nabla_\theta \log \pi_\theta(a\mid s)\)</span> and returns, without differentiating through the environment dynamics. This likelihood-ratio form makes policy optimization feasible even when the transition model is unknown or non-differentiable.</p>
 <div class="theorembox">
 <div class="theorem">
-<p><span id="thm:policy-gradient-lemma" class="theorem"><strong>Theorem 3.4  (Policy Gradient Lemma) </strong></span>Let <span class="math inline">\(J(\theta)=\mathbb{E}_{\tau \sim p_\theta}[R(\tau)]\)</span> as defined in <a href="policy-gradient.html#eq:PG-objective">(3.8)</a> Then:
+<p><span id="thm:policy-gradient-lemma" class="theorem"><strong>Theorem 3.5  (Policy Gradient Lemma) </strong></span>Let <span class="math inline">\(J(\theta)=\mathbb{E}_{\tau \sim p_\theta}[R(\tau)]\)</span> as defined in <a href="policy-gradient.html#eq:PG-objective">(3.15)</a> Then:
 <span class="math display" id="eq:PG-PGLemma-1">\[\begin{equation}
 \nabla_\theta J(\theta)
 \;=\;
@@ -643,33 +589,33 @@ Consequently, the central task is to characterize the ascent direction, i.e., to
 \;=\;
 \mathbb{E}_{\tau\sim p_\theta} \Bigg[\sum_{t=0}^{T-1}
 \nabla_\theta \log \pi_\theta(a_t\mid s_t)\;R(\tau)\Bigg].
-\tag{3.9}
+\tag{3.16}
 \end{equation}\]</span>
-By causality (future rewards do not affect past actions), the full return can be replaced by return-to-go:
+By causality (future action does not affect past reward), the full return can be replaced by return-to-go:
 <span class="math display" id="eq:PG-PGLemma-2">\[\begin{equation}
 \nabla_\theta J(\theta)
 \;=\;
 \mathbb{E}_{\tau\sim p_\theta} \Bigg[\sum_{t=0}^{T-1} \gamma^t
 \nabla_\theta \log \pi_\theta(a_t\mid s_t)\;g_t\Bigg].
-\tag{3.10}
+\tag{3.17}
 \end{equation}\]</span>
 Equivalently, using value functions,
 <span class="math display" id="eq:PG-PGLemma-3">\[\begin{equation}
 \nabla_\theta J(\theta)
 \;=\;
 \frac{1}{1-\gamma} \mathbb{E}_{s\sim d_\theta,\;a\sim\pi_\theta} \Big[\nabla_\theta \log \pi_\theta(a\mid s)\,Q^{\pi_\theta}(s,a)\Big],
-\tag{3.11}
+\tag{3.18}
 \end{equation}\]</span>
 where <span class="math inline">\(d_\theta\)</span> is the (discounted) on-policy state visitation distribution for infinite-horizon MDPs:
 <span class="math display" id="eq:state-visitation-distribution">\[\begin{equation}
 d_\theta(s) = (1 - \gamma) \sum_{t=0}^{\infty} \gamma^t \Pr_\theta(s_t=s).
-\tag{3.12}
+\tag{3.19}
 \end{equation}\]</span></p>
 </div>
 </div>
 <div class="proof">
-<p><span id="unlabeled-div-19" class="proof"><em>Proof</em>. </span>We prove the three equivalent forms step by step. Throughout, we assume <span class="math inline">\(\theta\)</span> parameterizes only the policy <span class="math inline">\(\pi_\theta\)</span> (not the dynamics <span class="math inline">\(P\)</span> nor the initial distribution <span class="math inline">\(\rho\)</span>), and that interchanging <span class="math inline">\(\nabla_\theta\)</span> with the trajectory integral/sum is justified (e.g., bounded rewards and finite horizon or standard dominated-convergence conditions).
-Let the return-to-go <span class="math inline">\(g_t\)</span> be defined as in <a href="policy-gradient.html#eq:PG-return-to-go">(3.7)</a>.</p>
+<p><span id="unlabeled-div-20" class="proof"><em>Proof</em>. </span>We prove the three equivalent forms step by step. Throughout, we assume <span class="math inline">\(\theta\)</span> parameterizes only the policy <span class="math inline">\(\pi_\theta\)</span> (not the dynamics <span class="math inline">\(P\)</span> nor the initial distribution <span class="math inline">\(\rho\)</span>), and that interchanging <span class="math inline">\(\nabla_\theta\)</span> with the trajectory integral/sum is justified (e.g., bounded rewards and finite horizon or standard dominated-convergence conditions).
+Let the return-to-go <span class="math inline">\(g_t\)</span> be defined as in <a href="policy-gradient.html#eq:PG-return-to-go">(3.14)</a>.</p>
 <p><strong>Step 1 (Log-derivative trick).</strong> Write the objective as an expectation over trajectories:
 <span class="math display">\[
 J(\theta) \;=\; \int R(\tau)\, p_\theta(\tau)\, d\tau.
@@ -677,7 +623,7 @@ J(\theta) \;=\; \int R(\tau)\, p_\theta(\tau)\, d\tau.
 Differentiate under the integral and use
 <span class="math display" id="eq:log-derivative-trick">\[\begin{equation}
 \nabla_\theta p_\theta(\tau)=p_\theta(\tau)\nabla_\theta\log p_\theta(\tau)
-\tag{3.13}
+\tag{3.20}
 \end{equation}\]</span>
 we can write:
 <span class="math display">\[
@@ -686,7 +632,7 @@ we can write:
 = \int R(\tau)\, p_\theta(\tau)\,\nabla_\theta \log p_\theta(\tau)\, d\tau
 = \mathbb{E}_{\tau\sim p_\theta}\!\big[R(\tau)\,\nabla_\theta \log p_\theta(\tau)\big],
 \]</span>
-which is <a href="policy-gradient.html#eq:PG-PGLemma-1">(3.9)</a> up to expanding <span class="math inline">\(\log p_\theta(\tau)\)</span>. To see why <a href="policy-gradient.html#eq:log-derivative-trick">(3.13)</a> is true, write
+which is <a href="policy-gradient.html#eq:PG-PGLemma-1">(3.16)</a> up to expanding <span class="math inline">\(\log p_\theta(\tau)\)</span>. To see why <a href="policy-gradient.html#eq:log-derivative-trick">(3.20)</a> is true, write
 <span class="math display">\[
 \nabla_\theta \log p_\theta(\tau) = \frac{1}{p_\theta(\tau)} \nabla_\theta p_\theta(\tau),
 \]</span>
@@ -703,7 +649,7 @@ Since <span class="math inline">\(\rho\)</span> and <span class="math inline">\(
 \quad\Rightarrow\quad
 \nabla_\theta \log p_\theta(\tau) \;=\; \sum_{t=0}^{T-1}\nabla_\theta \log \pi_\theta(a_t\mid s_t).
 \]</span>
-Substitute into Step 1 to obtain the second equality in <a href="policy-gradient.html#eq:PG-PGLemma-1">(3.9)</a>:
+Substitute into Step 1 to obtain the second equality in <a href="policy-gradient.html#eq:PG-PGLemma-1">(3.16)</a>:
 <span class="math display">\[
 \nabla_\theta J(\theta)
 = \mathbb{E}_{\tau\sim p_\theta}\!\Bigg[\sum_{t=0}^{T-1}\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,R(\tau)\Bigg].
@@ -729,7 +675,7 @@ Therefore only the terms with <span class="math inline">\(t&#39;\ge t\)</span> s
 = \sum_{t=0}^{T-1}\mathbb{E} \Big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\sum_{t&#39;=t}^{T-1}\gamma^{t&#39;} r_{t&#39;}\Big]
 = \mathbb{E} \Bigg[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,g_t\Bigg],
 \]</span>
-which is <a href="policy-gradient.html#eq:PG-PGLemma-2">(3.10)</a>.</p>
+which is <a href="policy-gradient.html#eq:PG-PGLemma-2">(3.17)</a>.</p>
 <p><strong>Step 4 (Value-function form).</strong> Condition on <span class="math inline">\((s_t,a_t)\)</span> and use the definition of the action-value function:
 <span class="math display">\[
 Q^{\pi_\theta}(s_t,a_t) \;\equiv\; \mathbb{E}\!\left[g_t \,\middle|\, s_t,a_t\right].
@@ -745,7 +691,7 @@ Summing over <span class="math inline">\(t\)</span> and collecting terms with th
 \;=\;
 \mathbb{E}_{s\sim d_\theta,\;a\sim \pi_\theta} \Big[\nabla_\theta \log \pi_\theta(a\mid s)\,Q^{\pi_\theta}(s,a)\Big],
 \]</span>
-which is <a href="policy-gradient.html#eq:PG-PGLemma-3">(3.11)</a>.</p>
+which is <a href="policy-gradient.html#eq:PG-PGLemma-3">(3.18)</a>.</p>
 <p><strong>Conclusion.</strong> Combining Steps 1–4 proves all three stated forms of the policy gradient.</p>
 </div>
 <!-- #### Baselines and Variance Reduction
@@ -761,10 +707,10 @@ A common choice is $b(s)=V^{\pi_\theta}(s)$, yielding the **advantage** $A^{\pi_
 </div>
 <div id="reinforce" class="section level3 hasAnchor" number="3.2.3">
 <h3><span class="header-section-number">3.2.3</span> REINFORCE<a href="policy-gradient.html#reinforce" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>The policy gradient lemma immediately gives us an algorithm. Specifically, the gradient receipe in <a href="policy-gradient.html#eq:PG-PGLemma-1">(3.9)</a> tells us that if we generate one trajectory <span class="math inline">\(\tau\)</span> by following the policy <span class="math inline">\(\pi\)</span>, then
+<p>The policy gradient lemma immediately gives us an algorithm. Specifically, the gradient receipe in <a href="policy-gradient.html#eq:PG-PGLemma-1">(3.16)</a> tells us that if we generate one trajectory <span class="math inline">\(\tau\)</span> by following the policy <span class="math inline">\(\pi\)</span>, then
 <span class="math display" id="eq:PG-Estimator-1">\[\begin{equation}
 \widehat{\nabla_\theta J} = \sum_{t=0}^{T-1} \nabla_\theta \log \pi_\theta(a_t \mid s_t) R(\tau)
-\tag{3.14}
+\tag{3.21}
 \end{equation}\]</span>
 is an unbiased estimator of the true gradient.</p>
 <p>With this sample gradient estimator, we obtain the classical REINFORCE algorithm.</p>
@@ -775,7 +721,7 @@ is an unbiased estimator of the true gradient.</p>
 </ol>
 <ul>
 <li>Obtain a trajectory <span class="math inline">\(\tau \sim p_{\theta_k}\)</span></li>
-<li>Compute the stochastic gradient <span class="math inline">\(g_k\)</span> as in <a href="policy-gradient.html#eq:PG-Estimator-1">(3.14)</a></li>
+<li>Compute the stochastic gradient <span class="math inline">\(g_k\)</span> as in <a href="policy-gradient.html#eq:PG-Estimator-1">(3.21)</a></li>
 <li>Update <span class="math inline">\(\theta_{k+1} = \theta_k + \alpha_k g_k\)</span></li>
 </ul>
 </div>
@@ -783,13 +729,13 @@ is an unbiased estimator of the true gradient.</p>
 <span class="math display">\[
 g_t^{(i)} = \sum_{t&#39;=t}^{T^{(i)}-1} \gamma^{t&#39;-t} R\!\left(s_{t&#39;}^{(i)},a_{t&#39;}^{(i)}\right).
 \]</span>
-An unbiased gradient estimator, from <a href="policy-gradient.html#eq:PG-PGLemma-2">(3.10)</a> is
+An unbiased gradient estimator, from <a href="policy-gradient.html#eq:PG-PGLemma-2">(3.17)</a> is
 <span class="math display" id="eq:PG-Estimator-2">\[\begin{equation}
 \widehat{\nabla_\theta J}
 \;=\;
 \frac{1}{N}\sum_{i=1}^N \sum_{t=0}^{T^{(i)}-1} \gamma^t
 \nabla_\theta \log \pi_\theta \big(a_t^{(i)}\mid s_t^{(i)}\big) g_t^{(i)}.
-\tag{3.15}
+\tag{3.22}
 \end{equation}\]</span></p>
 <p>This leads to the following minibatch REINFORCE algorithm.</p>
 <div class="highlightbox">
@@ -799,7 +745,7 @@ An unbiased gradient estimator, from <a href="policy-gradient.html#eq:PG-PGLemma
 </ol>
 <ul>
 <li>Obtain N trajectories <span class="math inline">\(\{ \tau^{(i)} \}_{i=1}^N \sim p_{\theta_k}\)</span></li>
-<li>Compute the stochastic gradient <span class="math inline">\(g_k\)</span> as in <a href="policy-gradient.html#eq:PG-Estimator-2">(3.15)</a></li>
+<li>Compute the stochastic gradient <span class="math inline">\(g_k\)</span> as in <a href="policy-gradient.html#eq:PG-Estimator-2">(3.22)</a></li>
 <li>Update <span class="math inline">\(\theta_{k+1} = \theta_k + \alpha_k g_k\)</span></li>
 </ul>
 </div>
@@ -822,6 +768,15 @@ REINFORCE performs **stochastic gradient ascent** on $J(\theta)$ using the score
 
 
 
+</div>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-garrigos2023handbook" class="csl-entry">
+Garrigos, Guillaume, and Robert M Gower. 2023. <span>“Handbook of Convergence Theorems for (Stochastic) Gradient Methods.”</span> <em>arXiv Preprint arXiv:2301.11235</em>.
+</div>
+<div id="ref-nesterov2018lectures" class="csl-entry">
+Nesterov, Yurii. 2018. <em>Lectures on Convex Optimization</em>. Vol. 137. Springer.
+</div>
 </div>
             </section>
 
