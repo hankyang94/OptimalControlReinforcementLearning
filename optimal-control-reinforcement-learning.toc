@@ -47,14 +47,14 @@
 \contentsline {subsection}{\numberline {3.1.1}Basic Setup}{90}{subsection.3.1.1}%
 \contentsline {subsection}{\numberline {3.1.2}Gradient Ascent and Descent}{90}{subsection.3.1.2}%
 \contentsline {subsubsection}{\numberline {3.1.2.1}Convergence Guarantees}{91}{subsubsection.3.1.2.1}%
-\contentsline {subsection}{\numberline {3.1.3}Stochastic Gradients}{93}{subsection.3.1.3}%
+\contentsline {subsection}{\numberline {3.1.3}Stochastic Gradients}{92}{subsection.3.1.3}%
 \contentsline {subsubsection}{\numberline {3.1.3.1}Convergence Guarantees}{93}{subsubsection.3.1.3.1}%
-\contentsline {subsection}{\numberline {3.1.4}Beyond Vanilla Gradient Methods}{95}{subsection.3.1.4}%
+\contentsline {subsection}{\numberline {3.1.4}Beyond Vanilla Gradient Methods}{94}{subsection.3.1.4}%
 \contentsline {section}{\numberline {3.2}Policy Gradients}{95}{section.3.2}%
 \contentsline {subsection}{\numberline {3.2.1}Setup}{95}{subsection.3.2.1}%
-\contentsline {subsubsection}{\numberline {3.2.1.1}Policy models}{96}{subsubsection.3.2.1.1}%
-\contentsline {subsection}{\numberline {3.2.2}The Policy Gradient Lemma}{97}{subsection.3.2.2}%
-\contentsline {subsection}{\numberline {3.2.3}REINFORCE}{99}{subsection.3.2.3}%
+\contentsline {subsubsection}{\numberline {3.2.1.1}Policy models}{95}{subsubsection.3.2.1.1}%
+\contentsline {subsection}{\numberline {3.2.2}The Policy Gradient Lemma}{96}{subsection.3.2.2}%
+\contentsline {subsection}{\numberline {3.2.3}REINFORCE}{98}{subsection.3.2.3}%
 \contentsline {chapter}{\numberline {A}Convex Analysis and Optimization}{101}{appendix.A}%
 \contentsline {section}{\numberline {A.1}Theory}{101}{section.A.1}%
 \contentsline {subsection}{\numberline {A.1.1}Sets}{101}{subsection.A.1.1}%

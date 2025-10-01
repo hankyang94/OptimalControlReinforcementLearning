@@ -27,6 +27,11 @@ Fan, J., Wang, Z., Xie, Y., and Yang, Z. (2020).
 \newblock A theoretical analysis of deep q-learning.
 \newblock In {\em Learning for dynamics and control}, pages 486--489. PMLR.
 
+\bibitem[Garrigos and Gower, 2023]{garrigos2023handbook}
+Garrigos, G. and Gower, R.~M. (2023).
+\newblock Handbook of convergence theorems for (stochastic) gradient methods.
+\newblock {\em arXiv preprint arXiv:2301.11235}.
+
 \bibitem[Kearns and Singh, 2000]{kearns2000bias}
 Kearns, M.~J. and Singh, S. (2000).
 \newblock Bias-variance error bounds for temporal difference updates.
@@ -48,6 +53,11 @@ Mnih, V., Kavukcuoglu, K., Silver, D., Rusu, A.~A., Veness, J., Bellemare,
 Munos, R. and Szepesv{\'a}ri, C. (2008).
 \newblock Finite-time bounds for fitted value iteration.
 \newblock {\em Journal of Machine Learning Research}, 9(5).
+
+\bibitem[Nesterov, 2018]{nesterov2018lectures}
+Nesterov, Y. (2018).
+\newblock {\em Lectures on convex optimization}, volume 137.
+\newblock Springer.
 
 \bibitem[Riedmiller, 2005]{riedmiller2005neural}
 Riedmiller, M. (2005).

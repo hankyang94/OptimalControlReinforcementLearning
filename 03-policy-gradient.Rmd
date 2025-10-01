@@ -103,59 +103,22 @@ Let $f$ be convex and $L$-smooth with a minimizer
 $$
 \theta^\star\in\arg\min_\theta f(\theta).
 $$
-If $0<\alpha\le \frac{1}{L}$, then the GD iterates satisfy for all $k\ge 1$:
-\[
-f(\theta_k) - f(\theta^\star)
-\;\le\;
-\frac{\|\theta_0-\theta^\star\|^2}{2\alpha\,k}
-\;\le\;
-\frac{L\,\|\theta_0-\theta^\star\|^2}{2\,k}.
-\]
-In particular, choosing $\alpha=\frac{1}{L}$ yields the canonical $O(1/k)$ convergence rate in suboptimality.
+and the global minimum $f^\star = f(\theta^\star)$.
+If $0<\alpha\le \frac{2}{L}$, then the GD iterates satisfy for all $k\ge 0$:
+\begin{equation}
+f(\theta_k) - f^\star \leq \frac{2 (f(\theta_0) - f^\star) \Vert \theta_0 - \theta^\star \Vert^2 }{2 \Vert \theta_0 - \theta^\star \Vert^2 + k\alpha ( 2 - L \alpha) (f(\theta_0) - f^\star)}
+(\#eq:GD-SmoothConvex-Value)
+\end{equation}
+In particular, choosing $\alpha=\frac{1}{L}$ yields the canonical $O(1/k)$ convergence rate in suboptimality:
+\begin{equation}
+f(\theta_k) - f^\star \leq \frac{2L \Vert \theta_0 - \theta^\star \Vert^2}{k+4}
+(\#eq:GD-SmoothConvex-optimal-rate)
+\end{equation}
 :::
 :::
 ::: {.proofbox}
 ::: {.proof}
-Using the descent lemma with $\Delta=-\alpha \nabla f(\theta_k)$,
-\[
-f(\theta_{k+1}) \;\le\; f(\theta_k) - \alpha \|\nabla f(\theta_k)\|^2 + \frac{L\alpha^2}{2}\|\nabla f(\theta_k)\|^2
-= f(\theta_k) - \alpha\Bigl(1-\frac{L\alpha}{2}\Bigr)\|\nabla f(\theta_k)\|^2.
-\]
-For $0<\alpha\le \frac{1}{L}$, the coefficient is at least $\frac{\alpha}{2}$, so
-\[
-f(\theta_k) - f(\theta_{k+1}) \;\ge\; \frac{\alpha}{2}\,\|\nabla f(\theta_k)\|^2.
-\]
-By convexity,
-\[
-f(\theta_k)-f(\theta^\star) \;\le\; \nabla f(\theta_k)^\top(\theta_k-\theta^\star)
-\;\le\; \|\nabla f(\theta_k)\|\,\|\theta_k-\theta^\star\|.
-\]
-Also, expand the squared distance after one GD step:
-\[
-\|\theta_{k+1}-\theta^\star\|^2
-= \|\theta_k-\theta^\star\|^2 - 2\alpha\,\nabla f(\theta_k)^\top(\theta_k-\theta^\star)
-+ \alpha^2\|\nabla f(\theta_k)\|^2.
-\]
-Combining the convexity bound with Young's inequality (or substituting
-$\nabla f(\theta_k)^\top(\theta_k-\theta^\star)\ge f(\theta_k)-f(\theta^\star)$)
-and then eliminating $\|\nabla f(\theta_k)\|^2$ using the descent inequality above yields
-\[
-\|\theta_{k+1}-\theta^\star\|^2
-\;\le\; \|\theta_k-\theta^\star\|^2 - 2\alpha\bigl(f(\theta_k)-f(\theta^\star)\bigr)
-+ 2\alpha\bigl(f(\theta_k)-f(\theta_{k+1})\bigr).
-\]
-Telescoping from $t=0$ to $k-1$ gives
-\[
-2\alpha\,\sum_{t=0}^{k-1} \bigl(f(\theta_t)-f(\theta^\star)\bigr)
-\;\le\; \|\theta_0-\theta^\star\|^2.
-\]
-By convexity of $f$ and monotonicity of GD (with $\alpha\le 1/L$), $f(\theta_k)$ is nonincreasing, so
-\[
-k\bigl(f(\theta_k)-f(\theta^\star)\bigr)
-\;\le\; \sum_{t=0}^{k-1} \bigl(f(\theta_t)-f(\theta^\star)\bigr)
-\;\le\; \frac{\|\theta_0-\theta^\star\|^2}{2\alpha},
-\]
-which yields the stated bound. Setting $\alpha=1/L$ gives the explicit $\frac{L\|\theta_0-\theta^\star\|^2}{2k}$ rate.
+See Theorem 2.1.14 and Corollary 2.1.2 in [@nesterov2018lectures].
 :::
 :::
 
@@ -164,20 +127,29 @@ which yields the stated bound. Setting $\alpha=1/L$ gives the explicit $\frac{L\
 f(\vartheta)\;\ge\; f(\theta) + \nabla f(\theta)^\top(\vartheta-\theta) \;+\; \frac{\mu}{2}\,\|\vartheta-\theta\|^2.
 (\#eq:PG-GO-strongly-convex)
 \end{equation}
-Then, GD with $0<\alpha\le \frac{1}{L}$ enjoys a **linear** (geometric) rate:
+Then, GD with $0<\alpha\le \frac{2}{\mu + L}$ enjoys a **linear** (geometric) rate:
 
 ::: {.theorembox}
-::: {.corollary #gd-strongly-convex}
-If $f$ is $L$-smooth and $\mu$-strongly convex, then for $\alpha=\frac{1}{L}$,
-\[
-\|\theta_k-\theta^\star\|
-\;\le\;
-\Bigl(1-\frac{\mu}{L}\Bigr)^k \,\|\theta_0-\theta^\star\|,
-\qquad
-f(\theta_k)-f(\theta^\star)
-\;\le\;
-\frac{L}{2}\Bigl(1-\frac{\mu}{L}\Bigr)^{2k}\|\theta_0-\theta^\star\|^2.
-\]
+::: {.theorem #gd-strongly-convex name="GD on smooth strongly convex function"}
+If $f$ is $L$-smooth and $\mu$-strongly convex, then for $0<\alpha\le \frac{2}{\mu + L}$,
+\begin{equation}
+\Vert \theta_k - \theta^\star \Vert^2 \leq \left( 1 - \frac{2\alpha \mu L}{\mu + L} \right)^k \Vert \theta_0 - \theta^\star \Vert^2.
+(\#eq:GD-Strongly-Convex-1)
+\end{equation}
+If $\alpha = \frac{2}{\mu + L}$, then 
+\begin{equation}
+\begin{split}
+\Vert \theta_k - \theta^\star \Vert & \leq \left( \frac{Q_f - 1}{Q_f + 1} \right)^k \Vert \theta_0 - \theta^\star \Vert \\
+f(\theta_k) - f^\star & \leq \frac{L}{2} \left( \frac{Q_f - 1}{Q_f + 1} \right)^{2k} \Vert \theta_0 - \theta^\star \Vert^2,
+\end{split}
+(\#eq:GD-Strongly-Convex-2)
+\end{equation}
+where $Q_f = L/\mu$.
+:::
+:::
+::: {.proofbox}
+::: {.proof}
+See Theorem 2.1.15 in [@nesterov2018lectures].
 :::
 :::
 
@@ -222,31 +194,29 @@ We consider the SGD update
 \]
 and define the **averaged iterate** 
 $$
-\bar\theta_K := \frac{1}{K}\sum_{k=0}^{K-1}\theta_k.
+\bar\theta_K := \frac{1}{K+1}\sum_{k=0}^{K}\theta_k.
 $$
 
 ::: {.theorembox}
 ::: {.theorem #sgd-convex-rate name="SGD on smooth convex function"}  
-Assume $f$ is convex and $L$-smooth. Suppose there exists $G\!>\!0$ with $\mathbb{E}\|g_k\|^2 \le G^2$ for all $k$. Choose stepsizes $\alpha_k = \frac{\eta}{\sqrt{k+1}}$ with $\eta>0$. Then for all $K\!\ge\!1$,
-\[
-\mathbb{E}\big[f(\bar\theta_K)\big] - f(\theta^\star)
-\;\le\;
-\frac{\|\theta_0-\theta^\star\|^2}{2\,\eta\,\sqrt{K}}
-\;+\;
-\frac{\eta\,G^2}{2\,\sqrt{K}},
-\]
-so choosing $\eta = \frac{\|\theta_0-\theta^\star\|}{G}$ yields
-\[
-\mathbb{E}\big[f(\bar\theta_K)\big] - f(\theta^\star)
-\;\le\;
-\frac{\|\theta_0-\theta^\star\|\,G}{\sqrt{K}}
-\;=\; O\!\left(\frac{1}{\sqrt{K}}\right).
-\]
+Assume $f$ is convex and $L$-smooth. Suppose there exists $G\!>\!0$ with $\mathbb{E}\|g_k\|^2 \le G^2$ for all $k$. 
+
+- Choose a constant stepsize $\alpha_k = \alpha > 0$. Then for all $K \ge 1$,
+\begin{equation}
+\mathbb{E}\big[f(\bar\theta_K)\big] - f^\star \leq \frac{\Vert \theta_0 - \theta^\star \Vert^2}{2 \alpha (K+1)} + \frac{\alpha G^2}{2}.
+(\#eq:SGD-convex-fixed-step-size)
+\end{equation}
+
+- Choose a diminishing step size $\alpha_k = \frac{\Vert \theta_0 - \theta^\star \Vert}{G \sqrt{k+1}}$, then
+\begin{equation}
+\mathbb{E}\big[f(\bar\theta_K)\big] - f^\star \leq \frac{\Vert \theta_0 - \theta^\star \Vert G}{\sqrt{K+1}} = \mathcal{O}\left(  \frac{1}{\sqrt{K}} \right).
+(\#eq:SGD-convex-diminishing-step-size)
+\end{equation}
 :::
 :::
 ::: {.proofbox}
 ::: {.proof}
-*Sketch.* Combine (i) the smoothness-based descent inequality for one noisy step, (ii) convexity to relate function error to gradient inner products, and (iii) the unbiasedness and bounded second moment of $g_k$, then sum over $k$ and apply Jensen's inequality to the average $\bar\theta_K$. The $1/\sqrt{K}$ rate follows from the harmonic growth of $\sum_k \alpha_k$ and boundedness of $\sum_k \alpha_k^2$.  
+See this [lecture note](https://people.eecs.berkeley.edu/~jiantao/227c2022spring/scribe/227C_Lecture_24.pdf) and [@garrigos2023handbook].
 :::
 :::
 
@@ -256,54 +226,28 @@ so choosing $\eta = \frac{\|\theta_0-\theta^\star\|}{G}$ yields
 
 - Replacing the second-moment bound by a variance bound $\sigma^2$ yields the same rate with $G^2$ replaced by $\sigma^2 + \sup_k\|\nabla f(\theta_k)\|^2$.
 
+- With a constant stepsize, SGD converges $\mathcal{O}(1/k)$ up to a neighborhood set by the gradient noise.
+
+The next theorem states the convergence rate of SGD for minimizing strongly convex functions.
+
 ::: {.theorembox}
 ::: {.theorem #sgd-strong-rate name="SGD on smooth strongly convex function"} 
-Assume $f$ is $\mu$-strongly convex and $L$-smooth, and $\mathbb{E}\!\left[\|g_k-\nabla f(\theta_k)\|^2 \mid \theta_k\right]\le \sigma^2$.  
-With stepsizes $\alpha_k = \frac{1}{\mu(k+1)}$, the SGD iterates satisfy for all $K\!\ge\!1$,
-\[
-\mathbb{E}\,\|\theta_K - \theta^\star\|^2
-\;\le\;
-\frac{C}{K}
-\quad\text{and}\quad
-\mathbb{E}\big[f(\theta_K)\big] - f(\theta^\star)
-\;\le\;
-\frac{L}{2}\,\frac{C}{K}
-\;=\; O\!\left(\frac{1}{K}\right),
-\]
-where $C := \max\!\Big\{\|\theta_0-\theta^\star\|^2,\; \frac{\sigma^2}{\mu^2}\Big\}$.
+Assume $f$ is $\mu$-strongly convex and $L$-smooth, and $\mathbb{E}\!\left[\|g_k\|^2 \right]\le G^2$.  
+With stepsize $\alpha_k = \frac{1}{\mu(k+1)}$, the SGD iterates satisfy for all $K\!\ge\!1$,
+\begin{equation}
+\begin{split}
+\mathbb{E}[f(\bar\theta_K)] - f^\star & \leq \frac{G^2}{2 \mu (K+1)} (1 + \log(K+1)), \\
+\mathbb{E} \Vert \bar\theta_K - \theta^\star \Vert^2 & \leq \frac{Q}{K+1}, \ \ Q = \max \left( \frac{G^2}{\mu^2}, \Vert \theta_0 - \theta^\star \Vert^2 \right).
+\end{split}
+(\#eq:SGD-Strongly-Convex)
+\end{equation}
 :::
 :::
 ::: {.proofbox}
 ::: {.proof}
-*Sketch.* Strong convexity gives a contraction in expected squared distance after one step; smoothness converts distance to function error. Summing the resulting supermartingale inequality and using $\sum_k \alpha_k = \infty$ and $\sum_k \alpha_k^2 < \infty$ yields the stated $1/K$ decay with explicit constants.  
+See this [lecture note](https://people.eecs.berkeley.edu/~jiantao/227c2022spring/scribe/227C_Lecture_24.pdf) and [@garrigos2023handbook].
 :::
 :::
-
-
-With a constant stepsize, SGD converges linearly up to a neighborhood set by the gradient noise.
-
-::: {.theorembox}
-::: {.corollary #sgd-const-steps name="Noise-dominated steady state"}
-Under the assumptions of Theorem \@ref(thm:sgd-strong-rate), if $0<\alpha \le \frac{1}{2L}$ is constant, then
-\[
-\mathbb{E}\,\|\theta_k-\theta^\star\|^2
-\;\le\;
-(1-\mu\alpha)^k\,\|\theta_0-\theta^\star\|^2
-\;+\;
-\frac{\alpha\,\sigma^2}{\mu},
-\]
-and consequently, by $L$-smoothness,
-\[
-\mathbb{E}\big[f(\theta_k)\big]-f(\theta^\star)
-\;\le\;
-\frac{L}{2}(1-\mu\alpha)^k\,\|\theta_0-\theta^\star\|^2
-\;+\;
-\frac{L\,\alpha\,\sigma^2}{2\mu}.
-\]
-Thus the error contracts geometrically until it reaches an $O(\alpha\,\sigma^2)$ noise floor.
-:::
-:::
-
 
 **Practical Takeaways for Policy Gradients.**
 
@@ -393,7 +337,7 @@ Let $J(\theta)=\mathbb{E}_{\tau \sim p_\theta}[R(\tau)]$ as defined in \@ref(eq:
 \nabla_\theta \log \pi_\theta(a_t\mid s_t)\;R(\tau)\Bigg].
 (\#eq:PG-PGLemma-1)
 \end{equation}
-By causality (future rewards do not affect past actions), the full return can be replaced by return-to-go:
+By causality (future action does not affect past reward), the full return can be replaced by return-to-go:
 \begin{equation}
 \nabla_\theta J(\theta)
 \;=\;

@@ -5,45 +5,45 @@ The style file: apalike.bst
 Database file #1: book.bib
 Database file #2: packages.bib
 Warning--can't use both volume and number fields in sutton1998reinforcement
-You've used 15 entries,
+You've used 17 entries,
             1935 wiz_defined-function locations,
-            569 strings with 6544 characters,
-and the built_in function-call counts, 6922 in all, are:
-= -- 688
-> -- 288
-< -- 15
-+ -- 104
-- -- 98
-* -- 558
-:= -- 1142
-add.period$ -- 48
-call.type$ -- 15
-change.case$ -- 120
-chr.to.int$ -- 15
-cite$ -- 16
-duplicate$ -- 283
-empty$ -- 484
-format.name$ -- 124
-if$ -- 1411
+            579 strings with 6777 characters,
+and the built_in function-call counts, 7519 in all, are:
+= -- 744
+> -- 308
+< -- 18
++ -- 110
+- -- 104
+* -- 601
+:= -- 1252
+add.period$ -- 54
+call.type$ -- 17
+change.case$ -- 132
+chr.to.int$ -- 17
+cite$ -- 18
+duplicate$ -- 310
+empty$ -- 527
+format.name$ -- 134
+if$ -- 1526
 int.to.chr$ -- 1
 int.to.str$ -- 0
-missing$ -- 17
-newline$ -- 78
-num.names$ -- 45
-pop$ -- 127
+missing$ -- 20
+newline$ -- 88
+num.names$ -- 51
+pop$ -- 140
 preamble$ -- 1
-purify$ -- 122
+purify$ -- 135
 quote$ -- 0
-skip$ -- 225
+skip$ -- 247
 stack$ -- 0
-substring$ -- 481
-swap$ -- 69
-text.length$ -- 7
+substring$ -- 505
+swap$ -- 72
+text.length$ -- 8
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 86
+type$ -- 96
 warning$ -- 1
-while$ -- 55
+while$ -- 59
 width$ -- 0
-write$ -- 198
+write$ -- 223
 (There was 1 warning)
