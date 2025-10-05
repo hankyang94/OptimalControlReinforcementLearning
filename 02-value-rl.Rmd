@@ -1269,6 +1269,7 @@ and $\mathbb{E}_{s \sim \mu^\pi}\|\phi(s)\|^2<\infty$, the iterates converge alm
 where the expectation is with respect to stationary state distribution $\mu^\pi$ under $\pi$.  
 
 - For *nonlinear* differentiable function classes with bounded gradients, the iterates converge almost surely to a stationary point of the same objective.
+  - Correction: Since Monte Carlo Estimation can be seen as performing Stochastic Gradient Descent on the objective in \@ref(eq:convergence-of-MC), to guarantee convergence to a first-order stationary point, we need some technical conditions: (a) diminishing step sizes satisfying the Robbins-Monro condition; (b) bounded second-order moment of the stochastic gradient; and (c) $L$-smoothness of the objective.  
 
 
 #### Semi-Gradient TD(0)

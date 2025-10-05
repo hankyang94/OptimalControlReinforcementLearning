@@ -4,46 +4,47 @@ The top-level auxiliary file: optimal-control-reinforcement-learning.aux
 The style file: apalike.bst
 Database file #1: book.bib
 Database file #2: packages.bib
+Warning--there's a number but no volume in barto2012neuronlike
 Warning--can't use both volume and number fields in sutton1998reinforcement
-You've used 17 entries,
+You've used 18 entries,
             1935 wiz_defined-function locations,
-            579 strings with 6777 characters,
-and the built_in function-call counts, 7519 in all, are:
-= -- 744
-> -- 308
+            586 strings with 7002 characters,
+and the built_in function-call counts, 7950 in all, are:
+= -- 787
+> -- 326
 < -- 18
-+ -- 110
-- -- 104
-* -- 601
-:= -- 1252
-add.period$ -- 54
-call.type$ -- 17
-change.case$ -- 132
-chr.to.int$ -- 17
-cite$ -- 18
-duplicate$ -- 310
-empty$ -- 527
-format.name$ -- 134
-if$ -- 1526
++ -- 116
+- -- 110
+* -- 643
+:= -- 1326
+add.period$ -- 57
+call.type$ -- 18
+change.case$ -- 140
+chr.to.int$ -- 18
+cite$ -- 20
+duplicate$ -- 324
+empty$ -- 557
+format.name$ -- 141
+if$ -- 1608
 int.to.chr$ -- 1
 int.to.str$ -- 0
-missing$ -- 20
-newline$ -- 88
-num.names$ -- 51
-pop$ -- 140
+missing$ -- 21
+newline$ -- 93
+num.names$ -- 54
+pop$ -- 147
 preamble$ -- 1
-purify$ -- 135
+purify$ -- 143
 quote$ -- 0
-skip$ -- 247
+skip$ -- 255
 stack$ -- 0
-substring$ -- 505
-swap$ -- 72
+substring$ -- 542
+swap$ -- 73
 text.length$ -- 8
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 96
-warning$ -- 1
-while$ -- 59
+type$ -- 102
+warning$ -- 2
+while$ -- 63
 width$ -- 0
-write$ -- 223
-(There was 1 warning)
+write$ -- 236
+(There were 2 warnings)

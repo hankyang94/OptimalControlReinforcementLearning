@@ -12,6 +12,13 @@ Baird, L. et~al. (1995).
 \newblock In {\em Proceedings of the twelfth international conference on
   machine learning}, pages 30--37.
 
+\bibitem[Barto et~al., 2012]{barto2012neuronlike}
+Barto, A.~G., Sutton, R.~S., and Anderson, C.~W. (2012).
+\newblock Neuronlike adaptive elements that can solve difficult learning
+  control problems.
+\newblock {\em IEEE transactions on systems, man, and cybernetics},
+  (5):834--846.
+
 \bibitem[Chen, 1984]{chen1984book-linear}
 Chen, C.-T. (1984).
 \newblock {\em Linear system theory and design}.
