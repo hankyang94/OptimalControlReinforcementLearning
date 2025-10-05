@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-10-01}
+\date{2025-10-05}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -3363,6 +3363,12 @@ It is worth noting that when using function approximation, the update on \(\thet
   where the expectation is with respect to stationary state distribution \(\mu^\pi\) under \(\pi\).
 \item
   For \emph{nonlinear} differentiable function classes with bounded gradients, the iterates converge almost surely to a stationary point of the same objective.
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Correction: Since Monte Carlo Estimation can be seen as performing Stochastic Gradient Descent on the objective in \eqref{eq:convergence-of-MC}, to guarantee convergence to a first-order stationary point, we need some technical conditions: (a) diminishing step sizes satisfying the Robbins-Monro condition; (b) bounded second-order moment of the stochastic gradient; and (c) \(L\)-smoothness of the objective.
+  \end{itemize}
 \end{itemize}
 
 \subsubsection{Semi-Gradient TD(0)}\label{semi-gradient-td0}
@@ -4224,17 +4230,19 @@ We consider a Markov decision process (MDP) with (possibly continuous) state spa
 \begin{itemize}
 \item
   \textbf{Finite action spaces (\(\mathcal{A}\) discrete).} A common choice is a \textbf{softmax (categorical) policy} over a score (logit) function \(f_\theta(s,a)\):
-  \[
+  \begin{equation}
   \pi_\theta(a\mid s)
   \;=\;
   \frac{\exp\{f_\theta(s,a)\}}{\sum_{a'\in\mathcal{A}}\exp\{f_\theta(s,a')\}}.
-  \]
+  \label{eq:finite-action-policy}
+  \end{equation}
   Here we use \(\exp\{f_\theta(s,a)\} = e^{f_\theta(s,a)}\) for pretty formatting. Typically \(f_\theta\) is a neural network or a linear function over features.
 \item
   \textbf{Continuous action spaces (\(\mathcal{A}\subseteq\mathbb{R}^m\)).} A standard choice is a \textbf{Gaussian policy}:
-  \[
+  \begin{equation}
   \pi_\theta(a\mid s) \;=\; \mathcal{N}\!\big(a;\;\mu_\theta(s),\,\Sigma_\theta(s)\big),
-  \]
+  \label{eq:continuous-action-policy}
+  \end{equation}
   where \(\mu_\theta(s)\) and (often diagonal) covariance \(\Sigma_\theta(s)\) are differentiable functions (e.g., neural networks) parameterized by \(\theta\). The policy \(\pi_\theta(a \mid s)\) samples actions from the Gaussian parameterized by \(\mu_\theta(s)\) and \(\Sigma_\theta(s)\). Other choices include squashed Gaussians (e.g., \(\tanh\)) or Beta distributions for bounded actions.
 \end{itemize}
 
@@ -4376,6 +4384,8 @@ is an unbiased estimator of the true gradient.
 
 With this sample gradient estimator, we obtain the classical REINFORCE algorithm.
 
+\textbf{Single-Trajectory (Naive) REINFORCE}
+
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
@@ -4410,6 +4420,8 @@ An unbiased gradient estimator, from \eqref{eq:PG-PGLemma-2} is
 
 This leads to the following minibatch REINFORCE algorithm.
 
+\textbf{Minibatch REINFORCE}
+
 \begin{enumerate}
 \def\labelenumi{\arabic{enumi}.}
 \tightlist
@@ -4428,6 +4440,449 @@ This leads to the following minibatch REINFORCE algorithm.
 \item
   Update \(\theta_{k+1} = \theta_k + \alpha_k g_k\)
 \end{itemize}
+
+We apply both the single-trajectory (naive) REINFORCE and a minibatch variant to the CartPole-v1 balancing task. The results show that variance reduction via minibatching is crucial for stable learning and for obtaining strong policies with policy-gradient methods.
+
+\begin{example}[REINFORCE for Cart-Pole Balancing]
+\protect\hypertarget{exm:cartpole-reinforce}{}\label{exm:cartpole-reinforce}
+
+Consider the cart-pole balancing task illustrated in Fig. \ref{fig:cart-pole-illustration}. A pole is attached by an un-actuated joint to a cart, which moves along a frictionless track. The pendulum is placed upright on the cart and the goal is to balance the pole by applying forces in the left and right direction on the cart.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cart_pole} 
+
+}
+
+\caption{Cart Pole balance.}\label{fig:cart-pole-illustration}
+\end{figure}
+
+\textbf{State Space.} The state of the cart-pole system is denoted by \(s \in \mathcal{S} \subset \mathbb{R}^4\), containing the position and velocity of the cart, as well as the angle and angular velocity of the pole.
+
+\textbf{Action Space.} The action space \(\mathcal{A}\) is discrete and contains two elements: pushing to the left and pushing to the right.
+
+The dynamics of the MDP is provided by the \href{https://gymnasium.farama.org/environments/classic_control/cart_pole/}{Gym simulator} and is described in the original paper \citep{barto2012neuronlike}. At the beginning of the episode, all state variables are randomly initialized in \([-0.05,0.05]\) and the goal for the agent is to apply the actions to balance the cart-pole for as long as possible---the agent gets a reward of \(+1\) every step if (1) the pole angle remains between \(-12^\circ\) and \(+12^\circ\) and (2) the cart position remains between \(-2.4\) and \(2.4\). The maximum episode length is \(500\).
+
+We design a policy network in the form of \eqref{eq:finite-action-policy} since the action space is finite.
+
+\textbf{REINFORCE.} We first apply the naive REINFORCE algorithm where the gradient estimator is computed from a single trajectory as in \eqref{eq:PG-Estimator-1}. Fig. \ref{fig:cart-pole-learning-curve-reinforce} shows the learning curve, which indicates that the REINFORCE algorithm was not able to learn a good policy after 2000 episodes.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_returns_reinforce} 
+
+}
+
+\caption{Learning curve (Naive REINFORCE).}\label{fig:cart-pole-learning-curve-reinforce}
+\end{figure}
+
+\textbf{Minibatch REINFORCE.} We then apply the minibatch REINFORCE algorithm where the gradient estimator is computed from multiple (\(20\) in our case) trajectories as in \eqref{eq:PG-Estimator-2}. Fig. \ref{fig:cart-pole-learning-curve-minibatch-reinforce} shows the learning curve, which shows steady increase in the per-episode return that eventually gets close to the maximum per-episode return \(500\).
+
+Fig. \ref{fig:cart-pole-policy-rollout-minibatch-reinforce} shows a rollout video of applying the policy training from minibatch REINFORCE. We can see the policy nicely balances the cart-pole system.
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_reinforce.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_returns_minibatch_reinforce} 
+
+}
+
+\caption{Learning curve (Minibatch REINFORCE).}\label{fig:cart-pole-learning-curve-minibatch-reinforce}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_policy_rollout_minibatch_reinforce} 
+
+}
+
+\caption{Policy rollout (Minibatch REINFORCE).}\label{fig:cart-pole-policy-rollout-minibatch-reinforce}
+\end{figure}
+
+\end{example}
+
+\subsection{Baselines and Variance Reduction}\label{baselines-and-variance-reduction}
+
+From the REINFORCE experiments above, we have seen firsthand that \textbf{variance reduction} is critical for stable policy-gradient learning.
+
+A natural question is: \emph{what framework can we use to systematically reduce the variance of the gradient estimator while preserving unbiasedness?}
+
+\subsubsection{Baseline}\label{baseline}
+
+A key device is a \textbf{baseline} \(b:\mathcal{S}\to\mathbb{R}\) added at each timestep:
+\begin{equation}
+\widehat{g}
+\;=\;
+\sum_{t=0}^{T-1} \gamma^t\,\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(g_t - b(s_t)\big).
+\label{eq:baseline-estimator}
+\end{equation}
+
+The only difference between \eqref{eq:baseline-estimator} and the original gradient estimator \eqref{eq:PG-PGLemma-2} is that the baseline \(b(s_t)\) is subtracted from the return-to-go \(g_t\). The next theorem states that any state-only baseline does not change the expectation of the gradient estimator.
+
+\begin{theorem}[Baseline Invariance]
+\protect\hypertarget{thm:baseline-invariance}{}\label{thm:baseline-invariance}Let \(b:\mathcal{S}\to\mathbb{R}\) be any function independent of the action \(a_t\). Then
+\[
+\mathbb{E}\!\left[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)\right]=0,
+\]
+and thus
+\begin{equation}
+\nabla_\theta J(\theta) \;=\; 
+\mathbb{E}\!\left[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(g_t - b(s_t)\big)\right].
+\label{eq:PG-baseline-form}
+\end{equation}
+
+Equivalently, using action-values,
+\begin{equation}
+\nabla_\theta J(\theta)
+=
+\frac{1}{1-\gamma}\,
+\mathbb{E}_{s\sim d_\theta,\;a\sim\pi_\theta}
+\!\Big[\nabla_\theta \log \pi_\theta(a\mid s)\,\big(Q^{\pi_\theta}(s,a)-b(s)\big)\Big].
+\label{eq:baseline-estimator-Qvalue}
+\end{equation}
+\end{theorem}
+
+\begin{proof}
+We prove (i) the baseline term has zero expectation, (ii) the baseline-subtracted estimator in \eqref{eq:PG-baseline-form} is unbiased, and (iii) the equivalent \(Q\)-value form \eqref{eq:baseline-estimator-Qvalue}.
+
+Throughout we assume standard conditions ensuring interchange of expectation and differentiation (e.g., bounded rewards with finite horizon or discounted infinite horizon, and a differentiable policy).
+
+\textbf{Step 1 (Score-function expectation is zero).} Fix a state \(s\in\mathcal{S}\). The \textbf{score function} integrates/sums to zero under the policy:
+\begin{equation}
+\begin{split}
+\mathbb{E}_{a\sim \pi_\theta(\cdot\mid s)}\!\big[\nabla_\theta \log \pi_\theta(a\mid s)\big]
+& =
+\sum_{a\in\mathcal{A}} \pi_\theta(a\mid s)\,\nabla_\theta \log \pi_\theta(a\mid s)
+=
+\sum_{a\in\mathcal{A}} \nabla_\theta \pi_\theta(a\mid s) \\
+& = 
+\nabla_\theta \sum_{a\in\mathcal{A}} \pi_\theta(a\mid s)
+=
+\nabla_\theta 1
+=
+0,
+\end{split}
+\end{equation}
+with the obvious replacement of sums by integrals for continuous \(\mathcal{A}\). This identity is the standard ``score has zero mean'' property.
+
+\textbf{Step 2 (Baseline term has zero expectation).} Let \(\mathcal{F}_t := \sigma(s_0,a_0,\ldots,s_t)\) be the history up to time \(t\) and recall that \(b(s_t)\) is \textbf{independent of} \(a_t\). Using iterated expectations:
+\[
+\mathbb{E}\!\left[\gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)\right]
+=
+\mathbb{E}\!\left[
+\gamma^t\, b(s_t)\,
+\underbrace{\mathbb{E}\!\left[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\middle|\, s_t\right]}_{=\,0~\text{by Step 1}}
+\right]
+= 0.
+\]
+Summing over \(t\) yields
+\[
+\mathbb{E}\!\left[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)\right]=0.
+\]
+
+\textbf{Step 3 (Unbiasedness of the baseline-subtracted estimator).} By the policy gradient lemma (likelihood-ratio form with return-to-go; see \eqref{eq:PG-PGLemma-2}),
+\[
+\nabla_\theta J(\theta)
+=
+\mathbb{E}\!\left[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,g_t\right].
+\]
+Subtract and add the baseline term inside the expectation:
+\[
+  \begin{split}
+\mathbb{E}\!\left[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,g_t\right]
+& =
+\mathbb{E}\!\left[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(g_t-b(s_t)\big)\right]
+\;+\; \\
+& \quad \quad \underbrace{\mathbb{E}\!\left[\sum_{t=0}^{T-1} \gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,b(s_t)\right]}_{=\,0~\text{by Step 2}}.
+\end{split}
+\]
+Therefore \eqref{eq:PG-baseline-form} holds, proving that \textbf{any} state-only baseline preserves unbiasedness.
+
+\textbf{Step 4 (Equivalent \(Q\)-value form).} Condition on \((s_t,a_t)\) and use the definition \(Q^{\pi_\theta}(s_t,a_t):=\mathbb{E}[g_t\mid s_t,a_t]\):
+\[
+\mathbb{E}\!\big[\gamma^t \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(g_t-b(s_t)\big)\big]
+=
+\mathbb{E}\!\Big[
+\gamma^t\,
+\mathbb{E}\!\big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(g_t-b(s_t)\big)\mid s_t\big]
+\Big].
+\]
+Inside the inner expectation (over \(a_t\sim \pi_\theta(\cdot\mid s_t)\)) and using \(b(s_t)\)'s independence from \(a_t\),
+\[
+\mathbb{E}\!\big[\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\big(g_t-b(s_t)\big)\mid s_t\big]
+=
+\mathbb{E}_{a\sim \pi_\theta(\cdot\mid s_t)}\!\Big[\nabla_\theta \log \pi_\theta(a\mid s_t)\,\big(Q^{\pi_\theta}(s_t,a)-b(s_t)\big)\Big].
+\]
+Summing over \(t\) with discount \(\gamma^t\) and collecting terms with the (discounted) on-policy state-visitation distribution \(d_\theta\) (cf.~\eqref{eq:state-visitation-distribution}) yields the infinite-horizon identity
+\[
+\nabla_\theta J(\theta)
+=
+\frac{1}{1-\gamma}\,
+\mathbb{E}_{s\sim d_\theta,\;a\sim \pi_\theta}\!
+\Big[\nabla_\theta \log \pi_\theta(a\mid s)\,\big(Q^{\pi_\theta}(s,a)-b(s)\big)\Big],
+\]
+which is \eqref{eq:baseline-estimator-Qvalue}.
+\end{proof}
+
+\subsubsection{Optimal Baseline and Advantage}\label{optimal-baseline-and-advantage}
+
+Among all state-only baselines \(b(s)\), which one minimizes the variance of the gradient estimator?
+
+\begin{theorem}[Variance-Minimizing Baseline (per-state)]
+\protect\hypertarget{thm:variance-minimizing-baseline}{}\label{thm:variance-minimizing-baseline}For the estimator
+\[
+g(s,a)=\nabla_\theta \log \pi_\theta(a\mid s)\,\big(Q^\pi(s,a)-b(s)\big),
+\]
+the \(b(s)\) minimizing \(\operatorname{Var}[g\mid s]\) is
+\[
+b^\star(s)=
+\frac{\mathbb{E}_{a\sim \pi_\theta}\!\left[\| \nabla_\theta \log \pi_\theta(a\mid s)\|^2\, Q^\pi(s,a)\right]}
+{\mathbb{E}_{a\sim \pi_\theta}\!\left[\| \nabla_\theta \log \pi_\theta(a\mid s)\|^2\right]}.
+\label{eq:best-baseline}
+\]
+Assuming that the norm factor \(\Vert \nabla_\theta \log \pi_\theta(a\mid s) \Vert^2\) varies slowly with \(a\), then
+\[
+b^\star(s) \approx V^\pi(s).
+\]
+\end{theorem}
+
+\begin{proof}
+Let \(s\in\mathcal{S}\) be fixed and write
+\[
+u(a\mid s) \;\equiv\; \nabla_\theta \log \pi_\theta(a\mid s)\in\mathbb{R}^d,
+\qquad
+w(a\mid s) \;\equiv\; \|u(a\mid s)\|^2 \;\ge 0.
+\]
+Consider the vector-valued random variable
+\[
+g(s,a) \;=\; u(a\mid s)\,\big(Q^\pi(s,a)-b(s)\big),
+\]
+where the randomness is over \(a\sim \pi_\theta(\cdot\mid s)\).
+
+We aim to choose \(b(s)\in\mathbb{R}\) to minimize the \textbf{conditional variance}
+\[
+\operatorname{Var}[g\mid s] \;=\; \mathbb{E}\!\left[\|g(s,a)-\mathbb{E}[g\mid s]\|^2 \,\middle|\, s\right].
+\]
+Using the identity \(\operatorname{Var}[X]=\mathbb{E}\|X\|^2-\|\mathbb{E}X\|^2\) (for vector \(X\) with Euclidean norm), we have
+\[
+\operatorname{Var}[g\mid s]
+\;=\;
+\underbrace{\mathbb{E}\!\left[\|g(s,a)\|^2 \mid s\right]}_{\text{depends on } b(s)}
+\;-\;
+\underbrace{\big\|\mathbb{E}[g\mid s]\big\|^2}_{\text{independent of } b(s)}.
+\]
+We first show that the mean term is independent of \(b(s)\). Indeed,
+\[
+\mathbb{E}[g\mid s]
+=
+\mathbb{E}_{a\sim\pi_\theta(\cdot\mid s)}\!\big[u(a\mid s)\,\big(Q^\pi(s,a)-b(s)\big)\big]
+=
+\mathbb{E}\!\big[u(a\mid s)\,Q^\pi(s,a)\big]
+\;-\;
+b(s)\,\underbrace{\mathbb{E}\!\big[u(a\mid s)\big]}_{=\,0},
+\]
+where \(\mathbb{E}[u(a\mid s)]=\sum_a \pi_\theta(a\mid s)\nabla_\theta\log\pi_\theta(a\mid s)=\nabla_\theta \sum_a \pi_\theta(a\mid s)=\nabla_\theta 1=0\) (replace sums by integrals in the continuous case). Therefore \(\mathbb{E}[g\mid s]\) does \textbf{not} depend on \(b(s)\).
+
+Consequently, minimizing \(\operatorname{Var}[g\mid s]\) is equivalent to minimizing the conditional \textbf{second moment}
+\[
+\mathbb{E}\!\left[\|g(s,a)\|^2 \mid s\right]
+=
+\mathbb{E}\!\left[\|u(a\mid s)\|^2 \,\big(Q^\pi(s,a)-b(s)\big)^2 \,\middle|\, s\right]
+=
+\mathbb{E}\!\left[w(a\mid s)\,\big(Q^\pi(s,a)-b(s)\big)^2 \,\middle|\, s\right].
+\]
+The right-hand side is a convex quadratic in the scalar \(b(s)\). Differentiate w.r.t. \(b(s)\) and set to zero:
+\[
+\frac{\partial}{\partial b(s)}
+\mathbb{E}\!\left[w(a\mid s)\,\big(Q^\pi(s,a)-b(s)\big)^2 \,\middle|\, s\right]
+=
+-2\,\mathbb{E}\!\left[w(a\mid s)\,\big(Q^\pi(s,a)-b(s)\big)\,\middle|\, s\right]
+= 0.
+\]
+Hence,
+\[
+\mathbb{E}\!\left[w(a\mid s)\,Q^\pi(s,a)\,\middle|\, s\right]
+=
+b(s)\,\mathbb{E}\!\left[w(a\mid s)\,\middle|\, s\right],
+\]
+and provided \(\mathbb{E}[w(a\mid s)\mid s]>0\) (i.e., the Fisher information at \(s\) is non-degenerate), the unique minimizer is
+\[
+b^\star(s)
+=
+\frac{\mathbb{E}_{a\sim\pi_\theta(\cdot\mid s)}\!\left[\| \nabla_\theta \log \pi_\theta(a\mid s)\|^2\, Q^\pi(s,a)\right]}
+{\mathbb{E}_{a\sim\pi_\theta(\cdot\mid s)}\!\left[\| \nabla_\theta \log \pi_\theta(a\mid s)\|^2\right]},
+\]
+which is \eqref{eq:best-baseline}. If \(\mathbb{E}[w(a\mid s)\mid s]=0\) (e.g., a locally deterministic policy), then \(g\equiv 0\) almost surely and any \(b(s)\) attains the minimum.
+
+Finally, when the weight \(w(a\mid s)=\|\nabla_\theta \log \pi_\theta(a\mid s)\|^2\) varies slowly with \(a\) (or is approximately constant) for a fixed \(s\), the ratio simplifies to
+\[
+b^\star(s)\;\approx\;\frac{\mathbb{E}[c(s)\,Q^\pi(s,a)\mid s]}{\mathbb{E}[c(s)\mid s]}
+\;=\;
+\mathbb{E}_{a\sim \pi_\theta(\cdot\mid s)}\!\big[Q^\pi(s,a)\big]
+\;=\;
+V^\pi(s),
+\]
+so that the baseline-subtracted target becomes the \textbf{advantage}
+\(A^\pi(s,a)=Q^\pi(s,a)-V^\pi(s)\).
+\end{proof}
+
+When using \(V^\pi(s)\) as the baseline, the baseline-subtracted target is called the \textbf{advantage function}
+\begin{equation}
+A^{\pi_\theta}(s,a)\;=\;Q^{\pi_\theta}(s,a)-V^{\pi_\theta}(s).
+\label{eq:advantage-def}
+\end{equation}
+The corresponding minibatch gradient estimator becomes
+\begin{equation}
+\widehat{\nabla_\theta J}
+\;=\;
+\frac{1}{N}\sum_{i=1}^N \sum_{t=0}^{T^{(i)}-1} \gamma^t\,
+\nabla_\theta \log \pi_\theta \big(a_t^{(i)}\mid s_t^{(i)}\big)\,
+\widehat{A}_t^{(i)},
+\quad
+\widehat{A}_t^{(i)} \approx g_t^{(i)} - V_\phi \big(s_t^{(i)}\big),
+\label{eq:reinforce-adv-estimator}
+\end{equation}
+where \(V_\phi\) is a learned approximation to \(V^{\pi_\theta}\).
+
+\subsubsection{Intuition for the Advantage}\label{intuition-for-the-advantage}
+
+The advantage
+\[
+A^\pi(s,a) \;=\; Q^\pi(s,a) - V^\pi(s)
+\]
+measures how much \emph{better or worse} action \(a\) is at state \(s\) \emph{relative to the policy's average action quality} \(V^\pi(s)=\mathbb{E}_{a\sim\pi}[Q^\pi(s,a)\mid s]\).\\
+Hence \(\mathbb{E}_{a\sim\pi}[A^\pi(s,a)\mid s]=0\): it is a \emph{relative} score.
+
+With a value baseline, the policy-gradient update is
+\[
+\nabla_\theta J(\theta)
+\;=\;
+\frac{1}{1-\gamma}\,
+\mathbb{E}_{s\sim d_\pi,\;a\sim\pi}\!\big[
+\nabla_\theta \log \pi_\theta(a\mid s)\,A^\pi(s,a)
+\big].
+\]
+
+\begin{itemize}
+\item
+  If \(A^\pi(s,a) > 0\): the term \(\nabla_\theta \log \pi_\theta(a\mid s)\,A^\pi(s,a)\) \textbf{increases} \(\log \pi_\theta(a\mid s)\) (and thus \(\pi_\theta(a\mid s)\))---the policy puts \textbf{more} probability mass on actions that outperformed its average at \(s\).
+\item
+  If \(A^\pi(s,a) < 0\): it \textbf{decreases} \(\log \pi_\theta(a\mid s)\)---the policy puts \textbf{less} probability mass on actions that underperformed at \(s\).
+\item
+  If \(A^\pi(s,a) \approx 0\): the action performed about as expected; the update at that \((s,a)\) is \textbf{negligible}.
+\end{itemize}
+
+Subtracting \(V^\pi(s)\) centers returns \emph{per state}, so the update depends only on \emph{relative} goodness. This:
+
+\begin{itemize}
+\item
+  preserves unbiasedness (baseline invariance),
+\item
+  reduces variance (no large, shared offset),
+\item
+  focuses learning on which actions at \(s\) should get more/less probability.
+\end{itemize}
+
+\subsubsection{REINFORCE with a Learned Value Baseline}\label{reinforce-with-a-learned-value-baseline}
+
+Recall that in Section \ref{function-approximation}, we have introduced multiple algorithms that can learn an approximate value function for policy evaluation. For example, we can use Monte Carlo estimation.
+
+We now combine REINFORCE with a learned baseline \(V_\phi(s)\approx V^{\pi_\theta}(s)\), yielding a lower-variance update while keeping the estimator unbiased.
+
+\textbf{Minibatch REINFORCE with a Learned Value Baseline}
+
+\textbf{Inputs:} policy \(\pi_\theta(a\mid s)\), value \(V_\phi(s)\), discount \(\gamma\in[0,1)\), stepsizes \(\alpha_\theta,\alpha_\phi>0\), batch size \(N\).\\
+\textbf{Convergence controls:} tolerance \(\varepsilon>0\), maximum inner steps \(K_{\max}\) (value-fit loop), optional patience \(P\).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Collect trajectories.} Roll out \(N\) on-policy trajectories \(\{\tau^{(i)}\}_{i=1}^N\) using \(\pi_\theta\).\\
+  For each trajectory \(i\) and timestep \(t\), record \((s_t^{(i)},a_t^{(i)},r_t^{(i)})\).
+\item
+  \textbf{Compute returns-to-go.} For each \(i,t\),
+  \[
+  g_t^{(i)} \;=\; \sum_{t'=t}^{T^{(i)}-1} \gamma^{\,t'-t}\, r_{t'}^{(i)}.
+  \]
+\item
+  \textbf{Fit the value to convergence (critic inner loop).} Define the batch regression loss
+  \[
+  \mathcal{L}_V(\phi)
+  \;=\;
+  \frac{1}{N}\sum_{i=1}^N \sum_{t=0}^{T^{(i)}-1}
+  \big(g_t^{(i)} - V_\phi(s_t^{(i)})\big)^2.
+  \]
+  Perform gradient steps on \(\phi\) \textbf{until convergence} on this fixed batch:
+  \[
+  \phi \leftarrow \phi - \alpha_\phi \,\nabla_\phi \mathcal{L}_V(\phi).
+  \]
+  Repeat for \(k=1,\dots,K_{\max}\) or until
+  \[
+  \frac{\mathcal{L}_V^{(k-1)}-\mathcal{L}_V^{(k)}}{\max\{1,|\mathcal{L}_V^{(k-1)}|\}} < \varepsilon
+  \]
+  for \(M\) consecutive checks.
+  Denote the (approximately) converged parameters by \(\phi^\star\).
+\item
+  \textbf{Form (optionally standardized) advantages using the converged value.}
+  \[
+  \widehat{A}_t^{(i)} \;=\; g_t^{(i)} - V_{\phi^\star}\!\big(s_t^{(i)}\big),
+  \qquad
+  \tilde{A}_t^{(i)} \;=\; \frac{\widehat{A}_t^{(i)} - \mu_A}{\sigma_A+\delta}\ \ (\text{optional, batch-wise}),
+  \]
+  where \(\mu_A,\sigma_A\) are the mean and std of \(\{\widehat{A}_t^{(i)}\}\) over the \textbf{whole} batch, and \(\delta>0\) is a small constant.
+\item
+  \textbf{Single policy (actor) update.} Using the converged baseline, take \textbf{one} ascent step:
+  \[
+  \theta \;\leftarrow\; \theta
+  \;+\; \alpha_\theta \cdot
+  \frac{1}{N}\sum_{i=1}^N \sum_{t=0}^{T^{(i)}-1}
+  \gamma^t\,\nabla_\theta \log \pi_\theta \big(a_t^{(i)}\mid s_t^{(i)}\big)\,\tilde{A}_t^{(i)}.
+  \]
+  \emph{(If not standardizing, use \(\widehat{A}_t^{(i)}\) in place of \(\tilde{A}_t^{(i)}\).)}
+\item
+  \textbf{Repeat} from Step 1 with the updated policy.
+\end{enumerate}
+
+\textbf{Notes.}
+
+\begin{itemize}
+\item
+  By baseline invariance, subtracting \(V_{\phi^\star}(s)\) keeps the policy-gradient unbiased while reducing variance.
+\item
+  Converging the critic on each fixed batch (Steps 3--4) approximates the variance-minimizing baseline for that batch before a single actor step, often stabilizing learning in high-variance settings.
+\end{itemize}
+
+\begin{example}[REINFORCE with a Learned Value Baseline for Cart-Pole]
+\protect\hypertarget{exm:cartpole-reinforce-learned-value}{}\label{exm:cartpole-reinforce-learned-value}
+
+Consider the same cart-pole balancing task in Example \ref{exm:cartpole-reinforce}. We use minibatch REINFORCE with a learned value baseline (batch size \(50\)), the algorithm described above.
+
+Fig. \ref{fig:cart-pole-learning-curve-minibatch-reinforce-learned-value} shows the learning curve. The algorithm is able to steadily increase the per-episode returns.
+
+Fig. \ref{fig:cart-pole-policy-rollout-minibatch-reinforce-learned-value} shows a rollout of the system trajectory under the learned policy.
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_reinforce_learned_value.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_returns_minibatch_reinforce_value_baseline} 
+
+}
+
+\caption{Learning curve (Minibatch REINFORCE with a Learned Value Baseline).}\label{fig:cart-pole-learning-curve-minibatch-reinforce-learned-value}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_policy_rollout_minibatch_reinforce_value_baseline} 
+
+}
+
+\caption{Policy rollout (Minibatch REINFORCE with a Learned Value Baseline).}\label{fig:cart-pole-policy-rollout-minibatch-reinforce-learned-value}
+\end{figure}
+
+\end{example}
 
 \appendix
 
