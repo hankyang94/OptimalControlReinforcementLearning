@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-05" />
+<meta name="date" content="2025-10-06" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -219,6 +219,11 @@ div.csl-indent {
 <li class="chapter" data-level="3.2.2" data-path="policy-gradient.html"><a href="policy-gradient.html#the-policy-gradient-lemma"><i class="fa fa-check"></i><b>3.2.2</b> The Policy Gradient Lemma</a></li>
 <li class="chapter" data-level="3.2.3" data-path="policy-gradient.html"><a href="policy-gradient.html#reinforce"><i class="fa fa-check"></i><b>3.2.3</b> REINFORCE</a></li>
 <li class="chapter" data-level="3.2.4" data-path="policy-gradient.html"><a href="policy-gradient.html#baselines-and-variance-reduction"><i class="fa fa-check"></i><b>3.2.4</b> Baselines and Variance Reduction</a></li>
+</ul></li>
+<li class="chapter" data-level="3.3" data-path="policy-gradient.html"><a href="policy-gradient.html#actorcritic-methods"><i class="fa fa-check"></i><b>3.3</b> Actor–Critic Methods</a>
+<ul>
+<li class="chapter" data-level="3.3.1" data-path="policy-gradient.html"><a href="policy-gradient.html#anatomy-of-an-actorcritic"><i class="fa fa-check"></i><b>3.3.1</b> Anatomy of an Actor–Critic</a></li>
+<li class="chapter" data-level="3.3.2" data-path="policy-gradient.html"><a href="policy-gradient.html#on-policy-actorcritic-with-td0"><i class="fa fa-check"></i><b>3.3.2</b> On-Policy Actor–Critic with TD(0)</a></li>
 </ul></li>
 </ul></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
@@ -1126,34 +1131,102 @@ Figure 3.6: Policy rollout (Minibatch REINFORCE with a Learned Value Baseline).
 </div>
 </div>
 </div>
-<!-- ## Actor–Critic Methods
-
-Actor–critic (AC) algorithms marry **policy gradients** (the *actor*) with **value function learning** (the *critic*). The critic reduces variance by supplying low-noise estimates of action quality (values or advantages), while the actor updates the policy using these estimates. In contrast to pure Monte Carlo baselines, actor–critic **bootstraps** from its own predictions, enabling **online**, **incremental**, and often far more **sample-efficient** learning.
-
-### Anatomy of an Actor–Critic
-
-- **Actor (policy):** a differentiable policy $\pi_\theta(a\mid s)$.
-- **Critic (value):** an approximator for $V_\phi(s)$, $Q_\psi(s,a)$, or directly $A_\eta(s,a)$.
-- **Update coupling:** the actor ascends a baseline-subtracted log-likelihood objective using *advantage-like* targets supplied by the critic.
-
-Concretely, the actor uses the generic gradient form
+</div>
+</div>
+</div>
+<div id="actorcritic-methods" class="section level2 hasAnchor" number="3.3">
+<h2><span class="header-section-number">3.3</span> Actor–Critic Methods<a href="policy-gradient.html#actorcritic-methods" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Actor–critic (AC) algorithms marry <strong>policy gradients</strong> (the <em>actor</em>) with <strong>value function learning</strong> (the <em>critic</em>). The critic reduces variance by supplying low-noise estimates of action quality (values or advantages), while the actor updates the policy using these estimates. In contrast to pure Monte Carlo baselines, actor–critic <strong>bootstraps</strong> from its own predictions, enabling online, incremental, and often more sample-efficient learning.</p>
+<div id="anatomy-of-an-actorcritic" class="section level3 hasAnchor" number="3.3.1">
+<h3><span class="header-section-number">3.3.1</span> Anatomy of an Actor–Critic<a href="policy-gradient.html#anatomy-of-an-actorcritic" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<ul>
+<li><strong>Actor (policy):</strong> a differentiable policy <span class="math inline">\(\pi_\theta(a\mid s)\)</span>.</li>
+<li><strong>Critic (value):</strong> an approximator for <span class="math inline">\(V_\phi(s)\)</span>, <span class="math inline">\(Q_\psi(s,a)\)</span>, or directly the advantage <span class="math inline">\(A_\eta(s,a)\)</span>.</li>
+<li><strong>Update coupling:</strong> the actor ascends a baseline-subtracted log-likelihood objective using <em>advantage-like</em> targets supplied by the critic.</li>
+</ul>
+<!-- Concretely, the actor uses the generic gradient form
 \begin{equation}
 \widehat{\nabla_\theta J}
 \;=\;
 \frac{1}{N}\sum_{i=1}^N\sum_{t=0}^{T^{(i)}-1}
-\gamma^t \,\nabla_\theta\log\pi_\theta\!\big(a_t^{(i)}\mid s_t^{(i)}\big)\,\widehat{A}_t^{(i)},
+\gamma^t \,\nabla_\theta\log\pi_\theta\big(a_t^{(i)}\mid s_t^{(i)}\big)\,\widehat{A}_t^{(i)},
 (\#eq:ac-actor-update)
 \end{equation}
-where $\widehat{A}_t$ is supplied by the critic (examples below).
-
-### TD Residuals and GAE as Advantage Targets
+where $N$ is the number of trajectories in a minibatch and $\widehat{A}_t$ is supplied by the critic. -->
+</div>
+<div id="on-policy-actorcritic-with-td0" class="section level3 hasAnchor" number="3.3.2">
+<h3><span class="header-section-number">3.3.2</span> On-Policy Actor–Critic with TD(0)<a href="policy-gradient.html#on-policy-actorcritic-with-td0" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We first learn a state value function <span class="math inline">\(V_\phi(s)\)</span> with a <strong>one-step bootstrapped</strong> TD(0) target:
+<span class="math display" id="eq:td0">\[
+\delta_t \;\equiv\; r_t + \gamma\,V_\phi(s_{t+1}) - V_\phi(s_t),
+\qquad
+\mathcal{L}_V(\phi) \;=\; \frac12\,\delta_t^{\,2}.
+\tag{3.31}
+\]</span>
+If <span class="math inline">\(V_\phi \approx V^\pi\)</span>, then <span class="math inline">\(\mathbb{E}[\delta_t\mid s_t,a_t]\approx A^\pi(s_t,a_t)\)</span>, so <span class="math inline">\(\delta_t\)</span> serves as a low-variance <strong>advantage</strong> target for the actor:
+<span class="math display" id="eq:ac-actor-delta">\[
+\widehat{\nabla_\theta J}
+\;=\;
+\frac{1}{|\mathcal{B}|}
+\sum_{(s_t,a_t)\in \mathcal{B}}
+\nabla_\theta \log\pi_\theta(a_t\mid s_t)\,\underbrace{\delta_t}_{\text{advantage target}}.
+\tag{3.32}
+\]</span>
+<em>(Practical: normalize <span class="math inline">\(\{\delta_t\}_{\mathcal{B}}\)</span> to mean <span class="math inline">\(0\)</span> and unit variance within a batch; clip gradients for stability.)</em></p>
+<div class="highlightbox">
+<div style="text-align:center;">
+<strong>On-Policy Actor–Critic with One-Step Bootstrap (TD(0))</strong>
+</div>
+<p><strong>Inputs:</strong> policy <span class="math inline">\(\pi_\theta(a\mid s)\)</span>, value <span class="math inline">\(V_\phi(s)\)</span>, discount <span class="math inline">\(\gamma\in[0,1)\)</span>, stepsizes <span class="math inline">\(\alpha_\theta,\alpha_\phi&gt;0\)</span>, rollout length <span class="math inline">\(K\)</span>, minibatch size <span class="math inline">\(|\mathcal{B}|\)</span>.</p>
+<p>For iterations <span class="math inline">\(k=0,1,2,\dots\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Collect on-policy rollouts.</strong> Run <span class="math inline">\(\pi_\theta\)</span> for <span class="math inline">\(K\)</span> steps (optionally across parallel envs), storing transitions <span class="math inline">\(\{(s_t,a_t,r_t,s_{t+1}\}\)</span>.</p></li>
+<li><p><strong>Compute TD errors.</strong> For each transition, compute the TD error
+<span class="math display">\[
+\delta_t \leftarrow r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t).
+\]</span></p></li>
+<li><p><strong>Critic update (value).</strong> Minimize <span class="math inline">\(\sum_{t\in\mathcal{B}} \frac12\,\delta_t^{\,2}\)</span>: perform multiple steps of
+<span class="math display">\[
+\phi \leftarrow \phi - \alpha_\phi \,\nabla_\phi \Big(\frac{1}{|\mathcal{B}|}\sum_{t\in\mathcal{B}}\frac12\,\delta_t^{\,2}\Big).
+\]</span></p></li>
+<li><p><strong>Actor advantages.</strong> Set <span class="math inline">\(\widehat{A}_t \leftarrow \delta_t\)</span> (optionally normalize over <span class="math inline">\(\mathcal{B}\)</span>).</p></li>
+<li><p><strong>Actor update (policy gradient).</strong>
+<span class="math display" id="eq:sac-policy" id="eq:sac-alpha" id="eq:soft-bellman" id="eq:soft-objective" id="eq:ddpg-critic" id="eq:dpg" id="eq:offpolicy-ac" id="eq:is-ratio" id="eq:critic-q-update" id="eq:critic-v-update" id="eq:gae" id="eq:td-error">\[
+\theta \leftarrow \theta + \alpha_\theta \,\frac{1}{|\mathcal{B}|}\sum_{t\in\mathcal{B}}
+\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t.
+\]</span></p></li>
+<li><p><strong>Repeat</strong> from step 1.</p></li>
+</ol>
+</div>
+<p>We apply the on-policy actor-critic algorithm to the cart-pole balancing task.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:cartpole-actor-critic-TD" class="example"><strong>Example 3.3  (Actor--Critic with One-Step Bootstrap for Cart-Pole) </strong></span>Consider the same cart-pole balancing control task as before, and this time apply the on-policy actor-critic with one-step bootstrap.</p>
+<p>Fig. <a href="policy-gradient.html#fig:cart-pole-learning-curve-actor-critic-TD">3.7</a> shows the learning curve.</p>
+<p>Fig. <a href="policy-gradient.html#fig:cart-pole-policy-rollout-actor-critic-TD">3.8</a> shows an example rollout of the policy.</p>
+<p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_actor-critic_on-policy_td0.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:cart-pole-learning-curve-actor-critic-TD"></span>
+<img src="images/Policy-Gradients/cartpole_returns_actor-critic-td.png" alt="Learning curve (Actor--Critic with One-Step Bootstrap)." width="60%" />
+<p class="caption">
+Figure 3.7: Learning curve (Actor–Critic with One-Step Bootstrap).
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:cart-pole-policy-rollout-actor-critic-TD"></span>
+<img src="images/Policy-Gradients/cartpole_policy_rollout_actor-critic-td.gif" alt="Policy rollout (Actor--Critic with One-Step Bootstrap)." width="60%" />
+<p class="caption">
+Figure 3.8: Policy rollout (Actor–Critic with One-Step Bootstrap).
+</p>
+</div>
+</div>
+</div>
+<!-- ### TD Residuals and GAE as Advantage Targets
 
 The simplest on-policy AC uses a **value critic** $V_\phi$ and the **TD residual**
 \begin{equation}
 \delta_t
 \;=\;
 r_t + \gamma\,V_\phi(s_{t+1}) - V_\phi(s_t).
-(\#eq:td-error)
+\tag{3.33}
 \end{equation}
 If $V_\phi\equiv V^\pi$, then $\mathbb{E}[\delta_t\mid s_t,a_t]=A^\pi(s_t,a_t)$, so $\delta_t$ is an unbiased *advantage* target. 
 
@@ -1163,7 +1236,7 @@ Variance can be further reduced with **generalized advantage estimation (GAE)**:
 \;=\;
 \sum_{\ell=0}^{\infty} (\gamma\lambda)^\ell\,\delta_{t+\ell},
 \qquad \lambda\in[0,1],
-(\#eq:gae)
+\tag{3.34}
 \end{equation}
 which trades bias for variance via $\lambda$.
 
@@ -1173,14 +1246,14 @@ which trades bias for variance via $\lambda$.
 \begin{equation}
 \phi \leftarrow \phi - \alpha_\phi \nabla_\phi
 \Big(r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)\Big)^2.
-(\#eq:critic-v-update)
+\tag{3.35}
 \end{equation}
 
 **Action-value critic ($Q$).** Regress to one-step bootstrapped targets:
 \begin{equation}
 \psi \leftarrow \psi - \alpha_\psi \nabla_\psi
 \Big(r_t + \gamma \,\mathbb{E}_{a'\sim\pi_\theta(\cdot\mid s_{t+1})}[Q_\psi(s_{t+1},a')] - Q_\psi(s_t,a_t)\Big)^2.
-(\#eq:critic-q-update)
+\tag{3.36}
 \end{equation}
 
 **Advantage critic ($A$).** Fit $A_\eta(s,a)$ directly and use $\widehat{A}_t=A_\eta(s_t,a_t)$ in \@ref(eq:ac-actor-update). In practice, $A$ is often represented implicitly via $Q-V$.
@@ -1222,14 +1295,14 @@ A2C aggregates gradients from multiple parallel workers *synchronously*, while A
 When data come from a **behavior policy** $\mu$ (e.g., replay buffer), correct the distribution mismatch with **per-decision importance ratios**
 \begin{equation}
 \rho_t \;=\; \frac{\pi_\theta(a_t\mid s_t)}{\mu(a_t\mid s_t)}.
-(\#eq:is-ratio)
+\tag{3.37}
 \end{equation}
 A basic off-policy actor update is
 \begin{equation}
 \widehat{\nabla_\theta J}
 \;=\;
 \mathbb{E}\big[\rho_t\,\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t\big],
-(\#eq:offpolicy-ac)
+\tag{3.38}
 \end{equation}
 often with **clipping** (e.g., $\min\{\bar\rho,\rho_t\}$) to control variance. Modern variants use **trace corrections** (e.g., Retrace, V-trace) to stabilize value targets while keeping bias small.
 
@@ -1250,13 +1323,13 @@ For continuous actions, a **deterministic policy** $\mu_\theta:\mathcal{S}\to\ma
 \nabla_\theta J(\theta)
 \;=\;
 \mathbb{E}_{s\sim d^\mu}\!\Big[\nabla_\theta \mu_\theta(s)\,\nabla_a Q^\mu(s,a)\big|_{a=\mu_\theta(s)}\Big].
-(\#eq:dpg)
+\tag{3.39}
 \end{equation}
 In practice (DDPG/TD3), learn a critic $Q_\psi$ off-policy with replay:
 \begin{equation}
 \psi \leftarrow \psi - \alpha_\psi \nabla_\psi
 \Big(r + \gamma\, Q_{\bar\psi}\!\big(s',\,\mu_{\bar\theta}(s')\big) - Q_\psi(s,a)\Big)^2,
-(\#eq:ddpg-critic)
+\tag{3.40}
 \end{equation}
 and update the actor with the sampled gradient from \@ref(eq:dpg).  
 **Stability tricks:** target networks $(\bar\theta,\bar\psi)$, action noise for exploration, **TD3**’s *twin critics* and *target policy smoothing* (reduces overestimation).
@@ -1270,7 +1343,7 @@ J(\pi)
 \mathbb{E}\!\Big[\sum_{t\ge 0}\gamma^t \big(r(s_t,a_t)\;+\;\alpha\,\mathcal{H}\!\left(\pi(\cdot\mid s_t)\right)\big)\Big],
 \quad
 \mathcal{H}(\pi(\cdot\mid s)) = -\mathbb{E}_{a\sim\pi}\![\log\pi(a\mid s)].
-(\#eq:soft-objective)
+\tag{3.41}
 \end{equation}
 The associated **soft Bellman backup** for $Q$ is
 \begin{equation}
@@ -1279,21 +1352,21 @@ Q(s,a)
 r(s,a) + \gamma\,\mathbb{E}_{s'}\!\Big[V(s')\Big],
 \quad
 V(s) \;=\; \mathbb{E}_{a\sim\pi}\!\big[Q(s,a) - \alpha \log \pi(a\mid s)\big].
-(\#eq:soft-bellman)
+\tag{3.42}
 \end{equation}
 **Soft Actor–Critic (SAC)** uses (i) reparameterized stochastic Gaussian policies, (ii) twin $Q$ critics, and (iii) **automatic temperature tuning** by minimizing
 \begin{equation}
 \mathcal{L}(\alpha) \;=\; \mathbb{E}_{a\sim\pi}\!\big[-\alpha\,(\log\pi(a\mid s)+\bar{\mathcal{H}})\big],
-(\#eq:sac-alpha)
+\tag{3.43}
 \end{equation}
 driving the policy’s entropy toward a target $\bar{\mathcal{H}}$. The actor is trained by minimizing the KL to a Boltzmann distribution induced by $Q$:
 \begin{equation}
 \theta \; \leftarrow \; \arg\min_\theta\;
 \mathbb{E}_{s\sim\mathcal{D}}\!\Big[
 \mathrm{KL}\!\Big(\pi_\theta(\cdot\mid s)\;\big\|\;
-\frac{\exp\{\tfrac{1}{\alpha}Q(s,\cdot)\}}{Z(s)}\Big)
+\frac{\exp\{\frac{1}{\alpha}Q(s,\cdot)\}}{Z(s)}\Big)
 \Big].
-(\#eq:sac-policy)
+\tag{3.44}
 \end{equation}
 
 ### Practical Refinements
@@ -1337,7 +1410,6 @@ For iterations $k=0,1,\dots$:
 
 Actor–critic methods reduce variance via bootstrapped critics while preserving the core policy-gradient structure. By choosing appropriate critics (value, action-value, or soft variants), off-policy corrections, and stability tricks (GAE, target networks, twin critics), AC algorithms form the backbone of modern deep RL for both discrete and continuous control. -->
 
-</div>
 </div>
 </div>
 </div>
