@@ -918,27 +918,102 @@ knitr::include_graphics('images/Policy-Gradients/cartpole_policy_rollout_minibat
 :::
 
 
-<!-- ## Actor–Critic Methods
+## Actor–Critic Methods
 
-Actor–critic (AC) algorithms marry **policy gradients** (the *actor*) with **value function learning** (the *critic*). The critic reduces variance by supplying low-noise estimates of action quality (values or advantages), while the actor updates the policy using these estimates. In contrast to pure Monte Carlo baselines, actor–critic **bootstraps** from its own predictions, enabling **online**, **incremental**, and often far more **sample-efficient** learning.
+Actor–critic (AC) algorithms marry **policy gradients** (the *actor*) with **value function learning** (the *critic*). The critic reduces variance by supplying low-noise estimates of action quality (values or advantages), while the actor updates the policy using these estimates. In contrast to pure Monte Carlo baselines, actor–critic **bootstraps** from its own predictions, enabling online, incremental, and often more sample-efficient learning.
 
 ### Anatomy of an Actor–Critic
 
 - **Actor (policy):** a differentiable policy $\pi_\theta(a\mid s)$.
-- **Critic (value):** an approximator for $V_\phi(s)$, $Q_\psi(s,a)$, or directly $A_\eta(s,a)$.
+- **Critic (value):** an approximator for $V_\phi(s)$, $Q_\psi(s,a)$, or directly the advantage $A_\eta(s,a)$.
 - **Update coupling:** the actor ascends a baseline-subtracted log-likelihood objective using *advantage-like* targets supplied by the critic.
 
-Concretely, the actor uses the generic gradient form
+<!-- Concretely, the actor uses the generic gradient form
 \begin{equation}
 \widehat{\nabla_\theta J}
 \;=\;
 \frac{1}{N}\sum_{i=1}^N\sum_{t=0}^{T^{(i)}-1}
-\gamma^t \,\nabla_\theta\log\pi_\theta\!\big(a_t^{(i)}\mid s_t^{(i)}\big)\,\widehat{A}_t^{(i)},
+\gamma^t \,\nabla_\theta\log\pi_\theta\big(a_t^{(i)}\mid s_t^{(i)}\big)\,\widehat{A}_t^{(i)},
 (\#eq:ac-actor-update)
 \end{equation}
-where $\widehat{A}_t$ is supplied by the critic (examples below).
+where $N$ is the number of trajectories in a minibatch and $\widehat{A}_t$ is supplied by the critic. -->
 
-### TD Residuals and GAE as Advantage Targets
+### On-Policy Actor–Critic with TD(0)
+
+We first learn a state value function \(V_\phi(s)\) with a **one-step bootstrapped** TD(0) target:
+\[
+\delta_t \;\equiv\; r_t + \gamma\,V_\phi(s_{t+1}) - V_\phi(s_t),
+\qquad
+\mathcal{L}_V(\phi) \;=\; \frac12\,\delta_t^{\,2}.
+(\#eq:td0)
+\]
+If \(V_\phi \approx V^\pi\), then \(\mathbb{E}[\delta_t\mid s_t,a_t]\approx A^\pi(s_t,a_t)\), so \(\delta_t\) serves as a low-variance **advantage** target for the actor:
+\[
+\widehat{\nabla_\theta J}
+\;=\;
+\frac{1}{|\mathcal{B}|}
+\sum_{(s_t,a_t)\in \mathcal{B}}
+\nabla_\theta \log\pi_\theta(a_t\mid s_t)\,\underbrace{\delta_t}_{\text{advantage target}}.
+(\#eq:ac-actor-delta)
+\]
+*(Practical: normalize \(\{\delta_t\}_{\mathcal{B}}\) to mean \(0\) and unit variance within a batch; clip gradients for stability.)*
+
+::: {.highlightbox}
+<div style="text-align:center;">**On-Policy Actor–Critic with One-Step Bootstrap (TD(0))**</div>
+
+**Inputs:** policy \(\pi_\theta(a\mid s)\), value \(V_\phi(s)\), discount \(\gamma\in[0,1)\), stepsizes \(\alpha_\theta,\alpha_\phi>0\), rollout length \(K\), minibatch size \(|\mathcal{B}|\).
+
+For iterations \(k=0,1,2,\dots\):
+
+1. **Collect on-policy rollouts.** Run \(\pi_\theta\) for \(K\) steps (optionally across parallel envs), storing transitions \(\{(s_t,a_t,r_t,s_{t+1}\}\).
+
+2. **Compute TD errors.** For each transition, compute the TD error
+   \[
+   \delta_t \leftarrow r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t).
+   \]
+
+3. **Critic update (value).** Minimize \(\sum_{t\in\mathcal{B}} \frac12\,\delta_t^{\,2}\): perform multiple steps of 
+   \[
+   \phi \leftarrow \phi - \alpha_\phi \,\nabla_\phi \Big(\frac{1}{|\mathcal{B}|}\sum_{t\in\mathcal{B}}\frac12\,\delta_t^{\,2}\Big).
+   \]
+
+4. **Actor advantages.** Set \(\widehat{A}_t \leftarrow \delta_t\) (optionally normalize over \(\mathcal{B}\)).
+
+5. **Actor update (policy gradient).**
+   \[
+   \theta \leftarrow \theta + \alpha_\theta \,\frac{1}{|\mathcal{B}|}\sum_{t\in\mathcal{B}}
+   \nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t.
+   \]
+
+6. **Repeat** from step 1.
+:::
+
+We apply the on-policy actor-critic algorithm to the cart-pole balancing task.
+
+
+::: {.examplebox}
+::: {.example #cartpole-actor-critic-TD name="Actor--Critic with One-Step Bootstrap for Cart-Pole"}
+
+Consider the same cart-pole balancing control task as before, and this time apply the on-policy actor-critic with one-step bootstrap. 
+
+Fig. \@ref(fig:cart-pole-learning-curve-actor-critic-TD) shows the learning curve.
+
+Fig. \@ref(fig:cart-pole-policy-rollout-actor-critic-TD) shows an example rollout of the policy.
+
+You can play with the code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_actor-critic_on-policy_td0.py).
+
+```{r cart-pole-learning-curve-actor-critic-TD, out.width='60%', fig.show='hold', fig.cap='Learning curve (Actor--Critic with One-Step Bootstrap).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/cartpole_returns_actor-critic-td.png')
+```
+
+```{r cart-pole-policy-rollout-actor-critic-TD, out.width='60%', fig.show='hold', fig.cap='Policy rollout (Actor--Critic with One-Step Bootstrap).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/cartpole_policy_rollout_actor-critic-td.gif')
+```
+:::
+:::
+
+
+<!-- ### TD Residuals and GAE as Advantage Targets
 
 The simplest on-policy AC uses a **value critic** $V_\phi$ and the **TD residual**
 \begin{equation}
@@ -1083,7 +1158,7 @@ driving the policy’s entropy toward a target $\bar{\mathcal{H}}$. The actor is
 \theta \; \leftarrow \; \arg\min_\theta\;
 \mathbb{E}_{s\sim\mathcal{D}}\!\Big[
 \mathrm{KL}\!\Big(\pi_\theta(\cdot\mid s)\;\big\|\;
-\frac{\exp\{\tfrac{1}{\alpha}Q(s,\cdot)\}}{Z(s)}\Big)
+\frac{\exp\{\frac{1}{\alpha}Q(s,\cdot)\}}{Z(s)}\Big)
 \Big].
 (\#eq:sac-policy)
 \end{equation}
