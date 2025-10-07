@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-06" />
+<meta name="date" content="2025-10-07" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -191,7 +191,7 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="2.1" data-path="value-rl.html"><a href="value-rl.html#tabular-methods"><i class="fa fa-check"></i><b>2.1</b> Tabular Methods</a>
 <ul>
-<li class="chapter" data-level="2.1.1" data-path="value-rl.html"><a href="value-rl.html#policy-evaluation-2"><i class="fa fa-check"></i><b>2.1.1</b> Policy Evaluation</a></li>
+<li class="chapter" data-level="2.1.1" data-path="value-rl.html"><a href="value-rl.html#tabular-PE"><i class="fa fa-check"></i><b>2.1.1</b> Policy Evaluation</a></li>
 <li class="chapter" data-level="2.1.2" data-path="value-rl.html"><a href="value-rl.html#value-rl-convergence-td"><i class="fa fa-check"></i><b>2.1.2</b> Convergence Proof of TD Learning</a></li>
 <li class="chapter" data-level="2.1.3" data-path="value-rl.html"><a href="value-rl.html#on-policy-control"><i class="fa fa-check"></i><b>2.1.3</b> On-Policy Control</a></li>
 <li class="chapter" data-level="2.1.4" data-path="value-rl.html"><a href="value-rl.html#off-policy-control"><i class="fa fa-check"></i><b>2.1.4</b> Off-Policy Control</a></li>
@@ -199,7 +199,7 @@ div.csl-indent {
 <li class="chapter" data-level="2.2" data-path="value-rl.html"><a href="value-rl.html#function-approximation"><i class="fa fa-check"></i><b>2.2</b> Function Approximation</a>
 <ul>
 <li class="chapter" data-level="2.2.1" data-path="value-rl.html"><a href="value-rl.html#basics-of-continuous-mdp"><i class="fa fa-check"></i><b>2.2.1</b> Basics of Continuous MDP</a></li>
-<li class="chapter" data-level="2.2.2" data-path="value-rl.html"><a href="value-rl.html#policy-evaluation-3"><i class="fa fa-check"></i><b>2.2.2</b> Policy Evaluation</a></li>
+<li class="chapter" data-level="2.2.2" data-path="value-rl.html"><a href="value-rl.html#policy-evaluation-2"><i class="fa fa-check"></i><b>2.2.2</b> Policy Evaluation</a></li>
 <li class="chapter" data-level="2.2.3" data-path="value-rl.html"><a href="value-rl.html#on-policy-control-1"><i class="fa fa-check"></i><b>2.2.3</b> On-Policy Control</a></li>
 <li class="chapter" data-level="2.2.4" data-path="value-rl.html"><a href="value-rl.html#off-policy-control-1"><i class="fa fa-check"></i><b>2.2.4</b> Off-Policy Control</a></li>
 </ul></li>
@@ -223,7 +223,9 @@ div.csl-indent {
 <li class="chapter" data-level="3.3" data-path="policy-gradient.html"><a href="policy-gradient.html#actorcritic-methods"><i class="fa fa-check"></i><b>3.3</b> Actor–Critic Methods</a>
 <ul>
 <li class="chapter" data-level="3.3.1" data-path="policy-gradient.html"><a href="policy-gradient.html#anatomy-of-an-actorcritic"><i class="fa fa-check"></i><b>3.3.1</b> Anatomy of an Actor–Critic</a></li>
-<li class="chapter" data-level="3.3.2" data-path="policy-gradient.html"><a href="policy-gradient.html#on-policy-actorcritic-with-td0"><i class="fa fa-check"></i><b>3.3.2</b> On-Policy Actor–Critic with TD(0)</a></li>
+<li class="chapter" data-level="3.3.2" data-path="policy-gradient.html"><a href="policy-gradient.html#ActorCriticTD"><i class="fa fa-check"></i><b>3.3.2</b> On-Policy Actor–Critic with TD(0)</a></li>
+<li class="chapter" data-level="3.3.3" data-path="policy-gradient.html"><a href="policy-gradient.html#generalized-advantage-estimation-gae"><i class="fa fa-check"></i><b>3.3.3</b> Generalized Advantage Estimation (GAE)</a></li>
+<li class="chapter" data-level="3.3.4" data-path="policy-gradient.html"><a href="policy-gradient.html#off-policy-actorcritic"><i class="fa fa-check"></i><b>3.3.4</b> Off-Policy Actor–Critic</a></li>
 </ul></li>
 </ul></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
@@ -312,8 +314,8 @@ where <span class="math inline">\(\pi(a \mid s)\)</span> denotes the probability
 \tau = (s_0, a_0, r_0, s_1, a_1, r_1, \dots),
 \]</span>
 by following a policy <span class="math inline">\(\pi\)</span>.</p>
-<div id="policy-evaluation-2" class="section level3 hasAnchor" number="2.1.1">
-<h3><span class="header-section-number">2.1.1</span> Policy Evaluation<a href="value-rl.html#policy-evaluation-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="tabular-PE" class="section level3 hasAnchor" number="2.1.1">
+<h3><span class="header-section-number">2.1.1</span> Policy Evaluation<a href="value-rl.html#tabular-PE" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>We first consider the problem of estimating the value function of a given policy <span class="math inline">\(\pi\)</span>. Recall the definition of the state-value function associated with <span class="math inline">\(\pi\)</span> is:
 <span class="math display" id="eq:InfiniteHorizonStateValueRestate">\[\begin{equation}
 V^{\pi}(s) = \mathbb{E}\left[ \sum_{t=0}^{\infty} \gamma^t R(s_t, a_t) \mid s_0 = s \right],
@@ -425,8 +427,8 @@ This replaces the true value <span class="math inline">\(V^\pi(s_{t+1})\)</span>
 </ul>
 <p>In summary, Temporal-Difference learning addresses the major limitations of Monte Carlo estimation: it works in <em>continuing tasks</em>, updates <em>online</em> at each step, and is generally more <em>sample-efficient</em>. However, it trades away unbiasedness for bias–variance efficiency, motivating further extensions such as multi-step TD and TD(<span class="math inline">\(\lambda\)</span>).</p>
 </div>
-<div id="multi-step-td-learning" class="section level4 hasAnchor" number="2.1.1.3">
-<h4><span class="header-section-number">2.1.1.3</span> Multi-Step TD Learning<a href="value-rl.html#multi-step-td-learning" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="PE-MultiStepTD" class="section level4 hasAnchor" number="2.1.1.3">
+<h4><span class="header-section-number">2.1.1.3</span> Multi-Step TD Learning<a href="value-rl.html#PE-MultiStepTD" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>Monte Carlo methods use the <em>full return</em> <span class="math inline">\(g_t\)</span>, while TD(0) uses a <em>one-step bootstrap</em>. Multi-step TD learning generalizes these two extremes by using <span class="math inline">\(n\)</span>-step returns as targets. In this way, multi-step TD interpolates between Monte Carlo and TD(0).</p>
 <p><strong>High-Level Intuition.</strong> The motivation is to balance the high variance of Monte Carlo with the bias of TD(0). Instead of waiting for a full return (MC) or using only one step of bootstrapping (TD(0)), multi-step TD uses partial returns spanning <span class="math inline">\(n\)</span> steps of real rewards, followed by a bootstrap. This provides a flexible tradeoff between bias and variance.</p>
 <p><strong>Algorithmic Form.</strong> The <span class="math inline">\(n\)</span>-step return starting from time <span class="math inline">\(t\)</span> is defined as
@@ -461,8 +463,8 @@ where <span class="math inline">\(g_t^{(n)}\)</span> replaces the one-step targe
 </ul>
 <p>In summary, multi-step TD unifies Monte Carlo and TD(0) by introducing <span class="math inline">\(n\)</span>-step returns. It allows practitioners to <em>tune the bias–variance tradeoff</em> by selecting <span class="math inline">\(n\)</span>. Later, we will see how TD(<span class="math inline">\(\lambda\)</span>) averages over all <span class="math inline">\(n\)</span>-step returns in a principled way, further smoothing this tradeoff.</p>
 </div>
-<div id="eligibility-traces-and-tdlambda" class="section level4 hasAnchor" number="2.1.1.4">
-<h4><span class="header-section-number">2.1.1.4</span> Eligibility Traces and TD(<span class="math inline">\(\lambda\)</span>)<a href="value-rl.html#eligibility-traces-and-tdlambda" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="TDlambda" class="section level4 hasAnchor" number="2.1.1.4">
+<h4><span class="header-section-number">2.1.1.4</span> Eligibility Traces and TD(<span class="math inline">\(\lambda\)</span>)<a href="value-rl.html#TDlambda" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>So far, we have seen that Monte Carlo methods use <em>full returns</em> <span class="math inline">\(g_t\)</span>, while TD(0) uses a <em>one-step bootstrap</em>. Multi-step TD methods generalize between these two extremes by using <span class="math inline">\(n\)</span>-step returns. However, a natural question arises: <em>can we combine information from all possible <span class="math inline">\(n\)</span>-step returns in a principled way?</em></p>
 <p>This motivates TD(<span class="math inline">\(\lambda\)</span>), which blends multi-step TD methods into a single algorithm using <em>eligibility traces</em>.</p>
 <p><strong>High-Level Intuition.</strong> TD(<span class="math inline">\(\lambda\)</span>) introduces a parameter <span class="math inline">\(\lambda \in [0,1]\)</span> that controls the weighting of <span class="math inline">\(n\)</span>-step returns:</p>
@@ -1309,8 +1311,8 @@ If a density <span class="math inline">\(\mu^\pi(s)\)</span> exists, then the ab
 In words, the state distribution <span class="math inline">\(\mu^\pi\)</span> does not change under the state-transition kernel <span class="math inline">\(P^\pi\)</span> (e.g., if a state <span class="math inline">\(A\)</span> has probability <span class="math inline">\(0.1\)</span> of being visited at time <span class="math inline">\(t\)</span>, the probability of visiting <span class="math inline">\(A\)</span> in the next time step remains <span class="math inline">\(0.1\)</span>, under policy <span class="math inline">\(\pi\)</span>).
 Under standard ergodicity assumptions, this stationary state distribution <span class="math inline">\(\mu^\pi\)</span> exists and is unique (after sufficient steps, the initial state distribution does not matter and the state distribution follows <span class="math inline">\(\mu^\pi\)</span>). Moreover, the empirical state distribution converge to <span class="math inline">\(\mu^\pi\)</span>.</p>
 </div>
-<div id="policy-evaluation-3" class="section level3 hasAnchor" number="2.2.2">
-<h3><span class="header-section-number">2.2.2</span> Policy Evaluation<a href="value-rl.html#policy-evaluation-3" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="policy-evaluation-2" class="section level3 hasAnchor" number="2.2.2">
+<h3><span class="header-section-number">2.2.2</span> Policy Evaluation<a href="value-rl.html#policy-evaluation-2" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>For simplicity, let us first relax the state space to be a continuous space <span class="math inline">\(\mathcal{S} \subseteq \mathbb{R}^n\)</span>. We assume the action space <span class="math inline">\(\mathcal{A}\)</span> is still finite with <span class="math inline">\(|\mathcal{A}|\)</span> elements. We first consider the problem of policy evaluation, i.e., estimate the value functions associated with a policy <span class="math inline">\(\pi\)</span> from interaction data with the environment.</p>
 <p><strong>Bellman Consistency.</strong> Given a policy <span class="math inline">\(\pi: \mathcal{S} \mapsto \Delta(\mathcal{A})\)</span>, its associated state-value function <span class="math inline">\(V^\pi\)</span> must satisfy the following Bellman Consistency equation
 <span class="math display" id="eq:BellmanConsistencyContinuousStateFiniteAction">\[\begin{equation}

@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-10-06}
+\date{2025-10-07}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -2117,7 +2117,7 @@ Unlike in Chapter \ref{mdp}, here we do not assume knowledge of the transition d
 \]
 by following a policy \(\pi\).
 
-\subsection{Policy Evaluation}\label{policy-evaluation-2}
+\subsection{Policy Evaluation}\label{tabular-PE}
 
 We first consider the problem of estimating the value function of a given policy \(\pi\). Recall the definition of the state-value function associated with \(\pi\) is:
 \begin{equation}
@@ -2269,7 +2269,7 @@ is called the TD error. It measures the discrepancy between the current value es
 
 In summary, Temporal-Difference learning addresses the major limitations of Monte Carlo estimation: it works in \emph{continuing tasks}, updates \emph{online} at each step, and is generally more \emph{sample-efficient}. However, it trades away unbiasedness for bias--variance efficiency, motivating further extensions such as multi-step TD and TD(\(\lambda\)).
 
-\subsubsection{Multi-Step TD Learning}\label{multi-step-td-learning}
+\subsubsection{Multi-Step TD Learning}\label{PE-MultiStepTD}
 
 Monte Carlo methods use the \emph{full return} \(g_t\), while TD(0) uses a \emph{one-step bootstrap}. Multi-step TD learning generalizes these two extremes by using \(n\)-step returns as targets. In this way, multi-step TD interpolates between Monte Carlo and TD(0).
 
@@ -2325,7 +2325,7 @@ where \(g_t^{(n)}\) replaces the one-step target in TD(0) \eqref{eq:TDZeroUpdate
 
 In summary, multi-step TD unifies Monte Carlo and TD(0) by introducing \(n\)-step returns. It allows practitioners to \emph{tune the bias--variance tradeoff} by selecting \(n\). Later, we will see how TD(\(\lambda\)) averages over all \(n\)-step returns in a principled way, further smoothing this tradeoff.
 
-\subsubsection{\texorpdfstring{Eligibility Traces and TD(\(\lambda\))}{Eligibility Traces and TD(\textbackslash lambda)}}\label{eligibility-traces-and-tdlambda}
+\subsubsection{\texorpdfstring{Eligibility Traces and TD(\(\lambda\))}{Eligibility Traces and TD(\textbackslash lambda)}}\label{TDlambda}
 
 So far, we have seen that Monte Carlo methods use \emph{full returns} \(g_t\), while TD(0) uses a \emph{one-step bootstrap}. Multi-step TD methods generalize between these two extremes by using \(n\)-step returns. However, a natural question arises: \emph{can we combine information from all possible \(n\)-step returns in a principled way?}
 
@@ -3284,7 +3284,7 @@ If a density \(\mu^\pi(s)\) exists, then the above equation is the followng cond
 In words, the state distribution \(\mu^\pi\) does not change under the state-transition kernel \(P^\pi\) (e.g., if a state \(A\) has probability \(0.1\) of being visited at time \(t\), the probability of visiting \(A\) in the next time step remains \(0.1\), under policy \(\pi\)).
 Under standard ergodicity assumptions, this stationary state distribution \(\mu^\pi\) exists and is unique (after sufficient steps, the initial state distribution does not matter and the state distribution follows \(\mu^\pi\)). Moreover, the empirical state distribution converge to \(\mu^\pi\).
 
-\subsection{Policy Evaluation}\label{policy-evaluation-3}
+\subsection{Policy Evaluation}\label{policy-evaluation-2}
 
 For simplicity, let us first relax the state space to be a continuous space \(\mathcal{S} \subseteq \mathbb{R}^n\). We assume the action space \(\mathcal{A}\) is still finite with \(|\mathcal{A}|\) elements. We first consider the problem of policy evaluation, i.e., estimate the value functions associated with a policy \(\pi\) from interaction data with the environment.
 
@@ -4784,7 +4784,7 @@ Subtracting \(V^\pi(s)\) centers returns \emph{per state}, so the update depends
   focuses learning on which actions at \(s\) should get more/less probability.
 \end{itemize}
 
-\subsubsection{REINFORCE with a Learned Value Baseline}\label{reinforce-with-a-learned-value-baseline}
+\subsubsection{REINFORCE with a Learned Value Baseline}\label{REINFORCE-LearnedValue}
 
 Recall that in Section \ref{function-approximation}, we have introduced multiple algorithms that can learn an approximate value function for policy evaluation. For example, we can use Monte Carlo estimation.
 
@@ -4900,7 +4900,7 @@ Actor--critic (AC) algorithms marry \textbf{policy gradients} (the \emph{actor})
   \textbf{Update coupling:} the actor ascends a baseline-subtracted log-likelihood objective using \emph{advantage-like} targets supplied by the critic.
 \end{itemize}
 
-\subsection{On-Policy Actor--Critic with TD(0)}\label{on-policy-actorcritic-with-td0}
+\subsection{On-Policy Actor--Critic with TD(0)}\label{ActorCriticTD}
 
 We first learn a state value function \(V_\phi(s)\) with a \textbf{one-step bootstrapped} TD(0) target:
 \[
@@ -4954,7 +4954,7 @@ For iterations \(k=0,1,2,\dots\):
 
 We apply the on-policy actor-critic algorithm to the cart-pole balancing task.
 
-\begin{example}[Actor--Critic with One-Step Bootstrap for Cart-Pole]
+\begin{example}[Actor–Critic with One-Step Bootstrap for Cart-Pole]
 \protect\hypertarget{exm:cartpole-actor-critic-TD}{}\label{exm:cartpole-actor-critic-TD}
 
 Consider the same cart-pole balancing control task as before, and this time apply the on-policy actor-critic with one-step bootstrap.
@@ -4981,6 +4981,383 @@ You can play with the code \href{https://github.com/ComputationalRobotics/2025-E
 }
 
 \caption{Policy rollout (Actor--Critic with One-Step Bootstrap).}\label{fig:cart-pole-policy-rollout-actor-critic-TD}
+\end{figure}
+
+\end{example}
+
+\subsection{Generalized Advantage Estimation (GAE)}\label{generalized-advantage-estimation-gae}
+
+In REINFORCE with a learned value baseline (Section \ref{REINFORCE-LearnedValue}), we used the full Monte Carlo return \(g_t\) as the target for value function approximation; while in on-policy Actor-Critic with TD(0) (Section \ref{ActorCriticTD}), we used the one-step bootstrap return \(r_t + \gamma V_\phi (s_{t+1})\) as the target for value function estimation.
+
+Recall in policy evaluation (Section \ref{tabular-PE}), we have introduced a spectrum of methods that sit in between Monte Carlo and TD(0): they are methods that leverage the \(n\)-step bootstrap return that balance bias and variance. (Section \ref{PE-MultiStepTD} and \ref{TDlambda}).
+
+In particular, recall the definition of an \(n\)-step bootstrap return
+\begin{equation}
+g^{(n)}_t = \sum_{k=0}^{n-1} \gamma^k r_{t+k} \;+\; \gamma^{n}\,V_\phi(s_{t+n}),
+\label{eq:nstep-target}
+\end{equation}
+where \(V_\phi\) denotes the approximate value function.
+The \(\lambda\)-return (with \(\lambda \in [0,1]\)) performs a convex combination of all the \(n\)-step returns
+\begin{equation}
+g^{(\lambda)}_t = (1-\lambda)\sum_{n=1}^{\infty} \lambda^{n-1} \, g^{(n)}_t.
+\label{eq:lambda-return}
+\end{equation}
+
+The Generalized Advantage Estimation (GAE) algorithm \citep{schulman2015high} is an Actor-Critic type of policy gradient method that leverages the \(\lambda\)-return as the target for fitting the critic (i.e., the approximate value function).
+
+\textbf{GAE-\(\lambda\) Advantage.} Start from the TD residual
+\[
+\delta_t \;=\; r_t + \gamma\,V_\phi(s_{t+1}) - V_\phi(s_t),
+\qquad
+\label{eq:td-residual}
+\]
+and define the GAE-\(\lambda\) advantage as the exponentially-weighted sum of future TD residuals:
+\[
+\widehat{A}^{(\lambda)}_t
+\;=\;
+\sum_{\ell=0}^{T-1-t}
+(\gamma\lambda)^\ell \,\delta_{t+\ell}.
+\qquad
+\label{eq:gae-def}
+\]
+This admits an efficient backward recursion:
+\[
+\widehat{A}^{(\lambda)}_t
+\;=\;
+\delta_t \;+\; \gamma\lambda\,\widehat{A}^{(\lambda)}_{t+1},
+\quad
+\widehat{A}^{(\lambda)}_{T}=0
+\text{ (at terminal).}
+\qquad
+\label{eq:gae-recursion}
+\]
+
+\textbf{From Advantage to Return.} A key identity (obtained by expanding the sum of TD residuals and grouping terms) is
+\[
+\sum_{\ell=0}^{\infty} (\gamma\lambda)^\ell \,\delta_{t+\ell}
+\;=\;
+\Big(1-\lambda\Big)\sum_{n=1}^{\infty}\lambda^{n-1}\Big(g^{(n)}_t - V_\phi(s_t)\Big).
+\label{eq:gae-equals-mix}
+\]
+The left-hand side is the GAE-\(\lambda\) advantage, and the right-hand side is \(g^{(\lambda)}_t - V_{\phi}(s_t)\). Therefore,
+\[
+\widehat{A}^{(\lambda)}_t
+\;=\;
+g^{(\lambda)}_t \;-\; V_\phi(s_t),
+\qquad\text{and hence}\qquad
+g_t^{(\lambda)}
+\;=\;
+\widehat{A}^{(\lambda)}_t + V_\phi(s_t).
+\]
+In GAE, we use
+\[
+\widehat{V}^{\,\text{targ}}_t
+\;=\;
+\widehat{A}^{(\lambda)}_t \;+\; V_\phi(s_t),
+\label{eq:gae-vtarget}
+\]
+as the target for fitting \(V_\phi\).
+
+\textbf{GAE Policy Gradient.} The true on-policy policy gradient can be written as
+\[
+\nabla_\theta J(\theta)
+\;=\;
+\mathbb{E}\!\left[\sum_{t=0}^{T-1}\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,A^\pi(s_t,a_t)\right].
+\qquad
+\label{eq:true-pg}
+\]
+An estimator remains unbiased if we replace \(A^\pi\) by any \(\widehat{A}\) satisfying
+\[
+\mathbb{E}\!\left[\widehat{A}_t \,\middle|\, s_t,a_t\right] \;=\; A^\pi(s_t,a_t).
+\qquad
+\label{eq:cond-unbiased}
+\]
+
+When the critic is exact, \(V_\phi\equiv V^\pi\), each \(n\)-step bootstrap return has expectation
+\[
+\mathbb{E}\!\left[g^{(n)}_t \,\middle|\, s_t,a_t\right] \;=\; Q^\pi(s_t,a_t),
+\]
+so by linearity and \eqref{eq:lambda-return},
+\[
+\mathbb{E}\!\left[g^{(\lambda)}_t \,\middle|\, s_t,a_t\right] \;=\; Q^\pi(s_t,a_t).
+\]
+Using \(\widehat{A}^{(\lambda)}_t = g^{(\lambda)}_t - V^\pi(s_t)\) gives
+\[
+\mathbb{E}\!\left[\widehat{A}^{(\lambda)}_t \,\middle|\, s_t,a_t\right]
+\;=\; Q^\pi(s_t,a_t) - V^\pi(s_t)
+\;=\; A^\pi(s_t,a_t),
+\]
+which satisfies \eqref{eq:cond-unbiased}. Plugging \(\widehat{A}^{(\lambda)}_t\) into \eqref{eq:true-pg} thus yields an unbiased policy-gradient estimator.
+
+The pseudocode for GAE is presented below.
+
+\textbf{On-Policy Actor--Critic with Generalized Advantage Estimation (GAE)}
+
+\textbf{Inputs:} policy \(\pi_\theta(a\mid s)\), value \(V_\phi(s)\), discount \(\gamma\in[0,1)\), GAE parameter \(\lambda\in[0,1]\); stepsizes \(\alpha_\theta,\alpha_\phi>0\); rollout length \(T\); minibatch size \(B\).
+
+For iterations \(k=0,1,2,\dots\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Collect rollouts.} Run \(\pi_\theta\) to collect \(B\) trajectories and each trajectory has \(T\) steps , storing \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\).
+\item
+  \textbf{Values \& residuals.} Compute
+  \[
+  v_t\!\leftarrow\!V_\phi(s_t), \ \ v_{t+1}\!\leftarrow\!V_\phi(s_{t+1}),\ \ m_t\!\leftarrow\!1-\mathrm{done}_t, \ \ \delta_t \leftarrow r_t + \gamma m_t v_{t+1} - v_t.
+  \]
+\item
+  \textbf{Backward GAE.} Set \(\widehat{A}_{T}\!\leftarrow\!0\), and for \(t=T-1\) to \(0\) do:\\
+  \[
+  \widehat{A}_t \leftarrow \delta_t + \gamma\lambda m_t \widehat{A}_{t+1}.
+  \]
+  \emph{(Optionally normalize \(\{\widehat{A}_t\}\) within the minibatch.)}
+\item
+  \textbf{Critic target (\(\lambda\)-return).} Set critic target
+  \[
+  \widehat{V}^{\,\text{targ}}_t \leftarrow \widehat{A}_t + v_t \;\;(=g^{(\lambda)}_t).
+  \]
+\item
+  \textbf{Critic update.} Gradient descent:
+  \[
+  \phi \leftarrow \phi - \alpha_\phi \nabla_\phi \frac{1}{ B }\sum_{t }\big(V_\phi(s_t)-\widehat{V}^{\,\text{targ}}_t\big)^2.
+  \]\\
+  \emph{(Often take several critic steps here.)}
+\item
+  \textbf{Actor update.} Gradient ascent
+  \[
+  \theta \leftarrow \theta + \alpha_\theta \frac{1}{ B }\sum_{t } \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\widehat{A}_t.
+  \]
+\end{enumerate}
+
+The next example applies GAE to the cart-pole balancing problem.
+
+\begin{example}[GAE for Cart-Pole Balancing]
+\protect\hypertarget{exm:cartpole-gae}{}\label{exm:cartpole-gae}
+
+Fig. \ref{fig:cart-pole-learning-curve-gae} shows the learning curve using Actor-Critic with GAE and Fig. \ref{fig:cart-pole-policy-rollout-gae} shows a sample rollout of the trained policy.
+
+The Python code can be found \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_actor-critic_gae.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_returns_gae} 
+
+}
+
+\caption{Learning curve (Actor--Critic with GAE).}\label{fig:cart-pole-learning-curve-gae}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_policy_rollout_gae} 
+
+}
+
+\caption{Policy rollout (Actor--Critic with GAE).}\label{fig:cart-pole-policy-rollout-gae}
+\end{figure}
+
+\end{example}
+
+\subsection{Off-Policy Actor--Critic}\label{off-policy-actorcritic}
+
+On-policy actor--critic discards data after a single update. \emph{Off-policy} methods decouple the behavior policy (that collects data) from the target policy (that we improve), enabling replay buffers and better sample efficiency.
+
+\textbf{Off-Policy Policy Gradient.} When data come from a behavior policy \(b\neq \pi_\theta\), define the per-decision likelihood ratio
+\[
+\rho_t \;=\; \frac{\pi_\theta(a_t\mid s_t)}{b (a_t\mid s_t)}.
+\qquad \label{eq:is-ratio}
+\]
+A basic off-policy policy gradient with an advantage target \(\widehat{A}_t\) is
+\begin{equation}
+\widehat{\nabla_\theta J}
+\;=\;
+\mathbb{E}\!\left[\rho_t\,\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t\right].
+\label{eq:offpolicy-actor}
+\end{equation}
+In practice we often clip the ratio to control variance:
+\[
+\bar\rho_t \;=\; \min\{\rho_t,\;c\}, \quad c\!\ge\!1,
+\qquad
+\widehat{\nabla_\theta J}
+\approx
+\mathbb{E}\!\left[\bar\rho_t\,\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t\right].
+\]
+Clipping introduces small bias but usually reduces variance.
+
+\textbf{Off-policy Critic.} A convenient choice is an \emph{action-value critic} \(Q_\psi(s,a)\) trained with an expected SARSA style target under the current \(\pi_\theta\):
+\[
+\begin{split}
+y_t & = r_t \;+\; \gamma \,
+\mathbb{E}_{a'\sim\pi_\theta(\cdot\mid s_{t+1})}\!\left[Q_{\bar\psi}(s_{t+1},a')\right],
+\\
+\psi & \leftarrow \arg\min_\psi \;\mathbb{E}\big[(Q_\psi(s_t,a_t)-y_t)^2\big],
+\end{split} 
+\label{eq:offpolicy-critic}
+\]
+where \(Q_{\bar\psi}\) is a target network used to stabilize bootstrapping (i.e., mitigate the deadly triad).
+For discrete actions, the expectation is an exact sum \(\sum_{a'}\pi_\theta(a'\mid s')Q_{\bar\psi}(s',a')\); for continuous, we approximate the expectation with a few samples \(a'\!\sim\!\pi_\theta(\cdot\mid s')\).
+
+\textbf{Advantage.} Given \(Q_\psi\), we can estimate the advantage by
+\[
+\widehat{A}_t
+\;=\;Q_\psi(s_t,a_t) \;-\; V_\psi(s_t),
+\quad
+V_\psi(s)
+\;\equiv\;
+\mathbb{E}_{a\sim\pi_\theta(\cdot\mid s)}[Q_\psi(s,a)].
+\qquad \label{eq:offpolicy-adv}
+\]
+Again, for discrete actions, we can compute \(V_\psi\) exactly; for continuous actions, we approximate using a few samples.
+
+Pseudocode for off-policy actor-critic is presented below.
+
+\textbf{Experience-Replay Off-Policy Actor--Critic}
+
+\textbf{Inputs:} target policy \(\pi_\theta\), Q-critic \(Q_\psi\) (and target \(Q_{\bar\psi}\)), discount \(\gamma\), stepsizes \(\alpha_\theta,\alpha_\psi\), replay buffer \(\mathcal{D}\), IS clip \(c\ge 1\), minibatch size \(B\).
+
+\textbf{Initialize:} \(\bar\psi\leftarrow\psi\). Behavior policy \(b\) can be \(\pi_\theta\) with exploration (e.g., \(\varepsilon\)-greedy).
+
+For iterations \(k=0,1,2,\dots\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Interact \& store.} Use \(b\) to step the env and append to \(\mathcal{D}\) tuples \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t,\;p_t^b)\), where \(p_t^b=b(a_t\mid s_t)\) (store this to compute \(\rho_t\)).
+\item
+  \textbf{Sample minibatch} Sample transitions \(\{(s,a,r,s',d,p^\mu)\}_{i=1}^B\) from the replay buffer \(\mathcal{D}\).
+\item
+  \textbf{Critic target (expected SARSA).}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Compute \(\pi_\theta(a'\mid s')\) and \(Q_{\bar\psi}(s',a')\).
+  \item
+    Set \(y \leftarrow r + \gamma(1-\mathrm{done}_t)\sum_{a'} \pi_\theta(a'\mid s')\,Q_{\bar\psi}(s',a')\). (for continuous actions: perform sample average)
+  \end{itemize}
+\item
+  \textbf{Critic update.}
+  \[
+  \psi \leftarrow \psi - \alpha_\psi \nabla_\psi\frac{1}{B}\sum_{i=1}^B\big(Q_\psi(s_i,a_i)-y_i\big)^2.
+  \]
+  \emph{(Optionally clip gradients; perform multiple critic steps.)}
+\item
+  \textbf{Actor advantage.}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Compute \(V_\psi(s)=\sum_{a}\pi_\theta(a\mid s)\,Q_\psi(s,a)\) (or sample-average for continuous actions).\\
+  \item
+    Set \(\widehat{A}=Q_\psi(s,a)-V_\psi(s)\); optionally normalize \(\widehat{A}\) within the batch.
+  \end{itemize}
+\item
+  \textbf{Importance ratios (clipped).}
+  \[
+  \rho \leftarrow \frac{\pi_\theta(a\mid s)}{p^b},\qquad \bar\rho \leftarrow \min\{\rho,\;c\}.
+  \]
+\item
+  \textbf{Actor update.}
+  \[
+  \theta \leftarrow \theta + \alpha_\theta\,
+  \frac{1}{B}\sum_{i=1}^B
+  \bar\rho_i \,\nabla_\theta \log \pi_\theta(a_i\mid s_i)\,\widehat{A}_i.
+  \]
+\item
+  \textbf{Target network (moving average).}
+  \[
+  \bar\psi \leftarrow \tau\,\psi + (1-\tau)\,\bar\psi.
+  \]
+\end{enumerate}
+
+\textbf{Notes \& Variants.}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Unbiased vs.~biased:} Without clipping and with a correct critic/advantage, \eqref{eq:offpolicy-actor} is unbiased; clipping \(\bar\rho\) adds bias but improves variance.\\
+\item
+  \textbf{Critic options:} You can learn \(V_\phi\) instead of \(Q_\psi\) using off-policy TD with IS; using \(Q\) with an expected SARSA target avoids IS in the critic while keeping evaluation under \(\pi_\theta\).\\
+\item
+  \textbf{Behavior refresh:} Periodically update \(b\) toward \(\pi_\theta\) (reduce exploration) to keep ratios well-behaved.
+\end{itemize}
+
+The next example applies off-policy actor-critic to cart-pole balancing.
+
+\begin{example}[Off-Policy Actor-Critic for Cart-Pole Balancing]
+\protect\hypertarget{exm:cart-pole-off-policy-actor-critic}{}\label{exm:cart-pole-off-policy-actor-critic}
+
+Fig. \ref{fig:cart-pole-learning-curve-off-policy-ac} shows the learning curve of applying off-policy actor-critic to cart-pole balancing.
+
+Fig. \ref{fig:cart-pole-policy-rollout-off-policy-ac} shows a sample rollout of the learned policy.
+
+The Python code can be found \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_off-policy_actor-critic.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_returns_off-policy_actor-critic} 
+
+}
+
+\caption{Learning curve (Off-Policy Actor--Critic).}\label{fig:cart-pole-learning-curve-off-policy-ac}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_policy_rollout_off-policy_actor-critic} 
+
+}
+
+\caption{Policy rollout (Off-Policy Actor--Critic).}\label{fig:cart-pole-policy-rollout-off-policy-ac}
+\end{figure}
+
+\end{example}
+
+The next example applies off-policy actor-critic to a control problem with a continuous action space.
+
+\begin{example}[Off-Policy Actor-Critic for Inverted Pendulum]
+\protect\hypertarget{exm:pendulum-off-policy-ac}{}\label{exm:pendulum-off-policy-ac}
+
+Consider the Inverted Pendulum problem illustrated in Fig. \ref{fig:pendulum-diagram}. The state of the pendulum is \(s = (\theta, \dot{\theta})\), or equivalently, \(s = (x, y, \dot{\theta})\) with \(x = \cos(\theta), y = \sin(\theta)\). The action space is continuous: \(\tau \in \mathcal{A} = [-2,2]\).
+
+The dynamics of the pendulum is specified by \href{https://gymnasium.farama.org/environments/classic_control/pendulum/}{Gym}, and the reward is
+\[
+R(s,\tau) = -(\theta^2 + 0.1  \dot{\theta}^2 + 0.001 \tau^2).
+\]
+The episode truncates at \(200\) time steps.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.2\linewidth]{images/Policy-Gradients/pendulum} 
+
+}
+
+\caption{Illustration of Inverted Pendulum in Gym.}\label{fig:pendulum-diagram}
+\end{figure}
+
+Fig. \ref{fig:pendulum-learning-curve-off-policy-ac} shows the learning curve of applying off-policy actor-critic to the pendulum problem.
+
+Fig. \ref{fig:pendulum-policy-rollout-off-policy-ac} shows a sample rollout of the learned policy.
+
+You can find the Python code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_off-policy_actor-critic.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/pendulum_returns_off-policy_actor-critic} 
+
+}
+
+\caption{Learning curve (Off-Policy Actor-Critic).}\label{fig:pendulum-learning-curve-off-policy-ac}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/pendulum_policy_rollout_off-policy_actor-critic} 
+
+}
+
+\caption{Policy rollout (Off-Policy Actor-Critic).}\label{fig:pendulum-policy-rollout-off-policy-ac}
 \end{figure}
 
 \end{example}
