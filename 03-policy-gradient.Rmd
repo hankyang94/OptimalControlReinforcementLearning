@@ -828,7 +828,7 @@ Subtracting \(V^\pi(s)\) centers returns *per state*, so the update depends only
 - focuses learning on which actions at \(s\) should get more/less probability.
 
 
-#### REINFORCE with a Learned Value Baseline
+#### REINFORCE with a Learned Value Baseline {#REINFORCE-LearnedValue}
 
 Recall that in Section \@ref(function-approximation), we have introduced multiple algorithms that can learn an approximate value function for policy evaluation. For example, we can use Monte Carlo estimation.
 
@@ -938,7 +938,7 @@ Actor–critic (AC) algorithms marry **policy gradients** (the *actor*) with **v
 \end{equation}
 where $N$ is the number of trajectories in a minibatch and $\widehat{A}_t$ is supplied by the critic. -->
 
-### On-Policy Actor–Critic with TD(0)
+### On-Policy Actor–Critic with TD(0) {#ActorCriticTD}
 
 We first learn a state value function \(V_\phi(s)\) with a **one-step bootstrapped** TD(0) target:
 \[
@@ -992,7 +992,7 @@ We apply the on-policy actor-critic algorithm to the cart-pole balancing task.
 
 
 ::: {.examplebox}
-::: {.example #cartpole-actor-critic-TD name="Actor--Critic with One-Step Bootstrap for Cart-Pole"}
+::: {.example #cartpole-actor-critic-TD name="Actor–Critic with One-Step Bootstrap for Cart-Pole"}
 
 Consider the same cart-pole balancing control task as before, and this time apply the on-policy actor-critic with one-step bootstrap. 
 
@@ -1012,198 +1012,456 @@ knitr::include_graphics('images/Policy-Gradients/cartpole_policy_rollout_actor-c
 :::
 :::
 
+### Generalized Advantage Estimation (GAE)
 
-<!-- ### TD Residuals and GAE as Advantage Targets
+In REINFORCE with a learned value baseline (Section \@ref(REINFORCE-LearnedValue)), we used the full Monte Carlo return $g_t$ as the target for value function approximation; while in on-policy Actor-Critic with TD(0) (Section \@ref(ActorCriticTD)), we used the one-step bootstrap return $r_t + \gamma V_\phi (s_{t+1})$ as the target for value function estimation. 
 
-The simplest on-policy AC uses a **value critic** $V_\phi$ and the **TD residual**
+Recall in policy evaluation (Section \@ref(tabular-PE)), we have introduced a spectrum of methods that sit in between Monte Carlo and TD(0): they are methods that leverage the $n$-step bootstrap return that balance bias and variance. (Section \@ref(PE-MultiStepTD) and \@ref(TDlambda)).
+
+In particular, recall the definition of an $n$-step bootstrap return
 \begin{equation}
-\delta_t
-\;=\;
-r_t + \gamma\,V_\phi(s_{t+1}) - V_\phi(s_t).
-(\#eq:td-error)
+g^{(n)}_t = \sum_{k=0}^{n-1} \gamma^k r_{t+k} \;+\; \gamma^{n}\,V_\phi(s_{t+n}),
+(\#eq:nstep-target)
 \end{equation}
-If $V_\phi\equiv V^\pi$, then $\mathbb{E}[\delta_t\mid s_t,a_t]=A^\pi(s_t,a_t)$, so $\delta_t$ is an unbiased *advantage* target. 
-
-Variance can be further reduced with **generalized advantage estimation (GAE)**:
+where $V_\phi$ denotes the approximate value function.
+The $\lambda$-return (with $\lambda \in [0,1]$) performs a convex combination of all the $n$-step returns
 \begin{equation}
-\widehat{A}_t^{(\lambda)}
-\;=\;
-\sum_{\ell=0}^{\infty} (\gamma\lambda)^\ell\,\delta_{t+\ell},
-\qquad \lambda\in[0,1],
-(\#eq:gae)
-\end{equation}
-which trades bias for variance via $\lambda$.
-
-### Learning the Critic
-
-**Value critic ($V$).** Minimize TD error (semi-gradient TD) or fitted value regression:
-\begin{equation}
-\phi \leftarrow \phi - \alpha_\phi \nabla_\phi
-\Big(r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)\Big)^2.
-(\#eq:critic-v-update)
+g^{(\lambda)}_t = (1-\lambda)\sum_{n=1}^{\infty} \lambda^{n-1} \, g^{(n)}_t.
+(\#eq:lambda-return)
 \end{equation}
 
-**Action-value critic ($Q$).** Regress to one-step bootstrapped targets:
-\begin{equation}
-\psi \leftarrow \psi - \alpha_\psi \nabla_\psi
-\Big(r_t + \gamma \,\mathbb{E}_{a'\sim\pi_\theta(\cdot\mid s_{t+1})}[Q_\psi(s_{t+1},a')] - Q_\psi(s_t,a_t)\Big)^2.
-(\#eq:critic-q-update)
-\end{equation}
+The Generalized Advantage Estimation (GAE) algorithm [@schulman2015high] is an Actor-Critic type of policy gradient method that leverages the $\lambda$-return as the target for fitting the critic (i.e., the approximate value function).
 
-**Advantage critic ($A$).** Fit $A_\eta(s,a)$ directly and use $\widehat{A}_t=A_\eta(s_t,a_t)$ in \@ref(eq:ac-actor-update). In practice, $A$ is often represented implicitly via $Q-V$.
-
-::: {.theorembox}
-::: {.theorem #compatible-fa name="Compatible Function Approximation and Natural Gradient"}
-Let the critic be $Q_w(s,a)=w^\top \nabla_\theta \log \pi_\theta(a\mid s)$ (compatible features), and let $w$ minimize
-$\mathbb{E}_{s\sim d_\pi,a\sim\pi}\!\big[(Q_w(s,a)-A^\pi(s,a))^2\big]$.
-Then the policy gradient equals a **natural gradient** direction:
+**GAE-$\lambda$ Advantage.** Start from the TD residual
 \[
-\nabla_\theta J(\theta) \;=\; F(\theta)\,w,
+\delta_t \;=\; r_t + \gamma\,V_\phi(s_{t+1}) - V_\phi(s_t),
+\qquad
+(\#eq:td-residual)
 \]
-where $F(\theta)=\mathbb{E}_{s,a}\!\big[\nabla_\theta \log\pi\,\nabla_\theta \log\pi^\top\big]$ is the Fisher information matrix. 
-:::
-:::
+and define the GAE-\(\lambda\) advantage as the exponentially-weighted sum of future TD residuals:
+\[
+\widehat{A}^{(\lambda)}_t
+\;=\;
+\sum_{\ell=0}^{T-1-t}
+(\gamma\lambda)^\ell \,\delta_{t+\ell}.
+\qquad
+(\#eq:gae-def)
+\]
+This admits an efficient backward recursion:
+\[
+\widehat{A}^{(\lambda)}_t
+\;=\;
+\delta_t \;+\; \gamma\lambda\,\widehat{A}^{(\lambda)}_{t+1},
+\quad
+\widehat{A}^{(\lambda)}_{T}=0
+\text{ (at terminal).}
+\qquad
+(\#eq:gae-recursion)
+\]
 
-This result motivates critics that approximate advantages in the **policy’s score-feature space**, yielding well-conditioned actor updates.
+**From Advantage to Return.** A key identity (obtained by expanding the sum of TD residuals and grouping terms) is
+\[
+\sum_{\ell=0}^{\infty} (\gamma\lambda)^\ell \,\delta_{t+\ell}
+\;=\;
+\Big(1-\lambda\Big)\sum_{n=1}^{\infty}\lambda^{n-1}\Big(g^{(n)}_t - V_\phi(s_t)\Big).
+(\#eq:gae-equals-mix)
+\]
+The left-hand side is the GAE-$\lambda$ advantage, and the right-hand side is $g^{(\lambda)}_t - V_{\phi}(s_t)$. Therefore,
+\[
+\widehat{A}^{(\lambda)}_t
+\;=\;
+g^{(\lambda)}_t \;-\; V_\phi(s_t),
+\qquad\text{and hence}\qquad
+g_t^{(\lambda)}
+\;=\;
+\widehat{A}^{(\lambda)}_t + V_\phi(s_t).
+\]
+In GAE, we use
+\[
+\widehat{V}^{\,\text{targ}}_t
+\;=\;
+\widehat{A}^{(\lambda)}_t \;+\; V_\phi(s_t),
+(\#eq:gae-vtarget)
+\]
+as the target for fitting \(V_\phi\).
 
-### On-Policy Actor–Critic (TD/GAE)
+**GAE Policy Gradient.** The true on-policy policy gradient can be written as
+\[
+\nabla_\theta J(\theta)
+\;=\;
+\mathbb{E}\!\left[\sum_{t=0}^{T-1}\nabla_\theta \log \pi_\theta(a_t\mid s_t)\,A^\pi(s_t,a_t)\right].
+\qquad
+(\#eq:true-pg)
+\]
+An estimator remains unbiased if we replace \(A^\pi\) by any \(\widehat{A}\) satisfying
+\[
+\mathbb{E}\!\left[\widehat{A}_t \,\middle|\, s_t,a_t\right] \;=\; A^\pi(s_t,a_t).
+\qquad
+(\#eq:cond-unbiased)
+\]
+
+When the critic is exact, \(V_\phi\equiv V^\pi\), each \(n\)-step bootstrap return has expectation
+\[
+\mathbb{E}\!\left[g^{(n)}_t \,\middle|\, s_t,a_t\right] \;=\; Q^\pi(s_t,a_t),
+\]
+so by linearity and \@ref(eq:lambda-return),
+\[
+\mathbb{E}\!\left[g^{(\lambda)}_t \,\middle|\, s_t,a_t\right] \;=\; Q^\pi(s_t,a_t).
+\]
+Using \(\widehat{A}^{(\lambda)}_t = g^{(\lambda)}_t - V^\pi(s_t)\) gives
+\[
+\mathbb{E}\!\left[\widehat{A}^{(\lambda)}_t \,\middle|\, s_t,a_t\right]
+\;=\; Q^\pi(s_t,a_t) - V^\pi(s_t)
+\;=\; A^\pi(s_t,a_t),
+\]
+which satisfies \@ref(eq:cond-unbiased). Plugging \(\widehat{A}^{(\lambda)}_t\) into \@ref(eq:true-pg) thus yields an unbiased policy-gradient estimator.
+
+
+The pseudocode for GAE is presented below.
 
 ::: {.highlightbox}
-<div style="text-align:center;">**On-Policy Advantage Actor–Critic (TD/GAE)**</div>
+<div style="text-align:center;">**On-Policy Actor–Critic with Generalized Advantage Estimation (GAE)**</div>
 
-**Inputs:** $\pi_\theta$, $V_\phi$, $\gamma\in[0,1)$, $\lambda\in[0,1]$, stepsizes $\alpha_\theta,\alpha_\phi$, batch size $N$.
+**Inputs:** policy \(\pi_\theta(a\mid s)\), value \(V_\phi(s)\), discount \(\gamma\in[0,1)\), GAE parameter \(\lambda\in[0,1]\); stepsizes \(\alpha_\theta,\alpha_\phi>0\); rollout length \(T\); minibatch size \(B\).
 
-1. **Collect rollouts.** Run $\pi_\theta$ to gather $\{(s_t,a_t,r_t,s_{t+1})\}$ for $N$ trajectories.
-2. **Compute TD errors.** $\delta_t \leftarrow r_t + \gamma V_\phi(s_{t+1}) - V_\phi(s_t)$.
-3. **Advantages.** $\widehat{A}_t \leftarrow$ either $\delta_t$ or GAE from \@ref(eq:gae).
-4. **Actor update.** $\theta \leftarrow \theta + \alpha_\theta \frac{1}{N}\sum \gamma^t \nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t$.
-5. **Critic update.** Minimize $\sum (r_t+\gamma V_\phi(s_{t+1})-V_\phi(s_t))^2$ as in \@ref(eq:critic-v-update).
-6. **Repeat.**
+For iterations \(k=0,1,2,\dots\):
+
+1. **Collect rollouts.** Run \(\pi_\theta\) to collect $B$ trajectories and each trajectory has \(T\) steps , storing \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\). 
+
+2. **Values & residuals.** Compute 
+$$
+v_t\!\leftarrow\!V_\phi(s_t), \ \ v_{t+1}\!\leftarrow\!V_\phi(s_{t+1}),\ \ m_t\!\leftarrow\!1-\mathrm{done}_t, \ \ \delta_t \leftarrow r_t + \gamma m_t v_{t+1} - v_t.
+$$
+
+3. **Backward GAE.** Set \(\widehat{A}_{T}\!\leftarrow\!0\), and for \(t=T-1\) to \(0\) do:  
+$$
+\widehat{A}_t \leftarrow \delta_t + \gamma\lambda m_t \widehat{A}_{t+1}.
+$$
+*(Optionally normalize \(\{\widehat{A}_t\}\) within the minibatch.)*
+
+4. **Critic target ($\lambda$-return).** Set critic target 
+$$
+\widehat{V}^{\,\text{targ}}_t \leftarrow \widehat{A}_t + v_t \;\;(=g^{(\lambda)}_t).
+$$
+
+5. **Critic update.** Gradient descent:
+$$
+\phi \leftarrow \phi - \alpha_\phi \nabla_\phi \frac{1}{ B }\sum_{t }\big(V_\phi(s_t)-\widehat{V}^{\,\text{targ}}_t\big)^2.
+$$  
+*(Often take several critic steps here.)*
+
+6. **Actor update.** Gradient ascent
+$$
+\theta \leftarrow \theta + \alpha_\theta \frac{1}{ B }\sum_{t } \nabla_\theta \log \pi_\theta(a_t\mid s_t)\,\widehat{A}_t.
+$$
 :::
 
-**Synchronous (A2C) and Asynchronous (A3C).**  
-A2C aggregates gradients from multiple parallel workers *synchronously*, while A3C applies them *asynchronously* (Hogwild-style), improving exploration and wall-clock efficiency. Both are instances of the template above.
+The next example applies GAE to the cart-pole balancing problem.
 
-### Off-Policy Actor–Critic and Importance Sampling
+::: {.examplebox}
+::: {.example #cartpole-gae name="GAE for Cart-Pole Balancing"}
 
-When data come from a **behavior policy** $\mu$ (e.g., replay buffer), correct the distribution mismatch with **per-decision importance ratios**
-\begin{equation}
-\rho_t \;=\; \frac{\pi_\theta(a_t\mid s_t)}{\mu(a_t\mid s_t)}.
-(\#eq:is-ratio)
-\end{equation}
-A basic off-policy actor update is
+Fig. \@ref(fig:cart-pole-learning-curve-gae) shows the learning curve using Actor-Critic with GAE and Fig. \@ref(fig:cart-pole-policy-rollout-gae) shows a sample rollout of the trained policy.
+
+The Python code can be found [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_actor-critic_gae.py).
+
+```{r cart-pole-learning-curve-gae, out.width='60%', fig.show='hold', fig.cap='Learning curve (Actor--Critic with GAE).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/cartpole_returns_gae.png')
+```
+
+```{r cart-pole-policy-rollout-gae, out.width='60%', fig.show='hold', fig.cap='Policy rollout (Actor--Critic with GAE).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/cartpole_policy_rollout_gae.gif')
+```
+:::
+:::
+
+### Off-Policy Actor–Critic
+
+On-policy actor–critic discards data after a single update. *Off-policy* methods decouple the behavior policy (that collects data) from the target policy (that we improve), enabling replay buffers and better sample efficiency.
+
+**Off-Policy Policy Gradient.** When data come from a behavior policy \(b\neq \pi_\theta\), define the per-decision likelihood ratio
+\[
+\rho_t \;=\; \frac{\pi_\theta(a_t\mid s_t)}{b (a_t\mid s_t)}.
+\qquad (\#eq:is-ratio)
+\]
+A basic off-policy policy gradient with an advantage target \(\widehat{A}_t\) is
 \begin{equation}
 \widehat{\nabla_\theta J}
 \;=\;
-\mathbb{E}\big[\rho_t\,\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t\big],
-(\#eq:offpolicy-ac)
+\mathbb{E}\!\left[\rho_t\,\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t\right].
+(\#eq:offpolicy-actor)
 \end{equation}
-often with **clipping** (e.g., $\min\{\bar\rho,\rho_t\}$) to control variance. Modern variants use **trace corrections** (e.g., Retrace, V-trace) to stabilize value targets while keeping bias small.
-
-::: {.highlightbox}
-<div style="text-align:center;">**Experience-Replay Off-Policy AC (with clipped IS)**</div>
-
-1. Interact with the environment using $\mu$ (e.g., slightly exploratory $\pi$) and store transitions in a buffer.  
-2. Sample minibatches $(s_t,a_t,r_t,s_{t+1})$.  
-3. Critic: update $V_\phi$ or $Q_\psi$ with off-policy targets (optionally with trace corrections).  
-4. Actor: update with \@ref(eq:offpolicy-ac) using clipped $\rho_t$.  
-5. Periodically refresh $\mu$ toward $\pi_\theta$.
-:::
-
-### Deterministic Actor–Critic (DPG, DDPG, TD3)
-
-For continuous actions, a **deterministic policy** $\mu_\theta:\mathcal{S}\to\mathcal{A}$ yields the **deterministic policy gradient**:
-\begin{equation}
-\nabla_\theta J(\theta)
-\;=\;
-\mathbb{E}_{s\sim d^\mu}\!\Big[\nabla_\theta \mu_\theta(s)\,\nabla_a Q^\mu(s,a)\big|_{a=\mu_\theta(s)}\Big].
-(\#eq:dpg)
-\end{equation}
-In practice (DDPG/TD3), learn a critic $Q_\psi$ off-policy with replay:
-\begin{equation}
-\psi \leftarrow \psi - \alpha_\psi \nabla_\psi
-\Big(r + \gamma\, Q_{\bar\psi}\!\big(s',\,\mu_{\bar\theta}(s')\big) - Q_\psi(s,a)\Big)^2,
-(\#eq:ddpg-critic)
-\end{equation}
-and update the actor with the sampled gradient from \@ref(eq:dpg).  
-**Stability tricks:** target networks $(\bar\theta,\bar\psi)$, action noise for exploration, **TD3**’s *twin critics* and *target policy smoothing* (reduces overestimation).
-
-### Entropy-Regularized Actor–Critic and SAC
-
-Max-entropy RL augments rewards with policy entropy to encourage exploration:
-\begin{equation}
-J(\pi)
-\;=\;
-\mathbb{E}\!\Big[\sum_{t\ge 0}\gamma^t \big(r(s_t,a_t)\;+\;\alpha\,\mathcal{H}\!\left(\pi(\cdot\mid s_t)\right)\big)\Big],
-\quad
-\mathcal{H}(\pi(\cdot\mid s)) = -\mathbb{E}_{a\sim\pi}\![\log\pi(a\mid s)].
-(\#eq:soft-objective)
-\end{equation}
-The associated **soft Bellman backup** for $Q$ is
-\begin{equation}
-Q(s,a)
-\;\leftarrow\;
-r(s,a) + \gamma\,\mathbb{E}_{s'}\!\Big[V(s')\Big],
-\quad
-V(s) \;=\; \mathbb{E}_{a\sim\pi}\!\big[Q(s,a) - \alpha \log \pi(a\mid s)\big].
-(\#eq:soft-bellman)
-\end{equation}
-**Soft Actor–Critic (SAC)** uses (i) reparameterized stochastic Gaussian policies, (ii) twin $Q$ critics, and (iii) **automatic temperature tuning** by minimizing
-\begin{equation}
-\mathcal{L}(\alpha) \;=\; \mathbb{E}_{a\sim\pi}\!\big[-\alpha\,(\log\pi(a\mid s)+\bar{\mathcal{H}})\big],
-(\#eq:sac-alpha)
-\end{equation}
-driving the policy’s entropy toward a target $\bar{\mathcal{H}}$. The actor is trained by minimizing the KL to a Boltzmann distribution induced by $Q$:
-\begin{equation}
-\theta \; \leftarrow \; \arg\min_\theta\;
-\mathbb{E}_{s\sim\mathcal{D}}\!\Big[
-\mathrm{KL}\!\Big(\pi_\theta(\cdot\mid s)\;\big\|\;
-\frac{\exp\{\frac{1}{\alpha}Q(s,\cdot)\}}{Z(s)}\Big)
-\Big].
-(\#eq:sac-policy)
-\end{equation}
-
-### Practical Refinements
-
-- **Entropy bonus (on-policy):** add $\beta\,\mathbb{E}[\nabla_\theta\log\pi_\theta \,(-\log\pi_\theta)]$ to encourage exploration.  
-- **Advantage normalization:** center/scale $\widehat{A}_t$ within a batch.  
-- **Gradient clipping & value clipping:** stabilize learning.  
-- **Target networks & Polyak averaging:** reduce moving-target drift for bootstrapped critics.  
-- **Parallel workers:** better state coverage and lower variance (A2C/A3C).
-
-### Putting It Together: Minimal A2C (TD + Entropy)
-
-::: {.highlightbox}
-<div style="text-align:center;">**Minimal A2C (Single Machine, Parallel Envs)**</div>
-
-**Inputs:** $\pi_\theta$, $V_\phi$, $\gamma$, rollout length $K$, workers $M$, stepsizes $\alpha_\theta,\alpha_\phi$, entropy weight $\beta$.
-
-For iterations $k=0,1,\dots$:
-
-1. **Parallel rollouts:** each worker runs $\pi_\theta$ for $K$ steps, collecting $\{(s_t,a_t,r_t,s_{t+1})\}_{t=0}^{K-1}$.
-2. **Compute $\delta_t$ and $\widehat{A}_t$:** use \@ref(eq:td-error) (or GAE, \@ref(eq:gae)).  
-3. **Actor update:**
+In practice we often clip the ratio to control variance:
 \[
-\theta \leftarrow \theta + \alpha_\theta \frac{1}{MK}\sum\nolimits_{m,t}
-\Big(
-\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t
-\;+\; \beta\,\nabla_\theta \mathcal{H}\big(\pi_\theta(\cdot\mid s_t)\big)
-\Big).
+\bar\rho_t \;=\; \min\{\rho_t,\;c\}, \quad c\!\ge\!1,
+\qquad
+\widehat{\nabla_\theta J}
+\approx
+\mathbb{E}\!\left[\bar\rho_t\,\nabla_\theta\log\pi_\theta(a_t\mid s_t)\,\widehat{A}_t\right].
 \]
-4. **Critic update:** minimize $\sum_{m,t}\delta_t^2$ as in \@ref(eq:critic-v-update).  
-5. **Repeat.**
+Clipping introduces small bias but usually reduces variance.
+
+**Off-policy Critic.** A convenient choice is an *action-value critic* \(Q_\psi(s,a)\) trained with an expected SARSA style target under the current \(\pi_\theta\):
+\[
+\begin{split}
+y_t & = r_t \;+\; \gamma \,
+\mathbb{E}_{a'\sim\pi_\theta(\cdot\mid s_{t+1})}\!\left[Q_{\bar\psi}(s_{t+1},a')\right],
+\\
+\psi & \leftarrow \arg\min_\psi \;\mathbb{E}\big[(Q_\psi(s_t,a_t)-y_t)^2\big],
+\end{split} 
+(\#eq:offpolicy-critic)
+\]
+where \(Q_{\bar\psi}\) is a target network used to stabilize bootstrapping (i.e., mitigate the deadly triad).
+For discrete actions, the expectation is an exact sum \(\sum_{a'}\pi_\theta(a'\mid s')Q_{\bar\psi}(s',a')\); for continuous, we approximate the expectation with a few samples \(a'\!\sim\!\pi_\theta(\cdot\mid s')\).
+
+**Advantage.** Given \(Q_\psi\), we can estimate the advantage by
+\[
+\widehat{A}_t
+\;=\;Q_\psi(s_t,a_t) \;-\; V_\psi(s_t),
+\quad
+V_\psi(s)
+\;\equiv\;
+\mathbb{E}_{a\sim\pi_\theta(\cdot\mid s)}[Q_\psi(s,a)].
+\qquad (\#eq:offpolicy-adv)
+\]
+Again, for discrete actions, we can compute \(V_\psi\) exactly; for continuous actions, we approximate using a few samples. 
+
+Pseudocode for off-policy actor-critic is presented below.
+
+::: {.highlightbox}
+<div style="text-align:center;">**Experience-Replay Off-Policy Actor–Critic**</div>
+
+**Inputs:** target policy \(\pi_\theta\), Q-critic \(Q_\psi\) (and target \(Q_{\bar\psi}\)), discount \(\gamma\), stepsizes \(\alpha_\theta,\alpha_\psi\), replay buffer \(\mathcal{D}\), IS clip \(c\ge 1\), minibatch size \(B\).
+
+**Initialize:** \(\bar\psi\leftarrow\psi\). Behavior policy \(b\) can be \(\pi_\theta\) with exploration (e.g., \(\varepsilon\)-greedy).
+
+For iterations $k=0,1,2,\dots$:
+
+1. **Interact & store.** Use \(b\) to step the env and append to \(\mathcal{D}\) tuples \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t,\;p_t^b)\), where \(p_t^b=b(a_t\mid s_t)\) (store this to compute \(\rho_t\)).
+
+2. **Sample minibatch** Sample transitions \(\{(s,a,r,s',d,p^\mu)\}_{i=1}^B\) from the replay buffer \(\mathcal{D}\).
+
+3. **Critic target (expected SARSA).**
+   - Compute \(\pi_\theta(a'\mid s')\) and \(Q_{\bar\psi}(s',a')\).
+   - Set \(y \leftarrow r + \gamma(1-\mathrm{done}_t)\sum_{a'} \pi_\theta(a'\mid s')\,Q_{\bar\psi}(s',a')\).  (for continuous actions: perform sample average)
+
+4. **Critic update.**
+   \[
+   \psi \leftarrow \psi - \alpha_\psi \nabla_\psi\frac{1}{B}\sum_{i=1}^B\big(Q_\psi(s_i,a_i)-y_i\big)^2.
+   \]
+   *(Optionally clip gradients; perform multiple critic steps.)*
+
+5. **Actor advantage.**
+   - Compute \(V_\psi(s)=\sum_{a}\pi_\theta(a\mid s)\,Q_\psi(s,a)\) (or sample-average for continuous actions).  
+   - Set \(\widehat{A}=Q_\psi(s,a)-V_\psi(s)\); optionally normalize \(\widehat{A}\) within the batch.
+
+6. **Importance ratios (clipped).**
+   \[
+   \rho \leftarrow \frac{\pi_\theta(a\mid s)}{p^b},\qquad \bar\rho \leftarrow \min\{\rho,\;c\}.
+   \]
+
+7. **Actor update.**
+   \[
+   \theta \leftarrow \theta + \alpha_\theta\,
+   \frac{1}{B}\sum_{i=1}^B
+   \bar\rho_i \,\nabla_\theta \log \pi_\theta(a_i\mid s_i)\,\widehat{A}_i.
+   \]
+
+8. **Target network (moving average).**
+   \[
+   \bar\psi \leftarrow \tau\,\psi + (1-\tau)\,\bar\psi.
+   \]
 :::
 
-### When to Use Which AC Variant?
+**Notes & Variants.**
 
-- **On-policy A2C/A3C (+GAE):** stable, simple, good for simulators where fresh data are cheap.  
-- **DPG/DDPG/TD3:** high-dimensional continuous control when off-policy data and replay are crucial.  
-- **SAC:** robust defaults for continuous control; strong exploration via entropy and reliable critics.
+- **Unbiased vs. biased:** Without clipping and with a correct critic/advantage, \@ref(eq:offpolicy-actor) is unbiased; clipping \(\bar\rho\) adds bias but improves variance.  
+- **Critic options:** You can learn \(V_\phi\) instead of \(Q_\psi\) using off-policy TD with IS; using \(Q\) with an expected SARSA target avoids IS in the critic while keeping evaluation under \(\pi_\theta\).   
+- **Behavior refresh:** Periodically update \(b\) toward \(\pi_\theta\) (reduce exploration) to keep ratios well-behaved.
 
-### Summary
+<!-- This basic off-policy AC template sets the stage for **Soft Actor–Critic (SAC)**, which builds on it by adding a maximum-entropy objective, twin critics, and (optionally) automatic temperature tuning. -->
 
-Actor–critic methods reduce variance via bootstrapped critics while preserving the core policy-gradient structure. By choosing appropriate critics (value, action-value, or soft variants), off-policy corrections, and stability tricks (GAE, target networks, twin critics), AC algorithms form the backbone of modern deep RL for both discrete and continuous control. -->
+The next example applies off-policy actor-critic to cart-pole balancing.
 
+::: {.examplebox}
+::: {.example #cart-pole-off-policy-actor-critic name="Off-Policy Actor-Critic for Cart-Pole Balancing"}
+
+Fig. \@ref(fig:cart-pole-learning-curve-off-policy-ac) shows the learning curve of applying off-policy actor-critic to cart-pole balancing.
+
+Fig. \@ref(fig:cart-pole-policy-rollout-off-policy-ac) shows a sample rollout of the learned policy.
+
+The Python code can be found [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_off-policy_actor-critic.py).
+
+```{r cart-pole-learning-curve-off-policy-ac, out.width='60%', fig.show='hold', fig.cap='Learning curve (Off-Policy Actor--Critic).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/cartpole_returns_off-policy_actor-critic.png')
+```
+
+```{r cart-pole-policy-rollout-off-policy-ac, out.width='60%', fig.show='hold', fig.cap='Policy rollout (Off-Policy Actor--Critic).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/cartpole_policy_rollout_off-policy_actor-critic.gif')
+```
+:::
+:::
+
+The next example applies off-policy actor-critic to a control problem with a continuous action space.
+
+::: {.examplebox}
+::: {.example #pendulum-off-policy-ac name="Off-Policy Actor-Critic for Inverted Pendulum"}
+
+Consider the Inverted Pendulum problem illustrated in Fig. \@ref(fig:pendulum-diagram). The state of the pendulum is $s = (\theta, \dot{\theta})$, or equivalently, $s = (x, y, \dot{\theta})$ with $x = \cos(\theta), y = \sin(\theta)$. The action space is continuous: $\tau \in \mathcal{A} = [-2,2]$.
+
+The dynamics of the pendulum is specified by [Gym](https://gymnasium.farama.org/environments/classic_control/pendulum/), and the reward is
+$$
+R(s,\tau) = -(\theta^2 + 0.1  \dot{\theta}^2 + 0.001 \tau^2).
+$$
+The episode truncates at $200$ time steps.
+
+
+```{r pendulum-diagram, out.width='20%', fig.show='hold', fig.cap='Illustration of Inverted Pendulum in Gym.', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/pendulum.png')
+```
+
+Fig. \@ref(fig:pendulum-learning-curve-off-policy-ac) shows the learning curve of applying off-policy actor-critic to the pendulum problem.
+
+Fig. \@ref(fig:pendulum-policy-rollout-off-policy-ac) shows a sample rollout of the learned policy.
+
+You can find the Python code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_off-policy_actor-critic.py).
+
+
+```{r pendulum-learning-curve-off-policy-ac, out.width='60%', fig.show='hold', fig.cap='Learning curve (Off-Policy Actor-Critic).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/pendulum_returns_off-policy_actor-critic.png')
+```
+
+
+```{r pendulum-policy-rollout-off-policy-ac, out.width='60%', fig.show='hold', fig.cap='Policy rollout (Off-Policy Actor-Critic).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/pendulum_policy_rollout_off-policy_actor-critic.gif')
+```
+
+:::
+:::
+
+
+
+
+
+<!-- ### Soft Actor–Critic
+
+Standard actor–critic methods maximize expected return. Soft Actor–Critic (SAC) augments the objective with an entropy bonus that explicitly encourages exploration and robustness while remaining off-policy and sample efficient [@haarnoja2018soft].
+
+**Maximum-Entropy Objective.** SAC maximizes the soft objective
+\[
+\begin{split}
+J(\pi) &= \mathbb{E}\!\left[\sum_{t\ge0}\gamma^t\Big(R(s_t,a_t)\;+\;\alpha\,\mathcal{H}\!\left(\pi(\cdot\mid s_t)\right)\Big)\right],
+\\
+\mathcal{H}(\pi(\cdot\mid s)) &= -\mathbb{E}_{a\sim\pi}[\log \pi(a\mid s)],
+\end{split}
+(\#eq:soft-objective)
+\]
+with temperature \(\alpha>0\) trading reward maximization against exploration.
+
+Define the soft state value and soft action value:
+\[
+V^\pi(s)\;=\;\mathbb{E}_{a\sim\pi}\!\left[Q^\pi(s,a)\;-\;\alpha\log\pi(a\mid s)\right],
+\qquad
+(\#eq:soft-v)
+\]
+\[
+Q^\pi(s,a) \;=\; R(s,a) + \gamma\,\mathbb{E}_{s'}\!\left[V^\pi(s')\right].
+(\#eq:soft-bellman)
+\]
+The fixed point of \@ref(eq:soft-bellman) yields the soft Bellman backup.
+
+**Practical SAC for Continuous Actions.** SAC uses:
+
+- a **stochastic Gaussian policy** \(\pi_\theta(a\mid s)=\mathcal{N}(\mu_\theta(s),\Sigma_\theta(s))\) passed through \(\tanh\) to respect action bounds (with change-of-variables correction in \(\log\pi\));
+
+- **twin critics** \(Q_{\psi_1},Q_{\psi_2}\) to reduce positive bias via a **min** operator;
+
+- **target networks** \(\bar\psi_1,\bar\psi_2\) for stable bootstrapping (Polyak averaging);
+
+- optional **automatic temperature tuning** so \(\alpha\) tracks a target entropy \(\bar{\mathcal{H}}\approx-|\mathcal{A}|\).
+
+**Critic Target.** For a replay sample \((s,a,r,s',\mathrm{done})\), draw \(a'\sim\pi_\theta(\cdot\mid s')\) and compute
+\[
+y(r,s') \;=\;
+r + \gamma(1-\mathrm{done})\Big(\min\nolimits_{j=1,2} Q_{\bar\psi_j}(s',a') \;-\; \alpha\,\log \pi_\theta(a'\mid s')\Big).
+(\#eq:sac-target)
+\]
+The critic loss (both heads) is
+\[
+\mathcal{L}_Q(\psi_j) \;=\; \mathbb{E}\big[\big(Q_{\psi_j}(s,a)-y\big)^2\big],\quad j\in\{1,2\}.
+(\#eq:sac-critic-loss)
+\]
+
+**Policy Update (reparameterized).** With \(a=f_\theta(s,\varepsilon)\) for \(\varepsilon\sim\mathcal{N}(0,I)\),
+\[
+\mathcal{L}_\pi(\theta)
+\;=\;
+\mathbb{E}_{s,\varepsilon}\!\left[\;\alpha\,\log\pi_\theta\!\big(f_\theta(s,\varepsilon)\mid s\big)\;-\;\min_{j}Q_{\psi_j}\!\big(s,f_\theta(s,\varepsilon)\big)\right].
+(\#eq:sac-policy-loss)
+\]
+This **minimization** is equivalent to ascending the soft objective (negative sign absorbed into the loss).
+
+**Temperature Tuning (optional).** Let \(\bar{\mathcal{H}}\) be a target entropy (e.g., \(-|\mathcal{A}|\)). Optimize
+\[
+\mathcal{L}_\alpha(\alpha)
+\;=\;
+\mathbb{E}_{a\sim\pi_\theta(\cdot\mid s)}\!\big[-\alpha\,(\log\pi_\theta(a\mid s)+\bar{\mathcal{H}})\big],
+\quad
+\text{update } \log\alpha \text{ by gradient descent.}
+(\#eq:sac-alpha-loss)
+\]
+
+::: {.highlightbox}
+<div style="text-align:center;">**Soft Actor–Critic (SAC, continuous actions)**</div>
+
+**Inputs:** replay buffer \(\mathcal{D}\), policy \(\pi_\theta\) (tanh-Gaussian), twin critics \(Q_{\psi_1},Q_{\psi_2}\), target critics \(\bar\psi_1,\bar\psi_2\); discount \(\gamma\); temperature \(\alpha\) (learned or fixed); Polyak \(\tau\in(0,1]\); batch size \(B\); stepsizes \(\alpha_\theta,\alpha_\psi,\alpha_\alpha\).
+
+**Initialize:** \(\bar\psi_j\leftarrow\psi_j\) for \(j=1,2\).
+
+For iterations \(k=0,1,2,\dots\):
+
+1. **Interaction.** Sample \(a_t\sim\pi_\theta(\cdot\mid s_t)\); step env to get \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\); push to \(\mathcal{D}\).
+
+2. **Sample minibatch.** Draw \(B\) transitions from \(\mathcal{D}\).
+
+3. **Target computation.**
+   - Sample \(a' \sim \pi_\theta(\cdot\mid s')\); compute \(\log\pi_\theta(a'\mid s')\) **with tanh correction**.
+   - \(y \leftarrow r + \gamma(1-\mathrm{done})\Big(\min_j Q_{\bar\psi_j}(s',a') - \alpha\,\log\pi_\theta(a'\mid s')\Big)\).   [\@ref(eq:sac-target)]
+
+4. **Critic update (both heads).**
+   \[
+   \psi_j \leftarrow \psi_j - \alpha_\psi \nabla_{\psi_j}\frac{1}{B}\sum (Q_{\psi_j}(s,a)-y)^2,\quad j=1,2.
+   \]
+   *(Option: gradient clipping.)*
+
+5. **Actor update (reparameterized).**
+   - Sample \(\varepsilon\) to build \(a=f_\theta(s,\varepsilon)\).
+   - \(\theta \leftarrow \theta - \alpha_\theta \nabla_\theta \frac{1}{B}\sum \big(\alpha\,\log\pi_\theta(a\mid s)-\min_j Q_{\psi_j}(s,a)\big).\)  [\@ref(eq:sac-policy-loss)]
+
+6. **Temperature (optional).**
+   \[
+   \alpha \leftarrow \alpha \cdot \exp\!\Big(-\alpha_\alpha\,\nabla_{\log\alpha}\frac{1}{B}\sum \big[-\alpha(\log\pi_\theta(a\mid s)+\bar{\mathcal{H}})\big]\Big).
+   \]
+   *(Equivalently, SGD on \(\log \alpha\) using \@ref(eq:sac-alpha-loss).)*
+
+7. **Target critics (Polyak).** For \(j=1,2\):
+   \[
+   \bar\psi_j \;\leftarrow\; \tau\,\psi_j \;+\; (1-\tau)\,\bar\psi_j.
+   \]
+
+8. **Repeat.**
+:::
+
+#### Practical Tips
+
+- **Action squashing & log-prob.** If \(a=\tanh(\tilde a)\) with \(\tilde a\sim\mathcal{N}(\mu,\Sigma)\), then  
+  \(\log\pi(a\mid s)=\log\mathcal{N}(\tilde a;\mu,\Sigma) - \sum_i \log(1-\tanh^2(\tilde a_i))\). Always include this Jacobian term.
+- **Target entropy.** A good default is \(\bar{\mathcal{H}}=-|\mathcal{A}|\) (per-dimension \(-1\)).
+- **Initialization.** Start \(\bar\psi_j\!\leftarrow\!\psi_j\); use small \(\tau\) (e.g., \(0.005\)) for smooth targets.
+- **Stability.** Normalize observations; clip gradients; bound \(\alpha\) away from zero; use **min** over twin critics to curb overestimation.
+- **Discrete SAC.** Replace \(\min_j Q\) and sampling with exact action sums and a LogSumExp-based soft value; the rest is analogous.
+
+**Summary.** SAC optimizes a maximum-entropy objective via off-policy updates, combining twin critics, a stochastic reparameterized actor, and (optionally) automatic temperature tuning. The result is a strong default for continuous control with stable learning and robust exploration. -->
 
 
 

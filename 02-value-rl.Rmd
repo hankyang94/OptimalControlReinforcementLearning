@@ -31,7 +31,7 @@ $$
 by following a policy \(\pi\).
 
 
-### Policy Evaluation
+### Policy Evaluation {#tabular-PE}
 
 We first consider the problem of estimating the value function of a given policy $\pi$. Recall the definition of the state-value function associated with $\pi$ is:
 \begin{equation}
@@ -164,7 +164,7 @@ This replaces the true value \(V^\pi(s_{t+1})\) with the *current estimate* \(\h
 In summary, Temporal-Difference learning addresses the major limitations of Monte Carlo estimation: it works in *continuing tasks*, updates *online* at each step, and is generally more *sample-efficient*. However, it trades away unbiasedness for bias–variance efficiency, motivating further extensions such as multi-step TD and TD(\(\lambda\)).
 
 
-#### Multi-Step TD Learning
+#### Multi-Step TD Learning {#PE-MultiStepTD}
 
 Monte Carlo methods use the *full return* \(g_t\), while TD(0) uses a *one-step bootstrap*. Multi-step TD learning generalizes these two extremes by using $n$-step returns as targets. In this way, multi-step TD interpolates between Monte Carlo and TD(0).
 
@@ -208,7 +208,7 @@ where \(g_t^{(n)}\) replaces the one-step target in TD(0) \@ref(eq:TDZeroUpdate)
   
 In summary, multi-step TD unifies Monte Carlo and TD(0) by introducing \(n\)-step returns. It allows practitioners to *tune the bias–variance tradeoff* by selecting \(n\). Later, we will see how TD(\(\lambda\)) averages over all $n$-step returns in a principled way, further smoothing this tradeoff.
 
-#### Eligibility Traces and TD(\(\lambda\))
+#### Eligibility Traces and TD(\(\lambda\)) {#TDlambda}
 
 So far, we have seen that Monte Carlo methods use *full returns* \(g_t\), while TD(0) uses a *one-step bootstrap*. Multi-step TD methods generalize between these two extremes by using \(n\)-step returns. However, a natural question arises: *can we combine information from all possible \(n\)-step returns in a principled way?*  
 

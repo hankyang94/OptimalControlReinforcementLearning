@@ -79,6 +79,12 @@ Robbins, H. and Siegmund, D. (1971).
   some applications.
 \newblock In {\em Optimizing methods in statistics}, pages 233--257. Elsevier.
 
+\bibitem[Schulman et~al., 2015]{schulman2015high}
+Schulman, J., Moritz, P., Levine, S., Jordan, M., and Abbeel, P. (2015).
+\newblock High-dimensional continuous control using generalized advantage
+  estimation.
+\newblock {\em arXiv preprint arXiv:1506.02438}.
+
 \bibitem[Sutton and Barto, 1998]{sutton1998reinforcement}
 Sutton, R.~S. and Barto, A.~G. (1998).
 \newblock {\em Reinforcement learning: An introduction}, volume~1.
