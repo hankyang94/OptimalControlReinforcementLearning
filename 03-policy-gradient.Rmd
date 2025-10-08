@@ -1332,8 +1332,11 @@ knitr::include_graphics('images/Policy-Gradients/pendulum_returns_off-policy_act
 ```
 
 
-```{r pendulum-policy-rollout-off-policy-ac, out.width='60%', fig.show='hold', fig.cap='Policy rollout (Off-Policy Actor-Critic).', fig.align='center', echo=FALSE}
+```{r pendulum-policy-rollout-off-policy-ac, out.width='40%', fig.show='hold', fig.cap='Policy rollout (Off-Policy Actor-Critic).', fig.align='center', echo=FALSE}
 knitr::include_graphics('images/Policy-Gradients/pendulum_policy_rollout_off-policy_actor-critic.gif')
+knitr::include_graphics('images/Policy-Gradients/pendulum_policy_rollout_off-policy_actor-critic-1.gif')
+knitr::include_graphics('images/Policy-Gradients/pendulum_policy_rollout_off-policy_actor-critic-2.gif')
+knitr::include_graphics('images/Policy-Gradients/pendulum_policy_rollout_off-policy_actor-critic-3.gif')
 ```
 
 :::
