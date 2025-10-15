@@ -39,6 +39,11 @@ Garrigos, G. and Gower, R.~M. (2023).
 \newblock Handbook of convergence theorems for (stochastic) gradient methods.
 \newblock {\em arXiv preprint arXiv:2301.11235}.
 
+\bibitem[Kakade, 2001]{kakade2001natural}
+Kakade, S.~M. (2001).
+\newblock A natural policy gradient.
+\newblock {\em Advances in neural information processing systems}, 14.
+
 \bibitem[Kearns and Singh, 2000]{kearns2000bias}
 Kearns, M.~J. and Singh, S. (2000).
 \newblock Bias-variance error bounds for temporal difference updates.
@@ -79,11 +84,22 @@ Robbins, H. and Siegmund, D. (1971).
   some applications.
 \newblock In {\em Optimizing methods in statistics}, pages 233--257. Elsevier.
 
-\bibitem[Schulman et~al., 2015]{schulman2015high}
-Schulman, J., Moritz, P., Levine, S., Jordan, M., and Abbeel, P. (2015).
+\bibitem[Schulman et~al., 2015a]{schulman2015trust}
+Schulman, J., Levine, S., Abbeel, P., Jordan, M., and Moritz, P. (2015a).
+\newblock Trust region policy optimization.
+\newblock In {\em International conference on machine learning}, pages
+  1889--1897. PMLR.
+
+\bibitem[Schulman et~al., 2015b]{schulman2015high}
+Schulman, J., Moritz, P., Levine, S., Jordan, M., and Abbeel, P. (2015b).
 \newblock High-dimensional continuous control using generalized advantage
   estimation.
 \newblock {\em arXiv preprint arXiv:1506.02438}.
+
+\bibitem[Schulman et~al., 2017]{schulman2017proximal}
+Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. (2017).
+\newblock Proximal policy optimization algorithms.
+\newblock {\em arXiv preprint arXiv:1707.06347}.
 
 \bibitem[Sutton and Barto, 1998]{sutton1998reinforcement}
 Sutton, R.~S. and Barto, A.~G. (1998).
