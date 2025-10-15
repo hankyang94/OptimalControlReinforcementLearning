@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-08" />
+<meta name="date" content="2025-10-15" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -224,8 +224,18 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="3.3.1" data-path="policy-gradient.html"><a href="policy-gradient.html#anatomy-of-an-actorcritic"><i class="fa fa-check"></i><b>3.3.1</b> Anatomy of an Actor–Critic</a></li>
 <li class="chapter" data-level="3.3.2" data-path="policy-gradient.html"><a href="policy-gradient.html#ActorCriticTD"><i class="fa fa-check"></i><b>3.3.2</b> On-Policy Actor–Critic with TD(0)</a></li>
-<li class="chapter" data-level="3.3.3" data-path="policy-gradient.html"><a href="policy-gradient.html#generalized-advantage-estimation-gae"><i class="fa fa-check"></i><b>3.3.3</b> Generalized Advantage Estimation (GAE)</a></li>
+<li class="chapter" data-level="3.3.3" data-path="policy-gradient.html"><a href="policy-gradient.html#PG-GAE"><i class="fa fa-check"></i><b>3.3.3</b> Generalized Advantage Estimation (GAE)</a></li>
 <li class="chapter" data-level="3.3.4" data-path="policy-gradient.html"><a href="policy-gradient.html#off-policy-actorcritic"><i class="fa fa-check"></i><b>3.3.4</b> Off-Policy Actor–Critic</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="policy-gradient.html"><a href="policy-gradient.html#advanced-policy-gradients"><i class="fa fa-check"></i><b>3.4</b> Advanced Policy Gradients</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="policy-gradient.html"><a href="policy-gradient.html#revisiting-generalized-policy-iteration"><i class="fa fa-check"></i><b>3.4.1</b> Revisiting Generalized Policy Iteration</a></li>
+<li class="chapter" data-level="3.4.2" data-path="policy-gradient.html"><a href="policy-gradient.html#performance-difference-lemma"><i class="fa fa-check"></i><b>3.4.2</b> Performance Difference Lemma</a></li>
+<li class="chapter" data-level="3.4.3" data-path="policy-gradient.html"><a href="policy-gradient.html#trust-region-constraint"><i class="fa fa-check"></i><b>3.4.3</b> Trust Region Constraint</a></li>
+<li class="chapter" data-level="3.4.4" data-path="policy-gradient.html"><a href="policy-gradient.html#natural-policy-gradient"><i class="fa fa-check"></i><b>3.4.4</b> Natural Policy Gradient</a></li>
+<li class="chapter" data-level="3.4.5" data-path="policy-gradient.html"><a href="policy-gradient.html#proof-fisher"><i class="fa fa-check"></i><b>3.4.5</b> Proof of Fisher Information</a></li>
+<li class="chapter" data-level="3.4.6" data-path="policy-gradient.html"><a href="policy-gradient.html#trust-region-policy-optimization"><i class="fa fa-check"></i><b>3.4.6</b> Trust Region Policy Optimization</a></li>
+<li class="chapter" data-level="3.4.7" data-path="policy-gradient.html"><a href="policy-gradient.html#proximal-policy-optimization"><i class="fa fa-check"></i><b>3.4.7</b> Proximal Policy Optimization</a></li>
 </ul></li>
 </ul></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
@@ -317,6 +327,9 @@ Fan, Jianqing, Zhaoran Wang, Yuchen Xie, and Zhuoran Yang. 2020. <span>“A Theo
 Garrigos, Guillaume, and Robert M Gower. 2023. <span>“Handbook of Convergence Theorems for (Stochastic) Gradient Methods.”</span> <em>arXiv Preprint arXiv:2301.11235</em>.
 </div>
 <div class="csl-entry">
+Kakade, Sham M. 2001. <span>“A Natural Policy Gradient.”</span> <em>Advances in Neural Information Processing Systems</em> 14.
+</div>
+<div class="csl-entry">
 Kearns, Michael J, and Satinder Singh. 2000. <span>“Bias-Variance Error Bounds for Temporal Difference Updates.”</span> In <em>COLT</em>, 142–47.
 </div>
 <div class="csl-entry">
@@ -338,7 +351,13 @@ Riedmiller, Martin. 2005. <span>“Neural Fitted q Iteration–First Experiences
 Robbins, Herbert, and David Siegmund. 1971. <span>“A Convergence Theorem for Non Negative Almost Supermartingales and Some Applications.”</span> In <em>Optimizing Methods in Statistics</em>, 233–57. Elsevier.
 </div>
 <div class="csl-entry">
+Schulman, John, Sergey Levine, Pieter Abbeel, Michael Jordan, and Philipp Moritz. 2015. <span>“Trust Region Policy Optimization.”</span> In <em>International Conference on Machine Learning</em>, 1889–97. PMLR.
+</div>
+<div class="csl-entry">
 Schulman, John, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter Abbeel. 2015. <span>“High-Dimensional Continuous Control Using Generalized Advantage Estimation.”</span> <em>arXiv Preprint arXiv:1506.02438</em>.
+</div>
+<div class="csl-entry">
+Schulman, John, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. 2017. <span>“Proximal Policy Optimization Algorithms.”</span> <em>arXiv Preprint arXiv:1707.06347</em>.
 </div>
 <div class="csl-entry">
 Sutton, Richard S, and Andrew G Barto. 1998. <em>Reinforcement Learning: An Introduction</em>. Vol. 1. 1. MIT press Cambridge.

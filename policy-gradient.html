@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-08" />
+<meta name="date" content="2025-10-15" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -224,8 +224,18 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="3.3.1" data-path="policy-gradient.html"><a href="policy-gradient.html#anatomy-of-an-actorcritic"><i class="fa fa-check"></i><b>3.3.1</b> Anatomy of an Actor–Critic</a></li>
 <li class="chapter" data-level="3.3.2" data-path="policy-gradient.html"><a href="policy-gradient.html#ActorCriticTD"><i class="fa fa-check"></i><b>3.3.2</b> On-Policy Actor–Critic with TD(0)</a></li>
-<li class="chapter" data-level="3.3.3" data-path="policy-gradient.html"><a href="policy-gradient.html#generalized-advantage-estimation-gae"><i class="fa fa-check"></i><b>3.3.3</b> Generalized Advantage Estimation (GAE)</a></li>
+<li class="chapter" data-level="3.3.3" data-path="policy-gradient.html"><a href="policy-gradient.html#PG-GAE"><i class="fa fa-check"></i><b>3.3.3</b> Generalized Advantage Estimation (GAE)</a></li>
 <li class="chapter" data-level="3.3.4" data-path="policy-gradient.html"><a href="policy-gradient.html#off-policy-actorcritic"><i class="fa fa-check"></i><b>3.3.4</b> Off-Policy Actor–Critic</a></li>
+</ul></li>
+<li class="chapter" data-level="3.4" data-path="policy-gradient.html"><a href="policy-gradient.html#advanced-policy-gradients"><i class="fa fa-check"></i><b>3.4</b> Advanced Policy Gradients</a>
+<ul>
+<li class="chapter" data-level="3.4.1" data-path="policy-gradient.html"><a href="policy-gradient.html#revisiting-generalized-policy-iteration"><i class="fa fa-check"></i><b>3.4.1</b> Revisiting Generalized Policy Iteration</a></li>
+<li class="chapter" data-level="3.4.2" data-path="policy-gradient.html"><a href="policy-gradient.html#performance-difference-lemma"><i class="fa fa-check"></i><b>3.4.2</b> Performance Difference Lemma</a></li>
+<li class="chapter" data-level="3.4.3" data-path="policy-gradient.html"><a href="policy-gradient.html#trust-region-constraint"><i class="fa fa-check"></i><b>3.4.3</b> Trust Region Constraint</a></li>
+<li class="chapter" data-level="3.4.4" data-path="policy-gradient.html"><a href="policy-gradient.html#natural-policy-gradient"><i class="fa fa-check"></i><b>3.4.4</b> Natural Policy Gradient</a></li>
+<li class="chapter" data-level="3.4.5" data-path="policy-gradient.html"><a href="policy-gradient.html#proof-fisher"><i class="fa fa-check"></i><b>3.4.5</b> Proof of Fisher Information</a></li>
+<li class="chapter" data-level="3.4.6" data-path="policy-gradient.html"><a href="policy-gradient.html#trust-region-policy-optimization"><i class="fa fa-check"></i><b>3.4.6</b> Trust Region Policy Optimization</a></li>
+<li class="chapter" data-level="3.4.7" data-path="policy-gradient.html"><a href="policy-gradient.html#proximal-policy-optimization"><i class="fa fa-check"></i><b>3.4.7</b> Proximal Policy Optimization</a></li>
 </ul></li>
 </ul></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
@@ -1222,8 +1232,8 @@ Figure 3.8: Policy rollout (Actor–Critic with One-Step Bootstrap).
 </div>
 </div>
 </div>
-<div id="generalized-advantage-estimation-gae" class="section level3 hasAnchor" number="3.3.3">
-<h3><span class="header-section-number">3.3.3</span> Generalized Advantage Estimation (GAE)<a href="policy-gradient.html#generalized-advantage-estimation-gae" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="PG-GAE" class="section level3 hasAnchor" number="3.3.3">
+<h3><span class="header-section-number">3.3.3</span> Generalized Advantage Estimation (GAE)<a href="policy-gradient.html#PG-GAE" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>In REINFORCE with a learned value baseline (Section <a href="policy-gradient.html#REINFORCE-LearnedValue">3.2.4.4</a>), we used the full Monte Carlo return <span class="math inline">\(g_t\)</span> as the target for value function approximation; while in on-policy Actor-Critic with TD(0) (Section <a href="policy-gradient.html#ActorCriticTD">3.3.2</a>), we used the one-step bootstrap return <span class="math inline">\(r_t + \gamma V_\phi (s_{t+1})\)</span> as the target for value function estimation.</p>
 <p>Recall in policy evaluation (Section <a href="value-rl.html#tabular-PE">2.1.1</a>), we have introduced a spectrum of methods that sit in between Monte Carlo and TD(0): they are methods that leverage the <span class="math inline">\(n\)</span>-step bootstrap return that balance bias and variance. (Section <a href="value-rl.html#PE-MultiStepTD">2.1.1.3</a> and <a href="value-rl.html#TDlambda">2.1.1.4</a>).</p>
 <p>In particular, recall the definition of an <span class="math inline">\(n\)</span>-step bootstrap return
@@ -1237,7 +1247,7 @@ The <span class="math inline">\(\lambda\)</span>-return (with <span class="math 
 g^{(\lambda)}_t = (1-\lambda)\sum_{n=1}^{\infty} \lambda^{n-1} \, g^{(n)}_t.
 \tag{3.34}
 \end{equation}\]</span></p>
-<p>The Generalized Advantage Estimation (GAE) algorithm <span class="citation">(<a href="#ref-schulman2015high">Schulman et al. 2015</a>)</span> is an Actor-Critic type of policy gradient method that leverages the <span class="math inline">\(\lambda\)</span>-return as the target for fitting the critic (i.e., the approximate value function).</p>
+<p>The Generalized Advantage Estimation (GAE) algorithm <span class="citation">(<a href="#ref-schulman2015high">Schulman, Moritz, et al. 2015</a>)</span> is an Actor-Critic type of policy gradient method that leverages the <span class="math inline">\(\lambda\)</span>-return as the target for fitting the critic (i.e., the approximate value function).</p>
 <p><strong>GAE-<span class="math inline">\(\lambda\)</span> Advantage.</strong> Start from the TD residual
 <span class="math display" id="eq:td-residual">\[
 \delta_t \;=\; r_t + \gamma\,V_\phi(s_{t+1}) - V_\phi(s_t),
@@ -1522,6 +1532,502 @@ Figure 3.15: Policy rollout (Off-Policy Actor-Critic).
 </div>
 </div>
 </div>
+</div>
+</div>
+<div id="advanced-policy-gradients" class="section level2 hasAnchor" number="3.4">
+<h2><span class="header-section-number">3.4</span> Advanced Policy Gradients<a href="policy-gradient.html#advanced-policy-gradients" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<div id="revisiting-generalized-policy-iteration" class="section level3 hasAnchor" number="3.4.1">
+<h3><span class="header-section-number">3.4.1</span> Revisiting Generalized Policy Iteration<a href="policy-gradient.html#revisiting-generalized-policy-iteration" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Recall from Chapter <a href="value-rl.html#value-rl">2</a> that <strong>generalized policy iteration (GPI)</strong> extends tabular policy iteration (with known dynamics) to unknown-dynamics settings. At a high level, GPI iterates over policies; at iteration <span class="math inline">\(k\)</span> it performs:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Policy evaluation.</strong> Use the current policy <span class="math inline">\(\pi_k\)</span> to generate <span class="math inline">\(N\)</span> trajectories and estimate either the <span class="math inline">\(Q\)</span>-function <span class="math inline">\(\hat Q^{\pi_k}(s,a)\)</span> or the advantage function <span class="math inline">\(\hat A^{\pi_k}(s,a)\)</span>, using function approximation. This can be done, for example, with the GAE algorithm introduced in Section <a href="policy-gradient.html#PG-GAE">3.3.3</a>, and is the “critic” in the Actor–Critic family of methods.</p></li>
+<li><p><strong>Policy improvement.</strong> Construct a new policy <span class="math inline">\(\pi_{k+1}\)</span> that (approximately) prefers actions deemed better by <span class="math inline">\(\hat Q^{\pi_k}\)</span> or <span class="math inline">\(\hat A^{\pi_k}\)</span>:
+<span class="math display">\[
+\pi_{k+1}(s) \approx \arg\max_a \hat Q^{\pi_k}(s,a) \;=\; \arg\max_a \hat A^{\pi_k}(s,a).
+\]</span>
+In policy gradients, we approximate <span class="math inline">\(\arg\max_a \hat A^{\pi_k}(s,a)\)</span> via gradient ascent in <span class="math inline">\(a\)</span>, i.e., using
+<span class="math display" id="eq:policy-gradient-advantage-gpi">\[\begin{equation}
+\nabla_\theta J(\theta)
+= \frac{1}{1-\gamma}\,
+\mathbb{E}_{s \sim d_{\pi_k},\, a \sim \pi_k}
+\big[\nabla_\theta \log \pi_\theta(a \mid s)\, \hat A^{\pi_k}(s,a)\big].
+\tag{3.46}
+\end{equation}\]</span></p></li>
+</ol>
+<p>A key observation is that we use an advantage estimate obtained from data generated by <span class="math inline">\(\pi_k\)</span> (the old policy) to produce a new policy. In the tabular case, this improvement step guarantees monotonic improvement of <span class="math inline">\(\pi_{k+1}\)</span> over <span class="math inline">\(\pi_k\)</span>, because the evaluation produces a value (or advantage) estimate over the entire state space. In continuous state spaces, this no longer holds: we typically can only obtain an advantage estimate that is accurate <em>along the state–action distribution induced by <span class="math inline">\(\pi_k\)</span></em> rather than globally over <span class="math inline">\(\mathcal{S}\times\mathcal{A}\)</span>. (If, however, we use off-policy data, the expectation here can be different.)</p>
+<p>The question “<em>how much better is <span class="math inline">\(\pi_{k+1}\)</span> than <span class="math inline">\(\pi_k\)</span>?</em>” motivates a relation between the performances of two policies that explicitly accounts for distribution shift.</p>
+</div>
+<div id="performance-difference-lemma" class="section level3 hasAnchor" number="3.4.2">
+<h3><span class="header-section-number">3.4.2</span> Performance Difference Lemma<a href="policy-gradient.html#performance-difference-lemma" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The following performance difference lemma (PDL) expresses the return gap between two policies in terms of the (old) policy’s advantage and the (new) policy’s state-action visitation:</p>
+<div class="theorembox">
+<div class="theorem">
+<p><span id="thm:pdl" class="theorem"><strong>Theorem 3.8  (Performance Difference Lemma) </strong></span>Let <span class="math inline">\(\pi\)</span> and <span class="math inline">\(\pi&#39;\)</span> be two stationary policies in a discounted MDP with <span class="math inline">\(\gamma\in[0,1)\)</span>. Then
+<span class="math display" id="eq:PDL">\[\begin{equation}
+J(\pi&#39;) - J(\pi)
+\;=\;
+\frac{1}{1-\gamma}\;
+\mathbb{E}_{s\sim d^{\pi&#39;},\,a\sim \pi&#39;}\!\left[A^{\pi}(s,a)\right],
+\qquad
+\tag{3.47}
+\end{equation}\]</span>
+where <span class="math inline">\(d^{\pi}(s)=(1-\gamma)\sum_{t=0}^\infty \gamma^t\,\Pr_{\pi}(s_t=s)\)</span> is the (discounted) state-visitation distribution generated by policy <span class="math inline">\(\pi\)</span> and <span class="math inline">\(A^\pi=Q^\pi-V^\pi\)</span> is the advantage.</p>
+</div>
+</div>
+<p><strong>Interpretation.</strong> The performance difference lemma highlights <strong>distribution shift</strong>: the advantage is evaluated under policy <span class="math inline">\(\pi\)</span>, while the expectation is taken over the state–action distribution induced by <span class="math inline">\(\pi&#39;\)</span>. In policy gradients, when performing a step using <a href="policy-gradient.html#eq:policy-gradient-advantage-gpi">(3.46)</a>, we are approximately maximizing the surrogate
+<span class="math display">\[
+\mathcal{L}_{\pi}(\pi&#39;) := \frac{1}{1-\gamma}\;
+\mathbb{E}_{s\sim d^{\pi},\,a\sim \pi&#39;}[A^{\pi}(s,a)],
+\]</span>
+where the state distribution is <span class="math inline">\(d_\pi\)</span>, not <span class="math inline">\(d_{\pi&#39;}\)</span>. To guarantee improvement, we want this surrogate to reflect the true gain <span class="math inline">\(J(\pi&#39;)-J(\pi)\)</span>. The two coincide when <span class="math inline">\(d^{\pi&#39;} \approx d^{\pi}\)</span>. Hence, <strong>keep <span class="math inline">\(\pi&#39;\)</span> close to <span class="math inline">\(\pi\)</span></strong> so state visitation does not change dramatically, making the surrogate reliable (to some extent, off-policy versions of actor–critic aim to achieve this). This “stay local” principle underpins TRPO, NPG, and PPO.</p>
+</div>
+<div id="trust-region-constraint" class="section level3 hasAnchor" number="3.4.3">
+<h3><span class="header-section-number">3.4.3</span> Trust Region Constraint<a href="policy-gradient.html#trust-region-constraint" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>How to enforce the new policy <span class="math inline">\(\pi_{\theta_{k+1}}\)</span> to be close to the old policy <span class="math inline">\(\pi_{\theta_{k}}\)</span>?</p>
+<p><strong>KL Divergence.</strong> The Kullback–Leibler (KL) divergence is a type of statistical distance: a measure of how much an approximating probability distribution <span class="math inline">\(Q\)</span> is different from a true probability distribution <span class="math inline">\(P\)</span>. Formally, let <span class="math inline">\(P\)</span> and <span class="math inline">\(Q\)</span> be two probability distributions supported on <span class="math inline">\(\mathcal{X}\)</span>, the KL divergence between <span class="math inline">\(P\)</span> and <span class="math inline">\(Q\)</span> is
+<span class="math display" id="eq:KL-divergence-def">\[\begin{equation}
+D_{\mathrm{KL}}(P \Vert Q) = \sum_{x \in \mathcal{X}} P(x) \log \left( \frac{P(x)}{Q(x)} \right) = \mathbb{E}_{x \sim P(x)}\left[ \log \left( \frac{P(x)}{Q(x)} \right) \right].
+\tag{3.48}
+\end{equation}\]</span>
+For example, when <span class="math inline">\(P = Q\)</span>, we have <span class="math inline">\(D_{\mathrm{KL}}(P \Vert Q) = 0\)</span>. Indeed, <span class="math inline">\(D_{\mathrm{KL}}(P \Vert Q) \geq 0\)</span> and the equality holds if and only if <span class="math inline">\(P = Q\)</span>.</p>
+<p><strong>Trust Region Constraint.</strong> We now augment the usual policy optimization problem with a trust region constraint defined by the KL divergence. In particular, we wish to improve the current policy <span class="math inline">\(\pi_{\theta_k}\)</span> <strong>locally</strong> by maximizing a <strong>surrogate advantage objective</strong> while constraining the <strong>expected KL divergence</strong> from the old policy. This keeps the new policy <span class="math inline">\(\pi_{\theta}\)</span> close to <span class="math inline">\(\pi_{\theta_k}\)</span>, so the surrogate built under <span class="math inline">\(d^{\pi_{\theta_k}}\)</span> remains predictive of true improvement.</p>
+<p>Formally, let <span class="math inline">\(\theta_k\)</span> denote the current policy parameters. Define the importance ratio
+<span class="math display">\[
+\rho_\theta(s,a)=\frac{\pi_\theta(a\mid s)}{\pi_{\theta_k}(a\mid s)}.
+\]</span>
+We aim to maximize the on-policy surrogate
+<span class="math display" id="eq:trpo-surrogate">\[\begin{equation}
+L_{\theta_k}(\theta)
+\;=\;
+\mathbb{E}_{s\sim d^{\pi_{\theta_k}},\,a\sim \pi_{\theta_k}}
+\!\big[\rho_\theta(s,a)\,\widehat{A}^{\,\pi_{\theta_k}}(s,a)\big],
+\qquad
+\tag{3.49}
+\end{equation}\]</span>
+subject to an expected KL constraint measured under the old state distribution:
+<span class="math display" id="eq:trpo-kl">\[\begin{equation}
+\bar D_{\mathrm{KL}}(\theta_k\,\|\,\theta)
+\;:=\;
+\mathbb{E}_{s\sim d^{\pi_{\theta_k}}}
+\!\left[
+D_{\mathrm{KL}}\!\big(\pi_{\theta_k}(\cdot\mid s)\,\|\,\pi_{\theta}(\cdot\mid s)\big)
+\right]
+\;\le\;\delta,
+\qquad
+\tag{3.50}
+\end{equation}\]</span>
+with a small radius <span class="math inline">\(\delta&gt;0\)</span>. In summary, we are now interested in the following constrained policy optimization problem:
+<span class="math display" id="eq:constrained-policy-optimization">\[\begin{equation}
+\begin{split}
+\max_\theta &amp; \quad L_{\theta_k}(\theta) \\
+\text{subject to} &amp; \quad \bar D_{\mathrm{KL}}(\theta_k\,\|\,\theta) \leq \delta.
+\end{split}
+\tag{3.51}
+\end{equation}\]</span></p>
+</div>
+<div id="natural-policy-gradient" class="section level3 hasAnchor" number="3.4.4">
+<h3><span class="header-section-number">3.4.4</span> Natural Policy Gradient<a href="policy-gradient.html#natural-policy-gradient" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The natural policy gradient method <span class="citation">(<a href="#ref-kakade2001natural">Kakade 2001</a>)</span> can be seen as first performing a linear approximation to the objective of <a href="policy-gradient.html#eq:constrained-policy-optimization">(3.51)</a> and a quadratic approximation to the constraint of <a href="policy-gradient.html#eq:constrained-policy-optimization">(3.51)</a>, and then solve the resulting approximate problem in closed form.</p>
+<p><strong>Leading-Order Approximation.</strong> To maximize the surrogate <span class="math inline">\(L_{\theta_k}(\theta)\)</span> in <a href="policy-gradient.html#eq:trpo-surrogate">(3.49)</a> subject to the KL trust-region constraint <a href="policy-gradient.html#eq:trpo-kl">(3.50)</a>, we linearize the surrogate around <span class="math inline">\(\theta_k\)</span> and quadratically approximate the KL trust region constraint. This leads to the following convex quadratic program (QP)
+<span class="math display" id="eq:npg-qp">\[\begin{equation}
+\max_{\Delta\theta}\ \ g^\top \Delta\theta
+\quad\text{s.t.}\quad
+\frac{1}{2}\,\Delta\theta^\top F(\theta_k)\,\Delta\theta \;\le\; \delta,
+\tag{3.52}
+\end{equation}\]</span>
+where
+<span class="math display" id="eq:npg-policy-gradient">\[\begin{equation}
+g \;=\; \nabla_\theta L_{\theta_k}(\theta)\big|_{\theta=\theta_k}
+= \mathbb{E}_{s\sim d^{\pi_{\theta_k}},\,a\sim \pi_{\theta_k}(\cdot\mid s)} \big[\nabla_\theta \log \pi_{\theta_k}(a\mid s)\,\widehat{A}(s,a)\big]
+\tag{3.53}
+\end{equation}\]</span>
+is the policy gradient, and
+<span class="math display" id="eq:npg-fisher">\[\begin{equation}
+F(\theta_k) \;=\; \mathbb{E}_{s\sim d^{\pi_{\theta_k}},\,a\sim \pi_{\theta_k}(\cdot\mid s)} \big[\nabla_\theta \log \pi_{\theta_k}(a \mid s)\,\nabla_\theta \log \pi_{\theta_k}(a\mid s)^\top\big]
+\tag{3.54}
+\end{equation}\]</span>
+is the (empirical) <em>Fisher information</em> of the policy under the old distribution. See a proof in Section <a href="policy-gradient.html#proof-fisher">3.4.5</a>.</p>
+<p>One can show that the QP <a href="policy-gradient.html#eq:npg-qp">(3.52)</a> has a closed-form solution:
+<span class="math display" id="eq:npg-step">\[\begin{equation}
+p_{\text{NPG}} \;=\; F(\theta_k)^{-1}\, g,
+\qquad
+\Delta\theta_{\text{NPG}}
+\;=\;
+\sqrt{\frac{2\delta}{g^\top F(\theta_k)^{-1} g}}\;\;p_{\text{NPG}},
+\tag{3.55}
+\end{equation}\]</span>
+where <span class="math inline">\(p_{\text{NPG}}\)</span> is called the <em>natural policy gradient</em>, for the reason that the usual policy gradient <span class="math inline">\(g\)</span> is pre-multiplied by <span class="math inline">\(F(\theta_k)^{-1}\)</span>, which contains the second-order curvature of the KL constraint. In practice, <span class="math inline">\(p_{\text{NPG}}\)</span> is computed with <a href="https://en.wikipedia.org/wiki/Conjugate_gradient_method">conjugate gradient (CG)</a> using Fisher–vector products; no matrices are formed. In <a href="policy-gradient.html#eq:npg-step">(3.55)</a>,
+<span class="math display">\[
+\alpha = \sqrt{\frac{2\delta}{g^\top F(\theta_k)^{-1} g}} = \sqrt{ \frac{2\delta}{p^\top_{\text{NPG}} F(\theta_k) p_{\text{NPG}} } }
+\]</span>
+is often called the trust-region step size.</p>
+<p>The following pseudocode implements NPG with GAE as the critic.</p>
+<div class="highlightbox">
+<div style="text-align:center;">
+<strong>Natural Policy Gradient (with GAE advantages)</strong>
+</div>
+<p><strong>Inputs:</strong> initial policy <span class="math inline">\(\theta_0\)</span>; value/critic <span class="math inline">\(\phi_0\)</span>; discount <span class="math inline">\(\gamma\)</span>; GAE parameter <span class="math inline">\(\lambda\)</span>; KL radius <span class="math inline">\(\delta\)</span> (or learning rate <span class="math inline">\(\eta\)</span>); CG iterations <span class="math inline">\(K_{\mathrm{cg}}\)</span>; (optional) damping <span class="math inline">\(\xi&gt;0\)</span>.</p>
+<p>For iterations <span class="math inline">\(k=0,1,2,\dots\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Collect rollouts (on-policy).</strong> Run <span class="math inline">\(\pi_{\theta_k}\)</span> to obtain a batch <span class="math inline">\(\{(s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\}_{t=1}^N\)</span>; cache <span class="math inline">\(\log \pi_{\theta_k}(a_t\mid s_t)\)</span>.</p></li>
+<li><p><strong>Critic / advantages (GAE).</strong><br />
+Compute TD residuals <span class="math inline">\(\delta_t = r_t + \gamma(1-\mathrm{done}_t)V_\phi(s_{t+1}) - V_\phi(s_t)\)</span>;<br />
+backward recursion <span class="math inline">\(\widehat{A}_t = \delta_t + \gamma\lambda(1-\mathrm{done}_t)\widehat{A}_{t+1}\)</span>, with <span class="math inline">\(\widehat{A}_{T}=0\)</span>;<br />
+(optionally) standardize <span class="math inline">\(\widehat{A}\)</span>; set value targets <span class="math inline">\(\widehat{V}^{\,\text{targ}}_t=\widehat{A}_t+V_\phi(s_t)\)</span>.</p></li>
+<li><p><strong>Value update.</strong> Fit <span class="math inline">\(V_\phi\)</span> by minimizing <span class="math inline">\(\sum_t (V_\phi(s_t)-\widehat{V}^{\,\text{targ}}_t)^2\)</span> (one or several epochs).</p></li>
+<li><p><strong>Surrogate gradient.</strong><br />
+<span class="math display">\[
+g \;=\; \frac{1}{N} \sum_{t} \nabla_\theta \log \pi_{\theta_k}(a_t \mid s_t )\,\widehat{A}_t .
+\]</span></p></li>
+<li><p><strong>Fisher–vector product (FvP).</strong> Define the empirical KL
+<span class="math inline">\(\bar D_{\mathrm{KL}}(\theta_k\,\|\,\theta)\)</span>. Implement <span class="math inline">\(v\mapsto Fv\)</span> as the <strong>Hessian–vector product</strong> of <span class="math inline">\(\bar D_{\mathrm{KL}}\)</span> at <span class="math inline">\(\theta_k\)</span> (optionally use <strong>damping</strong> <span class="math inline">\(F \leftarrow F+\xi I\)</span> to make sure <span class="math inline">\(F\)</span> is positive definite).</p></li>
+<li><p><strong>Conjugate gradient (CG).</strong> Approximately solve <span class="math inline">\((F)\,p = g\)</span> to obtain <span class="math inline">\(p_{\text{NPG}}\approx F^{-1}g\)</span>.</p></li>
+<li><p><strong>Step size.</strong></p>
+<ul>
+<li><strong>Trust-region scaling:</strong> set
+<span class="math inline">\(\alpha \leftarrow \sqrt{\frac{2\delta}{p^\top_{\text{NPG}} F p_{\text{NPG}}}}\)</span> and update <span class="math inline">\(\theta_{k+1} \leftarrow \theta_k + \alpha p_{\text{NPG}}\)</span>.<br />
+</li>
+<li><strong>Fixed-rate natural step:</strong> choose <span class="math inline">\(\eta&gt;0\)</span> and set <span class="math inline">\(\theta_{k+1} \leftarrow \theta_k + \eta p_{\text{NPG}}\)</span> (monitor empirical KL for safety).</li>
+</ul></li>
+</ol>
+</div>
+</div>
+<div id="proof-fisher" class="section level3 hasAnchor" number="3.4.5">
+<h3><span class="header-section-number">3.4.5</span> Proof of Fisher Information<a href="policy-gradient.html#proof-fisher" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Let the expected KL trust-region constraint (measured under the old policy’s state distribution) be
+<span class="math display">\[
+\bar D_{\mathrm{KL}}(\theta_k\!\parallel\!\theta)
+\;:=\;
+\mathbb{E}_{s\sim d^{\pi_{\theta_k}}}
+\Big[ D_{\mathrm{KL}}\!\big(\pi_{\theta_k}(\cdot\mid s)\,\|\,\pi_\theta(\cdot\mid s)\big) \Big].
+\]</span>
+Write <span class="math inline">\(\theta=\theta_k+\Delta\theta\)</span> and define, for a fixed state <span class="math inline">\(s\)</span>,
+<span class="math display">\[
+f_s(\theta)
+\;=\;
+D_{\mathrm{KL}}\!\big(\pi_{\theta_k}(\cdot\mid s)\,\|\,\pi_\theta(\cdot\mid s)\big)
+= \mathbb{E}_{a\sim \pi_{\theta_k}(\cdot\mid s)}
+\big[\log \pi_{\theta_k}(a\mid s) - \log \pi_\theta(a\mid s)\big].
+\]</span>
+We will show that the <em>second-order Taylor expansion</em> of <span class="math inline">\(\bar D_{\mathrm{KL}}\)</span> around <span class="math inline">\(\theta_k\)</span> is
+<span class="math display">\[
+\bar D_{\mathrm{KL}}(\theta_k\!\parallel\!\theta_k+\Delta\theta)
+\;=\;
+\frac{1}{2}\,\Delta\theta^\top
+\underbrace{
+\mathbb{E}_{s\sim d^{\pi_{\theta_k}},\,a\sim \pi_{\theta_k}(\cdot\mid s)}
+\!\big[\nabla_\theta \log \pi_{\theta_k}(a\mid s)\,\nabla_\theta \log \pi_{\theta_k}(a\mid s)^\top\big]
+}_{F(\theta_k)\ \text{(Fisher information)}}
+\,\Delta\theta \;+\; \mathcal{O}(\|\Delta\theta\|^3).
+\]</span></p>
+<p><strong>Step 1: Zeroth- and first-order terms vanish at <span class="math inline">\(\theta=\theta_k\)</span>.</strong> For each <span class="math inline">\(s\)</span>,
+<span class="math display">\[
+f_s(\theta_k) = D_{\mathrm{KL}}\!\big(\pi_{\theta_k}\,\|\,\pi_{\theta_k}\big)=0.
+\]</span>
+The gradient (holding the expectation under <span class="math inline">\(\pi_{\theta_k}\)</span>) is
+<span class="math display">\[
+\nabla_\theta f_s(\theta)
+= -\mathbb{E}_{a\sim \pi_{\theta_k}(\cdot\mid s)}\big[\nabla_\theta \log \pi_\theta(a\mid s)\big].
+\]</span>
+Evaluating at <span class="math inline">\(\theta=\theta_k\)</span>,
+<span class="math display">\[
+   \begin{split}
+\nabla_\theta f_s(\theta_k)
+&amp; = -\mathbb{E}_{a\sim \pi_{\theta_k}(\cdot\mid s)}\big[\nabla_\theta \log \pi_{\theta_k}(a\mid s)\big] \\
+&amp; = -\sum_a \pi_{\theta_k}(a\mid s)\,\nabla_\theta \log \pi_{\theta_k}(a\mid s)
+= -\nabla_\theta \sum_a \pi_{\theta_k}(a\mid s)
+= 0,
+\end{split}
+\]</span>
+using the normalization <span class="math inline">\(\sum_a \pi_{\theta_k}(a\mid s)=1\)</span>. Hence both the value and the first-order term are zero.</p>
+<p><strong>Step 2: The Hessian equals the (per-state) Fisher information.</strong> The Hessian of <span class="math inline">\(f_s\)</span> is
+<span class="math display">\[
+\nabla_\theta^2 f_s(\theta)
+= -\mathbb{E}_{a\sim \pi_{\theta_k}(\cdot\mid s)}\big[\nabla_\theta^2 \log \pi_\theta(a\mid s)\big].
+\]</span>
+At <span class="math inline">\(\theta=\theta_k\)</span>, apply the <em>information identity</em> (a.k.a. <a href="https://math.stackexchange.com/questions/2026428/what-is-second-bartlett-identity">Bartlett identity</a>):
+<span class="math display">\[
+-\mathbb{E}_{a\sim \pi_{\theta_k}(\cdot\mid s)}\big[\nabla_\theta^2 \log \pi_{\theta_k}(a\mid s)\big]
+=
+\mathbb{E}_{a\sim \pi_{\theta_k}(\cdot\mid s)}
+\big[\nabla_\theta \log \pi_{\theta_k}(a\mid s)\, \nabla_\theta \log \pi_{\theta_k}(a\mid s)^\top\big].
+\]</span></p>
+<div class="proofbox">
+<p><em>Proof sketch of the identity:</em> start from <span class="math inline">\(\sum_a \pi_\theta(a\mid s)=1\)</span>, differentiate once to get
+<span class="math inline">\(\mathbb{E}_{a\sim \pi_\theta}[\nabla\log\pi_\theta]=0\)</span>; differentiate again and use the product rule to obtain
+<span class="math inline">\(\mathbb{E}_{a\sim \pi_\theta}[\nabla^2\log\pi_\theta + (\nabla\log\pi_\theta)(\nabla\log\pi_\theta)^\top]=0\)</span>.</p>
+</div>
+<p>Thus,
+<span class="math display">\[
+\nabla_\theta^2 f_s(\theta_k)
+=
+\mathbb{E}_{a\sim \pi_{\theta_k}(\cdot\mid s)}
+\big[\nabla_\theta \log \pi_{\theta_k}(a\mid s)\,\nabla_\theta \log \pi_{\theta_k}(a\mid s)^\top\big]
+\;=:\; F_s(\theta_k).
+\]</span></p>
+<p><strong>Step 3: Second-order Taylor expansion and averaging over states.</strong> For each <span class="math inline">\(s\)</span>,
+<span class="math display">\[
+f_s(\theta_k+\Delta\theta)
+= \frac{1}{2}\,\Delta\theta^\top F_s(\theta_k)\,\Delta\theta \;+\; \mathcal{O}(\|\Delta\theta\|^3).
+\]</span>
+Taking expectation over <span class="math inline">\(s\sim d^{\pi_{\theta_k}}\)</span> gives
+<span class="math display">\[
+\bar D_{\mathrm{KL}}(\theta_k\!\parallel\!\theta_k+\Delta\theta)
+= \mathbb{E}_{s\sim d^{\pi_{\theta_k}}}[f_s(\theta_k+\Delta\theta)]
+= \frac{1}{2}\,\Delta\theta^\top
+\underbrace{\mathbb{E}_{s\sim d^{\pi_{\theta_k}}}[F_s(\theta_k)]}_{F(\theta_k)}
+\,\Delta\theta \;+\; \mathcal{O}(\|\Delta\theta\|^3).
+\]</span></p>
+<p><strong>Conclusion.</strong> The Fisher information <span class="math inline">\(F(\theta_k)\)</span> is exactly the Hessian of the expected KL at <span class="math inline">\(\theta_k\)</span>. Therefore, the KL trust-region constraint admits the quadratic local approximation
+<span class="math display">\[
+\bar D_{\mathrm{KL}}(\theta_k\!\parallel\!\theta_k+\Delta\theta)\;\approx\;\frac{1}{2}\,\Delta\theta^\top F(\theta_k)\,\Delta\theta,
+\]</span>
+which yields the TRPO/NPG quadratic constraint and identifies <span class="math inline">\(F(\theta_k)\)</span> as the local metric tensor of the policy manifold.</p>
+</div>
+<div id="trust-region-policy-optimization" class="section level3 hasAnchor" number="3.4.6">
+<h3><span class="header-section-number">3.4.6</span> Trust Region Policy Optimization<a href="policy-gradient.html#trust-region-policy-optimization" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>The NPG algorithm presented above leverages a leading-order approximation of the KL-constrained policy optimization problem <a href="policy-gradient.html#eq:constrained-policy-optimization">(3.51)</a>.</p>
+<p>In Trust Region Policy Optimization <span class="citation">(<a href="#ref-schulman2015trust">Schulman, Levine, et al. 2015</a>)</span>, we still use the leading-order approximation to obtain the natural policy gradient direction, but additionally, we perform a <em>backtracking line search</em> to enforce the true (nonlinear) KL constraint and surrogate improvement.</p>
+<p>The following pseudocode implements TRPO with GAE as the critic.</p>
+<div class="highlightbox">
+<div style="text-align:center;">
+<strong>TRPO (with GAE advantages)</strong>
+</div>
+<p><strong>Inputs:</strong> initial policy <span class="math inline">\(\theta_0\)</span>; value/critic parameters <span class="math inline">\(\phi_0\)</span>; discount <span class="math inline">\(\gamma\)</span>; GAE parameter <span class="math inline">\(\lambda\)</span>; KL radius <span class="math inline">\(\delta\)</span>; CG iterations <span class="math inline">\(K_{\mathrm{cg}}\)</span>; backtrack factor <span class="math inline">\(\beta\in(0,1)\)</span>; max backtracks <span class="math inline">\(M\)</span>.</p>
+<p>For iterations <span class="math inline">\(k=0,1,2,\dots\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Collect rollouts (on-policy).</strong> Run <span class="math inline">\(\pi_{\theta_k}\)</span> to obtain trajectories; build a batch <span class="math inline">\(\{(s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\}_{t=1}^N\)</span>.</p></li>
+<li><p><strong>Critic / advantages (GAE).</strong><br />
+Compute TD residuals <span class="math inline">\(\delta_t = r_t + \gamma(1-\mathrm{done}_t)V_\phi(s_{t+1}) - V_\phi(s_t)\)</span>;<br />
+backward recursion <span class="math inline">\(\widehat{A}_t = \delta_t + \gamma\lambda(1-\mathrm{done}_t)\widehat{A}_{t+1}\)</span>, with <span class="math inline">\(\widehat{A}_{T}=0\)</span>;<br />
+(optionally) standardize <span class="math inline">\(\widehat{A}\)</span> within the batch; set value targets <span class="math inline">\(\widehat{V}^{\,\text{targ}}_t=\widehat{A}_t+V_\phi(s_t)\)</span>.</p></li>
+<li><p><strong>Value function update.</strong> Fit <span class="math inline">\(V_\phi\)</span> by minimizing
+<span class="math inline">\(\sum_t (V_\phi(s_t)-\widehat{V}^{\,\text{targ}}_t)^2\)</span> (one or several epochs).</p></li>
+<li><p><strong>Policy gradient at <span class="math inline">\(\theta_k\)</span>.</strong><br />
+<span class="math display">\[
+g \;=\; \nabla_\theta L_{\theta_k}(\theta)\big|_{\theta=\theta_k}
+  \approx
+  \frac{1}{N} \sum_{t} \nabla_\theta \log \pi_{\theta_k}(a_t \mid s_t )\,\widehat{A}_t .
+\]</span></p></li>
+<li><p><strong>Fisher–vector product (FvP).</strong> Define the Fisher information under <span class="math inline">\(\pi_{\theta_k}\)</span>:
+<span class="math display">\[
+F(\theta_k)\;=\;\mathbb{E}\Big[\nabla_\theta \log \pi_{\theta_k}(a\mid s)\,\nabla_\theta \log \pi_{\theta_k}(a\mid s)^\top\Big].
+\]</span>
+Implement <span class="math inline">\(v\mapsto Fv\)</span> via the <strong>Hessian-vector product</strong> of the empirical KL.</p></li>
+<li><p><strong>Conjugate gradient (CG) solve.</strong> Approximately solve <span class="math inline">\(F p = g\)</span> with <span class="math inline">\(K_{\mathrm{cg}}\)</span> CG iterations to get the natural direction <span class="math inline">\(p_{\text{NPG}}\approx F^{-1}g\)</span>.</p></li>
+<li><p><strong>Compute step size for the quadratic trust region.</strong><br />
+<span class="math display">\[
+\alpha \;\leftarrow\; \sqrt{\frac{2\delta}{p^\top_{\text{NPG}} F p_{\text{NPG}} }}.
+\]</span>
+Candidate update: <span class="math inline">\(\theta^\star \leftarrow \theta_k + \alpha p_{\text{NPG}}\)</span>.</p></li>
+<li><p><strong>Backtracking line search (feasibility + improvement).</strong> Repeatedly set <span class="math inline">\(\theta^\star \leftarrow \theta_k + \beta^j \alpha p_{\text{NPG}}\)</span> for <span class="math inline">\(j=0,1,\dots,M\)</span> until both hold on the batch:</p>
+<ul>
+<li><strong>KL constraint:</strong> <span class="math inline">\(\bar D_{\mathrm{KL}}(\theta_k\,\|\,\theta^\star) \le \delta\)</span>.</li>
+<li><strong>Surrogate improvement:</strong> <span class="math inline">\(L_{\theta_k}(\theta^\star) \ge L_{\theta_k}(\theta_k)\)</span>.</li>
+</ul>
+<p>Accept the first <span class="math inline">\(\theta^\star\)</span> that satisfies both; set <span class="math inline">\(\theta_{k+1}\leftarrow \theta^\star\)</span>.</p></li>
+</ol>
+</div>
+<div id="backtracking-line-search" class="section level4 hasAnchor" number="3.4.6.1">
+<h4><span class="header-section-number">3.4.6.1</span> Backtracking Line Search<a href="policy-gradient.html#backtracking-line-search" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p><strong>Batch-only evaluation.</strong> During TRPO’s line search you <strong>do not collect new trajectories</strong>. All checks are computed on the same batch gathered with the old policy <span class="math inline">\(\pi_{\theta_k}\)</span> (i.e., under <span class="math inline">\(d^{\pi_{\theta_k}}\)</span>).</p>
+<p><strong>Given:</strong> a candidate update <span class="math inline">\(\theta^\star = \theta_k + \beta^j \alpha p_{\text{NPG}}\)</span>.</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Empirical KL constraint (nonlinear, “true” KL).</strong> Compute the state-wise KL between the full action distributions of the old and candidate policies and average over the batch states:
+<span class="math display">\[
+\widehat{\bar D}_{\mathrm{KL}}(\theta_k \,\|\, \theta^\star)
+\;=\;
+\frac{1}{|\mathcal{B}|}\sum_{s\in\mathcal{B}}
+D_{\mathrm{KL}}\!\big(\pi_{\theta_k}(\cdot\mid s)\,\|\,\pi_{\theta^\star}(\cdot\mid s)\big).
+\]</span></p>
+<ul>
+<li><strong>Categorical policy:</strong><br />
+<span class="math display">\[
+D_{\mathrm{KL}}(\pi_{\theta_k}\,\|\,\pi_{\theta^\star})
+\;=\;
+\sum_{a} \pi_{\theta_k}(a\mid s)\,
+\Big[\log \pi_{\theta_k}(a\mid s)-\log \pi_{\theta^\star}(a\mid s)\Big].
+\]</span></li>
+<li><strong>Gaussian policy</strong> (mean <span class="math inline">\(\mu(s),\)</span> covariance <span class="math inline">\(\Sigma(s)\)</span>; use pre-squash distribution if actions are squashed):<br />
+<span class="math display">\[
+D_{\mathrm{KL}}\big(\mathcal{N}(\mu_k,\Sigma_k)\,\|\,\mathcal{N}(\mu_\star,\Sigma_\star)\big)
+= \frac{1}{2}\Big(
+  \operatorname{tr}(\Sigma_\star^{-1}\Sigma_k)
+  + (\mu_\star-\mu_k)^\top \Sigma_\star^{-1}(\mu_\star-\mu_k)
+  - d + \log\tfrac{\det \Sigma_\star}{\det \Sigma_k}
+\Big).
+\]</span>
+<strong>Feasibility test:</strong> accept if <span class="math inline">\(\widehat{\bar D}_{\mathrm{KL}}(\theta_k \,\|\, \theta^\star) \le \delta\)</span> (cf. <a href="policy-gradient.html#eq:trpo-kl">(3.50)</a>).</li>
+</ul></li>
+<li><p><strong>Surrogate improvement.</strong> Evaluate the TRPO surrogate <span class="math inline">\(L_{\theta_k}(\theta)\)</span> (cf. <a href="policy-gradient.html#eq:trpo-surrogate">(3.49)</a>) on the same batch using importance ratios from <span class="math inline">\(\theta^\star\)</span>:
+<span class="math display">\[
+\widehat{L}_{\theta_k}(\theta^\star)
+\;=\;
+\frac{1}{|\mathcal{B}|}\sum_{(s,a)\in\mathcal{B}}
+\frac{\pi_{\theta^\star}(a\mid s)}{\pi_{\theta_k}(a\mid s)}\,
+\widehat{A}^{\,\pi_{\theta_k}}(s,a),
+\qquad
+\widehat{L}_{\theta_k}(\theta_k)=\frac{1}{|\mathcal{B}|}\sum_{(s,a)}\widehat{A}^{\,\pi_{\theta_k}}(s,a).
+\]</span>
+<strong>Improvement test:</strong> accept if <span class="math inline">\(\widehat{L}_{\theta_k}(\theta^\star)\ge \widehat{L}_{\theta_k}(\theta_k)\)</span>.</p></li>
+<li><p><strong>Backtracking loop (on-batch).</strong> Decrease the step by <span class="math inline">\(\beta\in(0,1)\)</span> until both tests pass or a maximum of <span class="math inline">\(M\)</span> backtracks is reached:
+<span class="math display">\[
+\theta^\star \leftarrow \theta_k + \beta^j \alpha p_{\text{NPG}},\quad
+j=0,1,\dots,M.
+\]</span>
+If successful, set <span class="math inline">\(\theta_{k+1}\leftarrow \theta^\star\)</span>; otherwise keep <span class="math inline">\(\theta_{k+1}\leftarrow \theta_k\)</span>.</p></li>
+</ol>
+</div>
+</div>
+<div id="proximal-policy-optimization" class="section level3 hasAnchor" number="3.4.7">
+<h3><span class="header-section-number">3.4.7</span> Proximal Policy Optimization<a href="policy-gradient.html#proximal-policy-optimization" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>While NPG/TRPO are stable, they may be computationally heavier due to constrained solves or natural-step systems. Proximal Policy Optimization (PPO) <span class="citation">(<a href="#ref-schulman2017proximal">Schulman et al. 2017</a>)</span> replaces the hard constraint with a <em>penalized (regularized) objective</em> and optimizes it with standard first-order SGD:
+<span class="math display" id="eq:PPO-regularized">\[\begin{equation}
+\ell_k(\theta)
+\;=\;
+\mathbb{E}_{s \sim d^{\pi_{\theta_k}},a\sim \pi_{\theta_k}}
+\big[\,\rho_\theta(s,a)\, \widehat{A}^{\,\pi_{\theta_k}}(s,a)\,\big]
+\;-\;
+\lambda\;
+\mathbb{E}_{s \sim d^{\pi_{\theta_k}},a\sim \pi_{\theta_k}}
+\!\left[\log\frac{\pi_{\theta_k}(a\mid s)}{\pi_\theta(a\mid s)}\right],
+\tag{3.56}
+\end{equation}\]</span>
+where <span class="math inline">\(\lambda &gt; 0\)</span> and the second term is the <em>per-sample KL penalty</em> that discourages large departures from <span class="math inline">\(\pi_{\theta_k}\)</span>.
+Conceptually, this is a <em>Lagrangian relaxation</em> of TRPO’s trust region, where the hard constraint is moved to the objective function as a soft penalty.</p>
+<div id="gradient-of-the-klregularized-surrogate" class="section level4 hasAnchor" number="3.4.7.1">
+<h4><span class="header-section-number">3.4.7.1</span> Gradient of the KL–Regularized Surrogate<a href="policy-gradient.html#gradient-of-the-klregularized-surrogate" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>Treat <span class="math inline">\(\widehat{A}^{\,\pi_{\theta_k}}\)</span> and the sampling distribution as fixed during the policy update. Using
+<span class="math inline">\(\nabla_\theta \rho_\theta = \rho_\theta\,\nabla_\theta \log \pi_\theta\)</span> and
+<span class="math inline">\(\nabla_\theta \log \frac{\pi_{\theta_k}}{\pi_\theta} = - \nabla_\theta \log \pi_\theta\)</span>, the gradient of the KL-regularized objective <a href="policy-gradient.html#eq:PPO-regularized">(3.56)</a> is
+<span class="math display" id="eq:PPO-penalty-gradient">\[
+\nabla_\theta \ell_k(\theta)
+\;=\;
+\mathbb{E}_{s \sim d^{\pi_{\theta_k}}, a\sim \pi_{\theta_k}}
+\!\Big[
+\nabla_\theta \log \pi_\theta(a\mid s)\,
+\underbrace{\big(\rho_\theta(s,a)\,\widehat{A}(s,a)-\lambda\big)}_{\text{effective advantage}}
+\Big].
+\qquad \tag{3.57}
+\]</span>
+This shows the KL penalty shifts the effective advantage by <span class="math inline">\(-\lambda\)</span>.</p>
+</div>
+<div id="from-the-lagrangian-relaxation-to-ppo-updates" class="section level4 hasAnchor" number="3.4.7.2">
+<h4><span class="header-section-number">3.4.7.2</span> From the Lagrangian Relaxation to PPO Updates<a href="policy-gradient.html#from-the-lagrangian-relaxation-to-ppo-updates" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>There are two standard PPO realizations:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>PPO–KL (penalty version).</strong> Directly ascend <span class="math inline">\(\ell_k(\theta)\)</span> with minibatch SGD:
+<span class="math display">\[
+\theta \leftarrow \theta + \alpha\;
+\frac{1}{B}\sum_{(s,a)\in\mathcal{B}}
+\nabla_\theta \log \pi_\theta(a\mid s)\,
+\big(\rho_\theta(s,a)\,\widehat{A}(s,a)-\lambda\big).
+\]</span>
+After each epoch, measure the empirical KL
+<span class="math inline">\(\widehat{\bar D}_{\mathrm{KL}}(\theta_k\!\parallel\!\theta)\)</span>
+on the batch; increase <span class="math inline">\(\lambda\)</span> if KL is too high (tighten the region), decrease <span class="math inline">\(\lambda\)</span> if it is too low.</p></li>
+<li><p><strong>PPO–Clip (clipping version).</strong> Replace the penalty with a <em>hard</em> trust region on the ratio <span class="math inline">\(\rho_\theta\)</span>. When <span class="math inline">\(\widehat{A}&gt;0\)</span>, forbid <span class="math inline">\(\rho_\theta&gt;1+\varepsilon\)</span>; when <span class="math inline">\(\widehat{A}&lt;0\)</span>, forbid <span class="math inline">\(\rho_\theta&lt;1-\varepsilon\)</span>. This yields the clipped objective
+<span class="math display" id="eq:PPO-clip-obj">\[\begin{equation}
+\hspace{-16mm}
+\ell^{\text{CLIP}}_k(\theta)
+\;=\;
+\mathbb{E}_{s \sim d^{\pi_{\theta_k}}, a \sim \pi_{\theta_k}}
+\Big[\min\!\big(\rho_\theta(s,a)\,\widehat{A}(s,a),\;
+\operatorname{clip}(\rho_\theta(s,a),\,1-\varepsilon,\,1+\varepsilon)\,\widehat{A}(s,a)\big)\Big],
+\tag{3.58}
+\end{equation}\]</span>
+which is a first-order proxy to the Lagrangian/TRPO trust region: the min/clip term cancels the incentive to move <span class="math inline">\(\rho_\theta\)</span> outside <span class="math inline">\([1-\varepsilon,1+\varepsilon]\)</span> in directions that would further increase the objective.</p></li>
+</ol>
+<p>Both versions are typically combined with a value-function loss and an entropy bonus to encourage exploration:
+<span class="math display">\[
+\mathcal{L}^{\text{PPO}}(\theta,\phi)
+= - \ell^{\text{PG}}_k(\theta)
++ c_v\,\mathbb{E}\big[(V_\phi(s)-\widehat{V}^{\,\text{targ}})^2\big]
+- c_e\,\mathbb{E}\big[\mathcal{H}(\pi_\theta(\cdot\mid s))\big],
+\]</span>
+where <span class="math inline">\(\ell^{\text{PG}}_k\)</span> is either <span class="math inline">\(\ell^{\text{CLIP}}_k\)</span> or <span class="math inline">\(\ell_k\)</span>.</p>
+<p><strong>Why PPO “forbids” <span class="math inline">\(\rho_\theta\)</span> from leaving <span class="math inline">\([1-\varepsilon,\,1+\varepsilon]\)</span>.</strong> Let <span class="math inline">\(r \equiv \rho_\theta(s,a)=\frac{\pi_\theta(a\mid s)}{\pi_{\theta_k}(a\mid s)}\)</span> and <span class="math inline">\(\widehat{A}=\widehat{A}^{\,\pi_{\theta_k}}(s,a)\)</span>.
+The PPO–Clip objective for one sample is
+<span class="math display">\[
+L^{\text{CLIP}}(r,\widehat{A})
+= \min\!\big(r\,\widehat{A},\ \operatorname{clip}(r,1-\varepsilon,1+\varepsilon)\,\widehat{A}\big).
+\]</span></p>
+<p>Let’s do a case analysis:</p>
+<ul>
+<li><p>If <span class="math inline">\(\widehat{A}&gt;0\)</span>: increasing <span class="math inline">\(r\)</span> (i.e., increasing <span class="math inline">\(\pi_\theta(a\mid s)\)</span>) raises the <em>unclipped</em> term <span class="math inline">\(r\,\widehat{A}\)</span>.<br />
+The clipped term equals <span class="math inline">\((1+\varepsilon)\widehat{A}\)</span> whenever <span class="math inline">\(r&gt;1+\varepsilon\)</span>.
+Hence
+<span class="math display">\[
+L^{\text{CLIP}}(r,\widehat{A})
+=
+\begin{cases}
+r\,\widehat{A}, &amp; r\le 1+\varepsilon,\\[4pt]
+(1+\varepsilon)\widehat{A}, &amp; r&gt;1+\varepsilon,
+\end{cases}
+\]</span>
+so <span class="math inline">\(\frac{\partial L^{\text{CLIP}}}{\partial r}=\widehat{A}\)</span> for <span class="math inline">\(r\le 1+\varepsilon\)</span> and <strong><span class="math inline">\(0\)</span></strong> for <span class="math inline">\(r&gt;1+\varepsilon\)</span>.
+There is no further gain by pushing <span class="math inline">\(r\)</span> beyond <span class="math inline">\(1+\varepsilon\)</span>; the gradient vanishes.<br />
+Intuitively: don’t increase an action’s probability <em>too much</em> even if it looks good—stay proximal.</p></li>
+<li><p>If <span class="math inline">\(\widehat{A}&lt;0\)</span>: decreasing <span class="math inline">\(r\)</span> (i.e., reducing <span class="math inline">\(\pi_\theta(a\mid s)\)</span>) lowers the unclipped term <span class="math inline">\(r\,\widehat{A}\)</span>.
+The clipped term equals <span class="math inline">\((1-\varepsilon)\widehat{A}\)</span> whenever <span class="math inline">\(r&lt;1-\varepsilon\)</span>.
+Thus
+<span class="math display">\[
+L^{\text{CLIP}}(r,\widehat{A})
+=
+\begin{cases}
+r\,\widehat{A}, &amp; r\ge 1-\varepsilon,\\[4pt]
+(1-\varepsilon)\widehat{A}, &amp; r&lt;1-\varepsilon,
+\end{cases}
+\]</span>
+so <span class="math inline">\(\frac{\partial L^{\text{CLIP}}}{\partial r}=\widehat{A}(&lt;0)\)</span> for <span class="math inline">\(r\ge 1-\varepsilon\)</span> and <strong><span class="math inline">\(0\)</span></strong> for <span class="math inline">\(r&lt;1-\varepsilon\)</span>.
+There is no incentive to shrink <span class="math inline">\(r\)</span> below <span class="math inline">\(1-\varepsilon\)</span>; the gradient goes to zero.</p></li>
+</ul>
+<p>Therefore, the <span class="math inline">\(\min\)</span> with a clipped ratio creates flat regions where the objective stops improving in the “profitable” outward direction. This removes the optimization incentive to move <span class="math inline">\(r\)</span> outside <span class="math inline">\([1-\varepsilon,1+\varepsilon]\)</span>, implementing a per-sample trust region on the probability ratio while retaining the standard policy-gradient inside the bracket.</p>
+<p>The following pseudocode implements PPO (clipped version) with GAE.</p>
+<div class="highlightbox">
+<div style="text-align:center;">
+<strong>Proximal Policy Optimization (PPO–Clip)</strong>
+</div>
+<p><strong>Inputs:</strong> policy <span class="math inline">\(\pi_\theta\)</span>, value <span class="math inline">\(V_\phi\)</span>, discount <span class="math inline">\(\gamma\)</span>, GAE <span class="math inline">\(\lambda\)</span>, clip <span class="math inline">\(\varepsilon\)</span>, coefficients <span class="math inline">\(c_v,c_e\)</span>, learning rate <span class="math inline">\(\alpha\)</span>, epochs <span class="math inline">\(K_{\text{epoch}}\)</span>, minibatch size <span class="math inline">\(B\)</span>.</p>
+<p>For iterations <span class="math inline">\(k=0,1,2,\dots\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Collect on-policy data.</strong> Roll out <span class="math inline">\(\pi_{\theta_k}\)</span> to get trajectories <span class="math inline">\(\{(s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\}\)</span>.<br />
+Cache <span class="math inline">\(\log \pi_{\theta_k}(a_t\mid s_t)\)</span>.</p></li>
+<li><p><strong>Compute GAE advantages and value targets.</strong><br />
+<span class="math inline">\(\delta_t = r_t + \gamma(1-\mathrm{done}_t) V_\phi(s_{t+1}) - V_\phi(s_t)\)</span><br />
+<span class="math inline">\(\widehat{A}_t = \delta_t + \gamma\lambda(1-\mathrm{done}_t)\widehat{A}_{t+1}\)</span>, with <span class="math inline">\(\widehat{A}_T=0\)</span>.<br />
+<span class="math inline">\(\widehat{V}^{\,\text{targ}}_t = \widehat{A}_t + V_\phi(s_t)\)</span>.<br />
+(Optionally standardize <span class="math inline">\(\{\widehat{A}_t\}\)</span> within the batch.)</p></li>
+<li><p><strong>Policy/Value optimization (multiple epochs).</strong><br />
+For <span class="math inline">\(e=1,\dots,K_{\text{epoch}}\)</span>:</p>
+<ul>
+<li>Split the batch into minibatches <span class="math inline">\(\mathcal{B}\)</span> of size <span class="math inline">\(B\)</span>.<br />
+</li>
+<li>For each <span class="math inline">\(\mathcal{B}\)</span>:
+<span class="math display">\[
+\rho_\theta(s,a) = \exp\!\big(\log\pi_\theta(a\mid s)-\log\pi_{\theta_k}(a\mid s)\big),
+\]</span>
+<span class="math display">\[
+\ell^{\text{CLIP}}_{\mathcal{B}}(\theta) =
+\frac{1}{B}\sum_{(s,a)\in\mathcal{B}}
+\min\!\big(\rho_\theta\,\widehat{A},\;
+\operatorname{clip}(\rho_\theta,1-\varepsilon,1+\varepsilon)\,\widehat{A}\big),
+\]</span>
+<span class="math display">\[
+\ell^{\text{VAL}}_{\mathcal{B}}(\phi)=
+\frac{1}{B}\sum_{s\in\mathcal{B}}(V_\phi(s)-\widehat{V}^{\,\text{targ}})^2,\quad
+\mathcal{H}_{\mathcal{B}}(\theta)=\frac{1}{B}\sum_{s\in\mathcal{B}}\mathcal{H}(\pi_\theta(\cdot\mid s)).
+\]</span></li>
+<li>The total loss to be minimized is
+<span class="math display">\[
+\mathcal{J}_{\mathcal{B}}(\theta,\phi) = - \ell^{\text{CLIP}}_{\mathcal{B}}(\theta) + c_v\,\ell^{\text{VAL}}_{\mathcal{B}}(\phi) - c_e\,\mathcal{H}_{\mathcal{B}}(\theta).
+\]</span></li>
+<li>Take an optimizer step on <span class="math inline">\(\mathcal{J}_{\mathcal{B}}\)</span> (e.g., Adam with learning rate <span class="math inline">\(\alpha\)</span>).</li>
+</ul></li>
+<li><p><strong>(Optional) Early stopping by KL.</strong><br />
+Estimate <span class="math inline">\(\widehat{\bar D}_{\mathrm{KL}}(\theta_k\!\parallel\!\theta)\)</span> on the whole batch; stop inner epochs early if it exceeds a threshold.</p></li>
+</ol>
+</div>
 <!-- ### Soft Actor–Critic
 
 Standard actor–critic methods maximize expected return. Soft Actor–Critic (SAC) augments the objective with an entropy bonus that explicitly encourages exploration and robustness while remaining off-policy and sample efficient [@haarnoja2018soft].
@@ -1645,6 +2151,7 @@ For iterations \(k=0,1,2,\dots\):
 </div>
 </div>
 </div>
+</div>
 
 
 
@@ -1657,11 +2164,20 @@ Barto, Andrew G, Richard S Sutton, and Charles W Anderson. 2012. <span>“Neuron
 <div id="ref-garrigos2023handbook" class="csl-entry">
 Garrigos, Guillaume, and Robert M Gower. 2023. <span>“Handbook of Convergence Theorems for (Stochastic) Gradient Methods.”</span> <em>arXiv Preprint arXiv:2301.11235</em>.
 </div>
+<div id="ref-kakade2001natural" class="csl-entry">
+Kakade, Sham M. 2001. <span>“A Natural Policy Gradient.”</span> <em>Advances in Neural Information Processing Systems</em> 14.
+</div>
 <div id="ref-nesterov2018lectures" class="csl-entry">
 Nesterov, Yurii. 2018. <em>Lectures on Convex Optimization</em>. Vol. 137. Springer.
 </div>
+<div id="ref-schulman2015trust" class="csl-entry">
+Schulman, John, Sergey Levine, Pieter Abbeel, Michael Jordan, and Philipp Moritz. 2015. <span>“Trust Region Policy Optimization.”</span> In <em>International Conference on Machine Learning</em>, 1889–97. PMLR.
+</div>
 <div id="ref-schulman2015high" class="csl-entry">
 Schulman, John, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter Abbeel. 2015. <span>“High-Dimensional Continuous Control Using Generalized Advantage Estimation.”</span> <em>arXiv Preprint arXiv:1506.02438</em>.
+</div>
+<div id="ref-schulman2017proximal" class="csl-entry">
+Schulman, John, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. 2017. <span>“Proximal Policy Optimization Algorithms.”</span> <em>arXiv Preprint arXiv:1707.06347</em>.
 </div>
 </div>
             </section>
