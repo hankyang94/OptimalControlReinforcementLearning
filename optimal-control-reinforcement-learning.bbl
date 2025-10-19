@@ -39,6 +39,13 @@ Garrigos, G. and Gower, R.~M. (2023).
 \newblock Handbook of convergence theorems for (stochastic) gradient methods.
 \newblock {\em arXiv preprint arXiv:2301.11235}.
 
+\bibitem[Haarnoja et~al., 2018]{haarnoja2018soft}
+Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. (2018).
+\newblock Soft actor-critic: Off-policy maximum entropy deep reinforcement
+  learning with a stochastic actor.
+\newblock In {\em International conference on machine learning}, pages
+  1861--1870. Pmlr.
+
 \bibitem[Kakade, 2001]{kakade2001natural}
 Kakade, S.~M. (2001).
 \newblock A natural policy gradient.

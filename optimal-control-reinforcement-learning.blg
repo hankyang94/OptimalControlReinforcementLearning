@@ -6,45 +6,45 @@ Database file #1: book.bib
 Database file #2: packages.bib
 Warning--there's a number but no volume in barto2012neuronlike
 Warning--can't use both volume and number fields in sutton1998reinforcement
-You've used 22 entries,
+You've used 23 entries,
             1935 wiz_defined-function locations,
-            605 strings with 7656 characters,
-and the built_in function-call counts, 9681 in all, are:
-= -- 953
-> -- 417
-< -- 20
-+ -- 151
-- -- 142
-* -- 781
-:= -- 1629
-add.period$ -- 70
-call.type$ -- 22
-change.case$ -- 176
-chr.to.int$ -- 21
-cite$ -- 24
-duplicate$ -- 392
-empty$ -- 662
-format.name$ -- 177
-if$ -- 1947
+            610 strings with 7854 characters,
+and the built_in function-call counts, 10307 in all, are:
+= -- 1020
+> -- 440
+< -- 21
++ -- 159
+- -- 150
+* -- 827
+:= -- 1721
+add.period$ -- 74
+call.type$ -- 23
+change.case$ -- 185
+chr.to.int$ -- 22
+cite$ -- 25
+duplicate$ -- 421
+empty$ -- 707
+format.name$ -- 186
+if$ -- 2085
 int.to.chr$ -- 2
 int.to.str$ -- 0
-missing$ -- 25
-newline$ -- 113
-num.names$ -- 66
-pop$ -- 183
+missing$ -- 26
+newline$ -- 118
+num.names$ -- 69
+pop$ -- 195
 preamble$ -- 1
-purify$ -- 179
+purify$ -- 188
 quote$ -- 0
-skip$ -- 310
+skip$ -- 334
 stack$ -- 0
-substring$ -- 632
-swap$ -- 88
-text.length$ -- 9
+substring$ -- 684
+swap$ -- 100
+text.length$ -- 10
 text.prefix$ -- 0
 top$ -- 0
-type$ -- 126
+type$ -- 132
 warning$ -- 2
-while$ -- 74
+while$ -- 79
 width$ -- 0
-write$ -- 287
+write$ -- 301
 (There were 2 warnings)
