@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-15" />
+<meta name="date" content="2025-10-19" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -236,8 +236,12 @@ div.csl-indent {
 <li class="chapter" data-level="3.4.5" data-path="policy-gradient.html"><a href="policy-gradient.html#proof-fisher"><i class="fa fa-check"></i><b>3.4.5</b> Proof of Fisher Information</a></li>
 <li class="chapter" data-level="3.4.6" data-path="policy-gradient.html"><a href="policy-gradient.html#trust-region-policy-optimization"><i class="fa fa-check"></i><b>3.4.6</b> Trust Region Policy Optimization</a></li>
 <li class="chapter" data-level="3.4.7" data-path="policy-gradient.html"><a href="policy-gradient.html#proximal-policy-optimization"><i class="fa fa-check"></i><b>3.4.7</b> Proximal Policy Optimization</a></li>
+<li class="chapter" data-level="3.4.8" data-path="policy-gradient.html"><a href="policy-gradient.html#soft-actorcritic"><i class="fa fa-check"></i><b>3.4.8</b> Soft Actor–Critic</a></li>
+<li class="chapter" data-level="3.4.9" data-path="policy-gradient.html"><a href="policy-gradient.html#deterministic-policy-gradient"><i class="fa fa-check"></i><b>3.4.9</b> Deterministic Policy Gradient</a></li>
 </ul></li>
+<li class="chapter" data-level="3.5" data-path="policy-gradient.html"><a href="policy-gradient.html#model-based-policy-optimization"><i class="fa fa-check"></i><b>3.5</b> Model-based Policy Optimization</a></li>
 </ul></li>
+<li class="chapter" data-level="4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html"><i class="fa fa-check"></i><b>4</b> Model-based Planning and Optimization</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="appconvex.html"><a href="appconvex.html"><i class="fa fa-check"></i><b>A</b> Convex Analysis and Optimization</a>
 <ul>
@@ -301,13 +305,13 @@ div.csl-indent {
           <div class="page-inner">
 
             <section class="normal" id="section-">
-<div id="app-lti-system-theory" class="section level1 hasAnchor" number="5">
+<div id="app-lti-system-theory" class="section level1 hasAnchor" number="6">
 <h1><span class="header-section-number">B</span> Linear System Theory<a href="app-lti-system-theory.html#app-lti-system-theory" class="anchor-section" aria-label="Anchor link to header"></a></h1>
 <p><em>Thanks to Shucheng Kang for writing this Appendix.</em></p>
-<div id="app-lti-stability" class="section level2 hasAnchor" number="5.1">
+<div id="app-lti-stability" class="section level2 hasAnchor" number="6.1">
 <h2><span class="header-section-number">B.1</span> Stability<a href="app-lti-system-theory.html#app-lti-stability" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <!-- Check this [note](https://intra.engr.ucr.edu/~enozari/teaching/ME120_Fall20/Lecture%203%20-%20Stability,%20Controllability%20&%20Observability.pdf).  -->
-<div id="app-lti-stability-ct" class="section level3 hasAnchor" number="5.1.1">
+<div id="app-lti-stability-ct" class="section level3 hasAnchor" number="6.1.1">
 <h3><span class="header-section-number">B.1.1</span> Continuous-Time Stability<a href="app-lti-system-theory.html#app-lti-stability-ct" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Consider the continuous-time linear time-invariant (LTI) system
 <span class="math display" id="eq:app-stability-ct-linear-system">\[\begin{equation}
@@ -388,7 +392,7 @@ Since $\text{Re}(\lambda_i) < 0$, no matter how we choose $a_{i,k}(0)$, $a_{i,k}
 </div>
 </div>
 </div>
-<div id="app-lti-stability-dt" class="section level3 hasAnchor" number="5.1.2">
+<div id="app-lti-stability-dt" class="section level3 hasAnchor" number="6.1.2">
 <h3><span class="header-section-number">B.1.2</span> Discrete-Time Stability<a href="app-lti-system-theory.html#app-lti-stability-dt" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Now consider the diagonalizable, discrete-time linear time-invariant (LTI) system
 <span class="math display" id="eq:app-stability-dt-linear-system">\[\begin{equation}
@@ -419,7 +423,7 @@ Since <span class="math inline">\(|\lambda_i| &lt; 1\)</span>, <span class="math
 </div>
 </div>
 </div>
-<div id="lyapunov-analysis" class="section level3 hasAnchor" number="5.1.3">
+<div id="lyapunov-analysis" class="section level3 hasAnchor" number="6.1.3">
 <h3><span class="header-section-number">B.1.3</span> Lyapunov Analysis<a href="app-lti-system-theory.html#lyapunov-analysis" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div class="theorembox">
 <div class="theorem">
@@ -515,7 +519,7 @@ and <span class="math inline">\(Q = I\)</span> maximizes the convergence rate es
 <hr />
 </div>
 </div>
-<div id="app-lti-controllable-observable" class="section level2 hasAnchor" number="5.2">
+<div id="app-lti-controllable-observable" class="section level2 hasAnchor" number="6.2">
 <h2><span class="header-section-number">B.2</span> Controllability and Observability<a href="app-lti-system-theory.html#app-lti-controllable-observable" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>Consider the following linear time-invariant (LTI) system
 <span class="math display" id="eq:app-linear-system">\[\begin{equation}
@@ -552,7 +556,7 @@ where <span class="math inline">\(x \in \mathbb{R}^n\)</span> the state, <span c
    \end{split}
 \end{equation*}\]</span>
 Since the coordinate transformation only changes the system’s coordinate basis, physical properties like controllability and observability will not change.</p>
-<div id="cayley-hamilton-theorem" class="section level3 hasAnchor" number="5.2.1">
+<div id="cayley-hamilton-theorem" class="section level3 hasAnchor" number="6.2.1">
 <h3><span class="header-section-number">B.2.1</span> Cayley-Hamilton Theorem<a href="app-lti-system-theory.html#cayley-hamilton-theorem" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>In the analysis of controllability and observability, Cayley Hamilton Theorem lays the foundation. The statement of the theory and its (elegant) proof are given blow. Some useful corollaries are also presented.</p>
 <div class="theorembox">
@@ -824,7 +828,7 @@ where the penultimate equality uses Cayley Hamilton Theorem.</p>
 </div>
 </div>
 </div>
-<div id="equivalent-statements-for-controllability" class="section level3 hasAnchor" number="5.2.2">
+<div id="equivalent-statements-for-controllability" class="section level3 hasAnchor" number="6.2.2">
 <h3><span class="header-section-number">B.2.2</span> Equivalent Statements for Controllability<a href="app-lti-system-theory.html#equivalent-statements-for-controllability" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>There are a few equivalent statements to express an LTI system’s controllability that one should be familiar with:</p>
 <div class="theorembox">
@@ -1050,7 +1054,7 @@ Now consider <span class="math inline">\(F(z) = v^* e^{Az} B, z\in \mathcal{C}\)
 </div>
 </div>
 </div>
-<div id="duality" class="section level3 hasAnchor" number="5.2.3">
+<div id="duality" class="section level3 hasAnchor" number="6.2.3">
 <h3><span class="header-section-number">B.2.3</span> Duality<a href="app-lti-system-theory.html#duality" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Although controllability and observability seemingly have no direct connections from their definitions <a href="app-lti-system-theory.html#def:lticontrollable">B.2</a> and <a href="app-lti-system-theory.html#def:ltiobservable">B.3</a>, the following theorem <span class="citation">(<a href="#ref-chen1984book-linear">Chen 1984</a>)</span> states their tight relations.</p>
 <div class="theorembox">
@@ -1098,7 +1102,7 @@ is nonsingular for all <span class="math inline">\(t &gt;0\)</span>. The latter 
 </div>
 </div>
 </div>
-<div id="equivalent-statements-for-observability" class="section level3 hasAnchor" number="5.2.4">
+<div id="equivalent-statements-for-observability" class="section level3 hasAnchor" number="6.2.4">
 <h3><span class="header-section-number">B.2.4</span> Equivalent Statements for Observability<a href="app-lti-system-theory.html#equivalent-statements-for-observability" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>With the Theorem of Duality <a href="app-lti-system-theory.html#thm:lti-dual-conobs">B.6</a>, we can directly write down the equivalent statements of observability without any additional proofs:</p>
 <div class="theorembox">
@@ -1138,7 +1142,7 @@ W_o = \int_{0}^{\infty} e^{A^*\tau} C^* C e^{A\tau} d\tau
 <hr />
 </div>
 </div>
-<div id="stabilizability-and-detectability" class="section level2 hasAnchor" number="5.3">
+<div id="stabilizability-and-detectability" class="section level2 hasAnchor" number="6.3">
 <h2><span class="header-section-number">B.3</span> Stabilizability And Detectability<a href="app-lti-system-theory.html#stabilizability-and-detectability" class="anchor-section" aria-label="Anchor link to header"></a></h2>
 <p>To define stabilizability and detectability of an LTI system, we first introduce the concept of <em>system mode</em>, which can be naturally derived from the fifth definition of controllability <a href="app-lti-system-theory.html#thm:lticontrollable">B.5</a> (observability <a href="app-lti-system-theory.html#thm:ltiobservable">B.7</a>).</p>
 <div class="definitionbox">
@@ -1168,7 +1172,7 @@ W_o = \int_{0}^{\infty} e^{A^*\tau} C^* C e^{A\tau} d\tau
 </div>
 </div>
 <p>Like in the case of controllability and observability, duality also holds in stabilizability and detectability. Moreover, similarity transformation will not influence an LTI system’s stabilizability and detectability.</p>
-<div id="equivalent-statements-for-stabilizability" class="section level3 hasAnchor" number="5.3.1">
+<div id="equivalent-statements-for-stabilizability" class="section level3 hasAnchor" number="6.3.1">
 <h3><span class="header-section-number">B.3.1</span> Equivalent Statements for Stabilizability<a href="app-lti-system-theory.html#equivalent-statements-for-stabilizability" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div class="theorembox">
 <div class="theorem">
@@ -1273,7 +1277,7 @@ where <span class="math inline">\(\bar{A}_c \in \mathbb{C}^{k_1 \times k_1}\)</s
 </div>
 </div>
 </div>
-<div id="equivalent-statements-for-detectability" class="section level3 hasAnchor" number="5.3.2">
+<div id="equivalent-statements-for-detectability" class="section level3 hasAnchor" number="6.3.2">
 <h3><span class="header-section-number">B.3.2</span> Equivalent Statements for Detectability<a href="app-lti-system-theory.html#equivalent-statements-for-detectability" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Thanks to duality, we can directly write down the equivalent statements of observability without any additional proofs:</p>
 <div class="theorembox">

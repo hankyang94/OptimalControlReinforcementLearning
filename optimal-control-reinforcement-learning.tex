@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-10-15}
+\date{2025-10-19}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -5841,7 +5841,7 @@ L^{\text{CLIP}}(r,\widehat{A})
 = \min\!\big(r\,\widehat{A},\ \operatorname{clip}(r,1-\varepsilon,1+\varepsilon)\,\widehat{A}\big).
 \]
 
-Let's do a case analysis:
+Let's do a case analysis, as shown in Fig. \ref{fig:ppo-clip-obj}.
 
 \begin{itemize}
 \item
@@ -5874,6 +5874,15 @@ Let's do a case analysis:
   so \(\frac{\partial L^{\text{CLIP}}}{\partial r}=\widehat{A}(<0)\) for \(r\ge 1-\varepsilon\) and \textbf{\(0\)} for \(r<1-\varepsilon\).
   There is no incentive to shrink \(r\) below \(1-\varepsilon\); the gradient goes to zero.
 \end{itemize}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.8\linewidth]{images/Policy-Gradients/PPO_clip} 
+
+}
+
+\caption{The clipped objective function in PPO (from the original PPO paper).}\label{fig:ppo-clip-obj}
+\end{figure}
 
 Therefore, the \(\min\) with a clipped ratio creates flat regions where the objective stops improving in the ``profitable'' outward direction. This removes the optimization incentive to move \(r\) outside \([1-\varepsilon,1+\varepsilon]\), implementing a per-sample trust region on the probability ratio while retaining the standard policy-gradient inside the bracket.
 
@@ -5932,6 +5941,373 @@ For iterations \(k=0,1,2,\dots\):
   \textbf{(Optional) Early stopping by KL.}\\
   Estimate \(\widehat{\bar D}_{\mathrm{KL}}(\theta_k\!\parallel\!\theta)\) on the whole batch; stop inner epochs early if it exceeds a threshold.
 \end{enumerate}
+
+\subsection{Soft Actor--Critic}\label{soft-actorcritic}
+
+Standard actor--critic methods maximize expected return. Soft Actor--Critic (SAC) augments the objective with an entropy bonus that explicitly encourages exploration and robustness while remaining off-policy and sample efficient \citep{haarnoja2018soft}. We first introduce a minimal implementation of SAC for discrete actions, then present full SAC with additional techniques for continuous actions.
+
+\subsubsection{SAC for Discrete Actions}\label{sac-for-discrete-actions}
+
+\textbf{Entropy of A Probability Distribution.} Given a probability distribution \(P\) supported on the set \(\mathcal{X}\), the entropy of the distribution is defined as
+\begin{equation}
+\mathcal{H}(P) = - \sum_{x \in \mathcal{X}} P(x) \log P(x) = - \mathbb{E}_{x \sim P} \log P(x).
+\label{eq:entropy}
+\end{equation}
+Since \(0 \leq P(x) \leq 1\) for any \(x\), it is clear that \(\mathcal{H}(P) \geq 0\) for any distribution \(P\).
+
+Suppose the set \(\mathcal{X}\) has \(N\) elements \(x_1,\dots,x_N\), and suppose \(P(x_i) = p_i \geq 0,i=1,\dots,N\). We claim that the distribution \(P^\star\) that maximizes \(\mathcal{H}(P)\) is such that \(p^\star_i = \frac{1}{N},i=1,\dots,N\).
+
+To show this, consider the function \(\log t\) that is concave for \(t > 0\). Using \href{https://en.wikipedia.org/wiki/Jensen's_inequality}{Jensen's inequality}, we have that
+\begin{equation}
+\begin{split}
+\mathcal{H}(P) & = - \sum_{x} P(x) \log P(x) = \sum_{x} P(x) \log \frac{1}{P(x)} \\
+& \leq \log \left( \sum_{x} P(x) \frac{1}{P(x)} \right) \\
+& = \log N,
+\end{split}
+\end{equation}
+with the equality holds if and only if \(P(x_1)=P(x_2)=\dots=P(x_N) = \frac{1}{N}\). Therefore, maximizing the entropy \(\mathcal{H}(P)\) encourages the distribution \(P\) to have a density function that spreads out evenly over the set \(\mathcal{X}\).
+
+\textbf{Maximum-Entropy Objective.} SAC maximizes the soft objective
+\begin{equation}
+\begin{split}
+J(\pi) &= \mathbb{E}\!\left[\sum_{t}\gamma^t\Big(R(s_t,a_t)\;+\;\alpha\,\mathcal{H}\!\left(\pi(\cdot\mid s_t)\right)\Big)\right],
+\\
+\mathcal{H}(\pi(\cdot\mid s)) &= -\mathbb{E}_{a\sim\pi}[\log \pi(a\mid s)],
+\end{split}
+\label{eq:soft-objective}
+\end{equation}
+where the entropy function \(\mathcal{H}(\cdot)\) encourages the policy to explore, and the temperature \(\alpha>0\) balances reward maximization against exploration.
+
+Given a trajectory \(\tau = (s_0, a_0, r_0, s_1, a_1,\dots)\), define the soft return:
+\[
+g_t = \sum_{t=0} \gamma^t \left( R(s_t, a_t) - \alpha \log \pi (a_t \mid s_t) \right).
+\]
+This leads to the ``soft'' state value and soft action value associated with \(\pi\):
+\begin{equation}
+\begin{split}
+V^\pi(s) & = \mathbb{E}_{a\sim\pi}\left[Q^\pi(s,a)\;-\;\alpha\log\pi(a\mid s)\right], \\
+Q^\pi(s,a) & = R(s,a) + \gamma\,\mathbb{E}_{s'} \left[V^\pi(s')\right].
+\end{split}
+\label{eq:soft-value-functions}
+\end{equation}
+Combining the two equations above, we obtain a soft Bellman Consistency equation on the \(Q\) value:
+\begin{equation}
+Q^{\pi}(s,a) = R(s, a) + \gamma \mathbb{E}_{s'} \left[ \mathbb{E}_{a' \sim \pi} \left[ Q^\pi(s', a') - \alpha \log \pi(a' \mid s') \right] \right].
+\label{eq:Bellman-Consistency-Soft-Q}
+\end{equation}
+
+\textbf{Critic Update.} For a replay sample \((s,a,r,s')\), assuming discrete actions, we can compute the target \(Q\) value following the soft Bellman Consistency equation \eqref{eq:Bellman-Consistency-Soft-Q}
+\begin{equation}
+y \;=\;
+r + \gamma \sum_{a'} \pi_{\theta} (a' \mid s') \left( Q_{\bar{\psi}}(s', a') - \alpha \log  \pi_\theta (a' \mid s') \right)
+\label{eq:sac-target}
+\end{equation}
+where \(Q_{\bar{\psi}}\) is the target Q network inspired by DQN to mitigate the deadly triad.
+The critic loss is therefore
+\begin{equation}
+\mathcal{L}_Q(\psi) \;=\; \mathbb{E}_{(s,a) \sim \mathcal{D}}\big[\big(Q_{\psi}(s,a)-y\big)^2\big],
+\label{eq:sac-critic-loss}
+\end{equation}
+where the expectation is taken over a minibatch drawn from the replay buffer.
+
+\textbf{Actor Update.} Given the learned critic \(Q_\psi\) and replay state distribution \(s \sim \mathcal{D}\), the SAC policy improvement step chooses \(\pi_\theta\) to \textbf{minimize}, for each state, the soft advantage--regularized objective
+\begin{equation}
+J_\pi(\theta)
+\;=\;
+\mathbb{E}_{s\sim\mathcal{D}}
+\left[
+\sum_{a} \pi_\theta(a\mid s)\left( \alpha\,\log \pi_\theta(a\mid s) - Q_\psi(s,a)\right)
+\right].
+\label{eq:sac-actor-discrete}
+\end{equation}
+For discrete actions, the expectation over \(a\) is a finite sum---no action sampling is required.
+
+Differentiating \eqref{eq:sac-actor-discrete} yields the policy gradient
+\begin{equation}
+\nabla_\theta J_\pi(\theta)
+=
+\mathbb{E}_{s\sim\mathcal{D}}
+\left[
+\sum_{a}
+\nabla_\theta \pi_\theta(a\mid s)\;
+\Big(\alpha\,[1+\log \pi_\theta(a\mid s)] - Q_\psi(s,a)\Big)
+\right].
+\label{eq:sac-actor-grad-discrete}
+\end{equation}
+
+The following pseudocode implements a basic SAC algorithm with discrete actions.
+
+\textbf{Soft Actor--Critic (Discrete Actions, Single Q + Single Target)}
+
+\textbf{Inputs:} replay buffer \(\mathcal{D}\); policy \(\pi_\theta(a\mid s)\) over \(K\) actions; single critic \(Q_{\psi}(s,\cdot)\) (returns a \(K\)-vector); target critic parameters \(\bar\psi\); discount \(\gamma\); temperature \(\alpha\) (learned or fixed); Polyak \(\tau\in(0,1]\); batch size \(B\); stepsizes \(\alpha_\theta,\alpha_\psi\).
+
+\textbf{Initialize:} \(\bar\psi \leftarrow \psi\).
+
+For iterations \(k=0,1,2,\dots\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Interaction.}\\
+  Observe \(s_t\). Sample \(a_t \sim \pi_\theta(\cdot\mid s_t)\); step env to get \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\); push to \(\mathcal{D}\).
+\item
+  \textbf{Sample minibatch.}\\
+  Draw \(B\) transitions \(\{(s,a,r,s',d)\}\) from \(\mathcal{D}\).
+\item
+  \textbf{Target computation (single target network).}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Compute \(\pi_\theta(\cdot\mid s')\) and \(\log \pi_\theta(\cdot\mid s')\).
+  \item
+    Evaluate target critic \(Q_{\bar\psi}(s',\cdot)\).
+  \item
+    Soft value target:\\
+    \[
+    V_{\text{tgt}}(s')=\Big\langle \pi_\theta(\cdot\mid s'),\; Q_{\bar\psi}(s',\cdot)-\alpha\,\log \pi_\theta(\cdot\mid s') \Big\rangle.
+    \]
+  \item
+    \textbf{Bellman target:}\\
+    \[
+    y \leftarrow r + \gamma(1-d)\,V_{\text{tgt}}(s').
+    \]
+    \emph{(Matches \eqref{eq:sac-target} with one target network.)}
+  \end{itemize}
+\item
+  \textbf{Critic update.}
+  Minimize the squared error (cf.~\eqref{eq:sac-critic-loss}):\\
+  \[
+    \psi \leftarrow \psi - \alpha_\psi \nabla_{\psi}\;\frac{1}{B}\sum\nolimits_{(s,a,r,s',d)}
+    \big(Q_{\psi}(s,a)-y\big)^2.
+    \]
+\item
+  \textbf{Actor update.} Minimize (cf.~\eqref{eq:sac-actor-discrete}):\\
+  \[
+    \theta \leftarrow \theta - \alpha_\theta \nabla_\theta \frac{1}{B}\sum_s
+    \sum_{a} \pi_\theta(a\mid s)\,\Big(\alpha\,\log \pi_\theta(a\mid s)-Q_{\psi}(s,a)\Big).
+    \]
+\item
+  \textbf{Target critic (Polyak).}\\
+  \[
+  \bar\psi \;\leftarrow\; \tau\,\psi \;+\; (1-\tau)\,\bar\psi.
+  \]
+\end{enumerate}
+
+The next example applies the SAC algorithm above to the cart-pole problem.
+
+\begin{example}[SAC for Cart-pole Balancing]
+\protect\hypertarget{exm:cartpole-sac}{}\label{exm:cartpole-sac}
+
+We use a fixed temperature \(\alpha=0.2\).
+
+Fig. \ref{fig:cart-pole-learning-curve-sac} shows the learning curve of SAC.
+
+Fig. \ref{fig:cart-pole-policy-rollout-sac} shows a sample rollout of the learned policy.
+
+You can find the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_sac.py}{here}. Play with the temperature parameter.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole_learning_curve_sac} 
+
+}
+
+\caption{Learning curve (Soft Actor--Critic).}\label{fig:cart-pole-learning-curve-sac}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/cartpole-sac-rollout} 
+
+}
+
+\caption{Policy rollout (Soft Actor--Critic).}\label{fig:cart-pole-policy-rollout-sac}
+\end{figure}
+
+\end{example}
+
+\subsubsection{SAC for Continuous Actions}\label{sac-for-continuous-actions}
+
+In continuous action spaces we cannot sum over actions. SAC therefore:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  samples actions from the current policy using a \emph{reparameterization} trick (low-variance gradients), and
+\item
+  computes the soft Bellman target with those sampled actions and a \emph{twin-target minimum} to reduce overestimation.
+\end{enumerate}
+
+\textbf{Reparameterization (pathwise) Gradient.} Let the stochastic policy be a Gaussian in unconstrained space, squashed by \texttt{tanh} to the action bounds:
+\[
+u \;=\; \mu_\theta(s)\;+\;\sigma_\theta(s)\odot\varepsilon,\quad \varepsilon\sim\mathcal N(0,I),
+\qquad
+a \;=\; \tanh(u)\cdot a_{\text{scale}} + a_{\text{bias}},
+\]
+where \(\sigma_\theta(s)\) outputs per-dimension standard deviation.
+This gives a differentiable map \(a=f_\theta(s,\varepsilon)\). Expectations over \(a\sim \pi_\theta(\cdot\mid s)\) are then written as expectations over \(\varepsilon\), so gradients can flow through \(f_\theta\) (the \emph{pathwise derivative}). The correct log-density under the squashed policy uses change-of-variables:
+\[
+\log\pi_\theta(a\mid s)
+\;=\;
+\log\mathcal N\!\big(u;\mu_\theta(s),\sigma_\theta^2(s)\big)
+\;-\;\sum_i \log\!\big(1-\tanh^2(u_i)\big)
+\;+\;\text{constant}.
+\]
+The intuition here is that the \texttt{tanh} function is a nonlinear transformation that distorts the original Gaussian distribution. This ``tanh correction'' is crucial for stable training.
+
+\textbf{Critic Update.} Maintain two critics \(Q_{\psi_1},Q_{\psi_2}\) and their target copies
+\(Q_{\bar\psi_1},Q_{\bar\psi_2}\).
+For a replay minibatch \((s,a,r,s',d)\), form the target by drawing a next action from the current policy:
+\begin{equation}
+a' \sim \pi_\theta(\cdot\mid s'),\qquad
+y \;=\; r \;+\; \gamma(1-d)\,\Big(
+\min\nolimits_{j=1,2} Q_{\bar\psi_j}(s',a') \;-\; \alpha \log\pi_\theta(a'\mid s')
+\Big).
+\label{eq:cont-target}
+\end{equation}
+Each critic minimizes the squared error to \(y\) (with stop-grad on \(y\)):
+\[
+\mathcal L_Q(\psi_j) \;=\; \mathbb{E}\big[(Q_{\psi_j}(s,a)-y)^2\big],\quad j=1,2,
+\]
+where the expectation is taken over the distribution in the replay buffer.
+
+\textbf{Actor Update.} The actor minimizes the soft objective under the replay state distribution:
+\begin{equation}
+J_\pi(\theta)
+\;=\;
+\mathbb{E}_{s\sim\mathcal D,\,\varepsilon}\left[
+\alpha\,\log\pi_\theta \big(f_\theta(s,\varepsilon)\mid s\big)
+-\min\nolimits_{j=1,2} Q_{\psi_j} \big(s,f_\theta(s,\varepsilon)\big)
+\right].
+\label{eq:cont-actor}
+\end{equation}
+By reparameterization, the gradient flows through both the explicit \(\log\pi_\theta\) term and the path \(a=f_\theta(s,\varepsilon)\). Particularly, denote \(Q_\psi(\cdot, \cdot) = \min_{j=1,2} Q_{\psi_j} (\cdot, \cdot)\), we have that
+\[
+\nabla_\theta J_\pi(\theta) = \mathbb{E}_{s,\varepsilon} \left[ \alpha \nabla_\theta \log \pi_\theta (a \mid s) + \left( \alpha \nabla_a \log \pi_\theta(a \mid s) - \nabla_a Q_\psi (s,a) \right) \nabla_\theta f_\theta (s, \varepsilon) \right]_{a=f_\theta(s,\varepsilon)}.
+\]
+In code, you typically just write the loss
+\[
+\mathbb{E}_{s, \varepsilon}\left[ \alpha \log \pi_\theta (a \mid s) - Q_\psi (s, a) \right], \quad a = f_\theta(s, \varepsilon),
+\]
+and autodiff will automatically compute the correct gradient.
+
+\textbf{Tuning \(\alpha\) (Temperature).} \(\alpha\) trades off reward pursuit vs.~policy entropy. A fixed \(\alpha\) is problem-dependent. SAC treats \(\alpha\) as a dual variable to enforce a target entropy \(\bar{\mathcal H}\) (often \(-\text{dim}(\mathcal A)\)):
+\[
+J(\alpha)\;=\;\mathbb{E}_{s\sim\mathcal D,\,a\sim\pi_\theta}\!\Big[-\alpha\big(\log \pi_\theta(a\mid s)+\bar{\mathcal H}\big)\Big],
+\quad
+\log\alpha \leftarrow \log\alpha - \alpha_\alpha \nabla_{\log\alpha} J(\alpha).
+\]
+This adapts exploration automatically across tasks and training phases.
+
+\textbf{Soft Actor--Critic (Continuous Actions, Twin Critics + Twin Targets)}
+
+\textbf{Inputs:} replay buffer \(\mathcal{D}\); policy \(\pi_\theta(a\mid s)\) reparameterized by \(a=f_\theta(s,\varepsilon)\) with tanh-squashed Gaussian; twin critics \(Q_{\psi_1},Q_{\psi_2}\); twin target critics with params \(\bar\psi_1,\bar\psi_2\); discount \(\gamma\); temperature \(\alpha\) (learned or fixed); Polyak \(\tau\in(0,1]\); batch size \(B\); stepsizes \(\alpha_\theta,\alpha_\psi,\alpha_\alpha\).
+
+\textbf{Initialize:} \(\bar\psi_j \leftarrow \psi_j\) for \(j\in\{1,2\}\).
+
+For iterations \(k=0,1,2,\dots\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Interaction.}\\
+  Observe \(s_t\). Sample \(\varepsilon_t\sim\mathcal N(0,I)\), set \(a_t=f_\theta(s_t,\varepsilon_t)\); step env to get \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\); push to \(\mathcal{D}\).
+\item
+  \textbf{Sample minibatch.}\\
+  Draw \(B\) transitions \(\{(s,a,r,s',d)\}\) from \(\mathcal{D}\).
+\item
+  \textbf{Target computation (twin targets, reparameterized next action).}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Sample \(\varepsilon'\sim\mathcal N(0,I)\), set \(a'=f_\theta(s',\varepsilon')\).
+  \item
+    Compute \(\log\pi_\theta(a'\mid s')\) with \textbf{tanh correction}.
+  \item
+    Evaluate target critics \(Q_{\bar\psi_1}(s',a')\), \(Q_{\bar\psi_2}(s',a')\); let \(Q_{\min}(s',a')=\min\{Q_{\bar\psi_1},Q_{\bar\psi_2}\}\).
+  \item
+    \textbf{Bellman target:}\\
+    \[
+    y \leftarrow r + \gamma(1-d)\,\big(Q_{\min}(s',a') - \alpha\,\log\pi_\theta(a'\mid s')\big).
+    \]
+    \emph{(Stop gradient through \(y\).)}
+  \end{itemize}
+\item
+  \textbf{Critic updates (both heads).}\\
+  \[
+  \psi_j \leftarrow \psi_j - \alpha_\psi \nabla_{\psi_j}\;\frac{1}{B}\sum (Q_{\psi_j}(s,a)-y)^2,\quad j=1,2.
+  \]
+\item
+  \textbf{Actor update (reparameterized).}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    For each \(s\) in the batch, sample \(\varepsilon\), set \(a=f_\theta(s,\varepsilon)\).
+  \item
+    \textbf{Actor objective:}\\
+    \[
+    J_\pi(\theta)=\frac{1}{B}\sum_s \Big(\alpha\,\log\pi_\theta(a\mid s)-\min\nolimits_j Q_{\psi_j}(s,a)\Big).
+    \]
+  \item
+    Update:
+    \[
+    \theta \leftarrow \theta - \alpha_\theta \nabla_\theta J_\pi(\theta).
+    \]
+  \end{itemize}
+\item
+  \textbf{Temperature (optional).}\\
+  With target entropy \(\bar{\mathcal H}\) and parameter \(\log\alpha\):
+  \[
+  J(\alpha)=\frac{1}{B}\sum_s \big[-\alpha(\log\pi_\theta(a\mid s)+\bar{\mathcal H})\big],\quad
+  \log\alpha \leftarrow \log\alpha - \alpha_\alpha \nabla_{\log\alpha} J(\alpha),\quad
+  \alpha\leftarrow e^{\log\alpha}.
+  \]
+\item
+  \textbf{Target critics (Polyak).} For \(j=1,2\):
+  \[
+  \bar\psi_j \;\leftarrow\; \tau\,\psi_j \;+\; (1-\tau)\,\bar\psi_j.
+  \]
+\end{enumerate}
+
+The next example applies SAC to Inverted Pendulum.
+
+\begin{example}[SAC for Inverted Pendulum]
+\protect\hypertarget{exm:pendulum-sac}{}\label{exm:pendulum-sac}
+
+Fig. \ref{fig:pendulum-learning-curve-sac} plots the learning curve.
+
+Fig. \ref{fig:pendulum-policy-rollout-sac} visualizes two sample rollouts of the policy.
+
+Code can be found \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_sac.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/pendulum_learning_curve_sac} 
+
+}
+
+\caption{Learning curve (Soft Actor--Critic).}\label{fig:pendulum-learning-curve-sac}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.4\linewidth]{images/Policy-Gradients/pendulum_rollout_sac-1} \includegraphics[width=0.4\linewidth]{images/Policy-Gradients/pendulum_rollout_sac-2} 
+
+}
+
+\caption{Policy rollout (Soft Actor--Critic).}\label{fig:pendulum-policy-rollout-sac}
+\end{figure}
+
+\end{example}
+
+\subsection{Deterministic Policy Gradient}\label{deterministic-policy-gradient}
+
+\section{Model-based Policy Optimization}\label{model-based-policy-optimization}
+
+\chapter{Model-based Planning and Optimization}\label{model-based-plan-optimize}
 
 \appendix
 

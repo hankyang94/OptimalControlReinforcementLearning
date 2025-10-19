@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-15" />
+<meta name="date" content="2025-10-19" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -31,7 +31,7 @@
   
   
 <link rel="prev" href="value-rl.html"/>
-<link rel="next" href="appconvex.html"/>
+<link rel="next" href="model-based-plan-optimize.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -236,8 +236,12 @@ div.csl-indent {
 <li class="chapter" data-level="3.4.5" data-path="policy-gradient.html"><a href="policy-gradient.html#proof-fisher"><i class="fa fa-check"></i><b>3.4.5</b> Proof of Fisher Information</a></li>
 <li class="chapter" data-level="3.4.6" data-path="policy-gradient.html"><a href="policy-gradient.html#trust-region-policy-optimization"><i class="fa fa-check"></i><b>3.4.6</b> Trust Region Policy Optimization</a></li>
 <li class="chapter" data-level="3.4.7" data-path="policy-gradient.html"><a href="policy-gradient.html#proximal-policy-optimization"><i class="fa fa-check"></i><b>3.4.7</b> Proximal Policy Optimization</a></li>
+<li class="chapter" data-level="3.4.8" data-path="policy-gradient.html"><a href="policy-gradient.html#soft-actorcritic"><i class="fa fa-check"></i><b>3.4.8</b> Soft Actor–Critic</a></li>
+<li class="chapter" data-level="3.4.9" data-path="policy-gradient.html"><a href="policy-gradient.html#deterministic-policy-gradient"><i class="fa fa-check"></i><b>3.4.9</b> Deterministic Policy Gradient</a></li>
 </ul></li>
+<li class="chapter" data-level="3.5" data-path="policy-gradient.html"><a href="policy-gradient.html#model-based-policy-optimization"><i class="fa fa-check"></i><b>3.5</b> Model-based Policy Optimization</a></li>
 </ul></li>
+<li class="chapter" data-level="4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html"><i class="fa fa-check"></i><b>4</b> Model-based Planning and Optimization</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="appconvex.html"><a href="appconvex.html"><i class="fa fa-check"></i><b>A</b> Convex Analysis and Optimization</a>
 <ul>
@@ -1952,7 +1956,7 @@ The PPO–Clip objective for one sample is
 L^{\text{CLIP}}(r,\widehat{A})
 = \min\!\big(r\,\widehat{A},\ \operatorname{clip}(r,1-\varepsilon,1+\varepsilon)\,\widehat{A}\big).
 \]</span></p>
-<p>Let’s do a case analysis:</p>
+<p>Let’s do a case analysis, as shown in Fig. <a href="policy-gradient.html#fig:ppo-clip-obj">3.16</a>.</p>
 <ul>
 <li><p>If <span class="math inline">\(\widehat{A}&gt;0\)</span>: increasing <span class="math inline">\(r\)</span> (i.e., increasing <span class="math inline">\(\pi_\theta(a\mid s)\)</span>) raises the <em>unclipped</em> term <span class="math inline">\(r\,\widehat{A}\)</span>.<br />
 The clipped term equals <span class="math inline">\((1+\varepsilon)\widehat{A}\)</span> whenever <span class="math inline">\(r&gt;1+\varepsilon\)</span>.
@@ -1982,6 +1986,12 @@ r\,\widehat{A}, &amp; r\ge 1-\varepsilon,\\[4pt]
 so <span class="math inline">\(\frac{\partial L^{\text{CLIP}}}{\partial r}=\widehat{A}(&lt;0)\)</span> for <span class="math inline">\(r\ge 1-\varepsilon\)</span> and <strong><span class="math inline">\(0\)</span></strong> for <span class="math inline">\(r&lt;1-\varepsilon\)</span>.
 There is no incentive to shrink <span class="math inline">\(r\)</span> below <span class="math inline">\(1-\varepsilon\)</span>; the gradient goes to zero.</p></li>
 </ul>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:ppo-clip-obj"></span>
+<img src="images/Policy-Gradients/PPO_clip.png" alt="The clipped objective function in PPO (from the original PPO paper)." width="80%" />
+<p class="caption">
+Figure 3.16: The clipped objective function in PPO (from the original PPO paper).
+</p>
+</div>
 <p>Therefore, the <span class="math inline">\(\min\)</span> with a clipped ratio creates flat regions where the objective stops improving in the “profitable” outward direction. This removes the optimization incentive to move <span class="math inline">\(r\)</span> outside <span class="math inline">\([1-\varepsilon,1+\varepsilon]\)</span>, implementing a per-sample trust region on the probability ratio while retaining the standard policy-gradient inside the bracket.</p>
 <p>The following pseudocode implements PPO (clipped version) with GAE.</p>
 <div class="highlightbox">
@@ -2028,133 +2038,718 @@ For <span class="math inline">\(e=1,\dots,K_{\text{epoch}}\)</span>:</p>
 Estimate <span class="math inline">\(\widehat{\bar D}_{\mathrm{KL}}(\theta_k\!\parallel\!\theta)\)</span> on the whole batch; stop inner epochs early if it exceeds a threshold.</p></li>
 </ol>
 </div>
-<!-- ### Soft Actor–Critic
-
-Standard actor–critic methods maximize expected return. Soft Actor–Critic (SAC) augments the objective with an entropy bonus that explicitly encourages exploration and robustness while remaining off-policy and sample efficient [@haarnoja2018soft].
-
-**Maximum-Entropy Objective.** SAC maximizes the soft objective
-\[
+</div>
+</div>
+<div id="soft-actorcritic" class="section level3 hasAnchor" number="3.4.8">
+<h3><span class="header-section-number">3.4.8</span> Soft Actor–Critic<a href="policy-gradient.html#soft-actorcritic" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Standard actor–critic methods maximize expected return. Soft Actor–Critic (SAC) augments the objective with an entropy bonus that explicitly encourages exploration and robustness while remaining off-policy and sample efficient <span class="citation">(<a href="#ref-haarnoja2018soft">Haarnoja et al. 2018</a>)</span>. We first introduce a minimal implementation of SAC for discrete actions, then present full SAC with additional techniques for continuous actions.</p>
+<div id="sac-for-discrete-actions" class="section level4 hasAnchor" number="3.4.8.1">
+<h4><span class="header-section-number">3.4.8.1</span> SAC for Discrete Actions<a href="policy-gradient.html#sac-for-discrete-actions" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p><strong>Entropy of A Probability Distribution.</strong> Given a probability distribution <span class="math inline">\(P\)</span> supported on the set <span class="math inline">\(\mathcal{X}\)</span>, the entropy of the distribution is defined as
+<span class="math display" id="eq:entropy">\[\begin{equation}
+\mathcal{H}(P) = - \sum_{x \in \mathcal{X}} P(x) \log P(x) = - \mathbb{E}_{x \sim P} \log P(x).
+\tag{3.59}
+\end{equation}\]</span>
+Since <span class="math inline">\(0 \leq P(x) \leq 1\)</span> for any <span class="math inline">\(x\)</span>, it is clear that <span class="math inline">\(\mathcal{H}(P) \geq 0\)</span> for any distribution <span class="math inline">\(P\)</span>.</p>
+<p>Suppose the set <span class="math inline">\(\mathcal{X}\)</span> has <span class="math inline">\(N\)</span> elements <span class="math inline">\(x_1,\dots,x_N\)</span>, and suppose <span class="math inline">\(P(x_i) = p_i \geq 0,i=1,\dots,N\)</span>. We claim that the distribution <span class="math inline">\(P^\star\)</span> that maximizes <span class="math inline">\(\mathcal{H}(P)\)</span> is such that <span class="math inline">\(p^\star_i = \frac{1}{N},i=1,\dots,N\)</span>.</p>
+<p>To show this, consider the function <span class="math inline">\(\log t\)</span> that is concave for <span class="math inline">\(t &gt; 0\)</span>. Using <a href="https://en.wikipedia.org/wiki/Jensen&#39;s_inequality">Jensen’s inequality</a>, we have that
+<span class="math display">\[\begin{equation}
 \begin{split}
-J(\pi) &= \mathbb{E}\!\left[\sum_{t\ge0}\gamma^t\Big(R(s_t,a_t)\;+\;\alpha\,\mathcal{H}\!\left(\pi(\cdot\mid s_t)\right)\Big)\right],
-\\
-\mathcal{H}(\pi(\cdot\mid s)) &= -\mathbb{E}_{a\sim\pi}[\log \pi(a\mid s)],
+\mathcal{H}(P) &amp; = - \sum_{x} P(x) \log P(x) = \sum_{x} P(x) \log \frac{1}{P(x)} \\
+&amp; \leq \log \left( \sum_{x} P(x) \frac{1}{P(x)} \right) \\
+&amp; = \log N,
 \end{split}
-(\#eq:soft-objective)
-\]
-with temperature \(\alpha>0\) trading reward maximization against exploration.
-
-Define the soft state value and soft action value:
-\[
-V^\pi(s)\;=\;\mathbb{E}_{a\sim\pi}\!\left[Q^\pi(s,a)\;-\;\alpha\log\pi(a\mid s)\right],
+\end{equation}\]</span>
+with the equality holds if and only if <span class="math inline">\(P(x_1)=P(x_2)=\dots=P(x_N) = \frac{1}{N}\)</span>. Therefore, maximizing the entropy <span class="math inline">\(\mathcal{H}(P)\)</span> encourages the distribution <span class="math inline">\(P\)</span> to have a density function that spreads out evenly over the set <span class="math inline">\(\mathcal{X}\)</span>.</p>
+<p><strong>Maximum-Entropy Objective.</strong> SAC maximizes the soft objective
+<span class="math display" id="eq:soft-objective">\[\begin{equation}
+\begin{split}
+J(\pi) &amp;= \mathbb{E}\!\left[\sum_{t}\gamma^t\Big(R(s_t,a_t)\;+\;\alpha\,\mathcal{H}\!\left(\pi(\cdot\mid s_t)\right)\Big)\right],
+\\
+\mathcal{H}(\pi(\cdot\mid s)) &amp;= -\mathbb{E}_{a\sim\pi}[\log \pi(a\mid s)],
+\end{split}
+\tag{3.60}
+\end{equation}\]</span>
+where the entropy function <span class="math inline">\(\mathcal{H}(\cdot)\)</span> encourages the policy to explore, and the temperature <span class="math inline">\(\alpha&gt;0\)</span> balances reward maximization against exploration.</p>
+<p>Given a trajectory <span class="math inline">\(\tau = (s_0, a_0, r_0, s_1, a_1,\dots)\)</span>, define the soft return:
+<span class="math display">\[
+g_t = \sum_{t=0} \gamma^t \left( R(s_t, a_t) - \alpha \log \pi (a_t \mid s_t) \right).
+\]</span>
+This leads to the “soft” state value and soft action value associated with <span class="math inline">\(\pi\)</span>:
+<span class="math display" id="eq:soft-value-functions">\[\begin{equation}
+\begin{split}
+V^\pi(s) &amp; = \mathbb{E}_{a\sim\pi}\left[Q^\pi(s,a)\;-\;\alpha\log\pi(a\mid s)\right], \\
+Q^\pi(s,a) &amp; = R(s,a) + \gamma\,\mathbb{E}_{s&#39;} \left[V^\pi(s&#39;)\right].
+\end{split}
+\tag{3.61}
+\end{equation}\]</span>
+Combining the two equations above, we obtain a soft Bellman Consistency equation on the <span class="math inline">\(Q\)</span> value:
+<span class="math display" id="eq:Bellman-Consistency-Soft-Q">\[\begin{equation}
+Q^{\pi}(s,a) = R(s, a) + \gamma \mathbb{E}_{s&#39;} \left[ \mathbb{E}_{a&#39; \sim \pi} \left[ Q^\pi(s&#39;, a&#39;) - \alpha \log \pi(a&#39; \mid s&#39;) \right] \right].
+\tag{3.62}
+\end{equation}\]</span></p>
+<p><strong>Critic Update.</strong> For a replay sample <span class="math inline">\((s,a,r,s&#39;)\)</span>, assuming discrete actions, we can compute the target <span class="math inline">\(Q\)</span> value following the soft Bellman Consistency equation <a href="policy-gradient.html#eq:Bellman-Consistency-Soft-Q">(3.62)</a>
+<span class="math display" id="eq:sac-target">\[\begin{equation}
+y \;=\;
+r + \gamma \sum_{a&#39;} \pi_{\theta} (a&#39; \mid s&#39;) \left( Q_{\bar{\psi}}(s&#39;, a&#39;) - \alpha \log  \pi_\theta (a&#39; \mid s&#39;) \right)
+\tag{3.63}
+\end{equation}\]</span>
+where <span class="math inline">\(Q_{\bar{\psi}}\)</span> is the target Q network inspired by DQN to mitigate the deadly triad.
+The critic loss is therefore
+<span class="math display" id="eq:sac-critic-loss">\[\begin{equation}
+\mathcal{L}_Q(\psi) \;=\; \mathbb{E}_{(s,a) \sim \mathcal{D}}\big[\big(Q_{\psi}(s,a)-y\big)^2\big],
+\tag{3.64}
+\end{equation}\]</span>
+where the expectation is taken over a minibatch drawn from the replay buffer.</p>
+<p><strong>Actor Update.</strong> Given the learned critic <span class="math inline">\(Q_\psi\)</span> and replay state distribution <span class="math inline">\(s \sim \mathcal{D}\)</span>, the SAC policy improvement step chooses <span class="math inline">\(\pi_\theta\)</span> to <strong>minimize</strong>, for each state, the soft advantage–regularized objective
+<span class="math display" id="eq:sac-actor-discrete">\[\begin{equation}
+J_\pi(\theta)
+\;=\;
+\mathbb{E}_{s\sim\mathcal{D}}
+\left[
+\sum_{a} \pi_\theta(a\mid s)\left( \alpha\,\log \pi_\theta(a\mid s) - Q_\psi(s,a)\right)
+\right].
+\tag{3.65}
+\end{equation}\]</span>
+For discrete actions, the expectation over <span class="math inline">\(a\)</span> is a finite sum—no action sampling is required.</p>
+<p>Differentiating <a href="policy-gradient.html#eq:sac-actor-discrete">(3.65)</a> yields the policy gradient
+<span class="math display" id="eq:sac-actor-grad-discrete">\[\begin{equation}
+\nabla_\theta J_\pi(\theta)
+=
+\mathbb{E}_{s\sim\mathcal{D}}
+\left[
+\sum_{a}
+\nabla_\theta \pi_\theta(a\mid s)\;
+\Big(\alpha\,[1+\log \pi_\theta(a\mid s)] - Q_\psi(s,a)\Big)
+\right].
+\tag{3.66}
+\end{equation}\]</span></p>
+<p>The following pseudocode implements a basic SAC algorithm with discrete actions.</p>
+<div class="highlightbox">
+<div style="text-align:center;">
+<strong>Soft Actor–Critic (Discrete Actions, Single Q + Single Target)</strong>
+</div>
+<p><strong>Inputs:</strong> replay buffer <span class="math inline">\(\mathcal{D}\)</span>; policy <span class="math inline">\(\pi_\theta(a\mid s)\)</span> over <span class="math inline">\(K\)</span> actions; single critic <span class="math inline">\(Q_{\psi}(s,\cdot)\)</span> (returns a <span class="math inline">\(K\)</span>-vector); target critic parameters <span class="math inline">\(\bar\psi\)</span>; discount <span class="math inline">\(\gamma\)</span>; temperature <span class="math inline">\(\alpha\)</span> (learned or fixed); Polyak <span class="math inline">\(\tau\in(0,1]\)</span>; batch size <span class="math inline">\(B\)</span>; stepsizes <span class="math inline">\(\alpha_\theta,\alpha_\psi\)</span>.</p>
+<p><strong>Initialize:</strong> <span class="math inline">\(\bar\psi \leftarrow \psi\)</span>.</p>
+<p>For iterations <span class="math inline">\(k=0,1,2,\dots\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Interaction.</strong><br />
+Observe <span class="math inline">\(s_t\)</span>. Sample <span class="math inline">\(a_t \sim \pi_\theta(\cdot\mid s_t)\)</span>; step env to get <span class="math inline">\((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\)</span>; push to <span class="math inline">\(\mathcal{D}\)</span>.</p></li>
+<li><p><strong>Sample minibatch.</strong><br />
+Draw <span class="math inline">\(B\)</span> transitions <span class="math inline">\(\{(s,a,r,s&#39;,d)\}\)</span> from <span class="math inline">\(\mathcal{D}\)</span>.</p></li>
+<li><p><strong>Target computation (single target network).</strong></p>
+<ul>
+<li>Compute <span class="math inline">\(\pi_\theta(\cdot\mid s&#39;)\)</span> and <span class="math inline">\(\log \pi_\theta(\cdot\mid s&#39;)\)</span>.</li>
+<li>Evaluate target critic <span class="math inline">\(Q_{\bar\psi}(s&#39;,\cdot)\)</span>.</li>
+<li>Soft value target:<br />
+<span class="math display">\[
+V_{\text{tgt}}(s&#39;)=\Big\langle \pi_\theta(\cdot\mid s&#39;),\; Q_{\bar\psi}(s&#39;,\cdot)-\alpha\,\log \pi_\theta(\cdot\mid s&#39;) \Big\rangle.
+\]</span></li>
+<li><strong>Bellman target:</strong><br />
+<span class="math display">\[
+y \leftarrow r + \gamma(1-d)\,V_{\text{tgt}}(s&#39;).
+\]</span>
+<em>(Matches <a href="policy-gradient.html#eq:sac-target">(3.63)</a> with one target network.)</em></li>
+</ul></li>
+<li><p><strong>Critic update.</strong>
+Minimize the squared error (cf. <a href="policy-gradient.html#eq:sac-critic-loss">(3.64)</a>):<br />
+<span class="math display">\[
+  \psi \leftarrow \psi - \alpha_\psi \nabla_{\psi}\;\frac{1}{B}\sum\nolimits_{(s,a,r,s&#39;,d)}
+  \big(Q_{\psi}(s,a)-y\big)^2.
+  \]</span></p></li>
+<li><p><strong>Actor update.</strong> Minimize (cf. <a href="policy-gradient.html#eq:sac-actor-discrete">(3.65)</a>):<br />
+<span class="math display">\[
+  \theta \leftarrow \theta - \alpha_\theta \nabla_\theta \frac{1}{B}\sum_s
+  \sum_{a} \pi_\theta(a\mid s)\,\Big(\alpha\,\log \pi_\theta(a\mid s)-Q_{\psi}(s,a)\Big).
+  \]</span></p></li>
+<li><p><strong>Target critic (Polyak).</strong><br />
+<span class="math display">\[
+\bar\psi \;\leftarrow\; \tau\,\psi \;+\; (1-\tau)\,\bar\psi.
+\]</span></p></li>
+</ol>
+</div>
+<p>The next example applies the SAC algorithm above to the cart-pole problem.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:cartpole-sac" class="example"><strong>Example 3.7  (SAC for Cart-pole Balancing) </strong></span>We use a fixed temperature <span class="math inline">\(\alpha=0.2\)</span>.</p>
+<p>Fig. <a href="policy-gradient.html#fig:cart-pole-learning-curve-sac">3.17</a> shows the learning curve of SAC.</p>
+<p>Fig. <a href="policy-gradient.html#fig:cart-pole-policy-rollout-sac">3.18</a> shows a sample rollout of the learned policy.</p>
+<p>You can find the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/cartpole_sac.py">here</a>. Play with the temperature parameter.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:cart-pole-learning-curve-sac"></span>
+<img src="images/Policy-Gradients/cartpole_learning_curve_sac.png" alt="Learning curve (Soft Actor--Critic)." width="60%" />
+<p class="caption">
+Figure 3.17: Learning curve (Soft Actor–Critic).
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:cart-pole-policy-rollout-sac"></span>
+<img src="images/Policy-Gradients/cartpole-sac-rollout.gif" alt="Policy rollout (Soft Actor--Critic)." width="60%" />
+<p class="caption">
+Figure 3.18: Policy rollout (Soft Actor–Critic).
+</p>
+</div>
+</div>
+</div>
+</div>
+<div id="sac-for-continuous-actions" class="section level4 hasAnchor" number="3.4.8.2">
+<h4><span class="header-section-number">3.4.8.2</span> SAC for Continuous Actions<a href="policy-gradient.html#sac-for-continuous-actions" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>In continuous action spaces we cannot sum over actions. SAC therefore:</p>
+<ol style="list-style-type: decimal">
+<li><p>samples actions from the current policy using a <em>reparameterization</em> trick (low-variance gradients), and</p></li>
+<li><p>computes the soft Bellman target with those sampled actions and a <em>twin-target minimum</em> to reduce overestimation.</p></li>
+</ol>
+<p><strong>Reparameterization (pathwise) Gradient.</strong> Let the stochastic policy be a Gaussian in unconstrained space, squashed by <code>tanh</code> to the action bounds:
+<span class="math display">\[
+u \;=\; \mu_\theta(s)\;+\;\sigma_\theta(s)\odot\varepsilon,\quad \varepsilon\sim\mathcal N(0,I),
 \qquad
-(\#eq:soft-v)
-\]
-\[
-Q^\pi(s,a) \;=\; R(s,a) + \gamma\,\mathbb{E}_{s'}\!\left[V^\pi(s')\right].
-(\#eq:soft-bellman)
-\]
-The fixed point of \@ref(eq:soft-bellman) yields the soft Bellman backup.
-
-**Practical SAC for Continuous Actions.** SAC uses:
-
-- a **stochastic Gaussian policy** \(\pi_\theta(a\mid s)=\mathcal{N}(\mu_\theta(s),\Sigma_\theta(s))\) passed through \(\tanh\) to respect action bounds (with change-of-variables correction in \(\log\pi\));
-
-- **twin critics** \(Q_{\psi_1},Q_{\psi_2}\) to reduce positive bias via a **min** operator;
-
-- **target networks** \(\bar\psi_1,\bar\psi_2\) for stable bootstrapping (Polyak averaging);
-
-- optional **automatic temperature tuning** so \(\alpha\) tracks a target entropy \(\bar{\mathcal{H}}\approx-|\mathcal{A}|\).
-
-**Critic Target.** For a replay sample \((s,a,r,s',\mathrm{done})\), draw \(a'\sim\pi_\theta(\cdot\mid s')\) and compute
-\[
-y(r,s') \;=\;
-r + \gamma(1-\mathrm{done})\Big(\min\nolimits_{j=1,2} Q_{\bar\psi_j}(s',a') \;-\; \alpha\,\log \pi_\theta(a'\mid s')\Big).
-(\#eq:sac-target)
-\]
-The critic loss (both heads) is
-\[
-\mathcal{L}_Q(\psi_j) \;=\; \mathbb{E}\big[\big(Q_{\psi_j}(s,a)-y\big)^2\big],\quad j\in\{1,2\}.
-(\#eq:sac-critic-loss)
-\]
-
-**Policy Update (reparameterized).** With \(a=f_\theta(s,\varepsilon)\) for \(\varepsilon\sim\mathcal{N}(0,I)\),
-\[
-\mathcal{L}_\pi(\theta)
+a \;=\; \tanh(u)\cdot a_{\text{scale}} + a_{\text{bias}},
+\]</span>
+where <span class="math inline">\(\sigma_\theta(s)\)</span> outputs per-dimension standard deviation.
+This gives a differentiable map <span class="math inline">\(a=f_\theta(s,\varepsilon)\)</span>. Expectations over <span class="math inline">\(a\sim \pi_\theta(\cdot\mid s)\)</span> are then written as expectations over <span class="math inline">\(\varepsilon\)</span>, so gradients can flow through <span class="math inline">\(f_\theta\)</span> (the <em>pathwise derivative</em>). The correct log-density under the squashed policy uses change-of-variables:
+<span class="math display">\[
+\log\pi_\theta(a\mid s)
 \;=\;
-\mathbb{E}_{s,\varepsilon}\!\left[\;\alpha\,\log\pi_\theta\!\big(f_\theta(s,\varepsilon)\mid s\big)\;-\;\min_{j}Q_{\psi_j}\!\big(s,f_\theta(s,\varepsilon)\big)\right].
-(\#eq:sac-policy-loss)
-\]
-This **minimization** is equivalent to ascending the soft objective (negative sign absorbed into the loss).
-
-**Temperature Tuning (optional).** Let \(\bar{\mathcal{H}}\) be a target entropy (e.g., \(-|\mathcal{A}|\)). Optimize
-\[
-\mathcal{L}_\alpha(\alpha)
+\log\mathcal N\!\big(u;\mu_\theta(s),\sigma_\theta^2(s)\big)
+\;-\;\sum_i \log\!\big(1-\tanh^2(u_i)\big)
+\;+\;\text{constant}.
+\]</span>
+The intuition here is that the <code>tanh</code> function is a nonlinear transformation that distorts the original Gaussian distribution. This “tanh correction” is crucial for stable training.</p>
+<p><strong>Critic Update.</strong> Maintain two critics <span class="math inline">\(Q_{\psi_1},Q_{\psi_2}\)</span> and their target copies
+<span class="math inline">\(Q_{\bar\psi_1},Q_{\bar\psi_2}\)</span>.
+For a replay minibatch <span class="math inline">\((s,a,r,s&#39;,d)\)</span>, form the target by drawing a next action from the current policy:
+<span class="math display" id="eq:cont-target">\[\begin{equation}
+a&#39; \sim \pi_\theta(\cdot\mid s&#39;),\qquad
+y \;=\; r \;+\; \gamma(1-d)\,\Big(
+\min\nolimits_{j=1,2} Q_{\bar\psi_j}(s&#39;,a&#39;) \;-\; \alpha \log\pi_\theta(a&#39;\mid s&#39;)
+\Big).
+\tag{3.67}
+\end{equation}\]</span>
+Each critic minimizes the squared error to <span class="math inline">\(y\)</span> (with stop-grad on <span class="math inline">\(y\)</span>):
+<span class="math display">\[
+\mathcal L_Q(\psi_j) \;=\; \mathbb{E}\big[(Q_{\psi_j}(s,a)-y)^2\big],\quad j=1,2,
+\]</span>
+where the expectation is taken over the distribution in the replay buffer.</p>
+<p><strong>Actor Update.</strong> The actor minimizes the soft objective under the replay state distribution:
+<span class="math display" id="eq:cont-actor">\[\begin{equation}
+J_\pi(\theta)
 \;=\;
-\mathbb{E}_{a\sim\pi_\theta(\cdot\mid s)}\!\big[-\alpha\,(\log\pi_\theta(a\mid s)+\bar{\mathcal{H}})\big],
+\mathbb{E}_{s\sim\mathcal D,\,\varepsilon}\left[
+\alpha\,\log\pi_\theta \big(f_\theta(s,\varepsilon)\mid s\big)
+-\min\nolimits_{j=1,2} Q_{\psi_j} \big(s,f_\theta(s,\varepsilon)\big)
+\right].
+\tag{3.68}
+\end{equation}\]</span>
+By reparameterization, the gradient flows through both the explicit <span class="math inline">\(\log\pi_\theta\)</span> term and the path <span class="math inline">\(a=f_\theta(s,\varepsilon)\)</span>. Particularly, denote <span class="math inline">\(Q_\psi(\cdot, \cdot) = \min_{j=1,2} Q_{\psi_j} (\cdot, \cdot)\)</span>, we have that
+<span class="math display">\[
+\nabla_\theta J_\pi(\theta) = \mathbb{E}_{s,\varepsilon} \left[ \alpha \nabla_\theta \log \pi_\theta (a \mid s) + \left( \alpha \nabla_a \log \pi_\theta(a \mid s) - \nabla_a Q_\psi (s,a) \right) \nabla_\theta f_\theta (s, \varepsilon) \right]_{a=f_\theta(s,\varepsilon)}.
+\]</span>
+In code, you typically just write the loss
+<span class="math display">\[
+\mathbb{E}_{s, \varepsilon}\left[ \alpha \log \pi_\theta (a \mid s) - Q_\psi (s, a) \right], \quad a = f_\theta(s, \varepsilon),
+\]</span>
+and autodiff will automatically compute the correct gradient.</p>
+<p><strong>Tuning <span class="math inline">\(\alpha\)</span> (Temperature).</strong> <span class="math inline">\(\alpha\)</span> trades off reward pursuit vs. policy entropy. A fixed <span class="math inline">\(\alpha\)</span> is problem-dependent. SAC treats <span class="math inline">\(\alpha\)</span> as a dual variable to enforce a target entropy <span class="math inline">\(\bar{\mathcal H}\)</span> (often <span class="math inline">\(-\text{dim}(\mathcal A)\)</span>):
+<span class="math display">\[
+J(\alpha)\;=\;\mathbb{E}_{s\sim\mathcal D,\,a\sim\pi_\theta}\!\Big[-\alpha\big(\log \pi_\theta(a\mid s)+\bar{\mathcal H}\big)\Big],
 \quad
-\text{update } \log\alpha \text{ by gradient descent.}
-(\#eq:sac-alpha-loss)
-\]
+\log\alpha \leftarrow \log\alpha - \alpha_\alpha \nabla_{\log\alpha} J(\alpha).
+\]</span>
+This adapts exploration automatically across tasks and training phases.</p>
+<div class="highlightbox">
+<div style="text-align:center;">
+<strong>Soft Actor–Critic (Continuous Actions, Twin Critics + Twin Targets)</strong>
+</div>
+<p><strong>Inputs:</strong> replay buffer <span class="math inline">\(\mathcal{D}\)</span>; policy <span class="math inline">\(\pi_\theta(a\mid s)\)</span> reparameterized by <span class="math inline">\(a=f_\theta(s,\varepsilon)\)</span> with tanh-squashed Gaussian; twin critics <span class="math inline">\(Q_{\psi_1},Q_{\psi_2}\)</span>; twin target critics with params <span class="math inline">\(\bar\psi_1,\bar\psi_2\)</span>; discount <span class="math inline">\(\gamma\)</span>; temperature <span class="math inline">\(\alpha\)</span> (learned or fixed); Polyak <span class="math inline">\(\tau\in(0,1]\)</span>; batch size <span class="math inline">\(B\)</span>; stepsizes <span class="math inline">\(\alpha_\theta,\alpha_\psi,\alpha_\alpha\)</span>.</p>
+<p><strong>Initialize:</strong> <span class="math inline">\(\bar\psi_j \leftarrow \psi_j\)</span> for <span class="math inline">\(j\in\{1,2\}\)</span>.</p>
+<p>For iterations <span class="math inline">\(k=0,1,2,\dots\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Interaction.</strong><br />
+Observe <span class="math inline">\(s_t\)</span>. Sample <span class="math inline">\(\varepsilon_t\sim\mathcal N(0,I)\)</span>, set <span class="math inline">\(a_t=f_\theta(s_t,\varepsilon_t)\)</span>; step env to get <span class="math inline">\((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\)</span>; push to <span class="math inline">\(\mathcal{D}\)</span>.</p></li>
+<li><p><strong>Sample minibatch.</strong><br />
+Draw <span class="math inline">\(B\)</span> transitions <span class="math inline">\(\{(s,a,r,s&#39;,d)\}\)</span> from <span class="math inline">\(\mathcal{D}\)</span>.</p></li>
+<li><p><strong>Target computation (twin targets, reparameterized next action).</strong></p>
+<ul>
+<li>Sample <span class="math inline">\(\varepsilon&#39;\sim\mathcal N(0,I)\)</span>, set <span class="math inline">\(a&#39;=f_\theta(s&#39;,\varepsilon&#39;)\)</span>.</li>
+<li>Compute <span class="math inline">\(\log\pi_\theta(a&#39;\mid s&#39;)\)</span> with <strong>tanh correction</strong>.</li>
+<li>Evaluate target critics <span class="math inline">\(Q_{\bar\psi_1}(s&#39;,a&#39;)\)</span>, <span class="math inline">\(Q_{\bar\psi_2}(s&#39;,a&#39;)\)</span>; let <span class="math inline">\(Q_{\min}(s&#39;,a&#39;)=\min\{Q_{\bar\psi_1},Q_{\bar\psi_2}\}\)</span>.</li>
+<li><strong>Bellman target:</strong><br />
+<span class="math display">\[
+y \leftarrow r + \gamma(1-d)\,\big(Q_{\min}(s&#39;,a&#39;) - \alpha\,\log\pi_\theta(a&#39;\mid s&#39;)\big).
+\]</span>
+<em>(Stop gradient through <span class="math inline">\(y\)</span>.)</em></li>
+</ul></li>
+<li><p><strong>Critic updates (both heads).</strong><br />
+<span class="math display">\[
+\psi_j \leftarrow \psi_j - \alpha_\psi \nabla_{\psi_j}\;\frac{1}{B}\sum (Q_{\psi_j}(s,a)-y)^2,\quad j=1,2.
+\]</span></p></li>
+<li><p><strong>Actor update (reparameterized).</strong></p>
+<ul>
+<li>For each <span class="math inline">\(s\)</span> in the batch, sample <span class="math inline">\(\varepsilon\)</span>, set <span class="math inline">\(a=f_\theta(s,\varepsilon)\)</span>.</li>
+<li><strong>Actor objective:</strong><br />
+<span class="math display">\[
+J_\pi(\theta)=\frac{1}{B}\sum_s \Big(\alpha\,\log\pi_\theta(a\mid s)-\min\nolimits_j Q_{\psi_j}(s,a)\Big).
+\]</span></li>
+<li>Update:
+<span class="math display">\[
+\theta \leftarrow \theta - \alpha_\theta \nabla_\theta J_\pi(\theta).
+\]</span></li>
+</ul></li>
+<li><p><strong>Temperature (optional).</strong><br />
+With target entropy <span class="math inline">\(\bar{\mathcal H}\)</span> and parameter <span class="math inline">\(\log\alpha\)</span>:
+<span class="math display">\[
+J(\alpha)=\frac{1}{B}\sum_s \big[-\alpha(\log\pi_\theta(a\mid s)+\bar{\mathcal H})\big],\quad
+\log\alpha \leftarrow \log\alpha - \alpha_\alpha \nabla_{\log\alpha} J(\alpha),\quad
+\alpha\leftarrow e^{\log\alpha}.
+\]</span></p></li>
+<li><p><strong>Target critics (Polyak).</strong> For <span class="math inline">\(j=1,2\)</span>:
+<span class="math display">\[
+\bar\psi_j \;\leftarrow\; \tau\,\psi_j \;+\; (1-\tau)\,\bar\psi_j.
+\]</span></p></li>
+</ol>
+</div>
+<p>The next example applies SAC to Inverted Pendulum.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:pendulum-sac" class="example"><strong>Example 3.8  (SAC for Inverted Pendulum) </strong></span>Fig. <a href="policy-gradient.html#fig:pendulum-learning-curve-sac">3.19</a> plots the learning curve.</p>
+<p>Fig. <a href="policy-gradient.html#fig:pendulum-policy-rollout-sac">3.20</a> visualizes two sample rollouts of the policy.</p>
+<p>Code can be found <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_sac.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-learning-curve-sac"></span>
+<img src="images/Policy-Gradients/pendulum_learning_curve_sac.png" alt="Learning curve (Soft Actor--Critic)." width="60%" />
+<p class="caption">
+Figure 3.19: Learning curve (Soft Actor–Critic).
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-policy-rollout-sac"></span>
+<img src="images/Policy-Gradients/pendulum_rollout_sac-1.gif" alt="Policy rollout (Soft Actor--Critic)." width="40%" /><img src="images/Policy-Gradients/pendulum_rollout_sac-2.gif" alt="Policy rollout (Soft Actor--Critic)." width="40%" />
+<p class="caption">
+Figure 3.20: Policy rollout (Soft Actor–Critic).
+</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div id="deterministic-policy-gradient" class="section level3 hasAnchor" number="3.4.9">
+<h3><span class="header-section-number">3.4.9</span> Deterministic Policy Gradient<a href="policy-gradient.html#deterministic-policy-gradient" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+</div>
+</div>
+<div id="model-based-policy-optimization" class="section level2 hasAnchor" number="3.5">
+<h2><span class="header-section-number">3.5</span> Model-based Policy Optimization<a href="policy-gradient.html#model-based-policy-optimization" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<!-- Model-based policy optimization (MBPO) [@janner2019trust] sits between pure model-free methods (high variance, data hungry) and “plan-only” model-based control (sensitive to model bias). The key idea is **to learn a dynamics model and then use only *short* rollouts from that model to create extra training data** for a strong off-policy learner (usually SAC). Short horizons curb compounding model error; a large model-generated replay reduces variance and boosts sample efficiency.
+
+## High-level idea
+
+Consider an MDP with unknown dynamics \(s_{t+1} \sim p(s_{t+1}\mid s_t,a_t)\). MBPO learns an ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\) that predicts the next state (often the *delta-state* \(\Delta s\)). Rather than planning far ahead inside the learned model, MBPO:
+
+1. Collects **real** transitions \(\mathcal{D}_{\text{env}}\) by interacting with the environment.
+2. **Fits** the dynamics ensemble on \(\mathcal{D}_{\text{env}}\).
+3. Periodically **generates short rollouts** (e.g., horizon \(H=1\ldots5\)) starting from **real** states by simulating with a *random* member of the ensemble, producing **model** transitions \(\mathcal{D}_{\text{model}}\).
+4. **Trains** an off-policy actor-critic (e.g., SAC) on a **mixture** of \(\mathcal{D}_{\text{env}}\) and \(\mathcal{D}_{\text{model}}\), typically with a high fraction of model data but *short* \(H\) to limit bias.
+
+This yields the sample-efficiency benefits of model-based learning while maintaining the robustness of model-free policy optimization.
+
+---
+
+## Algorithm: MBPO (short-model-rollout variant)
 
 ::: {.highlightbox}
-<div style="text-align:center;">**Soft Actor–Critic (SAC, continuous actions)**</div>
+**Inputs:** environment \(\mathcal{E}\), policy \(\pi_\theta(a\mid s)\), critics \(Q_{\phi_1},Q_{\phi_2}\) with targets, temperature \(\alpha\) (auto-tuned), dynamics ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\), real buffer \(\mathcal{D}_{\text{env}}\), model buffer \(\mathcal{D}_{\text{model}}\). Rollout horizon \(H\), model ratio \(p_{\text{model}}\in[0,1]\), update counts \(G_{\text{dyn}}, G_{\text{rl}}\).
 
-**Inputs:** replay buffer \(\mathcal{D}\), policy \(\pi_\theta\) (tanh-Gaussian), twin critics \(Q_{\psi_1},Q_{\psi_2}\), target critics \(\bar\psi_1,\bar\psi_2\); discount \(\gamma\); temperature \(\alpha\) (learned or fixed); Polyak \(\tau\in(0,1]\); batch size \(B\); stepsizes \(\alpha_\theta,\alpha_\psi,\alpha_\alpha\).
+1. **Warm-up & data collection.**
+   - Interact with \(\mathcal{E}\) using \(\pi_\theta\) (or random for a short warm-up).
+   - Store \((s,a,r,s')\) in \(\mathcal{D}_{\text{env}}\).
 
-**Initialize:** \(\bar\psi_j\leftarrow\psi_j\) for \(j=1,2\).
+2. **Fit dynamics.** For \(G_{\text{dyn}}\) steps:
+   - Sample minibatch \(B\subset\mathcal{D}_{\text{env}}\).
+   - Update each \(\psi_k\) to predict \(\Delta s = s'-s\) (and optionally \(r\)) by minimizing NLL/MSE.
 
-For iterations \(k=0,1,2,\dots\):
+3. **Short model rollouts (data generation).**
+   - Sample seed states \(S_0\) from recent \(\mathcal{D}_{\text{env}}\).
+   - For each \(s\in S_0\): for \(h=1\ldots H\):
+     - Sample \(a\sim \pi_\theta(\cdot\mid s)\).
+     - Pick random ensemble member \(k\); predict \(\hat\Delta s \leftarrow \hat f_{\psi_k}(s,a)\); set \(\hat s' = s + \hat\Delta s\).
+     - Compute \(r\) via a learned reward model or a known formula (when available).
+     - Push \((s,a,r,\hat s',\texttt{done}=0)\) into \(\mathcal{D}_{\text{model}}\).
+     - Set \(s\leftarrow\hat s'\); break if time-limit reached.
 
-1. **Interaction.** Sample \(a_t\sim\pi_\theta(\cdot\mid s_t)\); step env to get \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\); push to \(\mathcal{D}\).
+4. **Off-policy RL updates.** For \(G_{\text{rl}}\) steps:
+   - Form a minibatch by drawing a fraction \(p_{\text{model}}\) from \(\mathcal{D}_{\text{model}}\) and \(1-p_{\text{model}}\) from \(\mathcal{D}_{\text{env}}\).
+   - **Critic targets:** \(y=r+\gamma(1-d)\big[\min_j Q_{\phi_j^-}(s',a')-\alpha\log\pi_\theta(a'\mid s')\big]\), where \(a'\sim\pi_\theta(\cdot\mid s')\).
+   - **Critic update:** regress \(Q_{\phi_j}\) to \(y\) (both heads).
+   - **Actor update:** minimize \(J_\pi = \mathbb{E}_s\!\big[\alpha\log\pi_\theta(a\mid s) - \min_j Q_{\phi_j}(s,a)\big]\), with \(a\sim\pi_\theta\).
+   - **Temperature update (optional):** adjust \(\alpha\) towards target entropy.
+   - Soft-update target critics.
 
-2. **Sample minibatch.** Draw \(B\) transitions from \(\mathcal{D}\).
-
-3. **Target computation.**
-   - Sample \(a' \sim \pi_\theta(\cdot\mid s')\); compute \(\log\pi_\theta(a'\mid s')\) **with tanh correction**.
-   - \(y \leftarrow r + \gamma(1-\mathrm{done})\Big(\min_j Q_{\bar\psi_j}(s',a') - \alpha\,\log\pi_\theta(a'\mid s')\Big)\).   [\@ref(eq:sac-target)]
-
-4. **Critic update (both heads).**
-   \[
-   \psi_j \leftarrow \psi_j - \alpha_\psi \nabla_{\psi_j}\frac{1}{B}\sum (Q_{\psi_j}(s,a)-y)^2,\quad j=1,2.
-   \]
-   *(Option: gradient clipping.)*
-
-5. **Actor update (reparameterized).**
-   - Sample \(\varepsilon\) to build \(a=f_\theta(s,\varepsilon)\).
-   - \(\theta \leftarrow \theta - \alpha_\theta \nabla_\theta \frac{1}{B}\sum \big(\alpha\,\log\pi_\theta(a\mid s)-\min_j Q_{\psi_j}(s,a)\big).\)  [\@ref(eq:sac-policy-loss)]
-
-6. **Temperature (optional).**
-   \[
-   \alpha \leftarrow \alpha \cdot \exp\!\Big(-\alpha_\alpha\,\nabla_{\log\alpha}\frac{1}{B}\sum \big[-\alpha(\log\pi_\theta(a\mid s)+\bar{\mathcal{H}})\big]\Big).
-   \]
-   *(Equivalently, SGD on \(\log \alpha\) using \@ref(eq:sac-alpha-loss).)*
-
-7. **Target critics (Polyak).** For \(j=1,2\):
-   \[
-   \bar\psi_j \;\leftarrow\; \tau\,\psi_j \;+\; (1-\tau)\,\bar\psi_j.
-   \]
-
-8. **Repeat.**
+5. **Repeat** steps 1–4 until budget is exhausted. Tune \(H\) and \(p_{\text{model}}\) to trade off bias/variance.
 :::
 
-#### Practical Tips
+**Notes.**  
+- Ensembles capture epistemic uncertainty; random-member rollouts implicitly regularize toward pessimism.  
+- Keeping \(H\) *short* (e.g., \(1\!\!-\!\!5\)) is crucial to prevent model error explosion.  
+- Use recent real states as rollout seeds to stay on-distribution.
 
-- **Action squashing & log-prob.** If \(a=\tanh(\tilde a)\) with \(\tilde a\sim\mathcal{N}(\mu,\Sigma)\), then  
-  \(\log\pi(a\mid s)=\log\mathcal{N}(\tilde a;\mu,\Sigma) - \sum_i \log(1-\tanh^2(\tilde a_i))\). Always include this Jacobian term.
-- **Target entropy.** A good default is \(\bar{\mathcal{H}}=-|\mathcal{A}|\) (per-dimension \(-1\)).
-- **Initialization.** Start \(\bar\psi_j\!\leftarrow\!\psi_j\); use small \(\tau\) (e.g., \(0.005\)) for smooth targets.
-- **Stability.** Normalize observations; clip gradients; bound \(\alpha\) away from zero; use **min** over twin critics to curb overestimation.
-- **Discrete SAC.** Replace \(\min_j Q\) and sampling with exact action sums and a LogSumExp-based soft value; the rest is analogous.
+---
 
-**Summary.** SAC optimizes a maximum-entropy objective via off-policy updates, combining twin critics, a stochastic reparameterized actor, and (optionally) automatic temperature tuning. The result is a strong default for continuous control with stable learning and robust exploration. -->
+## Minimal MBPO on `Pendulum-v1` (Gym/Gymnasium, PyTorch)
+
+Below is a compact, instructional script. It uses:
+- A **dynamics ensemble** that predicts \(\Delta s\) (we compute the true reward analytically for Pendulum).
+- A **SAC** learner (Gaussian policy with tanh-squash) trained on a **mixture** of real and model transitions.
+- **Short rollouts** (default \(H=1\)).
+
+```python
+# MBPO on Pendulum-v1 (PyTorch)
+# --------------------------------
+# pip install torch gymnasium  (or: pip install torch gym)
+import os, math, time, random
+from dataclasses import dataclass
+from collections import deque
+import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+
+# ---- Gym import with fallback (Gymnasium preferred) ----
+try:
+    import gymnasium as gym
+    GYMN = True
+except Exception:
+    import gym
+    GYMN = False
+
+# ----------------- Utilities & Seeding -------------------
+SEED = 42
+random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
+
+def make_env(seed=SEED):
+    env = gym.make("Pendulum-v1")
+    try:
+        env.reset(seed=seed)
+    except TypeError:
+        try:
+            env.seed(seed)
+        except Exception:
+            pass
+    return env
+
+# Pendulum reward (from Gym source)
+def pendulum_reward(state, action):
+    # state = [cos(theta), sin(theta), theta_dot]; action shape (...,1)
+    cos_th, sin_th, thdot = float(state[0]), float(state[1]), float(state[2])
+    theta = math.atan2(sin_th, cos_th)
+    u = float(np.clip(action, -2.0, 2.0))
+    cost = theta**2 + 0.1 * thdot**2 + 0.001 * (u**2)
+    return -cost
+
+# --------------- Replay Buffers --------------------------
+class ReplayBuffer:
+    def __init__(self, obs_dim, act_dim, size, device):
+        self.obs_buf = np.zeros((size, obs_dim), dtype=np.float32)
+        self.act_buf = np.zeros((size, act_dim), dtype=np.float32)
+        self.rew_buf = np.zeros((size, 1), dtype=np.float32)
+        self.next_buf = np.zeros((size, obs_dim), dtype=np.float32)
+        self.done_buf = np.zeros((size, 1), dtype=np.float32)
+        self.max_size, self.ptr, self.size = size, 0, 0
+        self.device = device
+
+    def push(self, s, a, r, s2, d):
+        self.obs_buf[self.ptr]  = s
+        self.act_buf[self.ptr]  = a
+        self.rew_buf[self.ptr]  = r
+        self.next_buf[self.ptr] = s2
+        self.done_buf[self.ptr] = d
+        self.ptr = (self.ptr + 1) % self.max_size
+        self.size = min(self.size + 1, self.max_size)
+
+    def sample(self, batch_size):
+        idxs = np.random.randint(0, self.size, size=batch_size)
+        to_t = lambda x: torch.as_tensor(x[idxs], dtype=torch.float32, device=self.device)
+        return to_t(self.obs_buf), to_t(self.act_buf), to_t(self.rew_buf), to_t(self.next_buf), to_t(self.done_buf)
+
+# --------------- Neural Nets (MLPs) ----------------------
+def mlp(sizes, act=nn.ReLU, out_act=None):
+    layers = []
+    for j in range(len(sizes)-1):
+        layers += [nn.Linear(sizes[j], sizes[j+1])]
+        if j < len(sizes)-2:
+            layers += [act()]
+        elif out_act is not None:
+            layers += [out_act()]
+    return nn.Sequential(*layers)
+
+# ------------------- SAC Components ----------------------
+class ActorGaussian(nn.Module):
+    def __init__(self, obs_dim, act_dim, act_low, act_high, hidden=(256,256)):
+        super().__init__()
+        self.net = mlp([obs_dim, *hidden, 2*act_dim])
+        self.act_low  = torch.as_tensor(act_low, dtype=torch.float32)
+        self.act_high = torch.as_tensor(act_high, dtype=torch.float32)
+        self.act_scale = (self.act_high - self.act_low) / 2.0
+        self.act_bias  = (self.act_high + self.act_low) / 2.0
+
+    def forward(self, obs):
+        mu_logstd = self.net(obs)
+        act_dim = mu_logstd.shape[-1] // 2
+        mu, log_std = mu_logstd[..., :act_dim], mu_logstd[..., act_dim:]
+        log_std = torch.clamp(log_std, -20, 2)
+        std = torch.exp(log_std)
+        dist = torch.distributions.Normal(mu, std)
+        eps = dist.rsample()                          # reparameterized
+        squashed = torch.tanh(eps)
+        action = self.act_scale.to(obs.device) * squashed + self.act_bias.to(obs.device)
+        # Tanh correction (sum over action dims)
+        logp = dist.log_prob(eps) - torch.log(1 - squashed.pow(2) + 1e-6)
+        logp = logp.sum(dim=-1, keepdim=True)
+        return action, logp
+
+    @torch.no_grad()
+    def act(self, obs, deterministic=False):
+        obs_t = torch.as_tensor(obs, dtype=torch.float32).unsqueeze(0)
+        mu_logstd = self.net(obs_t)
+        act_dim = mu_logstd.shape[-1] // 2
+        mu, log_std = mu_logstd[..., :act_dim], mu_logstd[..., act_dim:]
+        if deterministic:
+            squashed = torch.tanh(mu)
+        else:
+            log_std = torch.clamp(log_std, -20, 2)
+            std = torch.exp(log_std)
+            eps = torch.distributions.Normal(mu, std).sample()
+            squashed = torch.tanh(eps)
+        action = self.act_scale * squashed + self.act_bias
+        return action.squeeze(0).cpu().numpy()
+
+class CriticTwin(nn.Module):
+    def __init__(self, obs_dim, act_dim, hidden=(256,256)):
+        super().__init__()
+        self.q1 = mlp([obs_dim+act_dim, *hidden, 1])
+        self.q2 = mlp([obs_dim+act_dim, *hidden, 1])
+    def forward(self, s, a):
+        sa = torch.cat([s,a], dim=-1)
+        return self.q1(sa), self.q2(sa)
+
+# ---------------- Dynamics Ensemble ----------------------
+class DynModel(nn.Module):
+    def __init__(self, obs_dim, act_dim, hidden=(200,200)):
+        super().__init__()
+        self.net = mlp([obs_dim+act_dim, *hidden, obs_dim])
+    def forward(self, s, a):
+        x = torch.cat([s,a], dim=-1)
+        delta = self.net(x)               # predict Δs
+        return delta
+
+class Ensemble:
+    def __init__(self, n_models, obs_dim, act_dim, device):
+        self.members = [DynModel(obs_dim, act_dim).to(device) for _ in range(n_models)]
+        self.optims  = [torch.optim.Adam(m.parameters(), lr=1e-3) for m in self.members]
+        self.device  = device
+        self.n = n_models
+    def train_step(self, batch_s, batch_a, batch_s2):
+        losses = []
+        for m,opt in zip(self.members, self.optims):
+            opt.zero_grad()
+            pred = m(batch_s, batch_a)
+            target = batch_s2 - batch_s
+            loss = F.mse_loss(pred, target)
+            loss.backward(); opt.step()
+            losses.append(loss.item())
+        return float(np.mean(losses))
+    @torch.no_grad()
+    def step(self, s, a, sigma=0.0):
+        # sample a random member per call
+        m = random.choice(self.members)
+        delta = m(s, a)
+        if sigma > 0:
+            delta = delta + sigma*torch.randn_like(delta)
+        return s + delta
+
+# -------------------- MBPO Trainer -----------------------
+@dataclass
+class MBPOConfig:
+    total_env_steps: int = 40_000
+    start_random_steps: int = 1_000
+    update_after: int = 1_000
+    update_every: int = 50
+    real_batch_size: int = 256
+    model_batch_size: int = 256
+    sac_updates_per_step: float = 1.0   # RL updates per env step
+    model_train_iters: int = 200        # per model-updating phase
+    rollout_horizon: int = 1            # short horizon is key
+    model_ratio: float = 0.9            # fraction from model buffer
+    gamma: float = 0.99
+    tau: float = 0.005
+    lr_actor: float = 3e-4
+    lr_critic: float = 3e-4
+    lr_alpha: float = 3e-4
+    ensemble_size: int = 5
+    real_buffer_size: int = 200_000
+    model_buffer_size: int = 500_000
+    device: str = "cpu"
+
+def soft_update(net, target, tau):
+    for p, p_targ in zip(net.parameters(), target.parameters()):
+        p_targ.data.mul_(1 - tau)
+        p_targ.data.add_(tau * p.data)
+
+def train_mbpo(config=MBPOConfig()):
+    device = torch.device(config.device)
+    env = make_env(SEED)
+    obs, _info = env.reset() if GYMN else env.reset()
+    obs_dim = env.observation_space.shape[0]
+    act_dim = env.action_space.shape[0]
+    act_low = env.action_space.low
+    act_high = env.action_space.high
+
+    # Replay buffers
+    rb_real  = ReplayBuffer(obs_dim, act_dim, config.real_buffer_size, device)
+    rb_model = ReplayBuffer(obs_dim, act_dim, config.model_buffer_size, device)
+
+    # SAC nets
+    actor = ActorGaussian(obs_dim, act_dim, act_low, act_high).to(device)
+    critic = CriticTwin(obs_dim, act_dim).to(device)
+    critic_targ = CriticTwin(obs_dim, act_dim).to(device)
+    critic_targ.load_state_dict(critic.state_dict())
+
+    pi_optim = torch.optim.Adam(actor.parameters(), lr=config.lr_actor)
+    q_optim  = torch.optim.Adam(critic.parameters(), lr=config.lr_critic)
+
+    # Entropy temperature (auto)
+    target_entropy = -float(act_dim)
+    log_alpha = torch.tensor(0.0, requires_grad=True, device=device)
+    alpha_optim = torch.optim.Adam([log_alpha], lr=config.lr_alpha)
+
+    # Dynamics ensemble
+    ensemble = Ensemble(config.ensemble_size, obs_dim, act_dim, device)
+
+    ep_ret, ep_len = 0.0, 0
+    returns = []
+    s = obs
+    for t in range(1, config.total_env_steps + 1):
+        # ---- Select action ----
+        if t < config.start_random_steps:
+            a = env.action_space.sample()
+        else:
+            a = actor.act(s, deterministic=False)
+
+        # ---- Step env ----
+        step_out = env.step(a)
+        if GYMN:
+            s2, r, terminated, truncated, _ = step_out
+            done = terminated or truncated
+        else:
+            s2, r, done, _ = step_out
+
+        rb_real.push(s, a, r, s2, float(done))
+        ep_ret += r; ep_len += 1
+        s = s2
+
+        if done:
+            returns.append(ep_ret)
+            s, _ = env.reset() if GYMN else env.reset()
+            ep_ret, ep_len = 0.0, 0
+
+        # ---- Training phase ----
+        if t >= config.update_after and t % config.update_every == 0:
+            # 1) Train dynamics on real buffer
+            for _ in range(config.model_train_iters):
+                if rb_real.size < config.real_batch_size: break
+                bs = config.real_batch_size
+                s_b, a_b, _r_b, s2_b, _d_b = rb_real.sample(bs)
+                ensemble.train_step(s_b, a_b, s2_b)
+
+            # 2) Generate short model rollouts seeded from real states
+            seeds = 1000  # number of seed states per generation burst
+            if rb_real.size > seeds:
+                # recent indices for more on-distribution seeds
+                idxs = np.random.randint(max(0, rb_real.size - 5000), rb_real.size, size=seeds)
+                seed_states = torch.as_tensor(rb_real.obs_buf[idxs], dtype=torch.float32, device=device)
+                s_model = seed_states.clone()
+                for _h in range(config.rollout_horizon):
+                    with torch.no_grad():
+                        a_model, _logp = actor(s_model)
+                        s2_model = ensemble.step(s_model, a_model, sigma=0.0)  # keep deterministic for stability
+                        # compute true Pendulum reward analytically
+                        r_list = []
+                        for i in range(s_model.shape[0]):
+                            r_i = pendulum_reward(s_model[i].cpu().numpy(), a_model[i].cpu().numpy())
+                            r_list.append([r_i])
+                        r_model = torch.tensor(r_list, dtype=torch.float32, device=device)
+                        d_model = torch.zeros_like(r_model)  # no terminal signals from short model rollouts
+                    # push into model buffer
+                    for i in range(s_model.shape[0]):
+                        rb_model.push(s_model[i].cpu().numpy(),
+                                      a_model[i].cpu().numpy(),
+                                      r_model[i].cpu().numpy(),
+                                      s2_model[i].cpu().numpy(),
+                                      d_model[i].cpu().numpy())
+                    s_model = s2_model
+
+            # 3) Off-policy SAC updates
+            total_updates = int(config.sac_updates_per_step * config.update_every)
+            for _ in range(total_updates):
+                if rb_real.size < config.real_batch_size: continue
+                # sample mixture
+                bm = max(1, int(config.model_ratio * config.model_batch_size))
+                br = max(1, config.model_batch_size - bm)
+                # If model buffer is too small, fall back to real
+                if rb_model.size < bm:
+                    bm = 0; br = config.model_batch_size
+                if br > 0:
+                    s_r, a_r, r_r, s2_r, d_r = rb_real.sample(br)
+                if bm > 0:
+                    s_m, a_m, r_m, s2_m, d_m = rb_model.sample(bm)
+
+                if bm > 0 and br > 0:
+                    s_b  = torch.cat([s_r,  s_m],  dim=0)
+                    a_b  = torch.cat([a_r,  a_m],  dim=0)
+                    r_b  = torch.cat([r_r,  r_m],  dim=0)
+                    s2_b = torch.cat([s2_r, s2_m], dim=0)
+                    d_b  = torch.cat([d_r,  d_m],  dim=0)
+                elif bm > 0:
+                    s_b, a_b, r_b, s2_b, d_b = s_m, a_m, r_m, s2_m, d_m
+                else:
+                    s_b, a_b, r_b, s2_b, d_b = s_r, a_r, r_r, s2_r, d_r
+
+                # Critic update
+                with torch.no_grad():
+                    a2, logp2 = actor(s2_b)
+                    q1_t, q2_t = critic_targ(s2_b, a2)
+                    q_targ = torch.min(q1_t, q2_t) - torch.exp(log_alpha) * logp2
+                    y = r_b + (1.0 - d_b) * config.gamma * q_targ
+                q1, q2 = critic(s_b, a_b)
+                q_loss = F.mse_loss(q1, y) + F.mse_loss(q2, y)
+                q_optim.zero_grad(); q_loss.backward(); q_optim.step()
+
+                # Actor update
+                a_new, logp = actor(s_b)
+                q1_pi, q2_pi = critic(s_b, a_new)
+                q_pi = torch.min(q1_pi, q2_pi)
+                pi_loss = (torch.exp(log_alpha) * logp - q_pi).mean()
+                pi_optim.zero_grad(); pi_loss.backward(); pi_optim.step()
+
+                # Temperature update
+                alpha_loss = -(log_alpha * (logp.detach() + target_entropy)).mean()
+                alpha_optim.zero_grad(); alpha_loss.backward(); alpha_optim.step()
+
+                # Targets
+                soft_update(critic, critic_targ, config.tau)
+
+        if t % 2000 == 0 and len(returns) > 5:
+            print(f"[t={t}] recent avg return: {np.mean(returns[-5:]):.1f}, real_buf={rb_real.size}, model_buf={rb_model.size}")
+
+    env.close()
+    print(f"Training done. Episodes logged: {len(returns)}. Last 10 avg return: {np.mean(returns[-10:]) if len(returns)>=10 else np.mean(returns):.1f}")
+    return returns
+
+if __name__ == "__main__":
+    cfg = MBPOConfig(
+        total_env_steps = 40_000,
+        rollout_horizon = 1,      # try 1-3; larger increases model bias
+        model_ratio     = 0.9,    # more model data after warmup
+        device          = "cpu"
+    )
+    train_mbpo(cfg)
+``` -->
 
 </div>
-</div>
-</div>
-</div>
-
-
-
 </div>
 <h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
@@ -2163,6 +2758,9 @@ Barto, Andrew G, Richard S Sutton, and Charles W Anderson. 2012. <span>“Neuron
 </div>
 <div id="ref-garrigos2023handbook" class="csl-entry">
 Garrigos, Guillaume, and Robert M Gower. 2023. <span>“Handbook of Convergence Theorems for (Stochastic) Gradient Methods.”</span> <em>arXiv Preprint arXiv:2301.11235</em>.
+</div>
+<div id="ref-haarnoja2018soft" class="csl-entry">
+Haarnoja, Tuomas, Aurick Zhou, Pieter Abbeel, and Sergey Levine. 2018. <span>“Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor.”</span> In <em>International Conference on Machine Learning</em>, 1861–70. Pmlr.
 </div>
 <div id="ref-kakade2001natural" class="csl-entry">
 Kakade, Sham M. 2001. <span>“A Natural Policy Gradient.”</span> <em>Advances in Neural Information Processing Systems</em> 14.
@@ -2186,7 +2784,7 @@ Schulman, John, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. 
         </div>
       </div>
 <a href="value-rl.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="appconvex.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="model-based-plan-optimize.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
