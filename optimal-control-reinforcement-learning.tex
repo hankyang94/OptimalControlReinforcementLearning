@@ -6549,6 +6549,151 @@ Code can be found \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-
 
 \section{Model-based Policy Optimization}\label{model-based-policy-optimization}
 
+Model-based policy optimization (MBPO) \citep{janner2019trust} sits between pure model-free methods (high variance, data hungry) and ``plan-only'' model-based control (sensitive to model bias, to be introduced in Chapter \ref{model-based-plan-optimize}). The key idea is to learn a dynamics model and then use only \emph{short} rollouts from that model to create extra training data for a strong off-policy learner (usually SAC).
+
+Consider an MDP with unknown dynamics \(s_{t+1} \sim P( \cdot \mid s_t,a_t)\). MBPO learns an ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\) that predicts the next state (often the \emph{delta-state} \(\Delta s\)). Rather than planning far ahead inside the learned model, MBPO:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Collects real transitions \(\mathcal{D}_{\text{env}}\) by interacting with the environment.
+\item
+  Fits the dynamics ensemble on \(\mathcal{D}_{\text{env}}\).
+\item
+  Periodically generates short rollouts (e.g., horizon \(H=1\ldots5\)) starting from \emph{real} states by simulating with a \emph{random} member of the ensemble, producing model transitions \(\mathcal{D}_{\text{model}}\).
+\item
+  Trains an off-policy actor-critic (e.g., SAC) on a \emph{mixture} of \(\mathcal{D}_{\text{env}}\) and \(\mathcal{D}_{\text{model}}\), typically with a high fraction of model data but \emph{short} \(H\) to limit bias.
+\end{enumerate}
+
+This yields the sample-efficiency benefits of model-based learning while maintaining the robustness of model-free policy optimization.
+
+The following pseudocode implements MBPO with SAC as the off-policy learner.
+
+\textbf{Model-based Policy Optimization (SAC as Off-Policy Learner)}
+
+\textbf{Inputs:} environment \(\mathcal{E}\), policy \(\pi_\theta(a\mid s)\), twin critics \(Q_{\phi_1},Q_{\phi_2}\) with targets, temperature \(\alpha\) (auto-tuned), dynamics ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\), real buffer \(\mathcal{D}_{\text{env}}\), model buffer \(\mathcal{D}_{\text{model}}\). Rollout horizon \(H\), model ratio \(p_{\text{model}}\in[0,1]\), update counts \(G_{\text{dyn}}, G_{\text{rl}}\).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Warm-up \& data collection.}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Interact with \(\mathcal{E}\) using \(\pi_\theta\) (or random for a short warm-up).
+  \item
+    Store \((s,a,r,s')\) in \(\mathcal{D}_{\text{env}}\).
+  \end{itemize}
+\item
+  \textbf{Fit dynamics.} For \(G_{\text{dyn}}\) steps:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Sample minibatch \(B\subset\mathcal{D}_{\text{env}}\).
+  \item
+    Update each \(\psi_k\) to predict \(\Delta s = s'-s\) (and optionally \(r\)) by minimizing, e.g, mean squared error.
+  \end{itemize}
+\item
+  \textbf{Short model rollouts (data generation).}
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Sample seed states \(S_0\) from recent \(\mathcal{D}_{\text{env}}\).
+  \item
+    For each \(s\in S_0\)
+
+    \begin{itemize}
+    \tightlist
+    \item
+      for \(h=1\ldots H\):
+
+      \begin{itemize}
+      \tightlist
+      \item
+        Sample \(a\sim \pi_\theta(\cdot\mid s)\).
+      \item
+        Pick random ensemble member \(k\); predict \(\hat\Delta s \leftarrow \hat f_{\psi_k}(s,a)\); set \(\hat s' = s + \hat\Delta s\).
+      \item
+        Compute \(r\) via a learned reward model or a known formula (when available).
+      \item
+        Push \((s,a,r,\hat s',\texttt{done}=0)\) into \(\mathcal{D}_{\text{model}}\).
+      \item
+        Set \(s\leftarrow\hat s'\); break if time-limit reached.
+      \end{itemize}
+    \end{itemize}
+  \end{itemize}
+\item
+  \textbf{Off-policy RL updates (SAC).} For \(G_{\text{rl}}\) steps:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    Form a minibatch by drawing a fraction \(p_{\text{model}}\) from \(\mathcal{D}_{\text{model}}\) and \(1-p_{\text{model}}\) from \(\mathcal{D}_{\text{env}}\).
+  \item
+    \textbf{Critic targets:}
+    \[
+    y=r+\gamma(1-d)\big[\min_j Q_{\phi_j^-}(s',a')-\alpha\log\pi_\theta(a'\mid s')\big],
+    \]
+    where \(a'\sim\pi_\theta(\cdot\mid s')\).
+  \item
+    \textbf{Critic update:} regress \(Q_{\phi_j}\) to \(y\) (both heads).
+  \item
+    \textbf{Actor update:} minimize \(J_\pi = \mathbb{E}_s\!\big[\alpha\log\pi_\theta(a\mid s) - \min_j Q_{\phi_j}(s,a)\big]\), with \(a\sim\pi_\theta\).
+  \item
+    \textbf{Temperature update (optional):} adjust \(\alpha\) towards target entropy.
+  \item
+    Soft-update target critics.
+  \end{itemize}
+\item
+  \textbf{Repeat} steps 1--4 until convergence or iteration limits.
+\end{enumerate}
+
+\textbf{Notes.}
+
+\begin{itemize}
+\item
+  Ensembles capture epistemic uncertainty; random-member rollouts implicitly regularize toward pessimism.
+\item
+  Keeping \(H\) \emph{short} (e.g., \(1\!\!-\!\!5\)) is crucial to prevent model error explosion.
+\item
+  Use recent real states as rollout seeds to stay on-distribution.
+\end{itemize}
+
+The next example applies MBPO to Inverted Pendulum.
+
+\begin{example}[MBPO for Inverted Pendulum]
+\protect\hypertarget{exm:pendulum-mbpo}{}\label{exm:pendulum-mbpo}
+
+Fig. \ref{fig:pendulum-learning-curve-mbpo} plots the learning curve.
+
+Fig. \ref{fig:pendulum-policy-rollout-mbpo} visualizes sample rollouts of the policy.
+
+Code can be found \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_mbpo.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/pendulum_learning_curve_mbpo} 
+
+}
+
+\caption{Learning curve (MBPO).}\label{fig:pendulum-learning-curve-mbpo}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.3\linewidth]{images/Policy-Gradients/pendulum_rollout_mbpo-1} \includegraphics[width=0.3\linewidth]{images/Policy-Gradients/pendulum_rollout_mbpo-2} \includegraphics[width=0.3\linewidth]{images/Policy-Gradients/pendulum_rollout_mbpo-3} 
+
+}
+
+\caption{Policy rollout (MBPO).}\label{fig:pendulum-policy-rollout-mbpo}
+\end{figure}
+
+\end{example}
+
 \chapter{Model-based Planning and Optimization}\label{model-based-plan-optimize}
 
 \appendix
