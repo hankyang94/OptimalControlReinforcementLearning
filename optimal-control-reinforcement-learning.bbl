@@ -46,6 +46,11 @@ Haarnoja, T., Zhou, A., Abbeel, P., and Levine, S. (2018).
 \newblock In {\em International conference on machine learning}, pages
   1861--1870. Pmlr.
 
+\bibitem[Janner et~al., 2019]{janner2019trust}
+Janner, M., Fu, J., Zhang, M., and Levine, S. (2019).
+\newblock When to trust your model: Model-based policy optimization.
+\newblock {\em Advances in neural information processing systems}, 32.
+
 \bibitem[Kakade, 2001]{kakade2001natural}
 Kakade, S.~M. (2001).
 \newblock A natural policy gradient.

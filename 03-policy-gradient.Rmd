@@ -2403,25 +2403,29 @@ knitr::include_graphics('images/Policy-Gradients/pendulum_rollout_ddpg-3.gif')
 
 ## Model-based Policy Optimization
 
-<!-- Model-based policy optimization (MBPO) [@janner2019trust] sits between pure model-free methods (high variance, data hungry) and “plan-only” model-based control (sensitive to model bias). The key idea is **to learn a dynamics model and then use only *short* rollouts from that model to create extra training data** for a strong off-policy learner (usually SAC). Short horizons curb compounding model error; a large model-generated replay reduces variance and boosts sample efficiency.
+Model-based policy optimization (MBPO) [@janner2019trust] sits between pure model-free methods (high variance, data hungry) and "plan-only" model-based control (sensitive to model bias, to be introduced in Chapter \@ref(model-based-plan-optimize)). The key idea is to learn a dynamics model and then use only *short* rollouts from that model to create extra training data for a strong off-policy learner (usually SAC).
 
-## High-level idea
+Consider an MDP with unknown dynamics \(s_{t+1} \sim P( \cdot \mid s_t,a_t)\). MBPO learns an ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\) that predicts the next state (often the *delta-state* \(\Delta s\)). Rather than planning far ahead inside the learned model, MBPO:
 
-Consider an MDP with unknown dynamics \(s_{t+1} \sim p(s_{t+1}\mid s_t,a_t)\). MBPO learns an ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\) that predicts the next state (often the *delta-state* \(\Delta s\)). Rather than planning far ahead inside the learned model, MBPO:
+1. Collects real transitions \(\mathcal{D}_{\text{env}}\) by interacting with the environment.
 
-1. Collects **real** transitions \(\mathcal{D}_{\text{env}}\) by interacting with the environment.
-2. **Fits** the dynamics ensemble on \(\mathcal{D}_{\text{env}}\).
-3. Periodically **generates short rollouts** (e.g., horizon \(H=1\ldots5\)) starting from **real** states by simulating with a *random* member of the ensemble, producing **model** transitions \(\mathcal{D}_{\text{model}}\).
-4. **Trains** an off-policy actor-critic (e.g., SAC) on a **mixture** of \(\mathcal{D}_{\text{env}}\) and \(\mathcal{D}_{\text{model}}\), typically with a high fraction of model data but *short* \(H\) to limit bias.
+2. Fits the dynamics ensemble on \(\mathcal{D}_{\text{env}}\).
+
+3. Periodically generates short rollouts (e.g., horizon \(H=1\ldots5\)) starting from *real* states by simulating with a *random* member of the ensemble, producing model transitions \(\mathcal{D}_{\text{model}}\).
+
+4. Trains an off-policy actor-critic (e.g., SAC) on a *mixture* of \(\mathcal{D}_{\text{env}}\) and \(\mathcal{D}_{\text{model}}\), typically with a high fraction of model data but *short* \(H\) to limit bias.
 
 This yields the sample-efficiency benefits of model-based learning while maintaining the robustness of model-free policy optimization.
 
----
-
-## Algorithm: MBPO (short-model-rollout variant)
+The following pseudocode implements MBPO with SAC as the off-policy learner.
 
 ::: {.highlightbox}
-**Inputs:** environment \(\mathcal{E}\), policy \(\pi_\theta(a\mid s)\), critics \(Q_{\phi_1},Q_{\phi_2}\) with targets, temperature \(\alpha\) (auto-tuned), dynamics ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\), real buffer \(\mathcal{D}_{\text{env}}\), model buffer \(\mathcal{D}_{\text{model}}\). Rollout horizon \(H\), model ratio \(p_{\text{model}}\in[0,1]\), update counts \(G_{\text{dyn}}, G_{\text{rl}}\).
+
+<div style="text-align: center;">
+**Model-based Policy Optimization (SAC as Off-Policy Learner)**
+</div>
+
+**Inputs:** environment \(\mathcal{E}\), policy \(\pi_\theta(a\mid s)\), twin critics \(Q_{\phi_1},Q_{\phi_2}\) with targets, temperature \(\alpha\) (auto-tuned), dynamics ensemble \(\{\hat f_{\psi_k}\}_{k=1}^K\), real buffer \(\mathcal{D}_{\text{env}}\), model buffer \(\mathcal{D}_{\text{model}}\). Rollout horizon \(H\), model ratio \(p_{\text{model}}\in[0,1]\), update counts \(G_{\text{dyn}}, G_{\text{rl}}\).
 
 1. **Warm-up & data collection.**
    - Interact with \(\mathcal{E}\) using \(\pi_\theta\) (or random for a short warm-up).
@@ -2429,394 +2433,66 @@ This yields the sample-efficiency benefits of model-based learning while maintai
 
 2. **Fit dynamics.** For \(G_{\text{dyn}}\) steps:
    - Sample minibatch \(B\subset\mathcal{D}_{\text{env}}\).
-   - Update each \(\psi_k\) to predict \(\Delta s = s'-s\) (and optionally \(r\)) by minimizing NLL/MSE.
+   - Update each \(\psi_k\) to predict \(\Delta s = s'-s\) (and optionally \(r\)) by minimizing, e.g, mean squared error.
 
 3. **Short model rollouts (data generation).**
    - Sample seed states \(S_0\) from recent \(\mathcal{D}_{\text{env}}\).
-   - For each \(s\in S_0\): for \(h=1\ldots H\):
-     - Sample \(a\sim \pi_\theta(\cdot\mid s)\).
-     - Pick random ensemble member \(k\); predict \(\hat\Delta s \leftarrow \hat f_{\psi_k}(s,a)\); set \(\hat s' = s + \hat\Delta s\).
-     - Compute \(r\) via a learned reward model or a known formula (when available).
-     - Push \((s,a,r,\hat s',\texttt{done}=0)\) into \(\mathcal{D}_{\text{model}}\).
-     - Set \(s\leftarrow\hat s'\); break if time-limit reached.
+   - For each \(s\in S_0\)
+      - for \(h=1\ldots H\):
+         - Sample \(a\sim \pi_\theta(\cdot\mid s)\).
+         - Pick random ensemble member \(k\); predict \(\hat\Delta s \leftarrow \hat f_{\psi_k}(s,a)\); set \(\hat s' = s + \hat\Delta s\).
+         - Compute \(r\) via a learned reward model or a known formula (when available).
+         - Push \((s,a,r,\hat s',\texttt{done}=0)\) into \(\mathcal{D}_{\text{model}}\).
+         - Set \(s\leftarrow\hat s'\); break if time-limit reached.
 
-4. **Off-policy RL updates.** For \(G_{\text{rl}}\) steps:
+4. **Off-policy RL updates (SAC).** For \(G_{\text{rl}}\) steps:
    - Form a minibatch by drawing a fraction \(p_{\text{model}}\) from \(\mathcal{D}_{\text{model}}\) and \(1-p_{\text{model}}\) from \(\mathcal{D}_{\text{env}}\).
-   - **Critic targets:** \(y=r+\gamma(1-d)\big[\min_j Q_{\phi_j^-}(s',a')-\alpha\log\pi_\theta(a'\mid s')\big]\), where \(a'\sim\pi_\theta(\cdot\mid s')\).
+   - **Critic targets:** 
+   $$
+   y=r+\gamma(1-d)\big[\min_j Q_{\phi_j^-}(s',a')-\alpha\log\pi_\theta(a'\mid s')\big],
+   $$ 
+   where \(a'\sim\pi_\theta(\cdot\mid s')\).
    - **Critic update:** regress \(Q_{\phi_j}\) to \(y\) (both heads).
    - **Actor update:** minimize \(J_\pi = \mathbb{E}_s\!\big[\alpha\log\pi_\theta(a\mid s) - \min_j Q_{\phi_j}(s,a)\big]\), with \(a\sim\pi_\theta\).
    - **Temperature update (optional):** adjust \(\alpha\) towards target entropy.
    - Soft-update target critics.
 
-5. **Repeat** steps 1–4 until budget is exhausted. Tune \(H\) and \(p_{\text{model}}\) to trade off bias/variance.
+5. **Repeat** steps 1–4 until convergence or iteration limits.
 :::
 
 **Notes.**  
+
 - Ensembles capture epistemic uncertainty; random-member rollouts implicitly regularize toward pessimism.  
+
 - Keeping \(H\) *short* (e.g., \(1\!\!-\!\!5\)) is crucial to prevent model error explosion.  
+
 - Use recent real states as rollout seeds to stay on-distribution.
 
----
+The next example applies MBPO to Inverted Pendulum.
 
-## Minimal MBPO on `Pendulum-v1` (Gym/Gymnasium, PyTorch)
+::: {.examplebox}
+::: {.example #pendulum-mbpo name="MBPO for Inverted Pendulum"}
 
-Below is a compact, instructional script. It uses:
-- A **dynamics ensemble** that predicts \(\Delta s\) (we compute the true reward analytically for Pendulum).
-- A **SAC** learner (Gaussian policy with tanh-squash) trained on a **mixture** of real and model transitions.
-- **Short rollouts** (default \(H=1\)).
+Fig. \@ref(fig:pendulum-learning-curve-mbpo) plots the learning curve.
 
-```python
-# MBPO on Pendulum-v1 (PyTorch)
-# --------------------------------
-# pip install torch gymnasium  (or: pip install torch gym)
-import os, math, time, random
-from dataclasses import dataclass
-from collections import deque
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
+Fig. \@ref(fig:pendulum-policy-rollout-mbpo) visualizes sample rollouts of the policy.
 
-# ---- Gym import with fallback (Gymnasium preferred) ----
-try:
-    import gymnasium as gym
-    GYMN = True
-except Exception:
-    import gym
-    GYMN = False
+Code can be found [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_mbpo.py).
 
-# ----------------- Utilities & Seeding -------------------
-SEED = 42
-random.seed(SEED); np.random.seed(SEED); torch.manual_seed(SEED)
 
-def make_env(seed=SEED):
-    env = gym.make("Pendulum-v1")
-    try:
-        env.reset(seed=seed)
-    except TypeError:
-        try:
-            env.seed(seed)
-        except Exception:
-            pass
-    return env
+```{r pendulum-learning-curve-mbpo, out.width='60%', fig.show='hold', fig.cap='Learning curve (MBPO).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/pendulum_learning_curve_mbpo.png')
+```
 
-# Pendulum reward (from Gym source)
-def pendulum_reward(state, action):
-    # state = [cos(theta), sin(theta), theta_dot]; action shape (...,1)
-    cos_th, sin_th, thdot = float(state[0]), float(state[1]), float(state[2])
-    theta = math.atan2(sin_th, cos_th)
-    u = float(np.clip(action, -2.0, 2.0))
-    cost = theta**2 + 0.1 * thdot**2 + 0.001 * (u**2)
-    return -cost
+```{r pendulum-policy-rollout-mbpo, out.width='30%', fig.show='hold', fig.cap='Policy rollout (MBPO).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Policy-Gradients/pendulum_rollout_mbpo-1.gif')
+knitr::include_graphics('images/Policy-Gradients/pendulum_rollout_mbpo-2.gif')
+knitr::include_graphics('images/Policy-Gradients/pendulum_rollout_mbpo-3.gif')
+```
 
-# --------------- Replay Buffers --------------------------
-class ReplayBuffer:
-    def __init__(self, obs_dim, act_dim, size, device):
-        self.obs_buf = np.zeros((size, obs_dim), dtype=np.float32)
-        self.act_buf = np.zeros((size, act_dim), dtype=np.float32)
-        self.rew_buf = np.zeros((size, 1), dtype=np.float32)
-        self.next_buf = np.zeros((size, obs_dim), dtype=np.float32)
-        self.done_buf = np.zeros((size, 1), dtype=np.float32)
-        self.max_size, self.ptr, self.size = size, 0, 0
-        self.device = device
 
-    def push(self, s, a, r, s2, d):
-        self.obs_buf[self.ptr]  = s
-        self.act_buf[self.ptr]  = a
-        self.rew_buf[self.ptr]  = r
-        self.next_buf[self.ptr] = s2
-        self.done_buf[self.ptr] = d
-        self.ptr = (self.ptr + 1) % self.max_size
-        self.size = min(self.size + 1, self.max_size)
-
-    def sample(self, batch_size):
-        idxs = np.random.randint(0, self.size, size=batch_size)
-        to_t = lambda x: torch.as_tensor(x[idxs], dtype=torch.float32, device=self.device)
-        return to_t(self.obs_buf), to_t(self.act_buf), to_t(self.rew_buf), to_t(self.next_buf), to_t(self.done_buf)
-
-# --------------- Neural Nets (MLPs) ----------------------
-def mlp(sizes, act=nn.ReLU, out_act=None):
-    layers = []
-    for j in range(len(sizes)-1):
-        layers += [nn.Linear(sizes[j], sizes[j+1])]
-        if j < len(sizes)-2:
-            layers += [act()]
-        elif out_act is not None:
-            layers += [out_act()]
-    return nn.Sequential(*layers)
-
-# ------------------- SAC Components ----------------------
-class ActorGaussian(nn.Module):
-    def __init__(self, obs_dim, act_dim, act_low, act_high, hidden=(256,256)):
-        super().__init__()
-        self.net = mlp([obs_dim, *hidden, 2*act_dim])
-        self.act_low  = torch.as_tensor(act_low, dtype=torch.float32)
-        self.act_high = torch.as_tensor(act_high, dtype=torch.float32)
-        self.act_scale = (self.act_high - self.act_low) / 2.0
-        self.act_bias  = (self.act_high + self.act_low) / 2.0
-
-    def forward(self, obs):
-        mu_logstd = self.net(obs)
-        act_dim = mu_logstd.shape[-1] // 2
-        mu, log_std = mu_logstd[..., :act_dim], mu_logstd[..., act_dim:]
-        log_std = torch.clamp(log_std, -20, 2)
-        std = torch.exp(log_std)
-        dist = torch.distributions.Normal(mu, std)
-        eps = dist.rsample()                          # reparameterized
-        squashed = torch.tanh(eps)
-        action = self.act_scale.to(obs.device) * squashed + self.act_bias.to(obs.device)
-        # Tanh correction (sum over action dims)
-        logp = dist.log_prob(eps) - torch.log(1 - squashed.pow(2) + 1e-6)
-        logp = logp.sum(dim=-1, keepdim=True)
-        return action, logp
-
-    @torch.no_grad()
-    def act(self, obs, deterministic=False):
-        obs_t = torch.as_tensor(obs, dtype=torch.float32).unsqueeze(0)
-        mu_logstd = self.net(obs_t)
-        act_dim = mu_logstd.shape[-1] // 2
-        mu, log_std = mu_logstd[..., :act_dim], mu_logstd[..., act_dim:]
-        if deterministic:
-            squashed = torch.tanh(mu)
-        else:
-            log_std = torch.clamp(log_std, -20, 2)
-            std = torch.exp(log_std)
-            eps = torch.distributions.Normal(mu, std).sample()
-            squashed = torch.tanh(eps)
-        action = self.act_scale * squashed + self.act_bias
-        return action.squeeze(0).cpu().numpy()
-
-class CriticTwin(nn.Module):
-    def __init__(self, obs_dim, act_dim, hidden=(256,256)):
-        super().__init__()
-        self.q1 = mlp([obs_dim+act_dim, *hidden, 1])
-        self.q2 = mlp([obs_dim+act_dim, *hidden, 1])
-    def forward(self, s, a):
-        sa = torch.cat([s,a], dim=-1)
-        return self.q1(sa), self.q2(sa)
-
-# ---------------- Dynamics Ensemble ----------------------
-class DynModel(nn.Module):
-    def __init__(self, obs_dim, act_dim, hidden=(200,200)):
-        super().__init__()
-        self.net = mlp([obs_dim+act_dim, *hidden, obs_dim])
-    def forward(self, s, a):
-        x = torch.cat([s,a], dim=-1)
-        delta = self.net(x)               # predict Δs
-        return delta
-
-class Ensemble:
-    def __init__(self, n_models, obs_dim, act_dim, device):
-        self.members = [DynModel(obs_dim, act_dim).to(device) for _ in range(n_models)]
-        self.optims  = [torch.optim.Adam(m.parameters(), lr=1e-3) for m in self.members]
-        self.device  = device
-        self.n = n_models
-    def train_step(self, batch_s, batch_a, batch_s2):
-        losses = []
-        for m,opt in zip(self.members, self.optims):
-            opt.zero_grad()
-            pred = m(batch_s, batch_a)
-            target = batch_s2 - batch_s
-            loss = F.mse_loss(pred, target)
-            loss.backward(); opt.step()
-            losses.append(loss.item())
-        return float(np.mean(losses))
-    @torch.no_grad()
-    def step(self, s, a, sigma=0.0):
-        # sample a random member per call
-        m = random.choice(self.members)
-        delta = m(s, a)
-        if sigma > 0:
-            delta = delta + sigma*torch.randn_like(delta)
-        return s + delta
-
-# -------------------- MBPO Trainer -----------------------
-@dataclass
-class MBPOConfig:
-    total_env_steps: int = 40_000
-    start_random_steps: int = 1_000
-    update_after: int = 1_000
-    update_every: int = 50
-    real_batch_size: int = 256
-    model_batch_size: int = 256
-    sac_updates_per_step: float = 1.0   # RL updates per env step
-    model_train_iters: int = 200        # per model-updating phase
-    rollout_horizon: int = 1            # short horizon is key
-    model_ratio: float = 0.9            # fraction from model buffer
-    gamma: float = 0.99
-    tau: float = 0.005
-    lr_actor: float = 3e-4
-    lr_critic: float = 3e-4
-    lr_alpha: float = 3e-4
-    ensemble_size: int = 5
-    real_buffer_size: int = 200_000
-    model_buffer_size: int = 500_000
-    device: str = "cpu"
-
-def soft_update(net, target, tau):
-    for p, p_targ in zip(net.parameters(), target.parameters()):
-        p_targ.data.mul_(1 - tau)
-        p_targ.data.add_(tau * p.data)
-
-def train_mbpo(config=MBPOConfig()):
-    device = torch.device(config.device)
-    env = make_env(SEED)
-    obs, _info = env.reset() if GYMN else env.reset()
-    obs_dim = env.observation_space.shape[0]
-    act_dim = env.action_space.shape[0]
-    act_low = env.action_space.low
-    act_high = env.action_space.high
-
-    # Replay buffers
-    rb_real  = ReplayBuffer(obs_dim, act_dim, config.real_buffer_size, device)
-    rb_model = ReplayBuffer(obs_dim, act_dim, config.model_buffer_size, device)
-
-    # SAC nets
-    actor = ActorGaussian(obs_dim, act_dim, act_low, act_high).to(device)
-    critic = CriticTwin(obs_dim, act_dim).to(device)
-    critic_targ = CriticTwin(obs_dim, act_dim).to(device)
-    critic_targ.load_state_dict(critic.state_dict())
-
-    pi_optim = torch.optim.Adam(actor.parameters(), lr=config.lr_actor)
-    q_optim  = torch.optim.Adam(critic.parameters(), lr=config.lr_critic)
-
-    # Entropy temperature (auto)
-    target_entropy = -float(act_dim)
-    log_alpha = torch.tensor(0.0, requires_grad=True, device=device)
-    alpha_optim = torch.optim.Adam([log_alpha], lr=config.lr_alpha)
-
-    # Dynamics ensemble
-    ensemble = Ensemble(config.ensemble_size, obs_dim, act_dim, device)
-
-    ep_ret, ep_len = 0.0, 0
-    returns = []
-    s = obs
-    for t in range(1, config.total_env_steps + 1):
-        # ---- Select action ----
-        if t < config.start_random_steps:
-            a = env.action_space.sample()
-        else:
-            a = actor.act(s, deterministic=False)
-
-        # ---- Step env ----
-        step_out = env.step(a)
-        if GYMN:
-            s2, r, terminated, truncated, _ = step_out
-            done = terminated or truncated
-        else:
-            s2, r, done, _ = step_out
-
-        rb_real.push(s, a, r, s2, float(done))
-        ep_ret += r; ep_len += 1
-        s = s2
-
-        if done:
-            returns.append(ep_ret)
-            s, _ = env.reset() if GYMN else env.reset()
-            ep_ret, ep_len = 0.0, 0
-
-        # ---- Training phase ----
-        if t >= config.update_after and t % config.update_every == 0:
-            # 1) Train dynamics on real buffer
-            for _ in range(config.model_train_iters):
-                if rb_real.size < config.real_batch_size: break
-                bs = config.real_batch_size
-                s_b, a_b, _r_b, s2_b, _d_b = rb_real.sample(bs)
-                ensemble.train_step(s_b, a_b, s2_b)
-
-            # 2) Generate short model rollouts seeded from real states
-            seeds = 1000  # number of seed states per generation burst
-            if rb_real.size > seeds:
-                # recent indices for more on-distribution seeds
-                idxs = np.random.randint(max(0, rb_real.size - 5000), rb_real.size, size=seeds)
-                seed_states = torch.as_tensor(rb_real.obs_buf[idxs], dtype=torch.float32, device=device)
-                s_model = seed_states.clone()
-                for _h in range(config.rollout_horizon):
-                    with torch.no_grad():
-                        a_model, _logp = actor(s_model)
-                        s2_model = ensemble.step(s_model, a_model, sigma=0.0)  # keep deterministic for stability
-                        # compute true Pendulum reward analytically
-                        r_list = []
-                        for i in range(s_model.shape[0]):
-                            r_i = pendulum_reward(s_model[i].cpu().numpy(), a_model[i].cpu().numpy())
-                            r_list.append([r_i])
-                        r_model = torch.tensor(r_list, dtype=torch.float32, device=device)
-                        d_model = torch.zeros_like(r_model)  # no terminal signals from short model rollouts
-                    # push into model buffer
-                    for i in range(s_model.shape[0]):
-                        rb_model.push(s_model[i].cpu().numpy(),
-                                      a_model[i].cpu().numpy(),
-                                      r_model[i].cpu().numpy(),
-                                      s2_model[i].cpu().numpy(),
-                                      d_model[i].cpu().numpy())
-                    s_model = s2_model
-
-            # 3) Off-policy SAC updates
-            total_updates = int(config.sac_updates_per_step * config.update_every)
-            for _ in range(total_updates):
-                if rb_real.size < config.real_batch_size: continue
-                # sample mixture
-                bm = max(1, int(config.model_ratio * config.model_batch_size))
-                br = max(1, config.model_batch_size - bm)
-                # If model buffer is too small, fall back to real
-                if rb_model.size < bm:
-                    bm = 0; br = config.model_batch_size
-                if br > 0:
-                    s_r, a_r, r_r, s2_r, d_r = rb_real.sample(br)
-                if bm > 0:
-                    s_m, a_m, r_m, s2_m, d_m = rb_model.sample(bm)
-
-                if bm > 0 and br > 0:
-                    s_b  = torch.cat([s_r,  s_m],  dim=0)
-                    a_b  = torch.cat([a_r,  a_m],  dim=0)
-                    r_b  = torch.cat([r_r,  r_m],  dim=0)
-                    s2_b = torch.cat([s2_r, s2_m], dim=0)
-                    d_b  = torch.cat([d_r,  d_m],  dim=0)
-                elif bm > 0:
-                    s_b, a_b, r_b, s2_b, d_b = s_m, a_m, r_m, s2_m, d_m
-                else:
-                    s_b, a_b, r_b, s2_b, d_b = s_r, a_r, r_r, s2_r, d_r
-
-                # Critic update
-                with torch.no_grad():
-                    a2, logp2 = actor(s2_b)
-                    q1_t, q2_t = critic_targ(s2_b, a2)
-                    q_targ = torch.min(q1_t, q2_t) - torch.exp(log_alpha) * logp2
-                    y = r_b + (1.0 - d_b) * config.gamma * q_targ
-                q1, q2 = critic(s_b, a_b)
-                q_loss = F.mse_loss(q1, y) + F.mse_loss(q2, y)
-                q_optim.zero_grad(); q_loss.backward(); q_optim.step()
-
-                # Actor update
-                a_new, logp = actor(s_b)
-                q1_pi, q2_pi = critic(s_b, a_new)
-                q_pi = torch.min(q1_pi, q2_pi)
-                pi_loss = (torch.exp(log_alpha) * logp - q_pi).mean()
-                pi_optim.zero_grad(); pi_loss.backward(); pi_optim.step()
-
-                # Temperature update
-                alpha_loss = -(log_alpha * (logp.detach() + target_entropy)).mean()
-                alpha_optim.zero_grad(); alpha_loss.backward(); alpha_optim.step()
-
-                # Targets
-                soft_update(critic, critic_targ, config.tau)
-
-        if t % 2000 == 0 and len(returns) > 5:
-            print(f"[t={t}] recent avg return: {np.mean(returns[-5:]):.1f}, real_buf={rb_real.size}, model_buf={rb_model.size}")
-
-    env.close()
-    print(f"Training done. Episodes logged: {len(returns)}. Last 10 avg return: {np.mean(returns[-10:]) if len(returns)>=10 else np.mean(returns):.1f}")
-    return returns
-
-if __name__ == "__main__":
-    cfg = MBPOConfig(
-        total_env_steps = 40_000,
-        rollout_horizon = 1,      # try 1-3; larger increases model bias
-        model_ratio     = 0.9,    # more model data after warmup
-        device          = "cpu"
-    )
-    train_mbpo(cfg)
-``` -->
+:::
+:::
 
 
 
