@@ -56,6 +56,12 @@ Kearns, M.~J. and Singh, S. (2000).
 \newblock Bias-variance error bounds for temporal difference updates.
 \newblock In {\em COLT}, pages 142--147.
 
+\bibitem[Lillicrap et~al., 2015]{lillicrap2015continuous}
+Lillicrap, T.~P., Hunt, J.~J., Pritzel, A., Heess, N., Erez, T., Tassa, Y.,
+  Silver, D., and Wierstra, D. (2015).
+\newblock Continuous control with deep reinforcement learning.
+\newblock {\em arXiv preprint arXiv:1509.02971}.
+
 \bibitem[Mahmood et~al., 2015]{mahmood2015emphatic}
 Mahmood, A.~R., Yu, H., White, M., and Sutton, R.~S. (2015).
 \newblock Emphatic temporal-difference learning.
@@ -107,6 +113,13 @@ Schulman, J., Moritz, P., Levine, S., Jordan, M., and Abbeel, P. (2015b).
 Schulman, J., Wolski, F., Dhariwal, P., Radford, A., and Klimov, O. (2017).
 \newblock Proximal policy optimization algorithms.
 \newblock {\em arXiv preprint arXiv:1707.06347}.
+
+\bibitem[Silver et~al., 2014]{silver2014deterministic}
+Silver, D., Lever, G., Heess, N., Degris, T., Wierstra, D., and Riedmiller, M.
+  (2014).
+\newblock Deterministic policy gradient algorithms.
+\newblock In {\em International conference on machine learning}, pages
+  387--395. Pmlr.
 
 \bibitem[Sutton and Barto, 1998]{sutton1998reinforcement}
 Sutton, R.~S. and Barto, A.~G. (1998).
