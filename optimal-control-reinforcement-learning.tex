@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-10-19}
+\date{2025-10-20}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -6304,6 +6304,248 @@ Code can be found \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-
 \end{example}
 
 \subsection{Deterministic Policy Gradient}\label{deterministic-policy-gradient}
+
+In continuous-control tasks, sampling or integrating over actions inside policy gradients is costly and noisy. The Deterministic Policy Gradient (DPG) framework \citep{silver2014deterministic} replaces the stochastic policy \(\pi_\theta(a\mid s)\) with a \emph{deterministic} actor
+\[
+a = \mu_\theta(s)\in\mathbb{R}^m.
+\]
+Its state--action value and discounted state visitation measure are
+\[
+Q^{\mu_\theta}(s,a) \;=\; \mathbb{E}\!\left[\sum_{t=0}^\infty \gamma^t R(s_t,a_t)\,\middle|\,s_0=s,\ a_0=a,\ a_{t>0}=\mu_\theta(s_t)\right],
+\]
+\[
+\rho^{\pi}(s) \;=\; \sum_{t=0}^{\infty}\gamma^t \Pr(s_t=s \mid a_t\sim \pi(\cdot\mid s_t)),\qquad
+\rho^{\mu_\theta}\equiv \rho^{\pi=\mu_\theta}.
+\]
+
+We consider two objectives:
+
+\begin{itemize}
+\item
+  \textbf{On-policy objective}:
+  \begin{equation}
+  J(\theta)\;=\;\mathbb{E}_{s\sim \rho^{\mu_\theta}}\big[\,Q^{\mu_\theta}(s,\mu_\theta(s))\,\big].
+  \label{eq:DPG-obj-on}
+  \end{equation}
+\item
+  \textbf{Off-policy surrogate} (with behavior policy \(\beta\)):
+  \begin{equation}
+  J_\beta(\theta)\;=\;\mathbb{E}_{s\sim \rho^{\beta}} \big[\,Q^{\mu_\theta}(s,\mu_\theta(s))\,\big].
+  \label{eq:DPG-obj-off}
+  \end{equation}
+\end{itemize}
+
+The on-policy objective \eqref{eq:DPG-obj-on} is the usual RL objective in policy gradient methods, as \(Q^{\mu_\theta}(s, \mu_\theta(s)) = V^{\mu_\theta}(s)\) by definition.
+
+A key result in Deterministic Policy Gradient is that under mild conditions, optimizating the surrogate off-policy objective \eqref{eq:DPG-obj-off} is the same as optimizating the original on-policy objective.
+
+To see this, assume
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \(R\) and \(P(\cdot\mid s,a)\) (the transition dynamics) are bounded/measurable; \(Q^{\mu_\theta}\) exists and is continuously differentiable in \(a\);
+\item
+  \(\mu_\theta(s)\) is continuously differentiable in \(\theta\);
+\item
+  Interchange of integration and differentiation is valid (e.g., dominated convergence).
+\end{enumerate}
+
+Then, the on-policy and off-policy deterministic policy gradients (DPG) are:
+
+\begin{itemize}
+\item
+  \textbf{On-policy DPG.}
+  \begin{equation}
+  \nabla_\theta J(\theta)
+  \;=\;
+  \mathbb{E}_{s\sim \rho^{\mu_\theta}} \left[
+  \nabla_\theta \mu_\theta(s)\;
+  \nabla_a Q^{\mu_\theta}(s,a)\big|_{a=\mu_\theta(s)}
+  \right].
+  \label{eq:DPG-grad-on}
+  \end{equation}
+\item
+  \textbf{Off-policy DPG.} For any behavior policy \(\beta\) with visitation \(\rho^\beta\),
+  \begin{equation}
+  \nabla_\theta J_\beta(\theta)
+  \;=\;
+  \mathbb{E}_{s\sim \rho^{\beta}} \left[
+  \nabla_\theta \mu_\theta(s)\;
+  \nabla_a Q^{\mu_\theta}(s,a)\big|_{a=\mu_\theta(s)}
+  \right].
+  \label{eq:DPG-grad-off}
+  \end{equation}
+\end{itemize}
+
+In particular, the off-policy DPG \eqref{eq:DPG-grad-off} can be estimated from replay sampled under \(\beta\) without action-importance ratios; only the state weighting changes.
+
+The following result states that the on-policy and off-policy objectives share the same stationary points.
+
+\begin{theorem}[Common First-Order Optima]
+\protect\hypertarget{thm:dpg-common-foc}{}\label{thm:dpg-common-foc}Let
+\begin{equation}
+g(s;\theta)\;:=\;\nabla_\theta \mu_\theta(s)\,\nabla_a Q^{\mu_\theta}(s,a)\big|_{a=\mu_\theta(s)}\in\mathbb{R}^{d},
+\label{eq:per-state-gradient}
+\end{equation}
+where \(d\) is the dimension of \(\theta\).
+
+Suppose \(\rho^\beta\) has coverage of the on-policy support, i.e.,
+\[
+\text{supp}(\rho^{\mu_\theta})\ \subseteq\ \text{supp}(\rho^\beta),\quad
+\text{and}\quad \rho^\beta(s)>0\ \text{a.e. on }\text{supp}(\rho^{\mu_\theta}).
+\]
+If \(g(s;\theta^\star)=0\) for \(\rho^{\mu_{\theta^\star}}\)-almost every \(s\) (in particular, if \(\mu_{\theta^\star}\) is greedy w.r.t. \(Q^{\mu_{\theta^\star}}\), so \(\nabla_a Q^{\mu_{\theta^\star}}(s,a)|_{a=\mu_{\theta^\star}(s)}=0\) for all \(s\)), then
+\[
+\nabla_\theta J(\theta^\star)=0
+\quad\text{and}\quad
+\nabla_\theta J_\beta(\theta^\star)=0.
+\]
+Thus any deterministic policy satisfying the first-order optimality condition (greedy w.r.t. its own \(Q\)) is a \emph{stationary point of both} \(J\) and \(J_\beta\), regardless of the (covered) state weighting.
+
+If additionally \(\text{supp}(\rho^{\mu_\theta})=\text{supp}(\rho^\beta)\) and both are strictly positive on that support, then
+\[
+\nabla_\theta J(\theta)=0 \ \Longleftrightarrow\ \nabla_\theta J_\beta(\theta)=0.
+\]
+\end{theorem}
+
+\textbf{Remarks.}
+
+\begin{itemize}
+\item
+  The off-policy objective \(J_\beta\) changes only the \textbf{weights} over states; the \textbf{per-state improvement direction} \(g(s;\theta)\) is identical. With sufficient coverage, ascent on \(J_\beta\) improves \(J\) and shares its stationary points.
+\item
+  In practice, DDPG uses exploration noise to expand support of \(\rho^\beta\) and target networks to stabilize \(Q^{\mu_\theta}\), making the off-policy gradient estimate reliable.
+\end{itemize}
+
+\textbf{From DPG to DDPG (Deep DPG).} DDPG \citep{lillicrap2015continuous} implements DPG with deep networks + standard stabilizers:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Replay buffer} \(\mathcal D\) for off-policy sample efficiency.
+\item
+  \textbf{Target networks} \(\mu_{\bar\theta}, Q_{\bar\psi}\) with Polyak averaging to stabilize TD targets.
+\item
+  \textbf{Exploration noise} added to the deterministic action: \(a_t = \mu_\theta(s_t) + \varepsilon_t\) (original paper used Ornstein--Uhlenbeck noise; Gaussian works well too).
+\end{itemize}
+
+\textbf{High-Level Algorithm (DDPG).}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Interact off-policy.} Act with exploration: \(a_t=\mu_\theta(s_t)+\varepsilon_t\). Store \((s_t,a_t,r_t,s_{t+1},\text{done}_t)\) in \(\mathcal D\).
+\item
+  \textbf{Critic TD(0).} For a minibatch from \(\mathcal D\),
+  \[
+  y = r + \gamma(1-\text{done})\,Q_{\bar\psi} \big(s',\,\mu_{\bar\theta}(s')\big),\qquad
+  \min_\psi\ \frac{1}{B}\sum (Q_\psi(s,a)-y)^2.
+  \]
+\item
+  \textbf{Actor DPG step.}
+  \[
+  \max_\theta\ \frac{1}{B}\sum Q_\psi\big(s,\,\mu_\theta(s)\big)
+  \quad\Longleftrightarrow\quad
+  \nabla_\theta J \approx \frac{1}{B}\sum \nabla_\theta \mu_\theta(s)\,\nabla_a Q_\psi(s,a)\big|_{a=\mu_\theta(s)}.
+  \]
+\item
+  \textbf{Targets Polyak update.}
+  \[
+  \bar\theta \leftarrow \tau\,\theta + (1-\tau)\bar\theta,\ \ \bar\psi \leftarrow \tau\,\psi + (1-\tau)\bar\psi.
+  \]
+\end{enumerate}
+
+\textbf{Remarks.}
+
+\begin{itemize}
+\tightlist
+\item
+  No entropy bonus or log-probabilities (in contrast to SAC). Exploration comes from additive noise.\\
+\item
+  Overestimation and sensitivity to hyperparameters can appear; target networks, small actor steps, and proper normalization help.
+\end{itemize}
+
+The following pseudocode implements DDPG.
+
+\textbf{Deep Deterministic Policy Gradient (DDPG)}
+
+\textbf{Inputs:} replay buffer \(\mathcal{D}\); deterministic actor \(\mu_\theta(s)\); critic \(Q_\psi(s,a)\); target networks \(\mu_{\bar\theta}, Q_{\bar\psi}\); discount \(\gamma\in[0,1)\); Polyak \(\tau\in(0,1]\); batch size \(B\); stepsizes \(\alpha_\theta,\alpha_\psi\); exploration noise process \(\varepsilon_t\sim \mathcal N(0,\sigma^2 I)\) (or Ornstein--Uhlenbeck).
+
+\textbf{Initialize:} \(\bar\theta\leftarrow\theta,\ \bar\psi\leftarrow\psi\). Fill \(\mathcal D\) with a short random warm-up.
+
+For iterations \(k=0,1,2,\dots\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Interaction (off-policy).}\\
+  Observe \(s_t\). Compute action with noise\\
+  \[
+  a_t \leftarrow \text{clip}\big(\mu_\theta(s_t) + \varepsilon_t,\ a_{\min}, a_{\max}\big).
+  \]
+  Step env to get \((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\). Push into \(\mathcal D\).
+\item
+  \textbf{Sample minibatch.}\\
+  Draw \(B\) transitions \(\{(s,a,r,s',d)\}\) from \(\mathcal D\).
+\item
+  \textbf{Critic target.}\\
+  \[
+  a' \leftarrow \mu_{\bar\theta}(s'),\qquad
+  y \leftarrow r + \gamma(1-d)\,Q_{\bar\psi}(s',a').
+  \]
+  \emph{(Stop gradient through \(y\).)}
+\item
+  \textbf{Critic update.}\\
+  \[
+  \psi \leftarrow \psi - \alpha_\psi\,\nabla_\psi\ \frac{1}{B}\sum (Q_\psi(s,a)-y)^2.
+  \]
+\item
+  \textbf{Actor update (DPG).}\\
+  \[
+  \theta \leftarrow \theta + \alpha_\theta\ \frac{1}{B}\sum
+  \Big[\ \nabla_\theta \mu_\theta(s)\ \nabla_a Q_\psi(s,a)\big|_{a=\mu_\theta(s)}\ \Big].
+  \]
+  \emph{(Equivalently, ascend \(\frac{1}{B}\sum Q_\psi(s,\mu_\theta(s))\) by backprop.)}
+\item
+  \textbf{Target networks (Polyak).}\\
+  \[
+  \bar\theta \leftarrow \tau\,\theta + (1-\tau)\,\bar\theta,\qquad
+  \bar\psi \leftarrow \tau\,\psi + (1-\tau)\,\bar\psi.
+  \]
+\end{enumerate}
+
+The next example applies DDPG to Inverted Pendulum.
+
+\begin{example}[DDPG for Inverted Pendulum]
+\protect\hypertarget{exm:pendulum-ddpg}{}\label{exm:pendulum-ddpg}
+
+Fig. \ref{fig:pendulum-learning-curve-ddpg} plots the learning curve of DDPG.
+
+Fig. \ref{fig:pendulum-policy-rollout-ddpg} visualizes sample rollouts of the learned policy.
+
+Code can be found \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_ddpg.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Policy-Gradients/pendulum_learning_curve_ddpg} 
+
+}
+
+\caption{Learning curve (DDPG).}\label{fig:pendulum-learning-curve-ddpg}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.3\linewidth]{images/Policy-Gradients/pendulum_rollout_ddpg-1} \includegraphics[width=0.3\linewidth]{images/Policy-Gradients/pendulum_rollout_ddpg-2} \includegraphics[width=0.3\linewidth]{images/Policy-Gradients/pendulum_rollout_ddpg-3} 
+
+}
+
+\caption{Policy rollout (DDPG).}\label{fig:pendulum-policy-rollout-ddpg}
+\end{figure}
+
+\end{example}
 
 \section{Model-based Policy Optimization}\label{model-based-policy-optimization}
 

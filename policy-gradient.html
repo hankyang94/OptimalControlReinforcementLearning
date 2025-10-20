@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-19" />
+<meta name="date" content="2025-10-20" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -2330,6 +2330,186 @@ Figure 3.20: Policy rollout (Soft Actor–Critic).
 </div>
 <div id="deterministic-policy-gradient" class="section level3 hasAnchor" number="3.4.9">
 <h3><span class="header-section-number">3.4.9</span> Deterministic Policy Gradient<a href="policy-gradient.html#deterministic-policy-gradient" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>In continuous-control tasks, sampling or integrating over actions inside policy gradients is costly and noisy. The Deterministic Policy Gradient (DPG) framework <span class="citation">(<a href="#ref-silver2014deterministic">Silver et al. 2014</a>)</span> replaces the stochastic policy <span class="math inline">\(\pi_\theta(a\mid s)\)</span> with a <em>deterministic</em> actor
+<span class="math display">\[
+a = \mu_\theta(s)\in\mathbb{R}^m.
+\]</span>
+Its state–action value and discounted state visitation measure are
+<span class="math display">\[
+Q^{\mu_\theta}(s,a) \;=\; \mathbb{E}\!\left[\sum_{t=0}^\infty \gamma^t R(s_t,a_t)\,\middle|\,s_0=s,\ a_0=a,\ a_{t&gt;0}=\mu_\theta(s_t)\right],
+\]</span>
+<span class="math display">\[
+\rho^{\pi}(s) \;=\; \sum_{t=0}^{\infty}\gamma^t \Pr(s_t=s \mid a_t\sim \pi(\cdot\mid s_t)),\qquad
+\rho^{\mu_\theta}\equiv \rho^{\pi=\mu_\theta}.
+\]</span></p>
+<p>We consider two objectives:</p>
+<ul>
+<li><p><strong>On-policy objective</strong>:
+<span class="math display" id="eq:DPG-obj-on">\[\begin{equation}
+J(\theta)\;=\;\mathbb{E}_{s\sim \rho^{\mu_\theta}}\big[\,Q^{\mu_\theta}(s,\mu_\theta(s))\,\big].
+\tag{3.69}
+\end{equation}\]</span></p></li>
+<li><p><strong>Off-policy surrogate</strong> (with behavior policy <span class="math inline">\(\beta\)</span>):
+<span class="math display" id="eq:DPG-obj-off">\[\begin{equation}
+J_\beta(\theta)\;=\;\mathbb{E}_{s\sim \rho^{\beta}} \big[\,Q^{\mu_\theta}(s,\mu_\theta(s))\,\big].
+\tag{3.70}
+\end{equation}\]</span></p></li>
+</ul>
+<p>The on-policy objective <a href="policy-gradient.html#eq:DPG-obj-on">(3.69)</a> is the usual RL objective in policy gradient methods, as <span class="math inline">\(Q^{\mu_\theta}(s, \mu_\theta(s)) = V^{\mu_\theta}(s)\)</span> by definition.</p>
+<p>A key result in Deterministic Policy Gradient is that under mild conditions, optimizating the surrogate off-policy objective <a href="policy-gradient.html#eq:DPG-obj-off">(3.70)</a> is the same as optimizating the original on-policy objective.</p>
+<p>To see this, assume</p>
+<ol style="list-style-type: decimal">
+<li><span class="math inline">\(R\)</span> and <span class="math inline">\(P(\cdot\mid s,a)\)</span> (the transition dynamics) are bounded/measurable; <span class="math inline">\(Q^{\mu_\theta}\)</span> exists and is continuously differentiable in <span class="math inline">\(a\)</span>;</li>
+<li><span class="math inline">\(\mu_\theta(s)\)</span> is continuously differentiable in <span class="math inline">\(\theta\)</span>;</li>
+<li>Interchange of integration and differentiation is valid (e.g., dominated convergence).</li>
+</ol>
+<p>Then, the on-policy and off-policy deterministic policy gradients (DPG) are:</p>
+<ul>
+<li><p><strong>On-policy DPG.</strong>
+<span class="math display" id="eq:DPG-grad-on">\[\begin{equation}
+\nabla_\theta J(\theta)
+\;=\;
+\mathbb{E}_{s\sim \rho^{\mu_\theta}} \left[
+\nabla_\theta \mu_\theta(s)\;
+\nabla_a Q^{\mu_\theta}(s,a)\big|_{a=\mu_\theta(s)}
+\right].
+\tag{3.71}
+\end{equation}\]</span></p></li>
+<li><p><strong>Off-policy DPG.</strong> For any behavior policy <span class="math inline">\(\beta\)</span> with visitation <span class="math inline">\(\rho^\beta\)</span>,
+<span class="math display" id="eq:DPG-grad-off">\[\begin{equation}
+\nabla_\theta J_\beta(\theta)
+\;=\;
+\mathbb{E}_{s\sim \rho^{\beta}} \left[
+\nabla_\theta \mu_\theta(s)\;
+\nabla_a Q^{\mu_\theta}(s,a)\big|_{a=\mu_\theta(s)}
+\right].
+\tag{3.72}
+\end{equation}\]</span></p></li>
+</ul>
+<p>In particular, the off-policy DPG <a href="policy-gradient.html#eq:DPG-grad-off">(3.72)</a> can be estimated from replay sampled under <span class="math inline">\(\beta\)</span> without action-importance ratios; only the state weighting changes.</p>
+<p>The following result states that the on-policy and off-policy objectives share the same stationary points.</p>
+<div class="theorembox">
+<div class="theorem">
+<p><span id="thm:dpg-common-foc" class="theorem"><strong>Theorem 3.9  (Common First-Order Optima) </strong></span>Let
+<span class="math display" id="eq:per-state-gradient">\[\begin{equation}
+g(s;\theta)\;:=\;\nabla_\theta \mu_\theta(s)\,\nabla_a Q^{\mu_\theta}(s,a)\big|_{a=\mu_\theta(s)}\in\mathbb{R}^{d},
+\tag{3.73}
+\end{equation}\]</span>
+where <span class="math inline">\(d\)</span> is the dimension of <span class="math inline">\(\theta\)</span>.</p>
+<p>Suppose <span class="math inline">\(\rho^\beta\)</span> has coverage of the on-policy support, i.e.,
+<span class="math display">\[
+\text{supp}(\rho^{\mu_\theta})\ \subseteq\ \text{supp}(\rho^\beta),\quad
+\text{and}\quad \rho^\beta(s)&gt;0\ \text{a.e. on }\text{supp}(\rho^{\mu_\theta}).
+\]</span>
+If <span class="math inline">\(g(s;\theta^\star)=0\)</span> for <span class="math inline">\(\rho^{\mu_{\theta^\star}}\)</span>-almost every <span class="math inline">\(s\)</span> (in particular, if <span class="math inline">\(\mu_{\theta^\star}\)</span> is greedy w.r.t. <span class="math inline">\(Q^{\mu_{\theta^\star}}\)</span>, so <span class="math inline">\(\nabla_a Q^{\mu_{\theta^\star}}(s,a)|_{a=\mu_{\theta^\star}(s)}=0\)</span> for all <span class="math inline">\(s\)</span>), then
+<span class="math display">\[
+\nabla_\theta J(\theta^\star)=0
+\quad\text{and}\quad
+\nabla_\theta J_\beta(\theta^\star)=0.
+\]</span>
+Thus any deterministic policy satisfying the first-order optimality condition (greedy w.r.t. its own <span class="math inline">\(Q\)</span>) is a <em>stationary point of both</em> <span class="math inline">\(J\)</span> and <span class="math inline">\(J_\beta\)</span>, regardless of the (covered) state weighting.</p>
+<p>If additionally <span class="math inline">\(\text{supp}(\rho^{\mu_\theta})=\text{supp}(\rho^\beta)\)</span> and both are strictly positive on that support, then
+<span class="math display">\[
+\nabla_\theta J(\theta)=0 \ \Longleftrightarrow\ \nabla_\theta J_\beta(\theta)=0.
+\]</span></p>
+</div>
+</div>
+<p><strong>Remarks.</strong></p>
+<ul>
+<li><p>The off-policy objective <span class="math inline">\(J_\beta\)</span> changes only the <strong>weights</strong> over states; the <strong>per-state improvement direction</strong> <span class="math inline">\(g(s;\theta)\)</span> is identical. With sufficient coverage, ascent on <span class="math inline">\(J_\beta\)</span> improves <span class="math inline">\(J\)</span> and shares its stationary points.</p></li>
+<li><p>In practice, DDPG uses exploration noise to expand support of <span class="math inline">\(\rho^\beta\)</span> and target networks to stabilize <span class="math inline">\(Q^{\mu_\theta}\)</span>, making the off-policy gradient estimate reliable.</p></li>
+</ul>
+<p><strong>From DPG to DDPG (Deep DPG).</strong> DDPG <span class="citation">(<a href="#ref-lillicrap2015continuous">Lillicrap et al. 2015</a>)</span> implements DPG with deep networks + standard stabilizers:</p>
+<ul>
+<li><strong>Replay buffer</strong> <span class="math inline">\(\mathcal D\)</span> for off-policy sample efficiency.</li>
+<li><strong>Target networks</strong> <span class="math inline">\(\mu_{\bar\theta}, Q_{\bar\psi}\)</span> with Polyak averaging to stabilize TD targets.</li>
+<li><strong>Exploration noise</strong> added to the deterministic action: <span class="math inline">\(a_t = \mu_\theta(s_t) + \varepsilon_t\)</span> (original paper used Ornstein–Uhlenbeck noise; Gaussian works well too).</li>
+</ul>
+<p><strong>High-Level Algorithm (DDPG).</strong></p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Interact off-policy.</strong> Act with exploration: <span class="math inline">\(a_t=\mu_\theta(s_t)+\varepsilon_t\)</span>. Store <span class="math inline">\((s_t,a_t,r_t,s_{t+1},\text{done}_t)\)</span> in <span class="math inline">\(\mathcal D\)</span>.</p></li>
+<li><p><strong>Critic TD(0).</strong> For a minibatch from <span class="math inline">\(\mathcal D\)</span>,
+<span class="math display">\[
+y = r + \gamma(1-\text{done})\,Q_{\bar\psi} \big(s&#39;,\,\mu_{\bar\theta}(s&#39;)\big),\qquad
+\min_\psi\ \frac{1}{B}\sum (Q_\psi(s,a)-y)^2.
+\]</span></p></li>
+<li><p><strong>Actor DPG step.</strong>
+<span class="math display">\[
+\max_\theta\ \frac{1}{B}\sum Q_\psi\big(s,\,\mu_\theta(s)\big)
+\quad\Longleftrightarrow\quad
+\nabla_\theta J \approx \frac{1}{B}\sum \nabla_\theta \mu_\theta(s)\,\nabla_a Q_\psi(s,a)\big|_{a=\mu_\theta(s)}.
+\]</span></p></li>
+<li><p><strong>Targets Polyak update.</strong>
+<span class="math display">\[
+\bar\theta \leftarrow \tau\,\theta + (1-\tau)\bar\theta,\ \ \bar\psi \leftarrow \tau\,\psi + (1-\tau)\bar\psi.
+\]</span></p></li>
+</ol>
+<p><strong>Remarks.</strong></p>
+<ul>
+<li>No entropy bonus or log-probabilities (in contrast to SAC). Exploration comes from additive noise.<br />
+</li>
+<li>Overestimation and sensitivity to hyperparameters can appear; target networks, small actor steps, and proper normalization help.</li>
+</ul>
+<p>The following pseudocode implements DDPG.</p>
+<div class="highlightbox">
+<div style="text-align:center;">
+<strong>Deep Deterministic Policy Gradient (DDPG)</strong>
+</div>
+<p><strong>Inputs:</strong> replay buffer <span class="math inline">\(\mathcal{D}\)</span>; deterministic actor <span class="math inline">\(\mu_\theta(s)\)</span>; critic <span class="math inline">\(Q_\psi(s,a)\)</span>; target networks <span class="math inline">\(\mu_{\bar\theta}, Q_{\bar\psi}\)</span>; discount <span class="math inline">\(\gamma\in[0,1)\)</span>; Polyak <span class="math inline">\(\tau\in(0,1]\)</span>; batch size <span class="math inline">\(B\)</span>; stepsizes <span class="math inline">\(\alpha_\theta,\alpha_\psi\)</span>; exploration noise process <span class="math inline">\(\varepsilon_t\sim \mathcal N(0,\sigma^2 I)\)</span> (or Ornstein–Uhlenbeck).</p>
+<p><strong>Initialize:</strong> <span class="math inline">\(\bar\theta\leftarrow\theta,\ \bar\psi\leftarrow\psi\)</span>. Fill <span class="math inline">\(\mathcal D\)</span> with a short random warm-up.</p>
+<p>For iterations <span class="math inline">\(k=0,1,2,\dots\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Interaction (off-policy).</strong><br />
+Observe <span class="math inline">\(s_t\)</span>. Compute action with noise<br />
+<span class="math display">\[
+a_t \leftarrow \text{clip}\big(\mu_\theta(s_t) + \varepsilon_t,\ a_{\min}, a_{\max}\big).
+\]</span>
+Step env to get <span class="math inline">\((s_t,a_t,r_t,s_{t+1},\mathrm{done}_t)\)</span>. Push into <span class="math inline">\(\mathcal D\)</span>.</p></li>
+<li><p><strong>Sample minibatch.</strong><br />
+Draw <span class="math inline">\(B\)</span> transitions <span class="math inline">\(\{(s,a,r,s&#39;,d)\}\)</span> from <span class="math inline">\(\mathcal D\)</span>.</p></li>
+<li><p><strong>Critic target.</strong><br />
+<span class="math display">\[
+a&#39; \leftarrow \mu_{\bar\theta}(s&#39;),\qquad
+y \leftarrow r + \gamma(1-d)\,Q_{\bar\psi}(s&#39;,a&#39;).
+\]</span>
+<em>(Stop gradient through <span class="math inline">\(y\)</span>.)</em></p></li>
+<li><p><strong>Critic update.</strong><br />
+<span class="math display">\[
+\psi \leftarrow \psi - \alpha_\psi\,\nabla_\psi\ \frac{1}{B}\sum (Q_\psi(s,a)-y)^2.
+\]</span></p></li>
+<li><p><strong>Actor update (DPG).</strong><br />
+<span class="math display">\[
+\theta \leftarrow \theta + \alpha_\theta\ \frac{1}{B}\sum
+\Big[\ \nabla_\theta \mu_\theta(s)\ \nabla_a Q_\psi(s,a)\big|_{a=\mu_\theta(s)}\ \Big].
+\]</span>
+<em>(Equivalently, ascend <span class="math inline">\(\frac{1}{B}\sum Q_\psi(s,\mu_\theta(s))\)</span> by backprop.)</em></p></li>
+<li><p><strong>Target networks (Polyak).</strong><br />
+<span class="math display">\[
+\bar\theta \leftarrow \tau\,\theta + (1-\tau)\,\bar\theta,\qquad
+\bar\psi \leftarrow \tau\,\psi + (1-\tau)\,\bar\psi.
+\]</span></p></li>
+</ol>
+</div>
+<p>The next example applies DDPG to Inverted Pendulum.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:pendulum-ddpg" class="example"><strong>Example 3.9  (DDPG for Inverted Pendulum) </strong></span>Fig. <a href="policy-gradient.html#fig:pendulum-learning-curve-ddpg">3.21</a> plots the learning curve of DDPG.</p>
+<p>Fig. <a href="policy-gradient.html#fig:pendulum-policy-rollout-ddpg">3.22</a> visualizes sample rollouts of the learned policy.</p>
+<p>Code can be found <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_ddpg.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-learning-curve-ddpg"></span>
+<img src="images/Policy-Gradients/pendulum_learning_curve_ddpg.png" alt="Learning curve (DDPG)." width="60%" />
+<p class="caption">
+Figure 3.21: Learning curve (DDPG).
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-policy-rollout-ddpg"></span>
+<img src="images/Policy-Gradients/pendulum_rollout_ddpg-1.gif" alt="Policy rollout (DDPG)." width="30%" /><img src="images/Policy-Gradients/pendulum_rollout_ddpg-2.gif" alt="Policy rollout (DDPG)." width="30%" /><img src="images/Policy-Gradients/pendulum_rollout_ddpg-3.gif" alt="Policy rollout (DDPG)." width="30%" />
+<p class="caption">
+Figure 3.22: Policy rollout (DDPG).
+</p>
+</div>
+</div>
+</div>
 </div>
 </div>
 <div id="model-based-policy-optimization" class="section level2 hasAnchor" number="3.5">
@@ -2765,6 +2945,9 @@ Haarnoja, Tuomas, Aurick Zhou, Pieter Abbeel, and Sergey Levine. 2018. <span>“
 <div id="ref-kakade2001natural" class="csl-entry">
 Kakade, Sham M. 2001. <span>“A Natural Policy Gradient.”</span> <em>Advances in Neural Information Processing Systems</em> 14.
 </div>
+<div id="ref-lillicrap2015continuous" class="csl-entry">
+Lillicrap, Timothy P, Jonathan J Hunt, Alexander Pritzel, Nicolas Heess, Tom Erez, Yuval Tassa, David Silver, and Daan Wierstra. 2015. <span>“Continuous Control with Deep Reinforcement Learning.”</span> <em>arXiv Preprint arXiv:1509.02971</em>.
+</div>
 <div id="ref-nesterov2018lectures" class="csl-entry">
 Nesterov, Yurii. 2018. <em>Lectures on Convex Optimization</em>. Vol. 137. Springer.
 </div>
@@ -2776,6 +2959,9 @@ Schulman, John, Philipp Moritz, Sergey Levine, Michael Jordan, and Pieter Abbeel
 </div>
 <div id="ref-schulman2017proximal" class="csl-entry">
 Schulman, John, Filip Wolski, Prafulla Dhariwal, Alec Radford, and Oleg Klimov. 2017. <span>“Proximal Policy Optimization Algorithms.”</span> <em>arXiv Preprint arXiv:1707.06347</em>.
+</div>
+<div id="ref-silver2014deterministic" class="csl-entry">
+Silver, David, Guy Lever, Nicolas Heess, Thomas Degris, Daan Wierstra, and Martin Riedmiller. 2014. <span>“Deterministic Policy Gradient Algorithms.”</span> In <em>International Conference on Machine Learning</em>, 387–95. Pmlr.
 </div>
 </div>
             </section>
