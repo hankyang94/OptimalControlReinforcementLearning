@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-20" />
+<meta name="date" content="2025-10-22" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -31,7 +31,7 @@
   
   
 <link rel="prev" href="policy-gradient.html"/>
-<link rel="next" href="appconvex.html"/>
+<link rel="next" href="advanced-materials.html"/>
 <script src="libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/fuse.js@6.4.6/dist/fuse.min.js"></script>
 <link href="libs/gitbook-2.6.7/css/style.css" rel="stylesheet" />
@@ -241,7 +241,15 @@ div.csl-indent {
 </ul></li>
 <li class="chapter" data-level="3.5" data-path="policy-gradient.html"><a href="policy-gradient.html#model-based-policy-optimization"><i class="fa fa-check"></i><b>3.5</b> Model-based Policy Optimization</a></li>
 </ul></li>
-<li class="chapter" data-level="4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html"><i class="fa fa-check"></i><b>4</b> Model-based Planning and Optimization</a></li>
+<li class="chapter" data-level="4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html"><i class="fa fa-check"></i><b>4</b> Model-based Planning and Optimization</a>
+<ul>
+<li class="chapter" data-level="4.1" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#lqr"><i class="fa fa-check"></i><b>4.1</b> Linear Quadratic Regulator</a>
+<ul>
+<li class="chapter" data-level="4.1.1" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#finite-horizon-lqr"><i class="fa fa-check"></i><b>4.1.1</b> Finite-Horizon LQR</a></li>
+<li class="chapter" data-level="4.1.2" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#infinite-horizon-lqr"><i class="fa fa-check"></i><b>4.1.2</b> Infinite-Horizon LQR</a></li>
+</ul></li>
+</ul></li>
+<li class="chapter" data-level="5" data-path="advanced-materials.html"><a href="advanced-materials.html"><i class="fa fa-check"></i><b>5</b> Advanced Materials</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
 <li class="chapter" data-level="A" data-path="appconvex.html"><a href="appconvex.html"><i class="fa fa-check"></i><b>A</b> Convex Analysis and Optimization</a>
 <ul>
@@ -307,11 +315,359 @@ div.csl-indent {
             <section class="normal" id="section-">
 <div id="model-based-plan-optimize" class="section level1 hasAnchor" number="4">
 <h1><span class="header-section-number">Chapter 4</span> Model-based Planning and Optimization<a href="model-based-plan-optimize.html#model-based-plan-optimize" class="anchor-section" aria-label="Anchor link to header"></a></h1>
+<p>In Chapter <a href="mdp.html#mdp">1</a>, we studied tabular MDPs with known dynamics where both the state and action spaces are finite, and we saw how dynamic-programming methods—Policy Iteration (PI) and Value Iteration (VI)—recover optimal policies.</p>
+<p>Chapters <a href="value-rl.html#value-rl">2</a> and <a href="policy-gradient.html#policy-gradient">3</a> generalized these ideas to unknown dynamics and continuous spaces by introducing function approximation for value functions and policies. Those methods are <em>model-free</em>: they assume no access to the transition model and rely solely on data collected from interaction.</p>
+<p>This chapter turns to the complementary regime: <strong>known dynamics</strong> with <strong>continuous state and action spaces</strong>. Our goal is to develop model-based planning and optimization methods that exploit the known dynamics to compute high-quality decisions efficiently.</p>
+<p>We proceed in three steps:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Linear-quadratic systems.</strong> For linear dynamics and quadratic stage/terminal rewards (or costs), dynamic programming yields a linear optimal policy that can be computed efficiently via Riccati recursions. This setting serves as a tractable, illuminating baseline and a recurring building block in more general algorithms.</p></li>
+<li><p><strong>Trajectory optimization (TO) for nonlinear systems.</strong> When dynamics are nonlinear, we focus on planning an optimal state–action trajectory from a given initial condition, maximizing the cumulative reward (or minimizing cumulative cost) subject to dynamics and constraints. Unlike RL, which seeks an optimal <em>feedback policy</em> valid for all states, TO computes an <em>open-loop plan</em> (often with a time-varying local feedback around a nominal trajectory). Although less ambitious, TO naturally accommodates state/control constraints—common in motion planning under safety, actuation, and environmental limits—and is widely used in robotics and control.</p></li>
+<li><p><strong>Model predictive control (MPC).</strong> MPC converts open-loop plans into a feedback controller by repeatedly solving a short-horizon TO problem at each time step, applying only the first action, and receding the horizon. This receding-horizon strategy brings robustness to disturbances and model mismatch while retaining the constraint-handling benefits of TO.</p></li>
+</ol>
+<p>We adopt the standard discrete-time dynamical system notation
+<span class="math display">\[
+x_{t+1} = f_t(x_t, u_t, w_t),
+\]</span>
+where <span class="math inline">\(x_t \in \mathbb{R}^n\)</span> is the state, <span class="math inline">\(u_t \in \mathbb{R}^m\)</span> is the control/action, <span class="math inline">\(w_t \in \mathbb{R}^d\)</span> is a (possibly stochastic) disturbance, and <span class="math inline">\(f_t\)</span> is a known transition function, potentially nonlinear or nonsmooth. The goal is to find a policy that maximizes a sum of stage rewards <span class="math inline">\(r(x_t,u_t)\)</span> and optional terminal reward <span class="math inline">\(r_T(x_T)\)</span>. We will often use the cost-minimization form <span class="math inline">\(c = -r\)</span>.
+State and action constraints are written as
+<span class="math display">\[
+x_t \in \mathcal{X}, \qquad u_t \in \mathcal{U}.
+\]</span></p>
+<div id="lqr" class="section level2 hasAnchor" number="4.1">
+<h2><span class="header-section-number">4.1</span> Linear Quadratic Regulator<a href="model-based-plan-optimize.html#lqr" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>In this section, we focus on the case when <span class="math inline">\(f_t\)</span> is a linear function, and the rewards/costs are quadratic in <span class="math inline">\(x\)</span> and <span class="math inline">\(u\)</span>. This family of problems is known as linear quadratic regulator (LQR).</p>
+<div id="finite-horizon-lqr" class="section level3 hasAnchor" number="4.1.1">
+<h3><span class="header-section-number">4.1.1</span> Finite-Horizon LQR<a href="model-based-plan-optimize.html#finite-horizon-lqr" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Consider a linear discrete-time dynamical system
+<span class="math display" id="eq:lqr-linear-system">\[\begin{equation}
+x_{k+1} = A_k x_k + B_k u_k + w_k, \quad k=0,1,\dots,N-1,
+\tag{4.1}
+\end{equation}\]</span>
+where <span class="math inline">\(x_k \in \mathbb{R}^n\)</span> the state, <span class="math inline">\(u_k \in \mathbb{R}^m\)</span> the control, <span class="math inline">\(w_k \in \mathbb{R}^n\)</span> the independent, zero-mean disturbance with given probability distribution that does not depend on <span class="math inline">\(x_k,u_k\)</span>, and <span class="math inline">\(A_k \in \mathbb{R}^{n \times n}, B_k \in \mathbb{R}^{n \times m}\)</span> are known matrices determining the transition dynamics.</p>
+<p>We want to solve the following optimal control problem
+<span class="math display" id="eq:lqr-formulation">\[\begin{equation}
+\min_{\mu_0,\dots,\mu_{N-1}} \mathbb{E} \left\{ x_N^\top Q_N x_N + \sum_{k=0}^{N-1} \left( x_k^\top Q_k x_k + u_k^\top R_k u_k \right) \right\},
+\tag{4.2}
+\end{equation}\]</span>
+where <span class="math inline">\(\mu_0,\dots,\mu_{N-1}\)</span> are feedback policies/controllers that map states to actions and the expectation is taken over the randomness in <span class="math inline">\(w_0,\dots,w_{N-1}\)</span>. In <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a>, <span class="math inline">\(\{Q_k \}_{k=0}^N\)</span> are positive semidefinite matrices, and <span class="math inline">\(\{ R_k \}_{k=0}^{N-1}\)</span> are positive definite matrices. The formulation <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a> is known as the linear quadratic regulator (LQR) problem because the dynamics is linear, the cost is quadratic, and the formulation can be considered to “regulate” the system around the origin <span class="math inline">\(x=0\)</span>.</p>
+<p>The Bellman Optimality condition introduced in Theorem <a href="mdp.html#thm:FiniteHorizonMDPBellmanOptimality">1.1</a> still holds for continuous state and action spaces. Therefore, we will try to follow the dynamic programming (DP) algorithm in Section <a href="mdp.html#dp">1.1.4</a> to solve for the optimal policy.</p>
+<p>The DP algorithm computes the optimal cost-to-go backwards in time.
+The terminal cost is
+<span class="math display">\[
+J_N(x_N) = x_N^\top Q_N x_N
+\]</span>
+by definition.</p>
+<p>The optimal cost-to-go at time <span class="math inline">\(N-1\)</span> is equal to
+<span class="math display" id="eq:lqr-cost-N-1">\[\begin{equation}
+\begin{split}
+J_{N-1}(x_{N-1}) = \min_{u_{N-1}} \mathbb{E}_{w_{N-1}} \{ x_{N-1}^\top Q_{N-1} x_{N-1} + u_{N-1}^\top R_{N-1} u_{N-1} + \\ \Vert \underbrace{A_{N-1} x_{N-1} + B_{N-1} u_{N-1} + w_{N-1} }_{x_N} \Vert^2_{Q_N} \}
+\end{split}
+\tag{4.3}
+\end{equation}\]</span>
+where <span class="math inline">\(\Vert v \Vert_Q^2 = v^\top Q v\)</span> for <span class="math inline">\(Q \succeq 0\)</span>. Now observe that the objective in <a href="model-based-plan-optimize.html#eq:lqr-cost-N-1">(4.3)</a> is
+<span class="math display">\[\begin{equation}
+\begin{split}
+x_{N-1}^\top Q_{N-1} x_{N-1} + u_{N-1}^\top R_{N-1} u_{N-1} + \Vert A_{N-1} x_{N-1} + B_{N-1} u_{N-1} \Vert_{Q_N}^2 + \\
+\mathbb{E}_{w_{N-1}} \left[ 2(A_{N-1} x_{N-1} + B_{N-1} u_{N-1} )^\top Q_{N-1} w_{N-1} \right] + \\
+\mathbb{E}_{w_{N-1}} \left[ w_{N-1}^\top Q_N w_{N-1} \right]
+\end{split}
+\end{equation}\]</span>
+where the second line is zero due to <span class="math inline">\(\mathbb{E}[w_{N-1}] = 0\)</span> and the third line is a constant with respect to <span class="math inline">\(u_{N-1}\)</span>. Consequently, the optimal control <span class="math inline">\(u_{N-1}^\star\)</span> can be computed by setting the derivative of the objective with respect to <span class="math inline">\(u_{N-1}\)</span> equal to zero
+<span class="math display" id="eq:optimal-u-N-1">\[\begin{equation}
+u_{N-1}^\star = - \left[ \left( R_{N-1} + B_{N-1}^\top Q_N B_{N-1} \right)^{-1} B_{N-1}^\top Q_N A_{N-1} \right] x_{N-1}.
+\tag{4.4}
+\end{equation}\]</span>
+Plugging the optimal controller <span class="math inline">\(u^\star_{N-1}\)</span> back to the objective of <a href="model-based-plan-optimize.html#eq:lqr-cost-N-1">(4.3)</a> leads to
+<span class="math display" id="eq:optimal-cost-N-1">\[\begin{equation}
+J_{N-1}(x_{N-1}) = x_{N-1}^\top S_{N-1} x_{N-1} + \mathbb{E} \left[ w_{N-1}^\top Q_N w_{N-1} \right],
+\tag{4.5}
+\end{equation}\]</span>
+with
+<span class="math display">\[
+S_{N-1} = Q_{N-1} + A_{N-1}^\top \left[ Q_N - Q_N B_{N-1} \left( R_{N-1} + B_{N-1}^\top Q_N B_{N-1} \right)^{-1} B_{N-1}^\top Q_N \right] A_{N-1}.
+\]</span>
+We note that <span class="math inline">\(S_{N-1}\)</span> is positive semidefinite (this is an exercise for you to convince yourself).</p>
+<p>Now we realize that something surprising and nice has happened.</p>
+<ol style="list-style-type: decimal">
+<li><p>The optimal controller <span class="math inline">\(u^{\star}_{N-1}\)</span> in <a href="model-based-plan-optimize.html#eq:optimal-u-N-1">(4.4)</a> is a linear feedback policy of the state <span class="math inline">\(x_{N-1}\)</span>, and</p></li>
+<li><p>The optimal cost-to-go <span class="math inline">\(J_{N-1}(x_{N-1})\)</span> in <a href="model-based-plan-optimize.html#eq:optimal-cost-N-1">(4.5)</a> is quadratic in <span class="math inline">\(x_{N-1}\)</span>, just the same as <span class="math inline">\(J_{N}(x_N)\)</span>.</p></li>
+</ol>
+<p>This implies that, if we continue to compute the optimal cost-to-go at time <span class="math inline">\(N-2\)</span>, we will again compute a linear optimal controller and a quadratic optimal cost-to-go. This is the rare nice property for the LQR problem, that is,</p>
+<blockquote>
+<p>The (representation) complexity of the optimal controller and cost-to-go does not grow as we run the DP recursion backwards in time.</p>
+</blockquote>
+<p>We summarize the solution for the LQR problem <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a> as follows.</p>
+<div class="theorembox">
+<div class="proposition">
+<p><span id="prp:discretetimefinitehorizonlqrsolution" class="proposition"><strong>Proposition 4.1  (Solution of Discrete-Time Finite-Horizon LQR) </strong></span>The optimal controller for the LQR problem <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a> is a linear state-feedback policy
+<span class="math display" id="eq:lqr-solution-control">\[\begin{equation}
+\mu_k^\star(x_k) = - K_k x_k, \quad k=0,\dots,N-1.
+\tag{4.6}
+\end{equation}\]</span>
+The gain matrix <span class="math inline">\(K_k\)</span> can be computed as
+<span class="math display">\[
+K_k = \left( R_k + B_k^\top S_{k+1} B_k  \right)^{-1} B_k^\top S_{k+1} A_k,
+\]</span>
+where the matrix <span class="math inline">\(S_k\)</span> satisfies the following backwards recursion
+<span class="math display" id="eq:finite-discrete-lqr-riccati">\[\begin{equation}
+\hspace{-6mm}
+\begin{split}
+S_N &amp;= Q_N \\
+S_k &amp;= Q_k + A_k^\top \left[ S_{k+1} - S_{k+1}B_k \left( R_k + B_k^\top S_{k+1} B_k  \right)^{-1}  B_k^\top S_{k+1}  \right] A_k, k=N-1,\dots,0.
+\end{split}
+\tag{4.7}
+\end{equation}\]</span>
+The optimal cost-to-go is given by
+<span class="math display">\[
+J_0(x_0) = x_0^\top S_0 x_0 + \sum_{k=0}^{N-1} \mathbb{E} \left[ w_k^\top S_{k+1} w_k\right].
+\]</span>
+The recursion <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> is called the <em>discrete-time Riccati equation</em>.</p>
+</div>
+</div>
+<p>Proposition <a href="model-based-plan-optimize.html#prp:discretetimefinitehorizonlqrsolution">4.1</a> states that, to evaluate the optimal policy <a href="model-based-plan-optimize.html#eq:lqr-solution-control">(4.6)</a>, one can first run the backwards Riccati equation <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> to compute all the positive definite matrices <span class="math inline">\(S_k\)</span>, and then compute the gain matrices <span class="math inline">\(K_k\)</span>. For systems of reasonable dimensions, evalutating the matrix inversion in <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> should be fairly efficient.</p>
+<!-- ### Infinite-Horizon LQR {#infinite-horizon-lqr}
 
+We now specialize to **time-invariant** linear dynamics and consider the infinite-horizon problem. Let
+\[
+x_{k+1} \;=\; A x_k + B u_k + w_k,\qquad x_k\in\mathbb{R}^n,\; u_k\in\mathbb{R}^m,
+\]
+with \(Q\succeq 0\) and \(R\succ 0\). We treat both the **undiscounted deterministic** case (\(w_k\equiv 0\)) and the **discounted** case (\(\gamma\in(0,1)\)), allowing additive stochastic disturbances \(w_k\) where noted.
+
+---
+
+#### Problem statements
+
+- **Undiscounted, deterministic.**
+\[
+\min_{\mu}\;\sum_{k=0}^{\infty} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)
+\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k,\;\; x_0\text{ given}.
+(\#eq:ihlqr-undisc)
+\]
+
+- **Discounted.**
+\[
+\min_{\mu}\;\mathbb{E}\!\left[\sum_{k=0}^{\infty} \gamma^{\,k} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)\right]
+\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k + w_k,\;\; x_0\text{ given}.
+(\#eq:ihlqr-disc)
+\]
+
+We seek **stationary** feedback laws \(u_k=\mu(x_k)=-Kx_k\) and value functions \(J(x)=x^\top S x + c\) with time-invariant \(K,S\).
+
+---
+
+#### Algebraic Riccati equations and optimal stationary policy
+
+Plugging the quadratic ansatz \(J(x)=x^\top S x\) into the Bellman equation and minimizing over \(u\) yields the **discrete-time algebraic Riccati equation (DARE)** and the corresponding gain.
+
+::: {.theorembox}
+::: {.proposition #ihlqr-solution name="Solution of Infinite-Horizon LQR (discrete time)"}
+Consider \@ref(eq:ihlqr-undisc) with \(Q\succeq 0\), \(R\succ 0\). Suppose \((A,B)\) is **stabilizable** and \((Q^{1/2},A)\) is **detectable**. Then there exists a unique positive semidefinite matrix \(S\) (the **stabilizing** solution of the DARE)
+\[
+S \;=\; Q \;+\; A^\top S A \;-\; A^\top S B \bigl(R + B^\top S B\bigr)^{-1} B^\top S A,
+\qquad S\succeq 0,
+(\#eq:DARE)
+\]
+such that the linear feedback
+\[
+K \;=\; \bigl(R + B^\top S B\bigr)^{-1} B^\top S A
+(\#eq:K-undisc)
+\]
+stabilizes the closed loop \(A_{\text{cl}}=A-BK\) (i.e., \(\rho(A_{\text{cl}})<1\)). The optimal policy is \(u^\star=-Kx\) and the optimal cost is
+\[
+J^\star(x_0) \;=\; x_0^\top S x_0.
+\]
+:::
+:::
+
+**Discounted variant.** For \@ref(eq:ihlqr-disc) with \(\gamma\in(0,1)\), the optimal \(S\succeq 0\) and \(K\) solve the **discounted DARE**
+\[
+S \;=\; Q \;+\; \gamma A^\top S A \;-\; \gamma A^\top S B \bigl(R + \gamma B^\top S B\bigr)^{-1} B^\top S A,
+(\#eq:DARE-disc)
+\]
+with
+\[
+K \;=\; \bigl(R + \gamma B^\top S B\bigr)^{-1} \bigl(\gamma B^\top S A\bigr).
+(\#eq:K-disc)
+\]
+In the discounted case, the Bellman operator is a contraction; the stabilizing solution exists and is unique under the same convexity assumptions \(Q\succeq 0, R\succ 0\). The closed loop satisfies \(\rho\!\bigl(\sqrt{\gamma}\,(A-BK)\bigr)<1\).
+
+---
+
+#### Relation to finite-horizon Riccati recursion
+
+Let \(S_N=Q_N\) and backward-iterate the finite-horizon Riccati recursion in \@ref(eq:finite-discrete-lqr-riccati) with \(Q_k\equiv Q\), \(R_k\equiv R\), \(A_k\equiv A\), \(B_k\equiv B\). Then (under the stabilizability/detectability assumptions) the sequence \(\{S_k\}\) is monotone nondecreasing and converges to the unique stabilizing \(S\) solving \@ref(eq:DARE). The corresponding gains \(K_k\) converge to \(K\) in \@ref(eq:K-undisc).
+
+---
+
+#### Effect of additive disturbances
+
+Additive noise \(w_k\) (zero mean, covariance \(W=\mathbb{E}[w_k w_k^\top]\)) **does not change the optimal gain**; it only adds a constant to the value:
+
+- **Discounted cost.** With \(S\) from \@ref(eq:DARE-disc}),
+\[
+J^\star(x_0) \;=\; x_0^\top S x_0 \;+\; \sum_{k=0}^\infty \gamma^{\,k}\,\mathbb{E}\big[w_k^\top S w_k\big]
+\;=\; x_0^\top S x_0 \;+\; \frac{1}{1-\gamma}\,\mathrm{tr}(S W).
+(\#eq:disc-noise-cost)
+\]
+
+- **Undiscounted average cost (per stage).** Under the optimal gain \(K\) from \@ref(eq:K-undisc}) and stable \(A_{\text{cl}}=A-BK\), the closed-loop state covariance \(P\) solves the Lyapunov equation
+\[
+P \;=\; A_{\text{cl}} P A_{\text{cl}}^\top + W,
+\]
+and the steady-state average stage cost is
+\[
+\bar{J} \;=\; \mathrm{tr}\!\big((Q + K^\top R K)\,P\big) \;=\; \mathrm{tr}(S W).
+(\#eq:avg-cost)
+\]
+The last equality follows from standard DARE identities.
+
+---
+
+#### Remarks and practical notes
+
+- **Assumptions.**  
+  - *Stabilizability:* every unstable mode of \(A\) is controllable by \(B\).  
+  - *Detectability:* every unobservable mode of \((Q^{1/2},A)\) is stable.
+- **Computation.** Use a DARE solver (e.g., Schur or QZ methods). Iterating the Riccati map \(S\mapsto Q + A^\top S A - A^\top S B(R+B^\top S B)^{-1}B^\top S A\) from \(S_0=0\) also converges to the stabilizing solution under the stated assumptions.
+- **Stability certificate.** The optimal \(S\) is a Lyapunov function for the closed loop: \(V(x)=x^\top S x\) satisfies \(V(x_{k+1})-V(x_k)= -x_k^\top (Q+K^\top R K)x_k \le 0\), ensuring asymptotic stability in the deterministic case. -->
+</div>
+<div id="infinite-horizon-lqr" class="section level3 hasAnchor" number="4.1.2">
+<h3><span class="header-section-number">4.1.2</span> Infinite-Horizon LQR<a href="model-based-plan-optimize.html#infinite-horizon-lqr" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We now switch to the infinite-horizon LQR problem
+<span class="math display" id="eq:infinite-horizon-lqr-system" id="eq:infinite-horizon-lqr-cost">\[\begin{align}
+\min_{\mu} &amp; \quad  \sum_{k=0}^{\infty} \left( x_k^\top Q x_k + u_k^\top R u_k \right) \tag{4.8} \\
+\text{subject to} &amp; \quad x_{k+1} = A x_k + B u_k, \quad k=0,\dots,\infty, \tag{4.9}
+\end{align}\]</span>
+where <span class="math inline">\(Q \succeq 0\)</span>, <span class="math inline">\(R \succ 0\)</span>, <span class="math inline">\(A,B\)</span> are constant matrices, and we seek a stationary policy <span class="math inline">\(\mu\)</span> that maps states to actions. Note that here we remove the disturbance <span class="math inline">\(w_k\)</span> because in general adding <span class="math inline">\(w_k\)</span> will make the objective function unbounded. To handle <span class="math inline">\(w_k\)</span>, we will have to either add a discount factor <span class="math inline">\(\gamma\)</span>, or switch to an average cost objective function.</p>
+<p>For infinite-horizon problems, the Bellman Optimality condition changes from a recursion to an equation. Specifically, according to Theorem <a href="mdp.html#thm:BellmanOptimalityInfiniteHorizon">1.2</a> and equation <a href="mdp.html#eq:BellmanOptimalityInfiniteHorizonStateValue">(1.28)</a>, the optimal value function should satisfy the following Bellman optimality equation, restated for the case of cost minimization instead of reward maximization:
+<span class="math display" id="eq:BellmanOptimalityInfiniteHorizonRestateMin">\[\begin{equation}
+J^\star (x) = \min_{u} \left[ c(x,u) + \sum_{x&#39;} P(x&#39; \mid x, u) J^\star (x&#39;) \right], \quad \forall x,
+\tag{4.10}
+\end{equation}\]</span>
+where <span class="math inline">\(c(x,u)\)</span> is the cost function.</p>
+<p><strong>Guess A Solution.</strong> Based on our derivation in the finite-horizon case, we might as well guess that the optimal value function is a quadratic function:
+<span class="math display">\[
+J(x) = x^\top S x, \quad \forall x,
+\]</span>
+for some positive definite matrix <span class="math inline">\(S\)</span>. Then, our guessed solution must satisfy the Bellman optimality stated in <a href="model-based-plan-optimize.html#eq:BellmanOptimalityInfiniteHorizonRestateMin">(4.10)</a>:
+<span class="math display" id="eq:infinite-horizon-lqr-invoke-dp">\[\begin{equation}
+x^\top S x = J(x) = \min_{u} \left\{ x^\top Q x + u^\top R u + \Vert \underbrace{A x + B u}_{x&#39;} \Vert_S^2  \right\}.
+\tag{4.11}
+\end{equation}\]</span>
+The minimization over <span class="math inline">\(u\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-invoke-dp">(4.11)</a> can again be solved in closed-form by setting the gradient of the objective with respect to <span class="math inline">\(u\)</span> to be zero
+<span class="math display" id="eq:infinite-horizon-lqr-control">\[\begin{equation}
+u^\star = - \underbrace{\left[ \left( R + B^\top S B \right)^{-1} B^\top S A \right]}_{K} x.
+\tag{4.12}
+\end{equation}\]</span>
+Plugging the optimal <span class="math inline">\(u^\star\)</span> back into <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-invoke-dp">(4.11)</a>, we see that the matrix <span class="math inline">\(S\)</span> has to satisfy the following equation
+<span class="math display" id="eq:algebraic-riccati">\[\begin{equation}
+S = Q + A^\top \left[  S - SB \left( R + B^\top S B  \right)^{-1} B^\top S \right] A.
+\tag{4.13}
+\end{equation}\]</span>
+Equation <a href="model-based-plan-optimize.html#eq:algebraic-riccati">(4.13)</a> is known as the <em>discrete algebraic Riccati equation</em> (DARE).</p>
+<p>So the question boils down to if the DARE has a solution <span class="math inline">\(S\)</span> that is positive definite?</p>
+<div class="theorembox">
+<div class="proposition">
+<p><span id="prp:infinitehorizonlqrsolution" class="proposition"><strong>Proposition 4.2  (Solution of Discrete-Time Infinite-Horizon LQR) </strong></span>Consider a linear system
+<span class="math display">\[
+x_{k+1} = A x_k + B u_k,
+\]</span>
+with <span class="math inline">\((A,B)\)</span> controllable (see Appendix <a href="app-lti-system-theory.html#app-lti-controllable-observable">B.2</a>). Let <span class="math inline">\(Q \succeq 0\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a> be such that <span class="math inline">\(Q\)</span> can be written as <span class="math inline">\(Q = C^\top C\)</span> with <span class="math inline">\((A,C)\)</span> observable.</p>
+<p>Then the optimal controller for the infinite-horizon LQR problem <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a> is a stationary linear policy
+<span class="math display">\[
+\mu^\star (x) = - K x,
+\]</span>
+with
+<span class="math display">\[
+K = \left( R + B^\top S B \right)^{-1} B^\top S A.
+\]</span>
+The matrix <span class="math inline">\(S\)</span> is the unique positive definite matrix that satisfies the discrete algebraic Riccati equation
+<span class="math display" id="eq:discrete-algebraic-riccati-equation">\[\begin{equation}
+S = Q + A^\top \left[  S - SB \left( R + B^\top S B  \right)^{-1} B^\top S \right] A.
+\tag{4.14}
+\end{equation}\]</span></p>
+<p>Moreover, the closed-loop system
+<span class="math display">\[
+x_{k+1} = A x_k + B (-K x_k) = (A - BK) x_k
+\]</span>
+is stable, i.e., the eigenvalues of the matrix <span class="math inline">\(A - BK\)</span> are strictly within the unit circle (see Appendix <a href="app-lti-system-theory.html#app-lti-stability-dt">B.1.2</a>).</p>
+</div>
+</div>
+<p><em>Remark.</em> The assumptions of <span class="math inline">\((A,B)\)</span> being controllable and <span class="math inline">\((A,C)\)</span> being observable can be relaxted to <span class="math inline">\((A,B)\)</span> being stabilizable and <span class="math inline">\((A,C)\)</span> being detectable (for definitions of stabilizability and detectability, see Appendix <a href="app-lti-system-theory.html#app-lti-system-theory">B</a>).</p>
+<p>We have not discussed how to solve the algebraic Riccati equation <a href="model-based-plan-optimize.html#eq:discrete-algebraic-riccati-equation">(4.14)</a>. It is clear that <a href="model-based-plan-optimize.html#eq:discrete-algebraic-riccati-equation">(4.14)</a> is not a linear system of equations in <span class="math inline">\(S\)</span>. In fact, the numerical algorithms for solving the algebraic Riccati equation can be highly nontrivial, for example see <span class="citation">(<a href="#ref-arnold84ieee-generalized">Arnold and Laub 1984</a>)</span>. Fortunately, such algorithms are often readily available, and as practitioners we do not need to worry about solving the algebraic Riccati equation by ourselves. For example, the Matlab <a href="https://www.mathworks.com/help/control/ref/dlqr.html"><code>dlqr</code></a> and the Python <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.solve_discrete_are.html"><code>scipy.linalg.solve_discrete_are</code></a> function computes the <span class="math inline">\(K\)</span> and <span class="math inline">\(S\)</span> matrices from <span class="math inline">\(A,B,Q,R\)</span>.</p>
+<p>Let us now apply the infinite-horizon LQR solution to stabilizing a simple pendulum.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:lqr-pendulum-stabilization" class="example"><strong>Example 4.1  (Pendulum Stabilization by LQR) </strong></span>Consider the simple pendulum in Fig. <a href="model-based-plan-optimize.html#fig:pendulum-drawing">4.1</a> with dynamics
+<span class="math display" id="eq:lqr-pendulum-dynamics">\[\begin{equation}
+x = \begin{bmatrix} \theta \\ \dot{\theta} \end{bmatrix}, \quad
+\dot{x} = f(x,u) = \begin{bmatrix}
+\dot{\theta} \\
+-\frac{1}{ml^2}(b \dot{\theta} + mgl \sin \theta) + \frac{1}{ml^2} u
+\end{bmatrix}
+\tag{4.15}
+\end{equation}\]</span>
+where <span class="math inline">\(m\)</span> is the mass of the pendulum, <span class="math inline">\(l\)</span> is the length of the pole, <span class="math inline">\(g\)</span> is the gravitational constant, <span class="math inline">\(b\)</span> is the damping ratio, and <span class="math inline">\(u\)</span> is the torque applied to the pendulum.</p>
+<p>We are interested in applying the LQR controller to balance the pendulum in the upright position <span class="math inline">\(x_d = [\pi,0]^\top\)</span> with a zero velocity.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-drawing"></span>
+<img src="images/pendulum-drawing.png" alt="A Simple Pendulum." width="40%" />
+<p class="caption">
+Figure 4.1: A Simple Pendulum.
+</p>
+</div>
+<p>Let us first shift the dynamics so that “<span class="math inline">\(0\)</span>” is the upright position. This can be done by defining a new variable <span class="math inline">\(z = x - x_d = [\theta - \pi, \dot{\theta}]^\top\)</span>, which leads to
+<span class="math display" id="eq:pendulum-dynamics-z-coordinate">\[\begin{equation}
+\dot{z} = \dot{x} = f(x,u) = f(z + x_d,u) = \begin{bmatrix}
+z_2 \\
+\frac{1}{ml^2} \left( u - b z_2 + mgl \sin z_1  \right)
+\end{bmatrix} = f&#39;(z,u).
+\tag{4.16}
+\end{equation}\]</span>
+We then linearize the nonlinear dynamics <span class="math inline">\(\dot{z} = f&#39;(z,u)\)</span> at the point <span class="math inline">\(z^\star = 0, u^\star = 0\)</span>:
+<span class="math display">\[\begin{align}
+\dot{z} &amp; \approx f&#39;(z^\star,u^\star) + \left( \frac{\partial f&#39;}{\partial z} \right)_{z^\star,u^\star} (z - z^\star) + \left( \frac{\partial f&#39;}{\partial u} \right)_{z^\star,u^\star} (u - u^\star) \\
+&amp; = \begin{bmatrix}
+0 &amp; 1 \\
+\frac{g}{l} \cos z_1 &amp; - \frac{b}{ml^2}
+\end{bmatrix}_{z^\star, u^\star} z +
+\begin{bmatrix}
+0 \\
+\frac{1}{ml^2}
+\end{bmatrix} u \\
+&amp; = \underbrace{\begin{bmatrix}
+0 &amp; 1 \\
+\frac{g}{l} &amp; - \frac{b}{ml^2}
+\end{bmatrix}}_{A_c} z  +
+\underbrace{\begin{bmatrix}
+0 \\
+\frac{1}{ml^2}
+\end{bmatrix}}_{B_c} u.
+\end{align}\]</span>
+Finally, we convert the continuous-time dynamics to discrete time with a fixed discretization <span class="math inline">\(h\)</span>
+<span class="math display">\[
+z_{k+1} = \dot{z}_k \cdot h + z_k = \underbrace{(h \cdot A_c + I )}_{A} z_k + \underbrace{(h \cdot B_c)}_{B} u_k.
+\]</span></p>
+<p>We are now ready to implement the LQR controller. In the formulation <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a>, we choose <span class="math inline">\(Q = I\)</span>, <span class="math inline">\(R = I\)</span>, and compute the gain matrix <span class="math inline">\(K\)</span> by solving the DARE.</p>
+<p>Fig. <a href="model-based-plan-optimize.html#fig:pendulum-stabilization-sim">4.2</a> shows the simulation result for <span class="math inline">\(m=1,l=1,b=0.1\)</span>, <span class="math inline">\(g = 9.8\)</span>, and <span class="math inline">\(h = 0.01\)</span>, with an initial condition <span class="math inline">\(z^0 = [0.1,0.1]^\top\)</span>. We can see that the LQR controller successfully stabilizes the pendulum at <span class="math inline">\(z^\star\)</span>, the upright position.</p>
+<p>You can play with the Python code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_lqr_stabilization.py">here</a>.</p>
+<p>Alternatively, the Matlab code can be found <a href="https://github.com/ComputationalRobotics/OptimalControlEstimation-Examples/blob/main/pendulum_stabilization_lqr.m">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-stabilization-sim"></span>
+<img src="images/Model-based-optimization/pendulum_lqr_stabilization.png" alt="LQR stabilization of a simple pendulum." width="60%" />
+<p class="caption">
+Figure 4.2: LQR stabilization of a simple pendulum.
+</p>
+</div>
+</div>
 </div>
 
-
-
+</div>
+</div>
+</div>
+<h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
+<div id="ref-arnold84ieee-generalized" class="csl-entry">
+Arnold, William F, and Alan J Laub. 1984. <span>“Generalized Eigenproblem Algorithms and Software for Algebraic Riccati Equations.”</span> <em>Proceedings of the IEEE</em> 72 (12): 1746–54.
+</div>
 </div>
             </section>
 
@@ -319,7 +675,7 @@ div.csl-indent {
         </div>
       </div>
 <a href="policy-gradient.html" class="navigation navigation-prev " aria-label="Previous page"><i class="fa fa-angle-left"></i></a>
-<a href="appconvex.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
+<a href="advanced-materials.html" class="navigation navigation-next " aria-label="Next page"><i class="fa fa-angle-right"></i></a>
     </div>
   </div>
 <script src="libs/gitbook-2.6.7/js/app.min.js"></script>
