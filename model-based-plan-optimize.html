@@ -247,6 +247,7 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="4.1.1" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#finite-horizon-lqr"><i class="fa fa-check"></i><b>4.1.1</b> Finite-Horizon LQR</a></li>
 <li class="chapter" data-level="4.1.2" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#infinite-horizon-lqr"><i class="fa fa-check"></i><b>4.1.2</b> Infinite-Horizon LQR</a></li>
+<li class="chapter" data-level="4.1.3" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#linear-system-basics"><i class="fa fa-check"></i><b>4.1.3</b> Linear System Basics</a></li>
 </ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="advanced-materials.html"><a href="advanced-materials.html"><i class="fa fa-check"></i><b>5</b> Advanced Materials</a></li>
@@ -425,111 +426,6 @@ The recursion <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-ric
 </div>
 </div>
 <p>Proposition <a href="model-based-plan-optimize.html#prp:discretetimefinitehorizonlqrsolution">4.1</a> states that, to evaluate the optimal policy <a href="model-based-plan-optimize.html#eq:lqr-solution-control">(4.6)</a>, one can first run the backwards Riccati equation <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> to compute all the positive definite matrices <span class="math inline">\(S_k\)</span>, and then compute the gain matrices <span class="math inline">\(K_k\)</span>. For systems of reasonable dimensions, evalutating the matrix inversion in <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> should be fairly efficient.</p>
-<!-- ### Infinite-Horizon LQR {#infinite-horizon-lqr}
-
-We now specialize to **time-invariant** linear dynamics and consider the infinite-horizon problem. Let
-\[
-x_{k+1} \;=\; A x_k + B u_k + w_k,\qquad x_k\in\mathbb{R}^n,\; u_k\in\mathbb{R}^m,
-\]
-with \(Q\succeq 0\) and \(R\succ 0\). We treat both the **undiscounted deterministic** case (\(w_k\equiv 0\)) and the **discounted** case (\(\gamma\in(0,1)\)), allowing additive stochastic disturbances \(w_k\) where noted.
-
----
-
-#### Problem statements
-
-- **Undiscounted, deterministic.**
-\[
-\min_{\mu}\;\sum_{k=0}^{\infty} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)
-\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k,\;\; x_0\text{ given}.
-(\#eq:ihlqr-undisc)
-\]
-
-- **Discounted.**
-\[
-\min_{\mu}\;\mathbb{E}\!\left[\sum_{k=0}^{\infty} \gamma^{\,k} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)\right]
-\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k + w_k,\;\; x_0\text{ given}.
-(\#eq:ihlqr-disc)
-\]
-
-We seek **stationary** feedback laws \(u_k=\mu(x_k)=-Kx_k\) and value functions \(J(x)=x^\top S x + c\) with time-invariant \(K,S\).
-
----
-
-#### Algebraic Riccati equations and optimal stationary policy
-
-Plugging the quadratic ansatz \(J(x)=x^\top S x\) into the Bellman equation and minimizing over \(u\) yields the **discrete-time algebraic Riccati equation (DARE)** and the corresponding gain.
-
-::: {.theorembox}
-::: {.proposition #ihlqr-solution name="Solution of Infinite-Horizon LQR (discrete time)"}
-Consider \@ref(eq:ihlqr-undisc) with \(Q\succeq 0\), \(R\succ 0\). Suppose \((A,B)\) is **stabilizable** and \((Q^{1/2},A)\) is **detectable**. Then there exists a unique positive semidefinite matrix \(S\) (the **stabilizing** solution of the DARE)
-\[
-S \;=\; Q \;+\; A^\top S A \;-\; A^\top S B \bigl(R + B^\top S B\bigr)^{-1} B^\top S A,
-\qquad S\succeq 0,
-(\#eq:DARE)
-\]
-such that the linear feedback
-\[
-K \;=\; \bigl(R + B^\top S B\bigr)^{-1} B^\top S A
-(\#eq:K-undisc)
-\]
-stabilizes the closed loop \(A_{\text{cl}}=A-BK\) (i.e., \(\rho(A_{\text{cl}})<1\)). The optimal policy is \(u^\star=-Kx\) and the optimal cost is
-\[
-J^\star(x_0) \;=\; x_0^\top S x_0.
-\]
-:::
-:::
-
-**Discounted variant.** For \@ref(eq:ihlqr-disc) with \(\gamma\in(0,1)\), the optimal \(S\succeq 0\) and \(K\) solve the **discounted DARE**
-\[
-S \;=\; Q \;+\; \gamma A^\top S A \;-\; \gamma A^\top S B \bigl(R + \gamma B^\top S B\bigr)^{-1} B^\top S A,
-(\#eq:DARE-disc)
-\]
-with
-\[
-K \;=\; \bigl(R + \gamma B^\top S B\bigr)^{-1} \bigl(\gamma B^\top S A\bigr).
-(\#eq:K-disc)
-\]
-In the discounted case, the Bellman operator is a contraction; the stabilizing solution exists and is unique under the same convexity assumptions \(Q\succeq 0, R\succ 0\). The closed loop satisfies \(\rho\!\bigl(\sqrt{\gamma}\,(A-BK)\bigr)<1\).
-
----
-
-#### Relation to finite-horizon Riccati recursion
-
-Let \(S_N=Q_N\) and backward-iterate the finite-horizon Riccati recursion in \@ref(eq:finite-discrete-lqr-riccati) with \(Q_k\equiv Q\), \(R_k\equiv R\), \(A_k\equiv A\), \(B_k\equiv B\). Then (under the stabilizability/detectability assumptions) the sequence \(\{S_k\}\) is monotone nondecreasing and converges to the unique stabilizing \(S\) solving \@ref(eq:DARE). The corresponding gains \(K_k\) converge to \(K\) in \@ref(eq:K-undisc).
-
----
-
-#### Effect of additive disturbances
-
-Additive noise \(w_k\) (zero mean, covariance \(W=\mathbb{E}[w_k w_k^\top]\)) **does not change the optimal gain**; it only adds a constant to the value:
-
-- **Discounted cost.** With \(S\) from \@ref(eq:DARE-disc}),
-\[
-J^\star(x_0) \;=\; x_0^\top S x_0 \;+\; \sum_{k=0}^\infty \gamma^{\,k}\,\mathbb{E}\big[w_k^\top S w_k\big]
-\;=\; x_0^\top S x_0 \;+\; \frac{1}{1-\gamma}\,\mathrm{tr}(S W).
-(\#eq:disc-noise-cost)
-\]
-
-- **Undiscounted average cost (per stage).** Under the optimal gain \(K\) from \@ref(eq:K-undisc}) and stable \(A_{\text{cl}}=A-BK\), the closed-loop state covariance \(P\) solves the Lyapunov equation
-\[
-P \;=\; A_{\text{cl}} P A_{\text{cl}}^\top + W,
-\]
-and the steady-state average stage cost is
-\[
-\bar{J} \;=\; \mathrm{tr}\!\big((Q + K^\top R K)\,P\big) \;=\; \mathrm{tr}(S W).
-(\#eq:avg-cost)
-\]
-The last equality follows from standard DARE identities.
-
----
-
-#### Remarks and practical notes
-
-- **Assumptions.**  
-  - *Stabilizability:* every unstable mode of \(A\) is controllable by \(B\).  
-  - *Detectability:* every unobservable mode of \((Q^{1/2},A)\) is stable.
-- **Computation.** Use a DARE solver (e.g., Schur or QZ methods). Iterating the Riccati map \(S\mapsto Q + A^\top S A - A^\top S B(R+B^\top S B)^{-1}B^\top S A\) from \(S_0=0\) also converges to the stabilizing solution under the stated assumptions.
-- **Stability certificate.** The optimal \(S\) is a Lyapunov function for the closed loop: \(V(x)=x^\top S x\) satisfies \(V(x_{k+1})-V(x_k)= -x_k^\top (Q+K^\top R K)x_k \le 0\), ensuring asymptotic stability in the deterministic case. -->
 </div>
 <div id="infinite-horizon-lqr" class="section level3 hasAnchor" number="4.1.2">
 <h3><span class="header-section-number">4.1.2</span> Infinite-Horizon LQR<a href="model-based-plan-optimize.html#infinite-horizon-lqr" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -572,7 +468,7 @@ Equation <a href="model-based-plan-optimize.html#eq:algebraic-riccati">(4.13)</a
 <span class="math display">\[
 x_{k+1} = A x_k + B u_k,
 \]</span>
-with <span class="math inline">\((A,B)\)</span> controllable (see Appendix <a href="app-lti-system-theory.html#app-lti-controllable-observable">B.2</a>). Let <span class="math inline">\(Q \succeq 0\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a> be such that <span class="math inline">\(Q\)</span> can be written as <span class="math inline">\(Q = C^\top C\)</span> with <span class="math inline">\((A,C)\)</span> observable.</p>
+with <span class="math inline">\((A,B)\)</span> controllable (see Section <a href="model-based-plan-optimize.html#linear-system-basics">4.1.3</a>). Let <span class="math inline">\(Q \succeq 0\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a> be such that <span class="math inline">\(Q\)</span> can be written as <span class="math inline">\(Q = C^\top C\)</span> with <span class="math inline">\((A,C)\)</span> observable.</p>
 <p>Then the optimal controller for the infinite-horizon LQR problem <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a> is a stationary linear policy
 <span class="math display">\[
 \mu^\star (x) = - K x,
@@ -659,6 +555,47 @@ Figure 4.2: LQR stabilization of a simple pendulum.
 </div>
 </div>
 </div>
+</div>
+<div id="linear-system-basics" class="section level3 hasAnchor" number="4.1.3">
+<h3><span class="header-section-number">4.1.3</span> Linear System Basics<a href="model-based-plan-optimize.html#linear-system-basics" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Consider the discrete-time linear time-invariant (LTI) system
+<span class="math display">\[
+x_{k+1}=Ax_k+Bu_k,\qquad y_k=Cx_k+Du_k,
+\]</span>
+with <span class="math inline">\(x_k\in\mathbb{R}^n,\;u_k\in\mathbb{R}^m,\;y_k\in\mathbb{R}^p\)</span>.</p>
+<p>We provide a very brief review of linear system theory to understand Proposition <a href="model-based-plan-optimize.html#prp:infinitehorizonlqrsolution">4.2</a>. More details can be found in Appendix <a href="app-lti-system-theory.html#app-lti-system-theory">B</a>.</p>
+<p><strong>Stability.</strong> The autonomous system <span class="math inline">\(x_{k+1}=Ax_k\)</span> is (asymptotically) stable if for every <span class="math inline">\(x_0\)</span> we have <span class="math inline">\(x_k\to 0\)</span> as <span class="math inline">\(k\to\infty\)</span>.</p>
+<p><strong>Equivalent characterizations.</strong></p>
+<ul>
+<li><p><span class="math inline">\(A\)</span> is <strong>Schur</strong>: all eigenvalues satisfy <span class="math inline">\(|\lambda_i(A)|&lt;1\)</span>.</p></li>
+<li><p>Lyapunov: <span class="math inline">\(\exists P\succ 0\)</span> s.t. <span class="math inline">\(A^\top P A - P \prec 0\)</span>.</p></li>
+</ul>
+<p><strong>Controllability (reachability).</strong> The pair <span class="math inline">\((A,B)\)</span> is controllable if for any <span class="math inline">\(x_0,x_f\)</span> there exists a <em>finite</em> input sequence <span class="math inline">\(\{u_0,\dots,u_{N-1}\}\)</span> that drives the state from <span class="math inline">\(x_0\)</span> to <span class="math inline">\(x_N=x_f\)</span>.</p>
+<p><strong>Kalman controllability matrix.</strong>
+<span class="math display">\[
+  \mathcal C \;=\; [\,B\; AB\; A^2B\;\cdots\; A^{n-1}B\,],\quad
+  \text{\((A,B)\) controllable} \iff \operatorname{rank}(\mathcal C)=n.
+  \]</span></p>
+<p><strong>Popov-Belevitch-Hautus (PBH) test.</strong>
+<span class="math display">\[
+  \text{\((A,B)\) controllable} \iff
+  \operatorname{rank}\!\begin{bmatrix}\lambda I - A &amp; B\end{bmatrix} = n
+  \ \text{for all}\ \lambda\in\mathbb{C}.
+  \]</span>
+It suffices to check <span class="math inline">\(\lambda\)</span> equal to the eigenvalues of <span class="math inline">\(A\)</span>.</p>
+<p><strong>Observability.</strong> The pair <span class="math inline">\((A,C)\)</span> is observable if the initial state <span class="math inline">\(x_0\)</span> can be uniquely determined from a finite sequence of outputs (and known inputs), e.g., from <span class="math inline">\(\{y_0,\dots,y_{n-1}\}\)</span>.</p>
+<p><strong>Observability matrix.</strong>
+<span class="math display">\[
+  \mathcal O \;=\; \begin{bmatrix} C \\ CA \\ \vdots \\ CA^{n-1}\end{bmatrix},\quad
+  \text{\((A,C)\) observable} \iff \operatorname{rank}(\mathcal O)=n.
+  \]</span></p>
+<p><strong>PBH test.</strong>
+<span class="math display">\[
+  \text{\((A,C)\) observable} \iff
+  \operatorname{rank}\!\begin{bmatrix}\lambda I - A^\top &amp; C^\top\end{bmatrix} = n
+  \ \text{for all}\ \lambda\in\mathbb{C}.
+  \]</span>
+Dual to controllability: <span class="math inline">\((A,C)\)</span> observable <span class="math inline">\(\Leftrightarrow\)</span> <span class="math inline">\((A^\top,C^\top)\)</span> controllable.</p>
 
 </div>
 </div>

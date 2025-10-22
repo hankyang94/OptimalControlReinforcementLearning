@@ -6874,7 +6874,7 @@ So the question boils down to if the DARE has a solution \(S\) that is positive 
 \[
 x_{k+1} = A x_k + B u_k,
 \]
-with \((A,B)\) controllable (see Appendix \ref{app-lti-controllable-observable}). Let \(Q \succeq 0\) in \eqref{eq:infinite-horizon-lqr-cost} be such that \(Q\) can be written as \(Q = C^\top C\) with \((A,C)\) observable.
+with \((A,B)\) controllable (see Section \ref{linear-system-basics}). Let \(Q \succeq 0\) in \eqref{eq:infinite-horizon-lqr-cost} be such that \(Q\) can be written as \(Q = C^\top C\) with \((A,C)\) observable.
 
 Then the optimal controller for the infinite-horizon LQR problem \eqref{eq:infinite-horizon-lqr-cost} is a stationary linear policy
 \[
@@ -6979,6 +6979,59 @@ Alternatively, the Matlab code can be found \href{https://github.com/Computation
 \end{figure}
 
 \end{example}
+
+\subsection{Linear System Basics}\label{linear-system-basics}
+
+Consider the discrete-time linear time-invariant (LTI) system
+\[
+x_{k+1}=Ax_k+Bu_k,\qquad y_k=Cx_k+Du_k,
+\]
+with \(x_k\in\mathbb{R}^n,\;u_k\in\mathbb{R}^m,\;y_k\in\mathbb{R}^p\).
+
+We provide a very brief review of linear system theory to understand Proposition \ref{prp:infinitehorizonlqrsolution}. More details can be found in Appendix \ref{app-lti-system-theory}.
+
+\textbf{Stability.} The autonomous system \(x_{k+1}=Ax_k\) is (asymptotically) stable if for every \(x_0\) we have \(x_k\to 0\) as \(k\to\infty\).
+
+\textbf{Equivalent characterizations.}
+
+\begin{itemize}
+\item
+  \(A\) is \textbf{Schur}: all eigenvalues satisfy \(|\lambda_i(A)|<1\).
+\item
+  Lyapunov: \(\exists P\succ 0\) s.t. \(A^\top P A - P \prec 0\).
+\end{itemize}
+
+\textbf{Controllability (reachability).} The pair \((A,B)\) is controllable if for any \(x_0,x_f\) there exists a \emph{finite} input sequence \(\{u_0,\dots,u_{N-1}\}\) that drives the state from \(x_0\) to \(x_N=x_f\).
+
+\textbf{Kalman controllability matrix.}
+\[
+  \mathcal C \;=\; [\,B\; AB\; A^2B\;\cdots\; A^{n-1}B\,],\quad
+  \text{\((A,B)\) controllable} \iff \operatorname{rank}(\mathcal C)=n.
+  \]
+
+\textbf{Popov-Belevitch-Hautus (PBH) test.}
+\[
+  \text{\((A,B)\) controllable} \iff 
+  \operatorname{rank}\!\begin{bmatrix}\lambda I - A & B\end{bmatrix} = n
+  \ \text{for all}\ \lambda\in\mathbb{C}.
+  \]
+It suffices to check \(\lambda\) equal to the eigenvalues of \(A\).
+
+\textbf{Observability.} The pair \((A,C)\) is observable if the initial state \(x_0\) can be uniquely determined from a finite sequence of outputs (and known inputs), e.g., from \(\{y_0,\dots,y_{n-1}\}\).
+
+\textbf{Observability matrix.}
+\[
+  \mathcal O \;=\; \begin{bmatrix} C \\ CA \\ \vdots \\ CA^{n-1}\end{bmatrix},\quad
+  \text{\((A,C)\) observable} \iff \operatorname{rank}(\mathcal O)=n.
+  \]
+
+\textbf{PBH test.}
+\[
+  \text{\((A,C)\) observable} \iff 
+  \operatorname{rank}\!\begin{bmatrix}\lambda I - A^\top & C^\top\end{bmatrix} = n
+  \ \text{for all}\ \lambda\in\mathbb{C}.
+  \]
+Dual to controllability: \((A,C)\) observable \(\Leftrightarrow\) \((A^\top,C^\top)\) controllable.
 
 \chapter{Advanced Materials}\label{advanced-materials}
 
