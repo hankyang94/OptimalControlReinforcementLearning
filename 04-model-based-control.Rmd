@@ -126,112 +126,6 @@ The recursion \@ref(eq:finite-discrete-lqr-riccati) is called the _discrete-time
 
 Proposition \@ref(prp:discretetimefinitehorizonlqrsolution) states that, to evaluate the optimal policy \@ref(eq:lqr-solution-control), one can first run the backwards Riccati equation \@ref(eq:finite-discrete-lqr-riccati) to compute all the positive definite matrices $S_k$, and then compute the gain matrices $K_k$. For systems of reasonable dimensions, evalutating the matrix inversion in \@ref(eq:finite-discrete-lqr-riccati) should be fairly efficient.
 
-<!-- ### Infinite-Horizon LQR {#infinite-horizon-lqr}
-
-We now specialize to **time-invariant** linear dynamics and consider the infinite-horizon problem. Let
-\[
-x_{k+1} \;=\; A x_k + B u_k + w_k,\qquad x_k\in\mathbb{R}^n,\; u_k\in\mathbb{R}^m,
-\]
-with \(Q\succeq 0\) and \(R\succ 0\). We treat both the **undiscounted deterministic** case (\(w_k\equiv 0\)) and the **discounted** case (\(\gamma\in(0,1)\)), allowing additive stochastic disturbances \(w_k\) where noted.
-
----
-
-#### Problem statements
-
-- **Undiscounted, deterministic.**
-\[
-\min_{\mu}\;\sum_{k=0}^{\infty} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)
-\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k,\;\; x_0\text{ given}.
-(\#eq:ihlqr-undisc)
-\]
-
-- **Discounted.**
-\[
-\min_{\mu}\;\mathbb{E}\!\left[\sum_{k=0}^{\infty} \gamma^{\,k} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)\right]
-\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k + w_k,\;\; x_0\text{ given}.
-(\#eq:ihlqr-disc)
-\]
-
-We seek **stationary** feedback laws \(u_k=\mu(x_k)=-Kx_k\) and value functions \(J(x)=x^\top S x + c\) with time-invariant \(K,S\).
-
----
-
-#### Algebraic Riccati equations and optimal stationary policy
-
-Plugging the quadratic ansatz \(J(x)=x^\top S x\) into the Bellman equation and minimizing over \(u\) yields the **discrete-time algebraic Riccati equation (DARE)** and the corresponding gain.
-
-::: {.theorembox}
-::: {.proposition #ihlqr-solution name="Solution of Infinite-Horizon LQR (discrete time)"}
-Consider \@ref(eq:ihlqr-undisc) with \(Q\succeq 0\), \(R\succ 0\). Suppose \((A,B)\) is **stabilizable** and \((Q^{1/2},A)\) is **detectable**. Then there exists a unique positive semidefinite matrix \(S\) (the **stabilizing** solution of the DARE)
-\[
-S \;=\; Q \;+\; A^\top S A \;-\; A^\top S B \bigl(R + B^\top S B\bigr)^{-1} B^\top S A,
-\qquad S\succeq 0,
-(\#eq:DARE)
-\]
-such that the linear feedback
-\[
-K \;=\; \bigl(R + B^\top S B\bigr)^{-1} B^\top S A
-(\#eq:K-undisc)
-\]
-stabilizes the closed loop \(A_{\text{cl}}=A-BK\) (i.e., \(\rho(A_{\text{cl}})<1\)). The optimal policy is \(u^\star=-Kx\) and the optimal cost is
-\[
-J^\star(x_0) \;=\; x_0^\top S x_0.
-\]
-:::
-:::
-
-**Discounted variant.** For \@ref(eq:ihlqr-disc) with \(\gamma\in(0,1)\), the optimal \(S\succeq 0\) and \(K\) solve the **discounted DARE**
-\[
-S \;=\; Q \;+\; \gamma A^\top S A \;-\; \gamma A^\top S B \bigl(R + \gamma B^\top S B\bigr)^{-1} B^\top S A,
-(\#eq:DARE-disc)
-\]
-with
-\[
-K \;=\; \bigl(R + \gamma B^\top S B\bigr)^{-1} \bigl(\gamma B^\top S A\bigr).
-(\#eq:K-disc)
-\]
-In the discounted case, the Bellman operator is a contraction; the stabilizing solution exists and is unique under the same convexity assumptions \(Q\succeq 0, R\succ 0\). The closed loop satisfies \(\rho\!\bigl(\sqrt{\gamma}\,(A-BK)\bigr)<1\).
-
----
-
-#### Relation to finite-horizon Riccati recursion
-
-Let \(S_N=Q_N\) and backward-iterate the finite-horizon Riccati recursion in \@ref(eq:finite-discrete-lqr-riccati) with \(Q_k\equiv Q\), \(R_k\equiv R\), \(A_k\equiv A\), \(B_k\equiv B\). Then (under the stabilizability/detectability assumptions) the sequence \(\{S_k\}\) is monotone nondecreasing and converges to the unique stabilizing \(S\) solving \@ref(eq:DARE). The corresponding gains \(K_k\) converge to \(K\) in \@ref(eq:K-undisc).
-
----
-
-#### Effect of additive disturbances
-
-Additive noise \(w_k\) (zero mean, covariance \(W=\mathbb{E}[w_k w_k^\top]\)) **does not change the optimal gain**; it only adds a constant to the value:
-
-- **Discounted cost.** With \(S\) from \@ref(eq:DARE-disc}),
-\[
-J^\star(x_0) \;=\; x_0^\top S x_0 \;+\; \sum_{k=0}^\infty \gamma^{\,k}\,\mathbb{E}\big[w_k^\top S w_k\big]
-\;=\; x_0^\top S x_0 \;+\; \frac{1}{1-\gamma}\,\mathrm{tr}(S W).
-(\#eq:disc-noise-cost)
-\]
-
-- **Undiscounted average cost (per stage).** Under the optimal gain \(K\) from \@ref(eq:K-undisc}) and stable \(A_{\text{cl}}=A-BK\), the closed-loop state covariance \(P\) solves the Lyapunov equation
-\[
-P \;=\; A_{\text{cl}} P A_{\text{cl}}^\top + W,
-\]
-and the steady-state average stage cost is
-\[
-\bar{J} \;=\; \mathrm{tr}\!\big((Q + K^\top R K)\,P\big) \;=\; \mathrm{tr}(S W).
-(\#eq:avg-cost)
-\]
-The last equality follows from standard DARE identities.
-
----
-
-#### Remarks and practical notes
-
-- **Assumptions.**  
-  - *Stabilizability:* every unstable mode of \(A\) is controllable by \(B\).  
-  - *Detectability:* every unobservable mode of \((Q^{1/2},A)\) is stable.
-- **Computation.** Use a DARE solver (e.g., Schur or QZ methods). Iterating the Riccati map \(S\mapsto Q + A^\top S A - A^\top S B(R+B^\top S B)^{-1}B^\top S A\) from \(S_0=0\) also converges to the stabilizing solution under the stated assumptions.
-- **Stability certificate.** The optimal \(S\) is a Lyapunov function for the closed loop: \(V(x)=x^\top S x\) satisfies \(V(x_{k+1})-V(x_k)= -x_k^\top (Q+K^\top R K)x_k \le 0\), ensuring asymptotic stability in the deterministic case. -->
-
 
 
 
@@ -280,7 +174,7 @@ Consider a linear system
 $$
 x_{k+1} = A x_k + B u_k,
 $$
-with $(A,B)$ controllable (see Appendix \@ref(app-lti-controllable-observable)). Let $Q \succeq 0$ in \@ref(eq:infinite-horizon-lqr-cost) be such that $Q$ can be written as $Q = C^\top C$ with $(A,C)$ observable. 
+with $(A,B)$ controllable (see Section \@ref(linear-system-basics)). Let $Q \succeq 0$ in \@ref(eq:infinite-horizon-lqr-cost) be such that $Q$ can be written as $Q = C^\top C$ with $(A,C)$ observable. 
 
 Then the optimal controller for the infinite-horizon LQR problem \@ref(eq:infinite-horizon-lqr-cost) is a stationary linear policy
 $$
@@ -376,6 +270,58 @@ knitr::include_graphics('images/Model-based-optimization/pendulum_lqr_stabilizat
 ```
 :::
 :::
+
+### Linear System Basics {#linear-system-basics}
+
+Consider the discrete-time linear time-invariant (LTI) system
+\[
+x_{k+1}=Ax_k+Bu_k,\qquad y_k=Cx_k+Du_k,
+\]
+with \(x_k\in\mathbb{R}^n,\;u_k\in\mathbb{R}^m,\;y_k\in\mathbb{R}^p\).
+
+We provide a very brief review of linear system theory to understand Proposition \@ref(prp:infinitehorizonlqrsolution). More details can be found in Appendix \@ref(app-lti-system-theory).
+
+
+**Stability.** The autonomous system \(x_{k+1}=Ax_k\) is (asymptotically) stable if for every \(x_0\) we have \(x_k\to 0\) as \(k\to\infty\).
+
+**Equivalent characterizations.**
+
+- \(A\) is **Schur**: all eigenvalues satisfy \(|\lambda_i(A)|<1\). 
+
+- Lyapunov: \(\exists P\succ 0\) s.t. \(A^\top P A - P \prec 0\).  
+
+
+**Controllability (reachability).** The pair \((A,B)\) is controllable if for any \(x_0,x_f\) there exists a *finite* input sequence \(\{u_0,\dots,u_{N-1}\}\) that drives the state from \(x_0\) to \(x_N=x_f\).
+
+**Kalman controllability matrix.**
+  \[
+  \mathcal C \;=\; [\,B\; AB\; A^2B\;\cdots\; A^{n-1}B\,],\quad
+  \text{\((A,B)\) controllable} \iff \operatorname{rank}(\mathcal C)=n.
+  \]
+
+**Popov-Belevitch-Hautus (PBH) test.**
+  \[
+  \text{\((A,B)\) controllable} \iff 
+  \operatorname{rank}\!\begin{bmatrix}\lambda I - A & B\end{bmatrix} = n
+  \ \text{for all}\ \lambda\in\mathbb{C}.
+  \]
+It suffices to check \(\lambda\) equal to the eigenvalues of \(A\).
+
+**Observability.** The pair \((A,C)\) is observable if the initial state \(x_0\) can be uniquely determined from a finite sequence of outputs (and known inputs), e.g., from \(\{y_0,\dots,y_{n-1}\}\).
+
+**Observability matrix.**
+  \[
+  \mathcal O \;=\; \begin{bmatrix} C \\ CA \\ \vdots \\ CA^{n-1}\end{bmatrix},\quad
+  \text{\((A,C)\) observable} \iff \operatorname{rank}(\mathcal O)=n.
+  \]
+
+**PBH test.**
+  \[
+  \text{\((A,C)\) observable} \iff 
+  \operatorname{rank}\!\begin{bmatrix}\lambda I - A^\top & C^\top\end{bmatrix} = n
+  \ \text{for all}\ \lambda\in\mathbb{C}.
+  \]
+Dual to controllability: \((A,C)\) observable \(\Leftrightarrow\) \((A^\top,C^\top)\) controllable.
 
 
 
