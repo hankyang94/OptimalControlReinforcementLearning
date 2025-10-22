@@ -1,1 +1,382 @@
 # Model-based Planning and Optimization {#model-based-plan-optimize}
+
+In Chapter \@ref(mdp), we studied tabular MDPs with known dynamics where both the state and action spaces are finite, and we saw how dynamic-programming methods—Policy Iteration (PI) and Value Iteration (VI)—recover optimal policies.
+
+Chapters \@ref(value-rl) and \@ref(policy-gradient) generalized these ideas to unknown dynamics and continuous spaces by introducing function approximation for value functions and policies. Those methods are *model-free*: they assume no access to the transition model and rely solely on data collected from interaction.
+
+This chapter turns to the complementary regime: **known dynamics** with **continuous state and action spaces**. Our goal is to develop model-based planning and optimization methods that exploit the known dynamics to compute high-quality decisions efficiently.
+
+We proceed in three steps:
+
+1. **Linear-quadratic systems.** For linear dynamics and quadratic stage/terminal rewards (or costs), dynamic programming yields a linear optimal policy that can be computed efficiently via Riccati recursions. This setting serves as a tractable, illuminating baseline and a recurring building block in more general algorithms.
+
+2. **Trajectory optimization (TO) for nonlinear systems.** When dynamics are nonlinear, we focus on planning an optimal state–action trajectory from a given initial condition, maximizing the cumulative reward (or minimizing cumulative cost) subject to dynamics and constraints. Unlike RL, which seeks an optimal *feedback policy* valid for all states, TO computes an *open-loop plan* (often with a time-varying local feedback around a nominal trajectory). Although less ambitious, TO naturally accommodates state/control constraints—common in motion planning under safety, actuation, and environmental limits—and is widely used in robotics and control.
+
+3. **Model predictive control (MPC).** MPC converts open-loop plans into a feedback controller by repeatedly solving a short-horizon TO problem at each time step, applying only the first action, and receding the horizon. This receding-horizon strategy brings robustness to disturbances and model mismatch while retaining the constraint-handling benefits of TO.
+
+We adopt the standard discrete-time dynamical system notation 
+\[
+x_{t+1} = f_t(x_t, u_t, w_t),
+\]
+where \(x_t \in \mathbb{R}^n\) is the state, \(u_t \in \mathbb{R}^m\) is the control/action, \(w_t \in \mathbb{R}^d\) is a (possibly stochastic) disturbance, and \(f_t\) is a known transition function, potentially nonlinear or nonsmooth. The goal is to find a policy that maximizes a sum of stage rewards \(r(x_t,u_t)\) and optional terminal reward \(r_T(x_T)\). We will often use the cost-minimization form \(c = -r\).
+State and action constraints are written as
+\[
+x_t \in \mathcal{X}, \qquad u_t \in \mathcal{U}.
+\]
+
+## Linear Quadratic Regulator {#lqr}
+
+In this section, we focus on the case when $f_t$ is a linear function, and the rewards/costs are quadratic in $x$ and $u$. This family of problems is known as linear quadratic regulator (LQR).
+
+### Finite-Horizon LQR
+
+Consider a linear discrete-time dynamical system 
+\begin{equation}
+x_{k+1} = A_k x_k + B_k u_k + w_k, \quad k=0,1,\dots,N-1,
+(\#eq:lqr-linear-system)
+\end{equation}
+where $x_k \in \mathbb{R}^n$ the state, $u_k \in \mathbb{R}^m$ the control, $w_k \in \mathbb{R}^n$ the independent, zero-mean disturbance with given probability distribution that does not depend on $x_k,u_k$, and $A_k \in \mathbb{R}^{n \times n}, B_k \in \mathbb{R}^{n \times m}$ are known matrices determining the transition dynamics.
+
+We want to solve the following optimal control problem 
+\begin{equation}
+\min_{\mu_0,\dots,\mu_{N-1}} \mathbb{E} \left\{ x_N^\top Q_N x_N + \sum_{k=0}^{N-1} \left( x_k^\top Q_k x_k + u_k^\top R_k u_k \right) \right\},
+(\#eq:lqr-formulation)
+\end{equation}
+where $\mu_0,\dots,\mu_{N-1}$ are feedback policies/controllers that map states to actions and the expectation is taken over the randomness in $w_0,\dots,w_{N-1}$. In \@ref(eq:lqr-formulation), $\{Q_k \}_{k=0}^N$ are positive semidefinite matrices, and $\{ R_k \}_{k=0}^{N-1}$ are positive definite matrices. The formulation \@ref(eq:lqr-formulation) is known as the linear quadratic regulator (LQR) problem because the dynamics is linear, the cost is quadratic, and the formulation can be considered to "regulate" the system around the origin $x=0$. 
+
+The Bellman Optimality condition introduced in Theorem \@ref(thm:FiniteHorizonMDPBellmanOptimality) still holds for continuous state and action spaces. Therefore, we will try to follow the dynamic programming (DP) algorithm in Section \@ref(dp) to solve for the optimal policy.
+
+The DP algorithm computes the optimal cost-to-go backwards in time. 
+The terminal cost is 
+$$
+J_N(x_N) = x_N^\top Q_N x_N
+$$
+by definition.
+
+The optimal cost-to-go at time $N-1$ is equal to
+\begin{equation}
+\begin{split}
+J_{N-1}(x_{N-1}) = \min_{u_{N-1}} \mathbb{E}_{w_{N-1}} \{ x_{N-1}^\top Q_{N-1} x_{N-1} + u_{N-1}^\top R_{N-1} u_{N-1} + \\ \Vert \underbrace{A_{N-1} x_{N-1} + B_{N-1} u_{N-1} + w_{N-1} }_{x_N} \Vert^2_{Q_N} \}
+\end{split}
+(\#eq:lqr-cost-N-1)
+\end{equation}
+where $\Vert v \Vert_Q^2 = v^\top Q v$ for $Q \succeq 0$. Now observe that the objective in \@ref(eq:lqr-cost-N-1) is 
+\begin{equation}
+\begin{split}
+x_{N-1}^\top Q_{N-1} x_{N-1} + u_{N-1}^\top R_{N-1} u_{N-1} + \Vert A_{N-1} x_{N-1} + B_{N-1} u_{N-1} \Vert_{Q_N}^2 + \\
+\mathbb{E}_{w_{N-1}} \left[ 2(A_{N-1} x_{N-1} + B_{N-1} u_{N-1} )^\top Q_{N-1} w_{N-1} \right] + \\
+\mathbb{E}_{w_{N-1}} \left[ w_{N-1}^\top Q_N w_{N-1} \right]
+\end{split}
+\end{equation}
+where the second line is zero due to $\mathbb{E}[w_{N-1}] = 0$ and the third line is a constant with respect to $u_{N-1}$. Consequently, the optimal control $u_{N-1}^\star$ can be computed by setting the derivative of the objective with respect to $u_{N-1}$ equal to zero 
+\begin{equation}
+u_{N-1}^\star = - \left[ \left( R_{N-1} + B_{N-1}^\top Q_N B_{N-1} \right)^{-1} B_{N-1}^\top Q_N A_{N-1} \right] x_{N-1}.
+(\#eq:optimal-u-N-1)
+\end{equation}
+Plugging the optimal controller $u^\star_{N-1}$ back to the objective of \@ref(eq:lqr-cost-N-1) leads to
+\begin{equation}
+J_{N-1}(x_{N-1}) = x_{N-1}^\top S_{N-1} x_{N-1} + \mathbb{E} \left[ w_{N-1}^\top Q_N w_{N-1} \right],
+(\#eq:optimal-cost-N-1)
+\end{equation}
+with 
+$$
+S_{N-1} = Q_{N-1} + A_{N-1}^\top \left[ Q_N - Q_N B_{N-1} \left( R_{N-1} + B_{N-1}^\top Q_N B_{N-1} \right)^{-1} B_{N-1}^\top Q_N \right] A_{N-1}.
+$$
+We note that $S_{N-1}$ is positive semidefinite (this is an exercise for you to convince yourself). 
+
+Now we realize that something surprising and nice has happened.
+
+1. The optimal controller $u^{\star}_{N-1}$ in \@ref(eq:optimal-u-N-1) is a linear feedback policy of the state $x_{N-1}$, and 
+
+2. The optimal cost-to-go $J_{N-1}(x_{N-1})$ in \@ref(eq:optimal-cost-N-1) is quadratic in $x_{N-1}$, just the same as $J_{N}(x_N)$.
+
+This implies that, if we continue to compute the optimal cost-to-go at time $N-2$, we will again compute a linear optimal controller and a quadratic optimal cost-to-go. This is the rare nice property for the LQR problem, that is, 
+
+> The (representation) complexity of the optimal controller and cost-to-go does not grow as we run the DP recursion backwards in time. 
+
+We summarize the solution for the LQR problem \@ref(eq:lqr-formulation) as follows.
+
+::: {.theorembox}
+::: {.proposition #discretetimefinitehorizonlqrsolution name="Solution of Discrete-Time Finite-Horizon LQR"}
+The optimal controller for the LQR problem \@ref(eq:lqr-formulation) is a linear state-feedback policy
+\begin{equation}
+\mu_k^\star(x_k) = - K_k x_k, \quad k=0,\dots,N-1.
+(\#eq:lqr-solution-control)
+\end{equation}
+The gain matrix $K_k$ can be computed as
+$$
+K_k = \left( R_k + B_k^\top S_{k+1} B_k  \right)^{-1} B_k^\top S_{k+1} A_k,
+$$
+where the matrix $S_k$ satisfies the following backwards recursion
+\begin{equation}
+\hspace{-6mm}
+\begin{split}
+S_N &= Q_N \\
+S_k &= Q_k + A_k^\top \left[ S_{k+1} - S_{k+1}B_k \left( R_k + B_k^\top S_{k+1} B_k  \right)^{-1}  B_k^\top S_{k+1}  \right] A_k, k=N-1,\dots,0.
+\end{split}
+(\#eq:finite-discrete-lqr-riccati)
+\end{equation}
+The optimal cost-to-go is given by 
+$$
+J_0(x_0) = x_0^\top S_0 x_0 + \sum_{k=0}^{N-1} \mathbb{E} \left[ w_k^\top S_{k+1} w_k\right].
+$$
+The recursion \@ref(eq:finite-discrete-lqr-riccati) is called the _discrete-time Riccati equation_.
+:::
+:::
+
+Proposition \@ref(prp:discretetimefinitehorizonlqrsolution) states that, to evaluate the optimal policy \@ref(eq:lqr-solution-control), one can first run the backwards Riccati equation \@ref(eq:finite-discrete-lqr-riccati) to compute all the positive definite matrices $S_k$, and then compute the gain matrices $K_k$. For systems of reasonable dimensions, evalutating the matrix inversion in \@ref(eq:finite-discrete-lqr-riccati) should be fairly efficient.
+
+<!-- ### Infinite-Horizon LQR {#infinite-horizon-lqr}
+
+We now specialize to **time-invariant** linear dynamics and consider the infinite-horizon problem. Let
+\[
+x_{k+1} \;=\; A x_k + B u_k + w_k,\qquad x_k\in\mathbb{R}^n,\; u_k\in\mathbb{R}^m,
+\]
+with \(Q\succeq 0\) and \(R\succ 0\). We treat both the **undiscounted deterministic** case (\(w_k\equiv 0\)) and the **discounted** case (\(\gamma\in(0,1)\)), allowing additive stochastic disturbances \(w_k\) where noted.
+
+---
+
+#### Problem statements
+
+- **Undiscounted, deterministic.**
+\[
+\min_{\mu}\;\sum_{k=0}^{\infty} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)
+\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k,\;\; x_0\text{ given}.
+(\#eq:ihlqr-undisc)
+\]
+
+- **Discounted.**
+\[
+\min_{\mu}\;\mathbb{E}\!\left[\sum_{k=0}^{\infty} \gamma^{\,k} \bigl( x_k^\top Q x_k + u_k^\top R u_k \bigr)\right]
+\quad\text{s.t.}\quad x_{k+1}=A x_k + B u_k + w_k,\;\; x_0\text{ given}.
+(\#eq:ihlqr-disc)
+\]
+
+We seek **stationary** feedback laws \(u_k=\mu(x_k)=-Kx_k\) and value functions \(J(x)=x^\top S x + c\) with time-invariant \(K,S\).
+
+---
+
+#### Algebraic Riccati equations and optimal stationary policy
+
+Plugging the quadratic ansatz \(J(x)=x^\top S x\) into the Bellman equation and minimizing over \(u\) yields the **discrete-time algebraic Riccati equation (DARE)** and the corresponding gain.
+
+::: {.theorembox}
+::: {.proposition #ihlqr-solution name="Solution of Infinite-Horizon LQR (discrete time)"}
+Consider \@ref(eq:ihlqr-undisc) with \(Q\succeq 0\), \(R\succ 0\). Suppose \((A,B)\) is **stabilizable** and \((Q^{1/2},A)\) is **detectable**. Then there exists a unique positive semidefinite matrix \(S\) (the **stabilizing** solution of the DARE)
+\[
+S \;=\; Q \;+\; A^\top S A \;-\; A^\top S B \bigl(R + B^\top S B\bigr)^{-1} B^\top S A,
+\qquad S\succeq 0,
+(\#eq:DARE)
+\]
+such that the linear feedback
+\[
+K \;=\; \bigl(R + B^\top S B\bigr)^{-1} B^\top S A
+(\#eq:K-undisc)
+\]
+stabilizes the closed loop \(A_{\text{cl}}=A-BK\) (i.e., \(\rho(A_{\text{cl}})<1\)). The optimal policy is \(u^\star=-Kx\) and the optimal cost is
+\[
+J^\star(x_0) \;=\; x_0^\top S x_0.
+\]
+:::
+:::
+
+**Discounted variant.** For \@ref(eq:ihlqr-disc) with \(\gamma\in(0,1)\), the optimal \(S\succeq 0\) and \(K\) solve the **discounted DARE**
+\[
+S \;=\; Q \;+\; \gamma A^\top S A \;-\; \gamma A^\top S B \bigl(R + \gamma B^\top S B\bigr)^{-1} B^\top S A,
+(\#eq:DARE-disc)
+\]
+with
+\[
+K \;=\; \bigl(R + \gamma B^\top S B\bigr)^{-1} \bigl(\gamma B^\top S A\bigr).
+(\#eq:K-disc)
+\]
+In the discounted case, the Bellman operator is a contraction; the stabilizing solution exists and is unique under the same convexity assumptions \(Q\succeq 0, R\succ 0\). The closed loop satisfies \(\rho\!\bigl(\sqrt{\gamma}\,(A-BK)\bigr)<1\).
+
+---
+
+#### Relation to finite-horizon Riccati recursion
+
+Let \(S_N=Q_N\) and backward-iterate the finite-horizon Riccati recursion in \@ref(eq:finite-discrete-lqr-riccati) with \(Q_k\equiv Q\), \(R_k\equiv R\), \(A_k\equiv A\), \(B_k\equiv B\). Then (under the stabilizability/detectability assumptions) the sequence \(\{S_k\}\) is monotone nondecreasing and converges to the unique stabilizing \(S\) solving \@ref(eq:DARE). The corresponding gains \(K_k\) converge to \(K\) in \@ref(eq:K-undisc).
+
+---
+
+#### Effect of additive disturbances
+
+Additive noise \(w_k\) (zero mean, covariance \(W=\mathbb{E}[w_k w_k^\top]\)) **does not change the optimal gain**; it only adds a constant to the value:
+
+- **Discounted cost.** With \(S\) from \@ref(eq:DARE-disc}),
+\[
+J^\star(x_0) \;=\; x_0^\top S x_0 \;+\; \sum_{k=0}^\infty \gamma^{\,k}\,\mathbb{E}\big[w_k^\top S w_k\big]
+\;=\; x_0^\top S x_0 \;+\; \frac{1}{1-\gamma}\,\mathrm{tr}(S W).
+(\#eq:disc-noise-cost)
+\]
+
+- **Undiscounted average cost (per stage).** Under the optimal gain \(K\) from \@ref(eq:K-undisc}) and stable \(A_{\text{cl}}=A-BK\), the closed-loop state covariance \(P\) solves the Lyapunov equation
+\[
+P \;=\; A_{\text{cl}} P A_{\text{cl}}^\top + W,
+\]
+and the steady-state average stage cost is
+\[
+\bar{J} \;=\; \mathrm{tr}\!\big((Q + K^\top R K)\,P\big) \;=\; \mathrm{tr}(S W).
+(\#eq:avg-cost)
+\]
+The last equality follows from standard DARE identities.
+
+---
+
+#### Remarks and practical notes
+
+- **Assumptions.**  
+  - *Stabilizability:* every unstable mode of \(A\) is controllable by \(B\).  
+  - *Detectability:* every unobservable mode of \((Q^{1/2},A)\) is stable.
+- **Computation.** Use a DARE solver (e.g., Schur or QZ methods). Iterating the Riccati map \(S\mapsto Q + A^\top S A - A^\top S B(R+B^\top S B)^{-1}B^\top S A\) from \(S_0=0\) also converges to the stabilizing solution under the stated assumptions.
+- **Stability certificate.** The optimal \(S\) is a Lyapunov function for the closed loop: \(V(x)=x^\top S x\) satisfies \(V(x_{k+1})-V(x_k)= -x_k^\top (Q+K^\top R K)x_k \le 0\), ensuring asymptotic stability in the deterministic case. -->
+
+
+
+
+### Infinite-Horizon LQR {#infinite-horizon-lqr}
+
+We now switch to the infinite-horizon LQR problem
+\begin{align}
+\min_{\mu} & \quad  \sum_{k=0}^{\infty} \left( x_k^\top Q x_k + u_k^\top R u_k \right) (\#eq:infinite-horizon-lqr-cost) \\
+\text{subject to} & \quad x_{k+1} = A x_k + B u_k, \quad k=0,\dots,\infty, (\#eq:infinite-horizon-lqr-system)
+\end{align}
+where $Q \succeq 0$, $R \succ 0$, $A,B$ are constant matrices, and we seek a stationary policy $\mu$ that maps states to actions. Note that here we remove the disturbance $w_k$ because in general adding $w_k$ will make the objective function unbounded. To handle $w_k$, we will have to either add a discount factor $\gamma$, or switch to an average cost objective function. 
+
+For infinite-horizon problems, the Bellman Optimality condition changes from a recursion to an equation. Specifically, according to Theorem \@ref(thm:BellmanOptimalityInfiniteHorizon) and equation \@ref(eq:BellmanOptimalityInfiniteHorizonStateValue), the optimal value function should satisfy the following Bellman optimality equation, restated for the case of cost minimization instead of reward maximization:
+\begin{equation}
+J^\star (x) = \min_{u} \left[ c(x,u) + \sum_{x'} P(x' \mid x, u) J^\star (x') \right], \quad \forall x,
+(\#eq:BellmanOptimalityInfiniteHorizonRestateMin)
+\end{equation}
+where $c(x,u)$ is the cost function.
+
+**Guess A Solution.** Based on our derivation in the finite-horizon case, we might as well guess that the optimal value function is a quadratic function:
+$$
+J(x) = x^\top S x, \quad \forall x,
+$$
+for some positive definite matrix $S$. Then, our guessed solution must satisfy the Bellman optimality stated in \@ref(eq:BellmanOptimalityInfiniteHorizonRestateMin):
+\begin{equation}
+x^\top S x = J(x) = \min_{u} \left\{ x^\top Q x + u^\top R u + \Vert \underbrace{A x + B u}_{x'} \Vert_S^2  \right\}.
+(\#eq:infinite-horizon-lqr-invoke-dp)
+\end{equation}
+The minimization over $u$ in \@ref(eq:infinite-horizon-lqr-invoke-dp) can again be solved in closed-form by setting the gradient of the objective with respect to $u$ to be zero
+\begin{equation}
+u^\star = - \underbrace{\left[ \left( R + B^\top S B \right)^{-1} B^\top S A \right]}_{K} x.
+(\#eq:infinite-horizon-lqr-control)
+\end{equation}
+Plugging the optimal $u^\star$ back into \@ref(eq:infinite-horizon-lqr-invoke-dp), we see that the matrix $S$ has to satisfy the following equation
+\begin{equation}
+S = Q + A^\top \left[  S - SB \left( R + B^\top S B  \right)^{-1} B^\top S \right] A.
+(\#eq:algebraic-riccati)
+\end{equation}
+Equation \@ref(eq:algebraic-riccati) is known as the _discrete algebraic Riccati equation_ (DARE). 
+
+So the question boils down to if the DARE has a solution $S$ that is positive definite?
+
+::: {.theorembox}
+::: {.proposition #infinitehorizonlqrsolution name="Solution of Discrete-Time Infinite-Horizon LQR"} 
+Consider a linear system 
+$$
+x_{k+1} = A x_k + B u_k,
+$$
+with $(A,B)$ controllable (see Appendix \@ref(app-lti-controllable-observable)). Let $Q \succeq 0$ in \@ref(eq:infinite-horizon-lqr-cost) be such that $Q$ can be written as $Q = C^\top C$ with $(A,C)$ observable. 
+
+Then the optimal controller for the infinite-horizon LQR problem \@ref(eq:infinite-horizon-lqr-cost) is a stationary linear policy
+$$
+\mu^\star (x) = - K x,
+$$
+with 
+$$
+K = \left( R + B^\top S B \right)^{-1} B^\top S A.
+$$
+The matrix $S$ is the unique positive definite matrix that satisfies the discrete algebraic Riccati equation 
+\begin{equation}
+S = Q + A^\top \left[  S - SB \left( R + B^\top S B  \right)^{-1} B^\top S \right] A.
+(\#eq:discrete-algebraic-riccati-equation)
+\end{equation}
+
+Moreover, the closed-loop system 
+$$
+x_{k+1} = A x_k + B (-K x_k) = (A - BK) x_k
+$$
+is stable, i.e., the eigenvalues of the matrix $A - BK$ are strictly within the unit circle (see Appendix \@ref(app-lti-stability-dt)).
+:::
+:::
+
+*Remark.* The assumptions of $(A,B)$ being controllable and $(A,C)$ being observable can be relaxted to $(A,B)$ being stabilizable and $(A,C)$ being detectable (for definitions of stabilizability and detectability, see Appendix \@ref(app-lti-system-theory)).
+
+We have not discussed how to solve the algebraic Riccati equation \@ref(eq:discrete-algebraic-riccati-equation). It is clear that \@ref(eq:discrete-algebraic-riccati-equation) is not a linear system of equations in $S$. In fact, the numerical algorithms for solving the algebraic Riccati equation can be highly nontrivial, for example see [@arnold84ieee-generalized]. Fortunately, such algorithms are often readily available, and as practitioners we do not need to worry about solving the algebraic Riccati equation by ourselves. For example, the Matlab [`dlqr`](https://www.mathworks.com/help/control/ref/dlqr.html) and the Python [`scipy.linalg.solve_discrete_are`](https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.solve_discrete_are.html) function computes the $K$ and $S$ matrices from $A,B,Q,R$. 
+
+Let us now apply the infinite-horizon LQR solution to stabilizing a simple pendulum.
+
+
+::: {.examplebox}
+::: {.example #lqr-pendulum-stabilization name="Pendulum Stabilization by LQR"}
+Consider the simple pendulum in Fig. \@ref(fig:pendulum-drawing) with dynamics
+\begin{equation}
+x = \begin{bmatrix} \theta \\ \dot{\theta} \end{bmatrix}, \quad 
+\dot{x} = f(x,u) = \begin{bmatrix}
+\dot{\theta} \\
+-\frac{1}{ml^2}(b \dot{\theta} + mgl \sin \theta) + \frac{1}{ml^2} u
+\end{bmatrix}
+(\#eq:lqr-pendulum-dynamics)
+\end{equation}
+where $m$ is the mass of the pendulum, $l$ is the length of the pole, $g$ is the gravitational constant, $b$ is the damping ratio, and $u$ is the torque applied to the pendulum. 
+
+We are interested in applying the LQR controller to balance the pendulum in the upright position $x_d = [\pi,0]^\top$ with a zero velocity.
+
+```{r pendulum-drawing, out.width='40%', fig.show='hold', fig.cap='A Simple Pendulum.', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/pendulum-drawing.png')
+```
+
+Let us first shift the dynamics so that "$0$" is the upright position. This can be done by defining a new variable $z = x - x_d = [\theta - \pi, \dot{\theta}]^\top$, which leads to 
+\begin{equation}
+\dot{z} = \dot{x} = f(x,u) = f(z + x_d,u) = \begin{bmatrix}
+z_2 \\
+\frac{1}{ml^2} \left( u - b z_2 + mgl \sin z_1  \right)
+\end{bmatrix} = f'(z,u).
+(\#eq:pendulum-dynamics-z-coordinate)
+\end{equation}
+We then linearize the nonlinear dynamics $\dot{z} = f'(z,u)$ at the point $z^\star = 0, u^\star = 0$:
+\begin{align}
+\dot{z} & \approx f'(z^\star,u^\star) + \left( \frac{\partial f'}{\partial z} \right)_{z^\star,u^\star} (z - z^\star) + \left( \frac{\partial f'}{\partial u} \right)_{z^\star,u^\star} (u - u^\star) \\
+& = \begin{bmatrix}
+0 & 1 \\
+\frac{g}{l} \cos z_1 & - \frac{b}{ml^2}
+\end{bmatrix}_{z^\star, u^\star} z + 
+\begin{bmatrix}
+0 \\
+\frac{1}{ml^2}
+\end{bmatrix} u \\
+& = \underbrace{\begin{bmatrix}
+0 & 1 \\
+\frac{g}{l} & - \frac{b}{ml^2}
+\end{bmatrix}}_{A_c} z  + 
+\underbrace{\begin{bmatrix}
+0 \\
+\frac{1}{ml^2}
+\end{bmatrix}}_{B_c} u.
+\end{align} 
+Finally, we convert the continuous-time dynamics to discrete time with a fixed discretization $h$
+$$
+z_{k+1} = \dot{z}_k \cdot h + z_k = \underbrace{(h \cdot A_c + I )}_{A} z_k + \underbrace{(h \cdot B_c)}_{B} u_k.
+$$
+
+We are now ready to implement the LQR controller. In the formulation \@ref(eq:infinite-horizon-lqr-cost), we choose $Q = I$, $R = I$, and compute the gain matrix $K$ by solving the DARE.
+
+Fig. \@ref(fig:pendulum-stabilization-sim) shows the simulation result for $m=1,l=1,b=0.1$, $g = 9.8$, and $h = 0.01$, with an initial condition $z^0 = [0.1,0.1]^\top$. We can see that the LQR controller successfully stabilizes the pendulum at $z^\star$, the upright position.
+
+You can play with the Python code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_lqr_stabilization.py). 
+
+Alternatively, the Matlab code can be found [here](https://github.com/ComputationalRobotics/OptimalControlEstimation-Examples/blob/main/pendulum_stabilization_lqr.m).
+
+```{r pendulum-stabilization-sim, out.width='60%', fig.show='hold', fig.cap='LQR stabilization of a simple pendulum.', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/pendulum_lqr_stabilization.png')
+```
+:::
+:::
+
+
+
+

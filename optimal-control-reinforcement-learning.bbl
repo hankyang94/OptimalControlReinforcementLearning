@@ -5,6 +5,12 @@ Antos, A., Szepesv{\'a}ri, C., and Munos, R. (2007).
 \newblock Fitted q-iteration in continuous action-space mdps.
 \newblock {\em Advances in neural information processing systems}, 20.
 
+\bibitem[Arnold and Laub, 1984]{arnold84ieee-generalized}
+Arnold, W.~F. and Laub, A.~J. (1984).
+\newblock Generalized eigenproblem algorithms and software for algebraic
+  riccati equations.
+\newblock {\em Proceedings of the IEEE}, 72(12):1746--1754.
+
 \bibitem[Baird et~al., 1995]{baird1995residual}
 Baird, L. et~al. (1995).
 \newblock Residual algorithms: Reinforcement learning with function
