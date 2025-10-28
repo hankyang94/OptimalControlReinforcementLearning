@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-10-22}
+\date{2025-10-28}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -7032,6 +7032,266 @@ It suffices to check \(\lambda\) equal to the eigenvalues of \(A\).
   \ \text{for all}\ \lambda\in\mathbb{C}.
   \]
 Dual to controllability: \((A,C)\) observable \(\Leftrightarrow\) \((A^\top,C^\top)\) controllable.
+
+\section{LQR Trajectory Tracking}\label{lqr-tracking}
+
+Classical LQR delivers an optimal linear state-feedback when dynamics are linear and the objective is quadratic. In many planning problems, however, we do not seek a single stationary feedback for \emph{all} states but rather a \emph{local stabilizer around a given (possibly time-varying) trajectory}---for instance, a motion plan from a trajectory optimizer or MPC's rolling nominal (see Section \ref{traj-opt}). LQR Tracking (also called time-varying LQR, TVLQR) provides exactly this: a \emph{time-varying} linear feedback that stabilizes the system near a nominal state--control sequence and rejects small disturbances.
+
+\textbf{Problem Setup.} Let the nominal (i.e., ignoring the disturbance) discrete-time system be
+\[
+x_{t+1} \;=\; f_t(x_t,u_t), \qquad t=0,\dots,N-1,
+\]
+and suppose we have a \emph{nominal trajectory} \(\{(\bar x_t,\bar u_t)\}_{t=0}^{N-1}\) satisfying
+\[
+\bar x_{t+1} \;=\; f_t(\bar x_t,\bar u_t).
+\]
+
+Our goal is to design a controller that can stabilize the system with disturbance, i.e., \(x_{t+1} = f_t(x_t, u_t, w_t)\), around the nominal trajectory.
+
+Towards this, we define \emph{deviations} from the nominal trajectory as
+\[
+\delta x_t := x_t-\bar x_t, \qquad \delta u_t := u_t-\bar u_t.
+\]
+
+If the true system is linear time-varying (or we linearize a nonlinear system along the nominal), we obtain the \emph{deviation dynamics}
+\[
+\delta x_{t+1} \;\approx\; A_t\,\delta x_t + B_t\,\delta u_t,
+\quad
+A_t := \left.\frac{\partial f_t}{\partial x}\right|_{(\bar x_t,\bar u_t)},\quad
+B_t := \left.\frac{\partial f_t}{\partial u}\right|_{(\bar x_t,\bar u_t)}.
+\label{eq:tvlqr-deviation-dynamics}
+\]
+
+We penalize deviations with a quadratic cost
+\[
+J \;=\; \delta x_N^\top Q_N \delta x_N
+\;+\;\sum_{t=0}^{N-1} \Big(\delta x_t^\top Q_t \delta x_t \;+\; \delta u_t^\top R_t \delta u_t\Big),
+\quad Q_t\succeq 0,\; R_t\succ 0.
+\label{eq:tvlqr-deviation-cost}
+\]
+
+\textbf{LQR Tracking Algorithm.} The tracking controller takes the \emph{affine} form
+\[
+u_t \;=\; \bar u_t \;-\; K_t\,(x_t-\bar x_t),
+\]
+where \(\{K_t\}_{t=0}^{N-1}\) are time-varying gains computed by a backward Riccati recursion on the deviation system \eqref{eq:tvlqr-deviation-dynamics} with cost \eqref{eq:tvlqr-deviation-cost}.
+
+From Proposition \ref{prp:discretetimefinitehorizonlqrsolution}, we know the gains can be computed as follows.
+
+Initialize at terminal time:
+\[
+S_N \;=\; Q_N.
+\]
+For \(t = N-1,\,N-2,\,\dots,\,0\):
+\begin{equation}
+\begin{split}
+K_t &= \Big(R_t + B_t^\top S_{t+1} B_t\Big)^{-1} B_t^\top S_{t+1} A_t, \\[2mm]
+S_t &= Q_t \;+\; A_t^\top \!\Big(S_{t+1} - S_{t+1} B_t \big(R_t + B_t^\top S_{t+1} B_t\big)^{-1} B_t^\top S_{t+1}\Big) A_t.
+\end{split}
+\label{eq:tvlqr-riccati}
+\end{equation}
+
+Given the gains \(\{K_t\}\), apply at runtime:
+\begin{equation}
+u_t \;=\; \bar u_t - K_t\,(x_t-\bar x_t), \qquad t=0,\dots,N-1.
+\label{eq:tvlqr-control-law}
+\end{equation}
+
+The following pseudocode summarizes the algorithm.
+
+\textbf{Algorithm: LQR Trajectory Tracking (TVLQR)}
+
+\textbf{Inputs:} nominal \(\{(\bar x_t,\bar u_t)\}_{t=0}^{N-1}\), weights \(\{Q_t,R_t\}\), terminal \(Q_N\).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Linearize} along the nominal to get \(A_t,B_t\) via \eqref{eq:tvlqr-deviation-dynamics}.\\
+\item
+  \textbf{Backward pass:} compute \(K_t\) and \(S_t\) via \eqref{eq:tvlqr-riccati}.\\
+\item
+  \textbf{Apply feedback:} \(u_t=\bar u_t - K_t(x_t-\bar x_t)\) as in \eqref{eq:tvlqr-control-law}.
+\end{enumerate}
+
+\textbf{Output:} time-varying gains \(\{K_t\}\) giving a local stabilizer around the trajectory.
+
+We now apply TVLQR to a vehicle trajectory tracking problem.
+
+\begin{example}[LQR Trajectory Tracking for Unicyle]
+\protect\hypertarget{exm:tvlqr-unicyle}{}\label{exm:tvlqr-unicyle}
+
+We (i) define the dynamics in continuous and discrete time, (ii) specify a circular \emph{nominal trajectory}, (iii) linearize the nonlinear dynamics \emph{along the nominal}, (iv) state the deviation-cost weights \(Q,R\) (and terminal \(Q_N\)), and (v) list the \emph{experiment setup} (discretization and horizon length).
+
+\textbf{Unicycle Dynamics (Continuous and Discrete).}
+
+\textbf{State and input.}\\
+\[
+x=\begin{bmatrix}p_x\\ p_y\\ \theta\end{bmatrix}\in\mathbb{R}^3,
+\qquad
+u=\begin{bmatrix}v\\ \omega\end{bmatrix}\in\mathbb{R}^2,
+\]
+where \((p_x,p_y)\) is planar position, \(\theta\) is heading, \(v\) is forward speed, and \(\omega\) is yaw rate.
+
+\textbf{Continuous time:}
+\begin{equation}
+\dot p_x = v\cos\theta,\qquad
+\dot p_y = v\sin\theta,\qquad
+\dot\theta = \omega.
+\label{eq:unicycle-ct}
+\end{equation}
+
+\textbf{Discrete time (forward Euler with step \(h>0\)):}
+\begin{equation}
+x_{t+1} \;=\; f(x_t,u_t)
+:= \begin{bmatrix}
+p_{x,t} + h\, v_t\cos\theta_t\\[2pt]
+p_{y,t} + h\, v_t\sin\theta_t\\[2pt]
+\theta_t + h\,\omega_t
+\end{bmatrix}.
+\label{eq:unicycle-dt}
+\end{equation}
+
+\textbf{Nominal Trajectory (Circular Motion).} We track a circle of radius \(R=\dfrac{\bar v}{\bar\omega}\) using \emph{constant nominal inputs}
+\begin{equation}
+\bar u_t \equiv \begin{bmatrix}\bar v\\ \bar\omega\end{bmatrix},\qquad t=0,\dots,N-1,
+\label{eq:unicycle-nominal-control}
+\end{equation}
+and generate the \emph{nominal state} recursively under the discrete dynamics \eqref{eq:unicycle-dt}:
+\begin{equation}
+\bar x_{t+1} \;=\; f(\bar x_t,\bar u_t),\qquad \bar x_0 = \begin{bmatrix}R\\ 0\\ \tfrac{\pi}{2}\end{bmatrix}.
+\label{eq:unicycle-discrete-nominal}
+\end{equation}
+
+We define \emph{deviations} from the nominal:
+\[
+\delta x_t := x_t-\bar x_t,\qquad \delta u_t := u_t-\bar u_t.
+\]
+
+\textbf{Linearization Along the Nominal.} Linearize \eqref{eq:unicycle-dt} at \((\bar x_t,\bar u_t)\) to obtain the deviation dynamics
+\begin{equation}
+\delta x_{t+1} \;\approx\; A_t\,\delta x_t + B_t\,\delta u_t,
+\label{eq:unicycle-dev-dyn}
+\end{equation}
+with Jacobians (using \(c_t:=\cos\bar\theta_t,\ s_t:=\sin\bar\theta_t\))
+\begin{equation}
+A_t \;=\; \frac{\partial f}{\partial x}\Big|_{(\bar x_t,\bar u_t)}
+= \begin{bmatrix}
+1 & 0 & -h\,\bar v\,s_t\\
+0 & 1 & \ \ h\,\bar v\,c_t\\
+0 & 0 & 1
+\end{bmatrix},
+\qquad
+B_t \;=\; \frac{\partial f}{\partial u}\Big|_{(\bar x_t,\bar u_t)}
+= \begin{bmatrix}
+h\,c_t & 0\\
+h\,s_t & 0\\
+0 & h
+\end{bmatrix}.
+\label{eq:unicycle-linearization}
+\end{equation}
+
+\textbf{Deviation Cost (Weights \(Q,R,Q_N\)).} We penalize deviations with a quadratic stage/terminal cost
+\[
+J \;=\; \delta x_N^\top Q_N\,\delta x_N
+\;+\;\sum_{t=0}^{N-1}\Big(\delta x_t^\top Q\,\delta x_t+\delta u_t^\top R\,\delta u_t\Big),
+\]
+using the weights:
+\begin{equation}
+Q=\mathrm{diag}(30,\;30,\;5),\qquad
+Q_N=\mathrm{diag}(60,\;60,\;8),\qquad
+R=\mathrm{diag}(0.2,\;0.2).
+\label{eq:unicycle-weights}
+\end{equation}
+These reflect a stronger emphasis on position tracking, a moderate penalty on heading error, and a mild penalty on control \emph{deviations} from the nominal.
+
+\textbf{Experiment Setup.}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Discretization step:} \(h = 0.02\ \mathrm{s}\).\\
+\item
+  \textbf{Horizon length:} \(T_{\mathrm{final}} = 12\ \mathrm{s}\).\\
+\item
+  \textbf{Number of steps:} \(N = T_{\mathrm{final}}/h = \mathbf{600}\).\\
+\item
+  \textbf{Nominal inputs:} \(\bar v = 1.2\ \mathrm{m/s},\ \bar\omega = 0.4\ \mathrm{rad/s}\) (radius \(R=\bar v/\bar\omega\)).\\
+\item
+  \textbf{Initialization:} the nominal starts at \(\bar x_0 = [\,R,\,0,\,\pi/2\,]^\top\); the actual system may start with a small offset (see code).
+\end{itemize}
+
+With \((A_t,B_t)\) from \eqref{eq:unicycle-linearization} and weights \eqref{eq:unicycle-weights}, the TVLQR backward Riccati recursion (Section \ref{lqr-tracking}) yields gains \(K_t\). We then apply the \textbf{local feedback}
+\[
+u_t \;=\; \bar u_t - K_t\,(x_t-\bar x_t),
+\]
+to robustly track the circular nominal under small disturbances.
+
+\textbf{Disturbances.} To test robustness, we inject additive process disturbances into the discrete dynamics:
+\[
+x_{t+1} \;=\; f(x_t,u_t)\;+\; w_t,\qquad t=0,\dots,N-1,
+\]
+where
+\[
+w_t \;=\; \underbrace{\eta_t}_{\text{i.i.d. Gaussian noise}} \;+\; \underbrace{g_t}_{\text{deterministic gust}}.
+\]
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi})}
+\item
+  Small i.i.d. Gaussian process noise. We draw \(\eta_t \sim \mathcal N(0,W)\) independently at each step with
+  \[
+  W \;=\; \mathrm{diag}\!\big(\sigma_x^2,\ \sigma_y^2,\ \sigma_\theta^2\big),
+  \qquad
+  \sigma_x = \sigma_y = 0.01\ \text{m},\quad
+  \sigma_\theta = \mathrm{deg2rad}(0.2).
+  \]
+  This noise perturbs the post-update state components \((p_x,p_y,\theta)\).
+\item
+  Finite-duration ``gust'' impulse.
+  In addition to \(\eta_t\), we apply a brief deterministic bias over a window
+  \[
+  t \in [t_g,\ t_g+\Delta] \;=\; [\,4.0\,\mathrm{s},\ 4.8\,\mathrm{s}\,),
+  \]
+  implemented at the discrete indices \(\{t_g,\dots,t_g+\Delta\}\). During this window we set
+  \[
+  g_t \;=\; \begin{bmatrix}
+  \delta p_x \\[1mm] 0 \\[1mm] \delta \theta
+  \end{bmatrix},
+  \qquad
+  \delta p_x = 0.01\ \text{m per step},\quad
+  \delta \theta = \mathrm{deg2rad}(1.8)\ \text{per step},
+  \]
+  and \(g_t=\mathbf{0}\) otherwise. This models a short-lived lateral drift and a heading kick.
+\end{enumerate}
+
+\textbf{Results.} Fig. \ref{fig:unicycle-lqr-tracking-trajectory} visualizes the nominal trajectory (the dotted circle) and the TVLQR-stabilized trajectory in blue. To clearly see the impact of closed-loop LQR tracking, we also plotted the open-loop trajectory, i.e., the system's trajectory if no feedback is applied. We can observe that the TVLQR controller effectively rejects the disturbances and stabilizes the closed-loop trajectory along the nominal path.
+
+Fig. \ref{fig:unicycle-lqr-tracking-error} visualizes the state tracking error (position and heading error) as well as compares the closed-loop control with open-loop control.
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/lqr_tracking.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.6\linewidth]{images/Model-based-optimization/tvlqr_trajectory} 
+
+}
+
+\caption{LQR Trajectory Tracking for Unicyle: comparison between nominal trajectory, open-loop trajectory, and closed-loop trajectory with feedback.}\label{fig:unicycle-lqr-tracking-trajectory}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{images/Model-based-optimization/tvlqr_state_error} \includegraphics[width=0.9\linewidth]{images/Model-based-optimization/tvlqr_control} 
+
+}
+
+\caption{LQR Trajectory Tracking for Unicyle: state tracking error (top) and control signal (bottom).}\label{fig:unicycle-lqr-tracking-error}
+\end{figure}
+
+\end{example}
+
+\section{Trajectory Optimization}\label{traj-opt}
 
 \chapter{Advanced Materials}\label{advanced-materials}
 
