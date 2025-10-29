@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-10-28}
+\date{2025-10-29}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -7292,6 +7292,342 @@ You can play with the code \href{https://github.com/ComputationalRobotics/2025-E
 \end{example}
 
 \section{Trajectory Optimization}\label{traj-opt}
+
+In Section \ref{lqr-tracking} we saw that TVLQR gives a powerful \emph{local stabilizer} around a nominal state--control sequence \((\bar x_t,\bar u_t)\). This raises a natural question:
+
+\begin{quote}
+Where do nominal trajectories come from?
+\end{quote}
+
+In many robotics tasks (maneuvering a car, landing a rocket, walking with a robot), we must compute a \emph{feasible, high-quality open-loop plan} that respects the dynamics and constraints. \textbf{Trajectory Optimization (TO)} does exactly this: it searches over sequences \(\{x_t,u_t\}\) to minimize a cumulative cost while satisfying the system dynamics and constraints.
+
+Moreover, if we can solve TO \textbf{quickly} (or approximately, but reliably), then by re-solving over a short horizon at each time step and applying only the first control, we obtain \textbf{Model Predictive Control (MPC)}---a feedback controller that blends optimization with robustness (see Section \ref{mpc} later). Thus, TO is both a \textbf{planner} and the engine behind \textbf{feedback via MPC}.
+
+\textbf{General Nonlinear Trajectory Optimization Problem.} We adopt the standard discrete-time nonlinear system
+\[
+x_{t+1} = f_t(x_t,u_t),\qquad t=0,\dots,N-1,
+\]
+with state \(x_t\in\mathbb{R}^n\) and control \(u_t\in\mathbb{R}^m\). A generic finite-horizon TO problem is
+\begin{equation}
+\begin{split}
+\min_{\{x_t,u_t\}} \quad &
+\Phi(x_N) + \sum_{t=0}^{N-1} \ell_t(x_t,u_t) \\[2mm]
+\text{s.t.}\quad &
+x_{t+1} = f_t(x_t,u_t), \qquad t=0,\dots,N-1,\\
+& x_0 = \hat x_0 \ \ \text{(given)},\\
+& x_t \in \mathcal X_t,\quad u_t \in \mathcal U_t \quad \text{(bounds)},\\
+& g_t(x_t,u_t) \le 0,\quad h_t(x_t,u_t)=0 \quad \text{(path/terminal constraints).}
+\end{split}
+\label{eq:to-general}
+\end{equation}
+Here \(\ell_t\) and \(\Phi\) encode performance (e.g., energy, time, tracking error), \(\mathcal X_t,\mathcal U_t\) capture box limits and safety sets, and \(g_t,h_t\) represent additional nonlinear constraints (obstacles, terminal goals, etc.).
+
+Solving \eqref{eq:to-general} directly is difficult in general. A widely used strategy is to iteratively approximate it by \emph{quadratic} subproblems that can be solved efficiently. This leads to \textbf{iLQR} and its second-order cousin \textbf{DDP} (see Section \ref{ddp}).
+
+\subsection{Iterative LQR}\label{traj-opt-ilqr}
+
+\textbf{High-level intuition.} iLQR (iterative LQR) alternates between:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Local modeling:} around a \emph{current} nominal trajectory \(\{(\bar x_t,\bar u_t)\}\),
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \textbf{linearize} the dynamics,\\
+  \item
+    \textbf{quadratically approximate} the cost.
+  \end{itemize}
+\item
+  \textbf{LQR step:} solve the resulting \emph{time-varying LQR} subproblem to obtain a \emph{time-varying affine policy}
+  \[
+  \delta u_t = k_t + K_t\,\delta x_t,\quad \delta x_t:=x_t-\bar x_t,\ \delta u_t:=u_t-\bar u_t,
+  \]
+  which gives both a feedforward step \(k_t\) (to change the nominal control) and a feedback gain \(K_t\) (to stabilize the rollout).
+\item
+  \textbf{Forward rollout + line search:} apply \(u_t^{\text{new}}=\bar u_t+\alpha k_t + K_t(x_t^{\text{new}}-\bar x_t)\) to the true nonlinear dynamics, producing a new nominal trajectory \(\{(\bar x_t,\bar u_t)\}\). Here we choose \(\alpha\in(0,1]\) to reduce the cost and respect constraints.
+\item
+  \textbf{Repeat} until convergence (cost decrease and dynamics residuals are small).
+\end{enumerate}
+
+iLQR can be viewed as a \href{https://en.wikipedia.org/wiki/Gauss–Newton_algorithm}{Gauss--Newton method} on trajectories: it uses first-order dynamics and second-order cost, capturing the dominant curvature while remaining numerically robust and fast.
+
+\subsubsection{LQR Subproblem (one iLQR outer iteration)}\label{lqr-subproblem-one-ilqr-outer-iteration}
+
+Given a nominal trajectory \(\{(\bar x_t,\bar u_t)\}_{t=0}^{N-1}\) with \(\bar x_{t+1}=f_t(\bar x_t,\bar u_t)\), define deviations
+\[
+\delta x_t := x_t-\bar x_t,\qquad \delta u_t := u_t-\bar u_t,\qquad \delta x_0\ \text{given.}
+\]
+
+\textbf{Linearized Dynamics.} We linearize the dynamics along the nominal trajectory
+\[
+\delta x_{t+1} \;\approx\; A_t\,\delta x_t + B_t\,\delta u_t,\quad
+A_t:=\left.\frac{\partial f_t}{\partial x}\right|_{(\bar x_t,\bar u_t)},\ \ 
+B_t:=\left.\frac{\partial f_t}{\partial u}\right|_{(\bar x_t,\bar u_t)}.
+\label{eq:ilqr-linearize}
+\]
+
+\textbf{Quadratic Cost Approximation.} We perform a quadratic approximation of the objective function about \((\bar x_t,\bar u_t)\)
+\[
+\begin{aligned}
+\ell_t(x_t,u_t) &\approx \ell_t 
++ \ell_{x,t}^\top \delta x_t + \ell_{u,t}^\top \delta u_t
++ \frac{1}{2}
+\begin{bmatrix}\delta x_t\\ \delta u_t\end{bmatrix}^{\!\top}
+\!\begin{bmatrix}\ell_{xx,t} & \ell_{xu,t}\\ \ell_{ux,t} & \ell_{uu,t}\end{bmatrix}
+\!\begin{bmatrix}\delta x_t\\ \delta u_t\end{bmatrix},\\
+\Phi(x_N) &\approx \Phi + \Phi_x^\top \delta x_N + \frac{1}{2}\,\delta x_N^\top \Phi_{xx}\,\delta x_N.
+\end{aligned}
+\label{eq:ilqr-quadratic-cost}
+\]
+
+\textbf{The LQR Subproblem.} With \eqref{eq:ilqr-linearize}--\eqref{eq:ilqr-quadratic-cost}, the iLQR subproblem at this outer iteration is the \textbf{finite-horizon linear--quadratic program in deviations}:
+\[
+\begin{aligned}
+\min_{\{\delta x_t,\delta u_t\}} \quad
+& \underbrace{\frac{1}{2}\,\delta x_N^\top \Phi_{xx}\,\delta x_N + \Phi_x^\top \delta x_N}_{\text{terminal}}
+\;+\; \\
+& \sum_{t=0}^{N-1}
+\underbrace{\Big(
+\frac{1}{2}
+\begin{bmatrix}\delta x_t\\ \delta u_t\end{bmatrix}^{\!\top}
+\!\begin{bmatrix}\ell_{xx,t} & \ell_{xu,t}\\ \ell_{ux,t} & \ell_{uu,t}\end{bmatrix}
+\!\begin{bmatrix}\delta x_t\\ \delta u_t\end{bmatrix}
++ \ell_{x,t}^\top\delta x_t + \ell_{u,t}^\top\delta u_t
+\Big)}_{\text{stage}} \\[1mm]
+\text{s.t.}\quad &
+\delta x_{t+1} = A_t\,\delta x_t + B_t\,\delta u_t,\qquad t=0,\dots,N-1,\\
+& \delta x_0\ \text{given.}
+\end{aligned}
+\label{eq:ilqr-lqr-subproblem}
+\]
+
+\begin{quote}
+\textbf{Notes.} The iLQR subproblem \eqref{eq:ilqr-lqr-subproblem} is slightly different from the previous finite-horizon LQR formulation \eqref{eq:lqr-formulation} in the sense that the objective function of \eqref{eq:ilqr-lqr-subproblem} also contains \textbf{linear terms} in \(\delta x_t,\delta u_t\), and those linear terms come from the Taylor expansion of the original nonlinear objective fuctions. In this case, we will see in the following that the optimal policy is \textbf{affine} (feedforward \(k_t\) + feedback \(K_t\)).
+\end{quote}
+
+\subsubsection{Solving the Subproblem by Dynamic Programming}\label{solving-the-subproblem-by-dynamic-programming}
+
+We posit a \textbf{quadratic value approximator} at each time:
+\[
+V_{t}(\delta x_{t})
+\;\approx\;
+V_{t}
++ V_{x,t}^\top \delta x_t
++ \frac{1}{2}\,\delta x_t^\top V_{xx,t}\,\delta x_t,
+\qquad
+V_{x,N}=\Phi_x,\; V_{xx,N}=\Phi_{xx}.
+\label{eq:ilqr-value}
+\]
+Note that this quadratic value approximator also contains linear and constant terms because the objective function contains linear terms.
+
+Define the local Q-function at stage \(t\) by substituting the linear dynamics into the next-step value (this is our familiar Q-value in RL):
+\[
+Q_t(\delta x_t,\delta u_t)
+\;=\;
+\ell_t(x_t,u_t) + V_{t+1} \big(A_t\delta x_t + B_t\delta u_t\big),
+\]
+which, after collecting terms, yields the iLQR blocks
+\[
+\begin{aligned}
+Q_{x,t}&=\ell_{x,t}+A_t^\top V_{x,t+1},\qquad
+Q_{u,t}=\ell_{u,t}+B_t^\top V_{x,t+1},\\
+Q_{xx,t}&=\ell_{xx,t}+A_t^\top V_{xx,t+1}A_t,\quad
+Q_{ux,t}=\ell_{ux,t}+B_t^\top V_{xx,t+1}A_t,\\
+Q_{uu,t}&=\ell_{uu,t}+B_t^\top V_{xx,t+1}B_t.
+\end{aligned}
+\label{eq:ilqr-Q}
+\]
+The iLQR blocks assemble into a big matrix such that
+\[
+Q_t(\delta x_t,\delta u_t)
+\;=\;
+\frac{1}{2}\, \begin{bmatrix} 1 \\ \delta x_t \\ \delta u_t \end{bmatrix}^\top
+\begin{bmatrix}
+2c_t & Q_{x,t}^\top & Q_{u,t}^\top\\[2pt]
+Q_{x,t} & Q_{xx,t} & Q_{xu,t}\\[2pt]
+Q_{u,t} & Q_{ux,t} & Q_{uu,t}
+\end{bmatrix}
+\begin{bmatrix} 1 \\ \delta x_t \\ \delta u_t \end{bmatrix}.
+\label{eq:ilqr-Q-aug}
+\]
+where \(c_t\) collects all stage/terminal constants e.g., \(\ell_t+\!V_{t+1}\).
+
+\textbf{Solving the local Q (backward pass).} Set the first-order condition w.r.t. \(\delta u\):
+\[
+0 \;=\; \partial_{\delta u} Q_t \;=\; Q_{u,t} + Q_{ux,t}\delta x + Q_{uu,t}\delta u.
+\]
+Solve for the affine control law
+\[
+\delta u_t^\star \;=\; k_t + K_t\,\delta x,\qquad
+k_t = -Q_{uu,t}^{-1} Q_{u,t},\quad
+K_t = -Q_{uu,t}^{-1} Q_{ux,t}\!,
+\label{eq:ilqr-kK}
+\]
+which is exactly the LQR solution for the quadratic \(Q_t\).
+
+Substitute \(\delta u_t^\star\) back into \eqref{eq:ilqr-Q-aug}. The minimized Q becomes a quadratic in \(\delta x\) with coefficients given by
+\[
+\begin{aligned}
+V_{x,t}  &= Q_{x,t} + Q_{xu,t}k_t + K_t^\top Q_{uu,t}k_t + K_t^\top Q_{u,t},\\
+V_{xx,t} &= Q_{xx,t} + Q_{xu,t}K_t + K_t^\top Q_{ux,t} + K_t^\top Q_{uu,t}K_t,
+\end{aligned}
+\label{eq:ilqr-V}
+\]
+with terminal
+\[
+V_{x,N} = \Phi_x, V_{xx,N} = \Phi_{xx}.
+\]
+
+\textbf{Forward Pass (apply the computed policy).} Given \(\{k_t,K_t\}\), produce a candidate trajectory on the \emph{true} nonlinear dynamics using a line search \(\alpha\in(0,1]\):
+\[
+\begin{aligned}
+u_t^{\text{cand}} &= \bar u_t + \alpha k_t + K_t\big(x_t^{\text{cand}}-\bar x_t\big) ,\\
+x_{t+1}^{\text{cand}} &= f_t\big(x_t^{\text{cand}},u_t^{\text{cand}}\big),\qquad x_0^{\text{cand}}=\hat x_0.
+\end{aligned}
+\label{eq:ilqr-forward}
+\]
+Choose \(\alpha\) (e.g., \(\{1,\frac{1}{2},\tfrac14,\dots\}\)) to reduce the \textbf{true} cost and respect constraints, then update the nominal:
+\[
+(\bar x_t,\bar u_t)\ \leftarrow\ (x_t^{\text{cand}},u_t^{\text{cand}}).
+\]
+
+The following pseudocode summarizes iLQR.
+
+\textbf{Algorithm: iLQR (Trajectory Generation)}
+
+\textbf{Inputs:} dynamics \(f_t\), initial state \(\hat x_0\), horizon \(N\), stage/terminal costs \(\ell_t,\Phi\), initial guess \(\{\bar u_t\}\).
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  \textbf{Initialize} nominal rollout \(\{\bar x_t,\bar u_t\}\) from \(\hat x_0\).
+\item
+  \textbf{Linearize \& quadratize} at \(\{(\bar x_t,\bar u_t)\}\): build \(A_t,B_t\) and cost derivatives.
+\item
+  \textbf{Backward pass (TVLQR):} compute \(\{k_t,K_t\}\) using \eqref{eq:ilqr-kK} and update \(V_{x,t},V_{xx,t}\) via \eqref{eq:ilqr-V}.
+\item
+  \textbf{Forward rollout:} apply \(u_t^{\text{new}}=\bar u_t+\alpha k_t+K_t(x_t^{\text{new}}-\bar x_t)\) on the \textbf{true} dynamics, pick \(\alpha\) by line search.
+\item
+  \textbf{Convergence check:} stop if the cost decrease and dynamics residuals fall below thresholds; otherwise, set the new nominal and \textbf{repeat} from Step 2.
+\end{enumerate}
+
+The next example applies iLQR to trajectory generation for rocket landing.
+
+\begin{example}[iLQR for Rocket Landing]
+\protect\hypertarget{exm:iLQR-rocket-landing}{}\label{exm:iLQR-rocket-landing}
+
+We model a planar (2D) rocket with state and control
+\[
+x=\begin{bmatrix}p_x & p_y & v_x & v_y & \theta & \omega\end{bmatrix}^\top,\qquad
+u=\begin{bmatrix}T & \tau\end{bmatrix}^\top,
+\]
+where \((p_x,p_y)\) is position, \((v_x,v_y)\) is velocity, \(\theta\) is attitude (pitch) and \(\omega\) its angular rate. The thrust \(T\ge 0\) acts \textbf{along the body axis} (pointing out of the engine), and \(\tau\) is a planar torque about the center of mass. Continuous-time dynamics are
+\[
+\begin{aligned}
+\dot p_x &= v_x, &
+\dot p_y &= v_y, \\
+\dot v_x &= \frac{T}{m}\sin\theta, &
+\dot v_y &= \frac{T}{m}\cos\theta - g, \\
+\dot\theta &= \omega, &
+\dot\omega &= \frac{\tau}{I_{zz}}.
+\end{aligned}
+\label{eq:rocket-ct}
+\]
+In simulation we use RK4 with stepsize \(h\) to propagate the true dynamics \eqref{eq:rocket-ct}. For iLQR's local subproblems we form the continuous Jacobians \((A_c,B_c)=\big(\tfrac{\partial f}{\partial x},\tfrac{\partial f}{\partial u}\big)\) at the current nominal and use the standard first-order discrete map
+\[
+A_t \;\approx\; I + h\,A_c(\bar x_t,\bar u_t),\qquad
+B_t \;\approx\; h\,B_c(\bar x_t,\bar u_t).
+\label{eq:rocket-disc-lin}
+\]
+
+\textbf{Soft-Landing Objective.} The goal is a \textbf{soft, upright landing} at the origin:
+\[
+x_{\mathrm{goal}} = \mathbf{0}
+\quad\Longleftrightarrow\quad
+p_x=p_y=0,\; v_x=v_y=0,\; \theta=0,\; \omega=0.
+\]
+We penalize deviations from this goal along the entire trajectory and especially at the terminal state to encourage low touchdown velocities and an upright attitude.
+
+\textbf{Cost Function.} With horizon \(N\) and step \(h\), the discrete objective is
+\[
+J \;=\; \tfrac12\,(x_N-x_g)^\top Q_f (x_N-x_g)
+\;+\;\sum_{t=0}^{N-1}\Big[
+\tfrac12\,(x_t-x_g)^\top Q (x_t-x_g) \;+\; \tfrac12\,u_t^\top R u_t
+\Big],
+\label{eq:rocket-cost}
+\]
+where \(x_g=\mathbf{0}\). In the example:
+\[
+\begin{aligned}
+Q&=\mathrm{diag}(1,\ 2,\ 0.5,\ 0.5,\ 2,\ 0.5),\\
+Q_f&=\mathrm{diag}(200,\ 300,\ 50,\ 50,\ 300,\ 50),\\
+R&=\mathrm{diag}(10^{-3},\ 10^{-3}).
+\end{aligned}
+\label{eq:rocket-weights}
+\]
+These weights place strong emphasis on terminal altitude and attitude (\(p_y,\theta\)), moderate emphasis on velocities and lateral position, and a light regularization on the controls.
+
+\textbf{Experiment Setup.}
+
+\begin{itemize}
+\item
+  \textbf{Physical parameters.} Gravity \(g=9.81\,\mathrm{m/s^2}\), mass \(m=1.0\,\mathrm{kg}\), planar inertia \(I_{zz}=0.2\,\mathrm{kg\,m^2}\).
+\item
+  \textbf{Discretization.} Stepsize \(h=0.05\,\mathrm{s}\); horizon \(T=6.0\,\mathrm{s}\); number of steps \(N=T/h=120\).
+\item
+  \textbf{Initial state.}
+  \[
+  x_0=\big[\,5.0,\ 10.0,\ -0.5,\ -1.0,\ \mathrm{deg2rad}(10),\ 0\,\big]^\top,
+  \]
+  i.e., 10 m altitude, lateral offset, small descent and slight pitch.
+\item
+  \textbf{Initial nominal controls.} Constant hover thrust and zero torque:
+  \[
+  \bar u_t = [\,m g,\ 0\,]^\top,\qquad t=0,\dots,N-1.
+  \]
+\item
+  \textbf{iLQR procedure.} Each outer iteration:
+
+  \begin{enumerate}
+  \def\labelenumi{\arabic{enumi})}
+  \tightlist
+  \item
+    Linearize dynamics and quadratize the cost along the current nominal (\eqref{eq:rocket-disc-lin}, \eqref{eq:rocket-cost});\\
+  \item
+    Solve the \textbf{time-varying LQR} subproblem to get affine updates \(\delta u_t = k_t + K_t\,\delta x_t\);\\
+  \item
+    \textbf{Forward rollout} on the nonlinear RK4 dynamics with
+    \[
+    u_t^{\text{new}} = \bar u_t + \alpha\,k_t + K_t\big(x_t^{\text{new}}-\bar x_t\big),
+    \]
+    using a backtracking line search over \(\alpha\in\{1,\tfrac12,\tfrac14,\dots\}\) (note: \(\alpha\) scales only the \textbf{feedforward} \(k_t\), not the feedback \(K_t\));\\
+  \item
+    Update the nominal and repeat until cost reduction is small.
+  \end{enumerate}
+\end{itemize}
+
+Fig. \ref{fig:ilqr-rocket} plots the \textbf{initial}, \textbf{intermediate}, and \textbf{final} trajectories, and render the rocket as oriented rectangles (boxes) using \((p_x,p_y,\theta)\) to visualize attitude along the descent. We can see iLQR successfully generated a soft landing trajectory.
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/ilqr_rocket_landing.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=1\linewidth]{images/Model-based-optimization/ilqr_rocket_landing} 
+
+}
+
+\caption{iLQR Trajectory Generation for Rocket Landing.}\label{fig:ilqr-rocket}
+\end{figure}
+
+\end{example}
+
+\subsection{Differential Dynamic Programming}\label{ddp}
+
+\section{Model Predictive Control}\label{mpc}
 
 \chapter{Advanced Materials}\label{advanced-materials}
 
