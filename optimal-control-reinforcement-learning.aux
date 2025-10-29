@@ -574,142 +574,169 @@
 \newlabel{fig:unicycle-lqr-tracking-error}{{4.4}{156}{LQR Trajectory Tracking for Unicyle: state tracking error (top) and control signal (bottom)}{figure.4.4}{}}
 \@writefile{toc}{\contentsline {section}{\numberline {4.3}Trajectory Optimization}{157}{section.4.3}\protected@file@percent }
 \newlabel{traj-opt}{{4.3}{157}{Trajectory Optimization}{section.4.3}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {5}Advanced Materials}{159}{chapter.5}\protected@file@percent }
+\newlabel{eq:to-general}{{4.30}{157}{Trajectory Optimization}{equation.4.3.30}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.1}Iterative LQR}{157}{subsection.4.3.1}\protected@file@percent }
+\newlabel{traj-opt-ilqr}{{4.3.1}{157}{Iterative LQR}{subsection.4.3.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1.1}LQR Subproblem (one iLQR outer iteration)}{158}{subsubsection.4.3.1.1}\protected@file@percent }
+\newlabel{lqr-subproblem-one-ilqr-outer-iteration}{{4.3.1.1}{158}{LQR Subproblem (one iLQR outer iteration)}{subsubsection.4.3.1.1}{}}
+\newlabel{eq:ilqr-linearize}{{4.3.1.1}{158}{LQR Subproblem (one iLQR outer iteration)}{subsubsection.4.3.1.1}{}}
+\newlabel{eq:ilqr-quadratic-cost}{{4.3.1.1}{158}{LQR Subproblem (one iLQR outer iteration)}{subsubsection.4.3.1.1}{}}
+\newlabel{eq:ilqr-lqr-subproblem}{{4.3.1.1}{159}{LQR Subproblem (one iLQR outer iteration)}{subsubsection.4.3.1.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {4.3.1.2}Solving the Subproblem by Dynamic Programming}{159}{subsubsection.4.3.1.2}\protected@file@percent }
+\newlabel{solving-the-subproblem-by-dynamic-programming}{{4.3.1.2}{159}{Solving the Subproblem by Dynamic Programming}{subsubsection.4.3.1.2}{}}
+\newlabel{eq:ilqr-value}{{4.3.1.2}{159}{Solving the Subproblem by Dynamic Programming}{subsubsection.4.3.1.2}{}}
+\newlabel{eq:ilqr-Q}{{4.3.1.2}{159}{Solving the Subproblem by Dynamic Programming}{subsubsection.4.3.1.2}{}}
+\newlabel{eq:ilqr-Q-aug}{{4.3.1.2}{159}{Solving the Subproblem by Dynamic Programming}{subsubsection.4.3.1.2}{}}
+\newlabel{eq:ilqr-kK}{{4.3.1.2}{160}{Solving the Subproblem by Dynamic Programming}{subsubsection.4.3.1.2}{}}
+\newlabel{eq:ilqr-V}{{4.3.1.2}{160}{Solving the Subproblem by Dynamic Programming}{subsubsection.4.3.1.2}{}}
+\newlabel{eq:ilqr-forward}{{4.3.1.2}{160}{Solving the Subproblem by Dynamic Programming}{subsubsection.4.3.1.2}{}}
+\newlabel{exm:iLQR-rocket-landing}{{4.3}{161}{iLQR for Rocket Landing}{example.4.3}{}}
+\newlabel{eq:rocket-ct}{{4.3}{161}{iLQR for Rocket Landing}{example.4.3}{}}
+\newlabel{eq:rocket-disc-lin}{{4.3}{161}{iLQR for Rocket Landing}{example.4.3}{}}
+\newlabel{eq:rocket-cost}{{4.3}{161}{iLQR for Rocket Landing}{example.4.3}{}}
+\newlabel{eq:rocket-weights}{{4.3}{161}{iLQR for Rocket Landing}{example.4.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3.2}Differential Dynamic Programming}{162}{subsection.4.3.2}\protected@file@percent }
+\newlabel{ddp}{{4.3.2}{162}{Differential Dynamic Programming}{subsection.4.3.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {4.4}Model Predictive Control}{162}{section.4.4}\protected@file@percent }
+\newlabel{mpc}{{4.4}{162}{Model Predictive Control}{section.4.4}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {4.5}{\ignorespaces iLQR Trajectory Generation for Rocket Landing.}}{163}{figure.4.5}\protected@file@percent }
+\newlabel{fig:ilqr-rocket}{{4.5}{163}{iLQR Trajectory Generation for Rocket Landing}{figure.4.5}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {5}Advanced Materials}{165}{chapter.5}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{advanced-materials}{{5}{159}{Advanced Materials}{chapter.5}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {A}Convex Analysis and Optimization}{161}{appendix.A}\protected@file@percent }
+\newlabel{advanced-materials}{{5}{165}{Advanced Materials}{chapter.5}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {A}Convex Analysis and Optimization}{167}{appendix.A}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{appconvex}{{A}{161}{Convex Analysis and Optimization}{appendix.A}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A.1}Theory}{161}{section.A.1}\protected@file@percent }
-\newlabel{appconvex-theory}{{A.1}{161}{Theory}{section.A.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.1}Sets}{161}{subsection.A.1.1}\protected@file@percent }
-\newlabel{sets}{{A.1.1}{161}{Sets}{subsection.A.1.1}{}}
-\newlabel{def:affineset}{{A.1}{161}{Affine set}{definition.A.1}{}}
-\newlabel{def:convexset}{{A.2}{161}{Convex set}{definition.A.2}{}}
-\newlabel{def:cone}{{A.3}{161}{Cone}{definition.A.3}{}}
-\newlabel{def:convexcone}{{A.4}{161}{Convex Cone}{definition.A.4}{}}
-\newlabel{def:hyperplane}{{A.5}{161}{Hyperplane}{definition.A.5}{}}
-\newlabel{def:halfspaces}{{A.6}{162}{Halfspaces}{definition.A.6}{}}
-\newlabel{def:balls}{{A.7}{162}{Balls}{definition.A.7}{}}
-\newlabel{def:ellipsoids}{{A.8}{162}{Ellipsoids}{definition.A.8}{}}
-\newlabel{def:polyhedra}{{A.9}{162}{Polyhedra}{definition.A.9}{}}
-\newlabel{def:normball}{{A.10}{162}{Norm ball}{definition.A.10}{}}
-\newlabel{def:normcone}{{A.11}{162}{Norm cone}{definition.A.11}{}}
-\newlabel{def:simplex}{{A.12}{162}{Simplex}{definition.A.12}{}}
-\newlabel{def:symmetricmatrices}{{A.13}{162}{Symmetric,positive semidefinite,positive definite matrices}{definition.A.13}{}}
-\newlabel{prp:operationpreserveconvexity}{{A.1}{163}{}{proposition.A.1}{}}
-\newlabel{def:affinehull}{{A.14}{163}{Affine hull}{definition.A.14}{}}
-\newlabel{def:relint}{{A.15}{163}{Relative Interior}{definition.A.15}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.2}Convex function}{163}{subsection.A.1.2}\protected@file@percent }
-\newlabel{appconvex-theory-convexfunction}{{A.1.2}{163}{Convex function}{subsection.A.1.2}{}}
-\newlabel{def:defcvxfunc}{{A.16}{163}{Convex function}{definition.A.16}{}}
-\newlabel{prp:decidecvx}{{A.2}{164}{Conditions for Convex function}{proposition.A.2}{}}
-\newlabel{prp:preservecvx}{{A.3}{164}{Operations that preserve convexity}{proposition.A.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.3}Lagrange dual}{164}{subsection.A.1.3}\protected@file@percent }
-\newlabel{lagrange-dual}{{A.1.3}{164}{Lagrange dual}{subsection.A.1.3}{}}
-\newlabel{def:defdualfunc}{{A.17}{165}{Lagrange dual function}{definition.A.17}{}}
-\newlabel{def:defdualprob}{{A.18}{165}{Lagrange dual problem}{definition.A.18}{}}
-\newlabel{thm:slater}{{A.1}{165}{Slater's constraint qualification}{theorem.A.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.4}KKT condition}{166}{subsection.A.1.4}\protected@file@percent }
-\newlabel{appconvex-theory-kkt}{{A.1.4}{166}{KKT condition}{subsection.A.1.4}{}}
-\newlabel{thm:KKT}{{A.2}{166}{Karush-Kuhn-Tucker(KKT) Conditions}{theorem.A.2}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {A.2}Practice}{167}{section.A.2}\protected@file@percent }
-\newlabel{appconvex-practice}{{A.2}{167}{Practice}{section.A.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.1}CVX Introduction}{167}{subsection.A.2.1}\protected@file@percent }
-\newlabel{cvx-introduction}{{A.2.1}{167}{CVX Introduction}{subsection.A.2.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.2}Linear Programming (LP)}{167}{subsection.A.2.2}\protected@file@percent }
-\newlabel{linear-programming-lp}{{A.2.2}{167}{Linear Programming (LP)}{subsection.A.2.2}{}}
-\newlabel{eq:app-lpdef}{{A.5}{167}{Linear Programming (LP)}{equation.A.2.5}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.3}Quadratic Programming (QP)}{168}{subsection.A.2.3}\protected@file@percent }
-\newlabel{quadratic-programming-qp}{{A.2.3}{168}{Quadratic Programming (QP)}{subsection.A.2.3}{}}
-\newlabel{eq:app-qpdef}{{A.6}{168}{Quadratic Programming (QP)}{equation.A.2.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.4}Quadratically Constrained Quadratic Programming (QCQP)}{170}{subsection.A.2.4}\protected@file@percent }
-\newlabel{quadratically-constrained-quadratic-programming-qcqp}{{A.2.4}{170}{Quadratically Constrained Quadratic Programming (QCQP)}{subsection.A.2.4}{}}
-\newlabel{eq:app-qcqpdef}{{A.9}{170}{Quadratically Constrained Quadratic Programming (QCQP)}{equation.A.2.9}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.5}Second-Order Cone Programming (SOCP)}{172}{subsection.A.2.5}\protected@file@percent }
-\newlabel{second-order-cone-programming-socp}{{A.2.5}{172}{Second-Order Cone Programming (SOCP)}{subsection.A.2.5}{}}
-\newlabel{eq:app-socpdef}{{A.12}{172}{Second-Order Cone Programming (SOCP)}{equation.A.2.12}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.6}Semidefinite Programming (SDP)}{174}{subsection.A.2.6}\protected@file@percent }
-\newlabel{semidefinite-programming-sdp}{{A.2.6}{174}{Semidefinite Programming (SDP)}{subsection.A.2.6}{}}
-\newlabel{eq:app-sdpdef}{{A.25}{174}{Semidefinite Programming (SDP)}{equation.A.2.25}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.7}CVXPY Introduction and Examples}{176}{subsection.A.2.7}\protected@file@percent }
-\newlabel{cvxpy-introduction-and-examples}{{A.2.7}{176}{CVXPY Introduction and Examples}{subsection.A.2.7}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.1}LP}{176}{subsubsection.A.2.7.1}\protected@file@percent }
-\newlabel{lp}{{A.2.7.1}{176}{LP}{subsubsection.A.2.7.1}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.2}QP}{177}{subsubsection.A.2.7.2}\protected@file@percent }
-\newlabel{qp}{{A.2.7.2}{177}{QP}{subsubsection.A.2.7.2}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.3}QCQP}{178}{subsubsection.A.2.7.3}\protected@file@percent }
-\newlabel{qcqp}{{A.2.7.3}{178}{QCQP}{subsubsection.A.2.7.3}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.4}SOCP}{179}{subsubsection.A.2.7.4}\protected@file@percent }
-\newlabel{socp}{{A.2.7.4}{179}{SOCP}{subsubsection.A.2.7.4}{}}
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.5}SDP}{180}{subsubsection.A.2.7.5}\protected@file@percent }
-\newlabel{sdp}{{A.2.7.5}{180}{SDP}{subsubsection.A.2.7.5}{}}
-\@writefile{toc}{\contentsline {chapter}{\numberline {B}Linear System Theory}{183}{appendix.B}\protected@file@percent }
+\newlabel{appconvex}{{A}{167}{Convex Analysis and Optimization}{appendix.A}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.1}Theory}{167}{section.A.1}\protected@file@percent }
+\newlabel{appconvex-theory}{{A.1}{167}{Theory}{section.A.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.1}Sets}{167}{subsection.A.1.1}\protected@file@percent }
+\newlabel{sets}{{A.1.1}{167}{Sets}{subsection.A.1.1}{}}
+\newlabel{def:affineset}{{A.1}{167}{Affine set}{definition.A.1}{}}
+\newlabel{def:convexset}{{A.2}{167}{Convex set}{definition.A.2}{}}
+\newlabel{def:cone}{{A.3}{167}{Cone}{definition.A.3}{}}
+\newlabel{def:convexcone}{{A.4}{167}{Convex Cone}{definition.A.4}{}}
+\newlabel{def:hyperplane}{{A.5}{167}{Hyperplane}{definition.A.5}{}}
+\newlabel{def:halfspaces}{{A.6}{168}{Halfspaces}{definition.A.6}{}}
+\newlabel{def:balls}{{A.7}{168}{Balls}{definition.A.7}{}}
+\newlabel{def:ellipsoids}{{A.8}{168}{Ellipsoids}{definition.A.8}{}}
+\newlabel{def:polyhedra}{{A.9}{168}{Polyhedra}{definition.A.9}{}}
+\newlabel{def:normball}{{A.10}{168}{Norm ball}{definition.A.10}{}}
+\newlabel{def:normcone}{{A.11}{168}{Norm cone}{definition.A.11}{}}
+\newlabel{def:simplex}{{A.12}{168}{Simplex}{definition.A.12}{}}
+\newlabel{def:symmetricmatrices}{{A.13}{168}{Symmetric,positive semidefinite,positive definite matrices}{definition.A.13}{}}
+\newlabel{prp:operationpreserveconvexity}{{A.1}{169}{}{proposition.A.1}{}}
+\newlabel{def:affinehull}{{A.14}{169}{Affine hull}{definition.A.14}{}}
+\newlabel{def:relint}{{A.15}{169}{Relative Interior}{definition.A.15}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.2}Convex function}{169}{subsection.A.1.2}\protected@file@percent }
+\newlabel{appconvex-theory-convexfunction}{{A.1.2}{169}{Convex function}{subsection.A.1.2}{}}
+\newlabel{def:defcvxfunc}{{A.16}{169}{Convex function}{definition.A.16}{}}
+\newlabel{prp:decidecvx}{{A.2}{170}{Conditions for Convex function}{proposition.A.2}{}}
+\newlabel{prp:preservecvx}{{A.3}{170}{Operations that preserve convexity}{proposition.A.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.3}Lagrange dual}{170}{subsection.A.1.3}\protected@file@percent }
+\newlabel{lagrange-dual}{{A.1.3}{170}{Lagrange dual}{subsection.A.1.3}{}}
+\newlabel{def:defdualfunc}{{A.17}{171}{Lagrange dual function}{definition.A.17}{}}
+\newlabel{def:defdualprob}{{A.18}{171}{Lagrange dual problem}{definition.A.18}{}}
+\newlabel{thm:slater}{{A.1}{171}{Slater's constraint qualification}{theorem.A.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1.4}KKT condition}{172}{subsection.A.1.4}\protected@file@percent }
+\newlabel{appconvex-theory-kkt}{{A.1.4}{172}{KKT condition}{subsection.A.1.4}{}}
+\newlabel{thm:KKT}{{A.2}{172}{Karush-Kuhn-Tucker(KKT) Conditions}{theorem.A.2}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {A.2}Practice}{173}{section.A.2}\protected@file@percent }
+\newlabel{appconvex-practice}{{A.2}{173}{Practice}{section.A.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.1}CVX Introduction}{173}{subsection.A.2.1}\protected@file@percent }
+\newlabel{cvx-introduction}{{A.2.1}{173}{CVX Introduction}{subsection.A.2.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.2}Linear Programming (LP)}{173}{subsection.A.2.2}\protected@file@percent }
+\newlabel{linear-programming-lp}{{A.2.2}{173}{Linear Programming (LP)}{subsection.A.2.2}{}}
+\newlabel{eq:app-lpdef}{{A.5}{173}{Linear Programming (LP)}{equation.A.2.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.3}Quadratic Programming (QP)}{174}{subsection.A.2.3}\protected@file@percent }
+\newlabel{quadratic-programming-qp}{{A.2.3}{174}{Quadratic Programming (QP)}{subsection.A.2.3}{}}
+\newlabel{eq:app-qpdef}{{A.6}{174}{Quadratic Programming (QP)}{equation.A.2.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.4}Quadratically Constrained Quadratic Programming (QCQP)}{176}{subsection.A.2.4}\protected@file@percent }
+\newlabel{quadratically-constrained-quadratic-programming-qcqp}{{A.2.4}{176}{Quadratically Constrained Quadratic Programming (QCQP)}{subsection.A.2.4}{}}
+\newlabel{eq:app-qcqpdef}{{A.9}{176}{Quadratically Constrained Quadratic Programming (QCQP)}{equation.A.2.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.5}Second-Order Cone Programming (SOCP)}{178}{subsection.A.2.5}\protected@file@percent }
+\newlabel{second-order-cone-programming-socp}{{A.2.5}{178}{Second-Order Cone Programming (SOCP)}{subsection.A.2.5}{}}
+\newlabel{eq:app-socpdef}{{A.12}{178}{Second-Order Cone Programming (SOCP)}{equation.A.2.12}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.6}Semidefinite Programming (SDP)}{180}{subsection.A.2.6}\protected@file@percent }
+\newlabel{semidefinite-programming-sdp}{{A.2.6}{180}{Semidefinite Programming (SDP)}{subsection.A.2.6}{}}
+\newlabel{eq:app-sdpdef}{{A.25}{180}{Semidefinite Programming (SDP)}{equation.A.2.25}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2.7}CVXPY Introduction and Examples}{182}{subsection.A.2.7}\protected@file@percent }
+\newlabel{cvxpy-introduction-and-examples}{{A.2.7}{182}{CVXPY Introduction and Examples}{subsection.A.2.7}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.1}LP}{182}{subsubsection.A.2.7.1}\protected@file@percent }
+\newlabel{lp}{{A.2.7.1}{182}{LP}{subsubsection.A.2.7.1}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.2}QP}{183}{subsubsection.A.2.7.2}\protected@file@percent }
+\newlabel{qp}{{A.2.7.2}{183}{QP}{subsubsection.A.2.7.2}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.3}QCQP}{184}{subsubsection.A.2.7.3}\protected@file@percent }
+\newlabel{qcqp}{{A.2.7.3}{184}{QCQP}{subsubsection.A.2.7.3}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.4}SOCP}{185}{subsubsection.A.2.7.4}\protected@file@percent }
+\newlabel{socp}{{A.2.7.4}{185}{SOCP}{subsubsection.A.2.7.4}{}}
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {A.2.7.5}SDP}{186}{subsubsection.A.2.7.5}\protected@file@percent }
+\newlabel{sdp}{{A.2.7.5}{186}{SDP}{subsubsection.A.2.7.5}{}}
+\@writefile{toc}{\contentsline {chapter}{\numberline {B}Linear System Theory}{189}{appendix.B}\protected@file@percent }
 \@writefile{lof}{\addvspace {10\p@ }}
 \@writefile{lot}{\addvspace {10\p@ }}
-\newlabel{app-lti-system-theory}{{B}{183}{Linear System Theory}{appendix.B}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {B.1}Stability}{183}{section.B.1}\protected@file@percent }
-\newlabel{app-lti-stability}{{B.1}{183}{Stability}{section.B.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.1.1}Continuous-Time Stability}{183}{subsection.B.1.1}\protected@file@percent }
-\newlabel{app-lti-stability-ct}{{B.1.1}{183}{Continuous-Time Stability}{subsection.B.1.1}{}}
-\newlabel{eq:app-stability-ct-linear-system}{{B.1}{183}{Continuous-Time Stability}{equation.B.1.1}{}}
-\newlabel{def:ltistable}{{B.1}{183}{Asymptotic and Marginal Stability}{definition.B.1}{}}
-\newlabel{thm:ltistable}{{B.1}{183}{Stability of Continuous-Time LTI System}{theorem.B.1}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.1.2}Discrete-Time Stability}{184}{subsection.B.1.2}\protected@file@percent }
-\newlabel{app-lti-stability-dt}{{B.1.2}{184}{Discrete-Time Stability}{subsection.B.1.2}{}}
-\newlabel{eq:app-stability-dt-linear-system}{{B.2}{184}{Discrete-Time Stability}{equation.B.1.2}{}}
-\newlabel{thm:dtltisystemstability}{{B.2}{184}{Stability of Discrete-Time LTI System}{theorem.B.2}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.1.3}Lyapunov Analysis}{185}{subsection.B.1.3}\protected@file@percent }
-\newlabel{lyapunov-analysis}{{B.1.3}{185}{Lyapunov Analysis}{subsection.B.1.3}{}}
-\newlabel{thm:lyapunovequation}{{B.3}{185}{Lyapunov Equation}{theorem.B.3}{}}
-\newlabel{eq:lyapunov-equation}{{B.3}{185}{Lyapunov Equation}{equation.B.1.3}{}}
-\newlabel{cor:bestconvergencerate}{{B.1}{186}{Maximum Convergence Rate Estimation}{corollary.B.1}{}}
+\newlabel{app-lti-system-theory}{{B}{189}{Linear System Theory}{appendix.B}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B.1}Stability}{189}{section.B.1}\protected@file@percent }
+\newlabel{app-lti-stability}{{B.1}{189}{Stability}{section.B.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1.1}Continuous-Time Stability}{189}{subsection.B.1.1}\protected@file@percent }
+\newlabel{app-lti-stability-ct}{{B.1.1}{189}{Continuous-Time Stability}{subsection.B.1.1}{}}
+\newlabel{eq:app-stability-ct-linear-system}{{B.1}{189}{Continuous-Time Stability}{equation.B.1.1}{}}
+\newlabel{def:ltistable}{{B.1}{189}{Asymptotic and Marginal Stability}{definition.B.1}{}}
+\newlabel{thm:ltistable}{{B.1}{189}{Stability of Continuous-Time LTI System}{theorem.B.1}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1.2}Discrete-Time Stability}{190}{subsection.B.1.2}\protected@file@percent }
+\newlabel{app-lti-stability-dt}{{B.1.2}{190}{Discrete-Time Stability}{subsection.B.1.2}{}}
+\newlabel{eq:app-stability-dt-linear-system}{{B.2}{190}{Discrete-Time Stability}{equation.B.1.2}{}}
+\newlabel{thm:dtltisystemstability}{{B.2}{190}{Stability of Discrete-Time LTI System}{theorem.B.2}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.1.3}Lyapunov Analysis}{191}{subsection.B.1.3}\protected@file@percent }
+\newlabel{lyapunov-analysis}{{B.1.3}{191}{Lyapunov Analysis}{subsection.B.1.3}{}}
+\newlabel{thm:lyapunovequation}{{B.3}{191}{Lyapunov Equation}{theorem.B.3}{}}
+\newlabel{eq:lyapunov-equation}{{B.3}{191}{Lyapunov Equation}{equation.B.1.3}{}}
+\newlabel{cor:bestconvergencerate}{{B.1}{192}{Maximum Convergence Rate Estimation}{corollary.B.1}{}}
 \citation{chen1984book-linear}
-\@writefile{toc}{\contentsline {section}{\numberline {B.2}Controllability and Observability}{187}{section.B.2}\protected@file@percent }
-\newlabel{app-lti-controllable-observable}{{B.2}{187}{Controllability and Observability}{section.B.2}{}}
-\newlabel{eq:app-linear-system}{{B.14}{187}{Controllability and Observability}{equation.B.2.14}{}}
-\newlabel{eq:app-lti-xy}{{B.15}{187}{Controllability and Observability}{equation.B.2.15}{}}
-\newlabel{def:lticontrollable}{{B.2}{187}{Controllability}{definition.B.2}{}}
-\newlabel{def:ltiobservable}{{B.3}{188}{Observability}{definition.B.3}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.1}Cayley-Hamilton Theorem}{188}{subsection.B.2.1}\protected@file@percent }
-\newlabel{cayley-hamilton-theorem}{{B.2.1}{188}{Cayley-Hamilton Theorem}{subsection.B.2.1}{}}
-\newlabel{thm:cayham}{{B.4}{188}{Cayley-Hamilton}{theorem.B.4}{}}
-\newlabel{eq:adjugate-1}{{B.16}{188}{Cayley-Hamilton Theorem}{equation.B.2.16}{}}
-\newlabel{eq:adjugate-2}{{B.17}{188}{Cayley-Hamilton Theorem}{equation.B.2.17}{}}
-\newlabel{cor:cayham-1}{{B.2}{189}{}{corollary.B.2}{}}
-\newlabel{cor:cayham-2}{{B.3}{189}{}{corollary.B.3}{}}
-\newlabel{cor:cayham-3}{{B.4}{190}{}{corollary.B.4}{}}
-\newlabel{cor:cayham-4}{{B.5}{191}{}{corollary.B.5}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B.2}Controllability and Observability}{193}{section.B.2}\protected@file@percent }
+\newlabel{app-lti-controllable-observable}{{B.2}{193}{Controllability and Observability}{section.B.2}{}}
+\newlabel{eq:app-linear-system}{{B.14}{193}{Controllability and Observability}{equation.B.2.14}{}}
+\newlabel{eq:app-lti-xy}{{B.15}{193}{Controllability and Observability}{equation.B.2.15}{}}
+\newlabel{def:lticontrollable}{{B.2}{193}{Controllability}{definition.B.2}{}}
+\newlabel{def:ltiobservable}{{B.3}{194}{Observability}{definition.B.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.1}Cayley-Hamilton Theorem}{194}{subsection.B.2.1}\protected@file@percent }
+\newlabel{cayley-hamilton-theorem}{{B.2.1}{194}{Cayley-Hamilton Theorem}{subsection.B.2.1}{}}
+\newlabel{thm:cayham}{{B.4}{194}{Cayley-Hamilton}{theorem.B.4}{}}
+\newlabel{eq:adjugate-1}{{B.16}{194}{Cayley-Hamilton Theorem}{equation.B.2.16}{}}
+\newlabel{eq:adjugate-2}{{B.17}{194}{Cayley-Hamilton Theorem}{equation.B.2.17}{}}
+\newlabel{cor:cayham-1}{{B.2}{195}{}{corollary.B.2}{}}
+\newlabel{cor:cayham-2}{{B.3}{195}{}{corollary.B.3}{}}
+\newlabel{cor:cayham-3}{{B.4}{196}{}{corollary.B.4}{}}
+\newlabel{cor:cayham-4}{{B.5}{197}{}{corollary.B.5}{}}
 \citation{chen1984book-linear}
 \citation{zhou1996book-robust}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.2}Equivalent Statements for Controllability}{192}{subsection.B.2.2}\protected@file@percent }
-\newlabel{equivalent-statements-for-controllability}{{B.2.2}{192}{Equivalent Statements for Controllability}{subsection.B.2.2}{}}
-\newlabel{thm:lticontrollable}{{B.5}{192}{Equivalent Statements for Controllability}{theorem.B.5}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.2}Equivalent Statements for Controllability}{198}{subsection.B.2.2}\protected@file@percent }
+\newlabel{equivalent-statements-for-controllability}{{B.2.2}{198}{Equivalent Statements for Controllability}{subsection.B.2.2}{}}
+\newlabel{thm:lticontrollable}{{B.5}{198}{Equivalent Statements for Controllability}{theorem.B.5}{}}
 \citation{davison1968tac-poleassign}
 \citation{chen1984book-linear}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.3}Duality}{196}{subsection.B.2.3}\protected@file@percent }
-\newlabel{duality}{{B.2.3}{196}{Duality}{subsection.B.2.3}{}}
-\newlabel{thm:lti-dual-conobs}{{B.6}{197}{Theorem of Duality}{theorem.B.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.3}Duality}{202}{subsection.B.2.3}\protected@file@percent }
+\newlabel{duality}{{B.2.3}{202}{Duality}{subsection.B.2.3}{}}
+\newlabel{thm:lti-dual-conobs}{{B.6}{203}{Theorem of Duality}{theorem.B.6}{}}
 \citation{chen1984book-linear}
 \citation{zhou1996book-robust}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.4}Equivalent Statements for Observability}{198}{subsection.B.2.4}\protected@file@percent }
-\newlabel{equivalent-statements-for-observability}{{B.2.4}{198}{Equivalent Statements for Observability}{subsection.B.2.4}{}}
-\newlabel{thm:ltiobservable}{{B.7}{198}{Equivalent Statements for Observability}{theorem.B.7}{}}
-\@writefile{toc}{\contentsline {section}{\numberline {B.3}Stabilizability And Detectability}{198}{section.B.3}\protected@file@percent }
-\newlabel{stabilizability-and-detectability}{{B.3}{198}{Stabilizability And Detectability}{section.B.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.2.4}Equivalent Statements for Observability}{204}{subsection.B.2.4}\protected@file@percent }
+\newlabel{equivalent-statements-for-observability}{{B.2.4}{204}{Equivalent Statements for Observability}{subsection.B.2.4}{}}
+\newlabel{thm:ltiobservable}{{B.7}{204}{Equivalent Statements for Observability}{theorem.B.7}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {B.3}Stabilizability And Detectability}{204}{section.B.3}\protected@file@percent }
+\newlabel{stabilizability-and-detectability}{{B.3}{204}{Stabilizability And Detectability}{section.B.3}{}}
 \citation{zhou1996book-robust}
-\newlabel{def:ltisystemmode}{{B.4}{199}{System Mode}{definition.B.4}{}}
-\newlabel{def:ltistabilizable}{{B.5}{199}{Stabilizability}{definition.B.5}{}}
-\newlabel{def:ltidetectable}{{B.6}{199}{Detectability}{definition.B.6}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.3.1}Equivalent Statements for Stabilizability}{199}{subsection.B.3.1}\protected@file@percent }
-\newlabel{equivalent-statements-for-stabilizability}{{B.3.1}{199}{Equivalent Statements for Stabilizability}{subsection.B.3.1}{}}
-\newlabel{thm:ltistabilizable}{{B.8}{199}{Equivalent Statements for Stabilizability}{theorem.B.8}{}}
+\newlabel{def:ltisystemmode}{{B.4}{205}{System Mode}{definition.B.4}{}}
+\newlabel{def:ltistabilizable}{{B.5}{205}{Stabilizability}{definition.B.5}{}}
+\newlabel{def:ltidetectable}{{B.6}{205}{Detectability}{definition.B.6}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3.1}Equivalent Statements for Stabilizability}{205}{subsection.B.3.1}\protected@file@percent }
+\newlabel{equivalent-statements-for-stabilizability}{{B.3.1}{205}{Equivalent Statements for Stabilizability}{subsection.B.3.1}{}}
+\newlabel{thm:ltistabilizable}{{B.8}{205}{Equivalent Statements for Stabilizability}{theorem.B.8}{}}
 \citation{zhou1996book-robust}
-\@writefile{toc}{\contentsline {subsection}{\numberline {B.3.2}Equivalent Statements for Detectability}{201}{subsection.B.3.2}\protected@file@percent }
-\newlabel{equivalent-statements-for-detectability}{{B.3.2}{201}{Equivalent Statements for Detectability}{subsection.B.3.2}{}}
-\newlabel{thm:ltidetectable}{{B.9}{201}{Equivalent Statements for Detectability}{theorem.B.9}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {B.3.2}Equivalent Statements for Detectability}{207}{subsection.B.3.2}\protected@file@percent }
+\newlabel{equivalent-statements-for-detectability}{{B.3.2}{207}{Equivalent Statements for Detectability}{subsection.B.3.2}{}}
+\newlabel{thm:ltidetectable}{{B.9}{207}{Equivalent Statements for Detectability}{theorem.B.9}{}}
 \bibdata{book.bib,packages.bib}
 \bibcite{antos2007fitted}{{1}{2007}{{Antos et~al.}}{{}}}
 \bibcite{arnold84ieee-generalized}{{2}{1984}{{Arnold and Laub}}{{}}}
@@ -738,4 +765,4 @@
 \bibcite{sutton2009fast}{{25}{2009}{{Sutton et~al.}}{{}}}
 \bibcite{sutton2008convergent}{{26}{2008}{{Sutton et~al.}}{{}}}
 \bibcite{zhou1996book-robust}{{27}{1996}{{Zhou et~al.}}{{}}}
-\gdef \@abspage@last{205}
+\gdef \@abspage@last{211}
