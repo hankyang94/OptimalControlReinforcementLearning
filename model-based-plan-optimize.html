@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-29" />
+<meta name="date" content="2025-11-03" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -254,6 +254,9 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="4.3.1" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#traj-opt-ilqr"><i class="fa fa-check"></i><b>4.3.1</b> Iterative LQR</a></li>
 <li class="chapter" data-level="4.3.2" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#ddp"><i class="fa fa-check"></i><b>4.3.2</b> Differential Dynamic Programming</a></li>
+<li class="chapter" data-level="4.3.3" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#qp"><i class="fa fa-check"></i><b>4.3.3</b> Quadratic Programming</a></li>
+<li class="chapter" data-level="4.3.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#sequential-quadratic-programming"><i class="fa fa-check"></i><b>4.3.4</b> Sequential Quadratic Programming</a></li>
+<li class="chapter" data-level="4.3.5" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#interior-point-method"><i class="fa fa-check"></i><b>4.3.5</b> Interior Point Method</a></li>
 </ul></li>
 <li class="chapter" data-level="4.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#mpc"><i class="fa fa-check"></i><b>4.4</b> Model Predictive Control</a></li>
 </ul></li>
@@ -1042,9 +1045,9 @@ p_x=p_y=0,\; v_x=v_y=0,\; \theta=0,\; \omega=0.
 We penalize deviations from this goal along the entire trajectory and especially at the terminal state to encourage low touchdown velocities and an upright attitude.</p>
 <p><strong>Cost Function.</strong> With horizon <span class="math inline">\(N\)</span> and step <span class="math inline">\(h\)</span>, the discrete objective is
 <span class="math display" id="eq:rocket-cost">\[
-J \;=\; \tfrac12\,(x_N-x_g)^\top Q_f (x_N-x_g)
+J \;=\; \frac{1}{2}\,(x_N-x_g)^\top Q_f (x_N-x_g)
 \;+\;\sum_{t=0}^{N-1}\Big[
-\tfrac12\,(x_t-x_g)^\top Q (x_t-x_g) \;+\; \tfrac12\,u_t^\top R u_t
+\frac{1}{2}\,(x_t-x_g)^\top Q (x_t-x_g) \;+\; \frac{1}{2}\,u_t^\top R u_t
 \Big],
 \tag{4.40}
 \]</span>
@@ -1081,7 +1084,7 @@ i.e., 10 m altitude, lateral offset, small descent and slight pitch.</p></li>
 <span class="math display">\[
 u_t^{\text{new}} = \bar u_t + \alpha\,k_t + K_t\big(x_t^{\text{new}}-\bar x_t\big),
 \]</span>
-using a backtracking line search over <span class="math inline">\(\alpha\in\{1,\tfrac12,\tfrac14,\dots\}\)</span> (note: <span class="math inline">\(\alpha\)</span> scales only the <strong>feedforward</strong> <span class="math inline">\(k_t\)</span>, not the feedback <span class="math inline">\(K_t\)</span>);<br />
+using a backtracking line search over <span class="math inline">\(\alpha\in\{1,\frac{1}{2},\tfrac14,\dots\}\)</span> (note: <span class="math inline">\(\alpha\)</span> scales only the <strong>feedforward</strong> <span class="math inline">\(k_t\)</span>, not the feedback <span class="math inline">\(K_t\)</span>);<br />
 </li>
 <li>Update the nominal and repeat until cost reduction is small.</li>
 </ol></li>
@@ -1100,6 +1103,228 @@ Figure 4.5: iLQR Trajectory Generation for Rocket Landing.
 </div>
 <div id="ddp" class="section level3 hasAnchor" number="4.3.2">
 <h3><span class="header-section-number">4.3.2</span> Differential Dynamic Programming<a href="model-based-plan-optimize.html#ddp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Similar to iLQR, skipped for now.</p>
+</div>
+<div id="qp" class="section level3 hasAnchor" number="4.3.3">
+<h3><span class="header-section-number">4.3.3</span> Quadratic Programming<a href="model-based-plan-optimize.html#qp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>Trajectory optimization (TO) with nonlinear dynamics and objectives is well served by iLQR/DDP: at each outer iteration, they <em>linearize</em> the dynamics and <em>quadratize</em> the objective, then solve a <em>time-varying LQR</em> subproblem. This works remarkably well for <em>unconstrained</em> or softly constrained problems.</p>
+<p>However, many TO tasks are <strong>constrained</strong>—e.g., obstacle avoidance, actuator limits, keep-out zones, terminal envelopes. Hard constraints are awkward for iLQR/DDP (they typically enter via penalties or saturations), and feasibility can be fragile. For such cases, it is often more natural to frame TO as a <strong>nonlinear program (NLP)</strong>—an optimization problem with general nonlinear objective and constraints. This brings the full machinery of modern numerical optimization (see, e.g., <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>).</p>
+<p>As a first step, we study the <strong>convex</strong> special case where the linearization already yields linear dynamics, affine constraints, and a quadratic objective. This leads to <strong>Quadratic Programming (QP)</strong>, a cornerstone problem class with mature, efficient solvers. In the next section, we will lift these ideas to <strong>Sequential Quadratic Programming (SQP)</strong> to handle <em>general</em> constrained TO.</p>
+<div id="to-qp" class="section level4 hasAnchor" number="4.3.3.1">
+<h4><span class="header-section-number">4.3.3.1</span> From Trajectory Optimization to Quadratic Programming<a href="model-based-plan-optimize.html#to-qp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>Start from the constrained TO template in <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>. Suppose:</p>
+<ul>
+<li><strong>Linear (time-varying) dynamics</strong> (from linearization or an intrinsically linear model):
+<span class="math display">\[
+x_{t+1} = A_t x_t + B_t u_t + a_t,\qquad t=0,\dots,N-1,
+\]</span>
+with given <span class="math inline">\(x_0=\hat x_0\)</span>.</li>
+<li><strong>Quadratic objective</strong> (from quadratization or an Linear-Quadratic tracking design):
+<span class="math display">\[
+\Phi(x_N) + \sum_{t=0}^{N-1} \ell_t(x_t,u_t)
+\;\equiv\;
+\frac{1}{2}\,x_N^\top Q_N x_N + q_N^\top x_N
++ \sum_{t=0}^{N-1}\Big(\frac{1}{2}\,[x_t;u_t]^\top H_t [x_t;u_t] + h_t^\top [x_t;u_t]\Big),
+\]</span>
+with <span class="math inline">\(Q_N\succeq 0\)</span>, <span class="math inline">\(H_t=\begin{bmatrix}Q_t &amp; S_t\\ S_t^\top &amp; R_t\end{bmatrix} \succeq 0\)</span> and <span class="math inline">\(R_t\succ 0\)</span> for convexity.</li>
+<li><strong>Affine path/terminal constraints</strong> (from linearized safety/goal constraints):
+<span class="math display">\[
+G_t^x x_t + G_t^u u_t \le g_t,\qquad
+F_x x_N \leq f.
+\]</span></li>
+</ul>
+<p>Define the stacked decision vector
+<span class="math display">\[
+z := \big[x_0^\top,\,u_0^\top,\,x_1^\top,\,u_1^\top,\,\dots,\,x_{N-1}^\top,\,u_{N-1}^\top,\,x_N^\top\big]^\top.
+\]</span>
+Then the horizon-wide problem is a <strong>QP</strong>:
+<span class="math display" id="eq:qp-stacked">\[
+\begin{aligned}
+\min_{z}\quad &amp; \frac{1}{2}\, z^\top H\, z \;+\; h^\top z \\[2mm]
+\text{s.t.}\quad
+&amp; A_{\text{dyn}}\, z = b_{\text{dyn}} \quad \text{(stacked dynamics and } x_0=\hat x_0\text{)},\\
+&amp; G\, z \le g \qquad\quad\ \ \text{(stacked affine path/terminal constraints)}\\
+\end{aligned}
+\tag{4.42}
+\]</span>
+Here <span class="math inline">\(H\succeq 0\)</span> is block-sparse (banded) due to the stagewise structure; the constraint matrices are also sparse/banded because each dynamic constraint couples only <span class="math inline">\((x_t,u_t,x_{t+1})\)</span>.</p>
+<p><strong>Convexity.</strong> If all stage Hessians <span class="math inline">\(H_t\succeq 0\)</span> and <span class="math inline">\(Q_N\succeq 0\)</span>, <a href="model-based-plan-optimize.html#eq:qp-stacked">(4.42)</a> is a <strong>convex QP</strong> with a <strong>unique</strong> minimizer when <span class="math inline">\(H\)</span> is positive definite on the feasible subspace (e.g., via <span class="math inline">\(R_t\succ 0\)</span>). Such QPs can be solved efficiently by primal-dual interior-point or active-set methods, exploiting block sparsity.</p>
+</div>
+<div id="solving-the-quadratic-program" class="section level4 hasAnchor" number="4.3.3.2">
+<h4><span class="header-section-number">4.3.3.2</span> Solving the Quadratic Program<a href="model-based-plan-optimize.html#solving-the-quadratic-program" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>We now discuss how to solve a general convex quadratic program containing both equality and inequality constraints:
+<span class="math display" id="eq:qp-general">\[
+\begin{aligned}
+\min_{z \in \mathbb{R}^n}\quad &amp; \frac{1}{2}\, z^\top H\, z \;+\; h^\top z \\
+\text{s.t.}\quad
+&amp; A  z = b  \\
+&amp; G z \le g
+\end{aligned}
+\tag{4.43}
+\]</span>
+where <span class="math inline">\(z \in \mathbb{R}^n\)</span> is the decision variable, <span class="math inline">\(H \in \mathbb{S}^{n}, h \in \mathbb{R}^n, A \in \mathbb{R}^{m \times n}, b \in \mathbb{R}^m, G \in \mathbb{R}^{p \times n}, g \in \mathbb{R}^p\)</span> are given problem data (e.g., generated as in Section <a href="model-based-plan-optimize.html#to-qp">4.3.3.1</a>). We assume <span class="math inline">\(H \succeq 0\)</span> is positive semidefinite.</p>
+<p>There are multiple popular algorithms to solve <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a>, e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the <em>primal–dual interior point method</em> (PD-IPM) due to its generality and robustness.</p>
+<p><strong>Slacks, Lagrangian, and KKT Optimality.</strong> Introduce <span class="math inline">\(s\in\mathbb{R}^p\)</span> so that
+<span class="math display" id="eq:ipm-slack">\[
+Gz + s = g,\qquad s \ge 0.
+\tag{4.44}
+\]</span>
+Let <span class="math inline">\(y\in\mathbb{R}^m\)</span> be multipliers for <span class="math inline">\(Az=b\)</span>, <span class="math inline">\(\nu\in\mathbb{R}^p\)</span> for the equality <span class="math inline">\(Gz+s=g\)</span>, and <span class="math inline">\(w\in\mathbb{R}^p\)</span> (with <span class="math inline">\(w\ge 0\)</span>) for the inequality <span class="math inline">\(s\ge 0\)</span>. The Lagrangian for the QP <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a> is
+<span class="math display" id="eq:qp-Lagrangian">\[
+\mathcal L(z,s,y,\nu,w)
+= \frac{1}{2} z^\top H z + h^\top z
++ y^\top(Az-b) + \nu^\top(Gz+s-g) - w^\top s.
+\tag{4.45}
+\]</span>
+From the Lagrangian, we can derive the KKT optimality conditions, i.e., under technical conditions (such as constraint qualification), a point <span class="math inline">\((z,s)\)</span> is a local minimizer of the QP if and only if there exists dual variables <span class="math inline">\((\nu,w)\)</span> satisfying:
+<span class="math display" id="eq:ipm-kkt">\[
+\begin{aligned}
+\text{(stationarity)}&amp;:\quad
+\nabla_z\mathcal L = H z + h + A^\top y + G^\top \nu = 0,\\
+&amp;\quad \nabla_s\mathcal L = \nu - w = 0 \ \Longrightarrow\ \nu = w,\\[2pt]
+\text{(primal feasibility)}&amp;:\quad
+A z - b = 0,\qquad G z + s - g = 0, \qquad s \ge 0, \\
+\text{(dual feasibility)}&amp;:\quad
+w \ge 0,\\
+\text{(complementarity)}&amp;:\quad
+s_i w_i = 0,\quad i=1,\dots,p.
+\end{aligned}
+\tag{4.46}
+\]</span>
+Using <span class="math inline">\(\nu=w\)</span> we eliminate <span class="math inline">\(\nu\)</span> and keep variables <span class="math inline">\((z,s,y,w)\)</span>. Since the QP is convex, we know that any local minimizer is a global minimizer. Hence, if we can solve the KKT system <a href="model-based-plan-optimize.html#eq:ipm-kkt">(4.46)</a>, we can find an optimal solution of the QP.</p>
+<p><strong>Central Path and Residuals.</strong> Replace complementarity by the <strong>perturbed</strong> condition
+<span class="math display" id="eq:ipm-central">\[
+S W \mathbf{1} = \sigma \mu\,\mathbf{1},
+\qquad
+\mu := \tfrac{1}{p}\, s^\top w, \qquad \sigma \in (0,1)
+\tag{4.47}
+\]</span>
+with <span class="math inline">\(S=\mathrm{diag}(s)\)</span>, <span class="math inline">\(W=\mathrm{diag}(w)\)</span>.
+At a current iterate <span class="math inline">\((z,s,y,w)\)</span> define residuals
+<span class="math display" id="eq:ipm-residuals">\[
+\begin{aligned}
+r_{\mathrm{dual}} &amp;= H z + h + A^\top y + G^\top w,\\
+r_{\mathrm{pe}}   &amp;= A z - b,\\
+r_{\mathrm{pi}}   &amp;= G z + s - g,\\
+r_{\mathrm{cent}} &amp;= S W \mathbf{1} - \sigma \mu\,\mathbf{1}.
+\end{aligned}
+\tag{4.48}
+\]</span></p>
+<p><strong>Newton System (primal–dual step).</strong> Solve for the Newton direction <span class="math inline">\((\Delta z,\Delta s,\Delta y,\Delta w)\)</span>:
+<span class="math display" id="eq:ipm-newton">\[
+\begin{aligned}
+H\,\Delta z + A^\top \Delta y + G^\top \Delta w &amp;= -\,r_{\mathrm{dual}},\\
+A\,\Delta z &amp;= -\,r_{\mathrm{pe}},\\
+G\,\Delta z + \Delta s &amp;= -\,r_{\mathrm{pi}},\\
+W\,\Delta s + S\,\Delta w &amp;= -\,r_{\mathrm{cent}}.
+\end{aligned}
+\tag{4.49}
+\]</span>
+Eliminate <span class="math inline">\(\Delta s = -r_{\mathrm{pi}} - G\Delta z\)</span> in the last equation to get
+<span class="math display">\[
+S\,\Delta w
+= -\,r_{\mathrm{cent}} + W\,r_{\mathrm{pi}} + W\,G\,\Delta z
+\quad\Longrightarrow\quad
+\Delta w = S^{-1}\!\left(-r_{\mathrm{cent}} + W r_{\mathrm{pi}} + W G \Delta z\right).
+\]</span>
+Substitute into the first equation to obtain the <strong>reduced symmetric system</strong> in <span class="math inline">\((\Delta z,\Delta y)\)</span>:
+<span class="math display" id="eq:ipm-reduced">\[
+\boxed{
+\begin{bmatrix}
+H + G^\top D G &amp; A^\top\\
+A &amp; \ \ 0
+\end{bmatrix}
+\begin{bmatrix}\Delta z\\ \Delta y\end{bmatrix}
+=
+-
+\begin{bmatrix}
+r_{\mathrm{dual}} - G^\top S^{-1} \big(r_{\mathrm{cent}} + W r_{\mathrm{pi}}\big)\\[2pt]
+r_{\mathrm{pe}}
+\end{bmatrix}}
+\tag{4.50}
+\]</span>
+with <span class="math inline">\(D := S^{-1} W\)</span>. Then recover
+<span class="math display">\[
+\Delta w = S^{-1}\!\left(-r_{\mathrm{cent}} + W r_{\mathrm{pi}} + W G \Delta z\right),\qquad
+\Delta s = -r_{\mathrm{pi}} - G \Delta z.
+\]</span></p>
+<p><strong>Step Lengths.</strong> Choose step sizes to preserve positivity of <span class="math inline">\(s,w\)</span>:
+<span class="math display" id="eq:ipm-steps">\[
+\alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i&lt;0}\tfrac{-s_i}{\Delta s_i}\Big),\qquad
+\alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i&lt;0}\tfrac{-w_i}{\Delta w_i}\Big),
+\tag{4.51}
+\]</span>
+with <span class="math inline">\(\eta\in(0,1)\)</span> (e.g., <span class="math inline">\(0.99\)</span>). Update both primal and dual variables
+<span class="math display">\[
+\begin{aligned}
+z &amp;\leftarrow z + \alpha_{\mathrm{pri}}\,\Delta z,\qquad
+s \leftarrow s + \alpha_{\mathrm{pri}}\,\Delta s,\\
+y &amp;\leftarrow y + \alpha_{\mathrm{du}}\,\Delta y,\qquad
+w \leftarrow w + \alpha_{\mathrm{du}}\,\Delta w.
+\end{aligned}
+\]</span></p>
+<!-- #### 5) Mehrotra predictor–corrector (recommended)
+
+A robust adaptive centering strategy:
+
+1. **Predictor (affine-scaling) step:** solve \@ref(eq:ipm-reduced) with \(\sigma=0\) to get \((\Delta z^{\mathrm{aff}},\Delta s^{\mathrm{aff}},\Delta y^{\mathrm{aff}},\Delta w^{\mathrm{aff}})\). Compute affine step lengths \(\alpha^{\mathrm{aff}}_{\mathrm{pri}},\alpha^{\mathrm{aff}}_{\mathrm{du}}\) and
+   \[
+   \mu_{\mathrm{aff}} = \frac{\big(s + \alpha^{\mathrm{aff}}_{\mathrm{pri}}\Delta s^{\mathrm{aff}}\big)^\top
+   \big(w + \alpha^{\mathrm{aff}}_{\mathrm{du}}\Delta w^{\mathrm{aff}}\big)}{p}.
+   \]
+2. **Centering parameter:** set \(\sigma = (\mu_{\mathrm{aff}}/\mu)^3\) (power in \([2,3]\) is common).
+3. **Corrector step:** form the **corrected** centering residual
+   \[
+   r_{\mathrm{cent}}^{\mathrm{corr}} = S W \mathbf{1} - \sigma \mu \mathbf{1}
+   - \Delta S^{\mathrm{aff}}\Delta W^{\mathrm{aff}}\mathbf{1},
+   \]
+   and resolve \@ref(eq:ipm-reduced) using \(r_{\mathrm{cent}}^{\mathrm{corr}}\); then take fraction-to-boundary steps.
+
+This typically improves robustness and practical convergence. -->
+<p><strong>Initialization and Stopping.</strong></p>
+<ul>
+<li><strong>Initialization.</strong> Find any <span class="math inline">\(z\)</span> satisfying <span class="math inline">\(Az=b\)</span> (e.g., least-squares projection). Set
+<span class="math display">\[
+s := \max\{\mathbf{1},\, g - Gz\},\quad w := \mathbf{1},
+\]</span>
+to ensure strict positivity (<span class="math inline">\(s&gt;0,w&gt;0\)</span>); choose <span class="math inline">\(y:=0\)</span>.</li>
+<li><strong>Stopping.</strong> Terminate when
+<span class="math display">\[
+\|r_{\mathrm{dual}}\|_\infty \le \varepsilon,\quad
+\|r_{\mathrm{pe}}\|_\infty \le \varepsilon,\quad
+\|r_{\mathrm{pi}}\|_\infty \le \varepsilon,\quad
+\mu \le \varepsilon,
+\]</span>
+for a small tolerance <span class="math inline">\(\varepsilon\)</span> (e.g., <span class="math inline">\(10^{-6}\)</span>).</li>
+</ul>
+<p>The following pseudocode implements the PD-IPM algorithm for solving convex QP.</p>
+<div class="highlightbox">
+<p><strong>Algorithm: Primal–Dual Interior-Point for Convex QP</strong></p>
+<p><strong>Input:</strong> <span class="math inline">\(H\succeq 0, h, A,b, G,g\)</span>; tolerance <span class="math inline">\(\varepsilon\)</span>; <span class="math inline">\(\eta=0.99\)</span>; (0,1)</p>
+<ol style="list-style-type: decimal">
+<li>Initialize <span class="math inline">\(z\)</span> with <span class="math inline">\(Az=b\)</span>; set <span class="math inline">\(s&gt;0, w&gt;0\)</span> (e.g., <span class="math inline">\(s=\max\{1,g-Gz\}\)</span>, <span class="math inline">\(w=\mathbf{1}\)</span>); set <span class="math inline">\(y=0\)</span>.</li>
+<li>Repeat until convergence:
+<ol style="list-style-type: decimal">
+<li>Compute residuals <span class="math inline">\(r_{\mathrm{dual}}, r_{\mathrm{pe}}, r_{\mathrm{pi}}\)</span>, <span class="math inline">\(\mu=(s^\top w)/p\)</span>.</li>
+<li>Solve the reduced system <a href="model-based-plan-optimize.html#eq:ipm-reduced">(4.50)</a> to obtain Newton direction.</li>
+<li>Compute <span class="math inline">\(\alpha_{\mathrm{pri}},\alpha_{\mathrm{du}}\)</span> by <a href="model-based-plan-optimize.html#eq:ipm-steps">(4.51)</a>.</li>
+<li>Update <span class="math inline">\((z,s,y,w)\)</span>.</li>
+<li>Check stopping criteria; if satisfied, <strong>return</strong> <span class="math inline">\(z^\star\)</span>.</li>
+</ol></li>
+</ol>
+</div>
+<p><strong>Remarks.</strong></p>
+<ul>
+<li><p>For QPs obtained from trajectory optimization problems, the matrices are typically sparse (e.g., time-banded sparsity). This sparsity can be leveraged when forming and solving the Newton direction.</p></li>
+<li><p>In practice, <a href="https://en.wikipedia.org/wiki/Mehrotra_predictor%E2%80%93corrector_method">Mehrotra’s predictor–corrector method</a> is used to improve the robustness and convergence of PD-IPM.</p></li>
+</ul>
+</div>
+</div>
+<div id="sequential-quadratic-programming" class="section level3 hasAnchor" number="4.3.4">
+<h3><span class="header-section-number">4.3.4</span> Sequential Quadratic Programming<a href="model-based-plan-optimize.html#sequential-quadratic-programming" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+</div>
+<div id="interior-point-method" class="section level3 hasAnchor" number="4.3.5">
+<h3><span class="header-section-number">4.3.5</span> Interior Point Method<a href="model-based-plan-optimize.html#interior-point-method" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 </div>
 </div>
 <div id="mpc" class="section level2 hasAnchor" number="4.4">
@@ -1111,6 +1336,9 @@ Figure 4.5: iLQR Trajectory Generation for Rocket Landing.
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-arnold84ieee-generalized" class="csl-entry">
 Arnold, William F, and Alan J Laub. 1984. <span>“Generalized Eigenproblem Algorithms and Software for Algebraic Riccati Equations.”</span> <em>Proceedings of the IEEE</em> 72 (12): 1746–54.
+</div>
+<div id="ref-nocedal99book-numerical" class="csl-entry">
+Nocedal, Jorge, and Stephen J Wright. 1999. <em>Numerical Optimization</em>. Springer.
 </div>
 </div>
             </section>

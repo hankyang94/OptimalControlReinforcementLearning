@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-10-29}
+\date{2025-11-03}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -7554,9 +7554,9 @@ We penalize deviations from this goal along the entire trajectory and especially
 
 \textbf{Cost Function.} With horizon \(N\) and step \(h\), the discrete objective is
 \[
-J \;=\; \tfrac12\,(x_N-x_g)^\top Q_f (x_N-x_g)
+J \;=\; \frac{1}{2}\,(x_N-x_g)^\top Q_f (x_N-x_g)
 \;+\;\sum_{t=0}^{N-1}\Big[
-\tfrac12\,(x_t-x_g)^\top Q (x_t-x_g) \;+\; \tfrac12\,u_t^\top R u_t
+\frac{1}{2}\,(x_t-x_g)^\top Q (x_t-x_g) \;+\; \frac{1}{2}\,u_t^\top R u_t
 \Big],
 \label{eq:rocket-cost}
 \]
@@ -7604,7 +7604,7 @@ These weights place strong emphasis on terminal altitude and attitude (\(p_y,\th
     \[
     u_t^{\text{new}} = \bar u_t + \alpha\,k_t + K_t\big(x_t^{\text{new}}-\bar x_t\big),
     \]
-    using a backtracking line search over \(\alpha\in\{1,\tfrac12,\tfrac14,\dots\}\) (note: \(\alpha\) scales only the \textbf{feedforward} \(k_t\), not the feedback \(K_t\));\\
+    using a backtracking line search over \(\alpha\in\{1,\frac{1}{2},\tfrac14,\dots\}\) (note: \(\alpha\) scales only the \textbf{feedforward} \(k_t\), not the feedback \(K_t\));\\
   \item
     Update the nominal and repeat until cost reduction is small.
   \end{enumerate}
@@ -7626,6 +7626,246 @@ You can play with the code \href{https://github.com/ComputationalRobotics/2025-E
 \end{example}
 
 \subsection{Differential Dynamic Programming}\label{ddp}
+
+Similar to iLQR, skipped for now.
+
+\subsection{Quadratic Programming}\label{qp}
+
+Trajectory optimization (TO) with nonlinear dynamics and objectives is well served by iLQR/DDP: at each outer iteration, they \emph{linearize} the dynamics and \emph{quadratize} the objective, then solve a \emph{time-varying LQR} subproblem. This works remarkably well for \emph{unconstrained} or softly constrained problems.
+
+However, many TO tasks are \textbf{constrained}---e.g., obstacle avoidance, actuator limits, keep-out zones, terminal envelopes. Hard constraints are awkward for iLQR/DDP (they typically enter via penalties or saturations), and feasibility can be fragile. For such cases, it is often more natural to frame TO as a \textbf{nonlinear program (NLP)}---an optimization problem with general nonlinear objective and constraints. This brings the full machinery of modern numerical optimization (see, e.g., \citep{nocedal99book-numerical}).
+
+As a first step, we study the \textbf{convex} special case where the linearization already yields linear dynamics, affine constraints, and a quadratic objective. This leads to \textbf{Quadratic Programming (QP)}, a cornerstone problem class with mature, efficient solvers. In the next section, we will lift these ideas to \textbf{Sequential Quadratic Programming (SQP)} to handle \emph{general} constrained TO.
+
+\subsubsection{From Trajectory Optimization to Quadratic Programming}\label{to-qp}
+
+Start from the constrained TO template in \eqref{eq:to-general}. Suppose:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Linear (time-varying) dynamics} (from linearization or an intrinsically linear model):
+  \[
+  x_{t+1} = A_t x_t + B_t u_t + a_t,\qquad t=0,\dots,N-1,
+  \]
+  with given \(x_0=\hat x_0\).
+\item
+  \textbf{Quadratic objective} (from quadratization or an Linear-Quadratic tracking design):
+  \[
+  \Phi(x_N) + \sum_{t=0}^{N-1} \ell_t(x_t,u_t)
+  \;\equiv\;
+  \frac{1}{2}\,x_N^\top Q_N x_N + q_N^\top x_N
+  + \sum_{t=0}^{N-1}\Big(\frac{1}{2}\,[x_t;u_t]^\top H_t [x_t;u_t] + h_t^\top [x_t;u_t]\Big),
+  \]
+  with \(Q_N\succeq 0\), \(H_t=\begin{bmatrix}Q_t & S_t\\ S_t^\top & R_t\end{bmatrix} \succeq 0\) and \(R_t\succ 0\) for convexity.
+\item
+  \textbf{Affine path/terminal constraints} (from linearized safety/goal constraints):
+  \[
+  G_t^x x_t + G_t^u u_t \le g_t,\qquad
+  F_x x_N \leq f.
+  \]
+\end{itemize}
+
+Define the stacked decision vector
+\[
+z := \big[x_0^\top,\,u_0^\top,\,x_1^\top,\,u_1^\top,\,\dots,\,x_{N-1}^\top,\,u_{N-1}^\top,\,x_N^\top\big]^\top.
+\]
+Then the horizon-wide problem is a \textbf{QP}:
+\[
+\begin{aligned}
+\min_{z}\quad & \frac{1}{2}\, z^\top H\, z \;+\; h^\top z \\[2mm]
+\text{s.t.}\quad
+& A_{\text{dyn}}\, z = b_{\text{dyn}} \quad \text{(stacked dynamics and } x_0=\hat x_0\text{)},\\
+& G\, z \le g \qquad\quad\ \ \text{(stacked affine path/terminal constraints)}\\
+\end{aligned}
+\label{eq:qp-stacked}
+\]
+Here \(H\succeq 0\) is block-sparse (banded) due to the stagewise structure; the constraint matrices are also sparse/banded because each dynamic constraint couples only \((x_t,u_t,x_{t+1})\).
+
+\textbf{Convexity.} If all stage Hessians \(H_t\succeq 0\) and \(Q_N\succeq 0\), \eqref{eq:qp-stacked} is a \textbf{convex QP} with a \textbf{unique} minimizer when \(H\) is positive definite on the feasible subspace (e.g., via \(R_t\succ 0\)). Such QPs can be solved efficiently by primal-dual interior-point or active-set methods, exploiting block sparsity.
+
+\subsubsection{Solving the Quadratic Program}\label{solving-the-quadratic-program}
+
+We now discuss how to solve a general convex quadratic program containing both equality and inequality constraints:
+\[
+\begin{aligned}
+\min_{z \in \mathbb{R}^n}\quad & \frac{1}{2}\, z^\top H\, z \;+\; h^\top z \\
+\text{s.t.}\quad
+& A  z = b  \\
+& G z \le g
+\end{aligned}
+\label{eq:qp-general}
+\]
+where \(z \in \mathbb{R}^n\) is the decision variable, \(H \in \mathbb{S}^{n}, h \in \mathbb{R}^n, A \in \mathbb{R}^{m \times n}, b \in \mathbb{R}^m, G \in \mathbb{R}^{p \times n}, g \in \mathbb{R}^p\) are given problem data (e.g., generated as in Section \ref{to-qp}). We assume \(H \succeq 0\) is positive semidefinite.
+
+There are multiple popular algorithms to solve \eqref{eq:qp-general}, e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the \emph{primal--dual interior point method} (PD-IPM) due to its generality and robustness.
+
+\textbf{Slacks, Lagrangian, and KKT Optimality.} Introduce \(s\in\mathbb{R}^p\) so that
+\[
+Gz + s = g,\qquad s \ge 0. 
+\label{eq:ipm-slack}
+\]
+Let \(y\in\mathbb{R}^m\) be multipliers for \(Az=b\), \(\nu\in\mathbb{R}^p\) for the equality \(Gz+s=g\), and \(w\in\mathbb{R}^p\) (with \(w\ge 0\)) for the inequality \(s\ge 0\). The Lagrangian for the QP \eqref{eq:qp-general} is
+\[
+\mathcal L(z,s,y,\nu,w)
+= \frac{1}{2} z^\top H z + h^\top z
++ y^\top(Az-b) + \nu^\top(Gz+s-g) - w^\top s.
+\label{eq:qp-Lagrangian}
+\]
+From the Lagrangian, we can derive the KKT optimality conditions, i.e., under technical conditions (such as constraint qualification), a point \((z,s)\) is a local minimizer of the QP if and only if there exists dual variables \((\nu,w)\) satisfying:
+\[
+\begin{aligned}
+\text{(stationarity)}&:\quad
+\nabla_z\mathcal L = H z + h + A^\top y + G^\top \nu = 0,\\
+&\quad \nabla_s\mathcal L = \nu - w = 0 \ \Longrightarrow\ \nu = w,\\[2pt]
+\text{(primal feasibility)}&:\quad
+A z - b = 0,\qquad G z + s - g = 0, \qquad s \ge 0, \\
+\text{(dual feasibility)}&:\quad
+w \ge 0,\\
+\text{(complementarity)}&:\quad
+s_i w_i = 0,\quad i=1,\dots,p.
+\end{aligned}
+\label{eq:ipm-kkt}
+\]
+Using \(\nu=w\) we eliminate \(\nu\) and keep variables \((z,s,y,w)\). Since the QP is convex, we know that any local minimizer is a global minimizer. Hence, if we can solve the KKT system \eqref{eq:ipm-kkt}, we can find an optimal solution of the QP.
+
+\textbf{Central Path and Residuals.} Replace complementarity by the \textbf{perturbed} condition
+\[
+S W \mathbf{1} = \sigma \mu\,\mathbf{1},
+\qquad
+\mu := \tfrac{1}{p}\, s^\top w, \qquad \sigma \in (0,1)
+\label{eq:ipm-central}
+\]
+with \(S=\mathrm{diag}(s)\), \(W=\mathrm{diag}(w)\).
+At a current iterate \((z,s,y,w)\) define residuals
+\[
+\begin{aligned}
+r_{\mathrm{dual}} &= H z + h + A^\top y + G^\top w,\\
+r_{\mathrm{pe}}   &= A z - b,\\
+r_{\mathrm{pi}}   &= G z + s - g,\\
+r_{\mathrm{cent}} &= S W \mathbf{1} - \sigma \mu\,\mathbf{1}.
+\end{aligned}
+\label{eq:ipm-residuals}
+\]
+
+\textbf{Newton System (primal--dual step).} Solve for the Newton direction \((\Delta z,\Delta s,\Delta y,\Delta w)\):
+\[
+\begin{aligned}
+H\,\Delta z + A^\top \Delta y + G^\top \Delta w &= -\,r_{\mathrm{dual}},\\
+A\,\Delta z &= -\,r_{\mathrm{pe}},\\
+G\,\Delta z + \Delta s &= -\,r_{\mathrm{pi}},\\
+W\,\Delta s + S\,\Delta w &= -\,r_{\mathrm{cent}}.
+\end{aligned}
+\label{eq:ipm-newton}
+\]
+Eliminate \(\Delta s = -r_{\mathrm{pi}} - G\Delta z\) in the last equation to get
+\[
+S\,\Delta w
+= -\,r_{\mathrm{cent}} + W\,r_{\mathrm{pi}} + W\,G\,\Delta z
+\quad\Longrightarrow\quad
+\Delta w = S^{-1}\!\left(-r_{\mathrm{cent}} + W r_{\mathrm{pi}} + W G \Delta z\right).
+\]
+Substitute into the first equation to obtain the \textbf{reduced symmetric system} in \((\Delta z,\Delta y)\):
+\[
+\boxed{
+\begin{bmatrix}
+H + G^\top D G & A^\top\\
+A & \ \ 0
+\end{bmatrix}
+\begin{bmatrix}\Delta z\\ \Delta y\end{bmatrix}
+=
+-
+\begin{bmatrix}
+r_{\mathrm{dual}} - G^\top S^{-1} \big(r_{\mathrm{cent}} + W r_{\mathrm{pi}}\big)\\[2pt]
+r_{\mathrm{pe}}
+\end{bmatrix}}
+\label{eq:ipm-reduced}
+\]
+with \(D := S^{-1} W\). Then recover
+\[
+\Delta w = S^{-1}\!\left(-r_{\mathrm{cent}} + W r_{\mathrm{pi}} + W G \Delta z\right),\qquad
+\Delta s = -r_{\mathrm{pi}} - G \Delta z.
+\]
+
+\textbf{Step Lengths.} Choose step sizes to preserve positivity of \(s,w\):
+\[
+\alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i<0}\tfrac{-s_i}{\Delta s_i}\Big),\qquad
+\alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i<0}\tfrac{-w_i}{\Delta w_i}\Big),
+\label{eq:ipm-steps}
+\]
+with \(\eta\in(0,1)\) (e.g., \(0.99\)). Update both primal and dual variables
+\[
+\begin{aligned}
+z &\leftarrow z + \alpha_{\mathrm{pri}}\,\Delta z,\qquad
+s \leftarrow s + \alpha_{\mathrm{pri}}\,\Delta s,\\
+y &\leftarrow y + \alpha_{\mathrm{du}}\,\Delta y,\qquad
+w \leftarrow w + \alpha_{\mathrm{du}}\,\Delta w.
+\end{aligned}
+\]
+
+\textbf{Initialization and Stopping.}
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Initialization.} Find any \(z\) satisfying \(Az=b\) (e.g., least-squares projection). Set
+  \[
+  s := \max\{\mathbf{1},\, g - Gz\},\quad w := \mathbf{1},
+  \]
+  to ensure strict positivity (\(s>0,w>0\)); choose \(y:=0\).
+\item
+  \textbf{Stopping.} Terminate when
+  \[
+  \|r_{\mathrm{dual}}\|_\infty \le \varepsilon,\quad
+  \|r_{\mathrm{pe}}\|_\infty \le \varepsilon,\quad
+  \|r_{\mathrm{pi}}\|_\infty \le \varepsilon,\quad
+  \mu \le \varepsilon,
+  \]
+  for a small tolerance \(\varepsilon\) (e.g., \(10^{-6}\)).
+\end{itemize}
+
+The following pseudocode implements the PD-IPM algorithm for solving convex QP.
+
+\textbf{Algorithm: Primal--Dual Interior-Point for Convex QP}
+
+\textbf{Input:} \(H\succeq 0, h, A,b, G,g\); tolerance \(\varepsilon\); \(\eta=0.99\); \sigma \in (0,1)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Initialize \(z\) with \(Az=b\); set \(s>0, w>0\) (e.g., \(s=\max\{1,g-Gz\}\), \(w=\mathbf{1}\)); set \(y=0\).
+\item
+  Repeat until convergence:
+
+  \begin{enumerate}
+  \def\labelenumii{\arabic{enumii}.}
+  \tightlist
+  \item
+    Compute residuals \(r_{\mathrm{dual}}, r_{\mathrm{pe}}, r_{\mathrm{pi}}\), \(\mu=(s^\top w)/p\).
+  \item
+    Solve the reduced system \eqref{eq:ipm-reduced} to obtain Newton direction.
+  \item
+    Compute \(\alpha_{\mathrm{pri}},\alpha_{\mathrm{du}}\) by \eqref{eq:ipm-steps}.
+  \item
+    Update \((z,s,y,w)\).
+  \item
+    Check stopping criteria; if satisfied, \textbf{return} \(z^\star\).
+  \end{enumerate}
+\end{enumerate}
+
+\textbf{Remarks.}
+
+\begin{itemize}
+\item
+  For QPs obtained from trajectory optimization problems, the matrices are typically sparse (e.g., time-banded sparsity). This sparsity can be leveraged when forming and solving the Newton direction.
+\item
+  In practice, \href{https://en.wikipedia.org/wiki/Mehrotra_predictor\%E2\%80\%93corrector_method}{Mehrotra's predictor--corrector method} is used to improve the robustness and convergence of PD-IPM.
+\end{itemize}
+
+\subsection{Sequential Quadratic Programming}\label{sequential-quadratic-programming}
+
+\subsection{Interior Point Method}\label{interior-point-method}
 
 \section{Model Predictive Control}\label{mpc}
 
@@ -8359,7 +8599,7 @@ Here we provide the CVXPY codes for the above five convex optimization examples.
 \end{Highlighting}
 \end{Shaded}
 
-\subsubsection{QP}\label{qp}
+\subsubsection{QP}\label{qp-1}
 
 \begin{Shaded}
 \begin{Highlighting}[]

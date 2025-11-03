@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-10-29" />
+<meta name="date" content="2025-11-03" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -254,6 +254,9 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="4.3.1" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#traj-opt-ilqr"><i class="fa fa-check"></i><b>4.3.1</b> Iterative LQR</a></li>
 <li class="chapter" data-level="4.3.2" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#ddp"><i class="fa fa-check"></i><b>4.3.2</b> Differential Dynamic Programming</a></li>
+<li class="chapter" data-level="4.3.3" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#qp"><i class="fa fa-check"></i><b>4.3.3</b> Quadratic Programming</a></li>
+<li class="chapter" data-level="4.3.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#sequential-quadratic-programming"><i class="fa fa-check"></i><b>4.3.4</b> Sequential Quadratic Programming</a></li>
+<li class="chapter" data-level="4.3.5" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#interior-point-method"><i class="fa fa-check"></i><b>4.3.5</b> Interior Point Method</a></li>
 </ul></li>
 <li class="chapter" data-level="4.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#mpc"><i class="fa fa-check"></i><b>4.4</b> Model Predictive Control</a></li>
 </ul></li>
@@ -952,8 +955,8 @@ Seems tedious? Fortunately, CVX provides a high-level API to handle these linear
 <span id="cb14-25"><a href="appconvex.html#cb14-25" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal value: &quot;</span>, prob.value) <span class="co"># optimal objective</span></span>
 <span id="cb14-26"><a href="appconvex.html#cb14-26" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;optimal solution: &quot;</span>, x.value) <span class="co"># optimal x</span></span></code></pre></div>
 </div>
-<div id="qp" class="section level4 hasAnchor" number="6.2.7.2">
-<h4><span class="header-section-number">A.2.7.2</span> QP<a href="appconvex.html#qp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<div id="qp-1" class="section level4 hasAnchor" number="6.2.7.2">
+<h4><span class="header-section-number">A.2.7.2</span> QP<a href="appconvex.html#qp-1" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <div class="sourceCode" id="cb15"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb15-1"><a href="appconvex.html#cb15-1" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
 <span id="cb15-2"><a href="appconvex.html#cb15-2" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
 <span id="cb15-3"><a href="appconvex.html#cb15-3" tabindex="-1"></a></span>
