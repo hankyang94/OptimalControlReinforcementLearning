@@ -95,6 +95,11 @@ Nesterov, Y. (2018).
 \newblock {\em Lectures on convex optimization}, volume 137.
 \newblock Springer.
 
+\bibitem[Nocedal and Wright, 1999]{nocedal99book-numerical}
+Nocedal, J. and Wright, S.~J. (1999).
+\newblock {\em Numerical optimization}.
+\newblock Springer.
+
 \bibitem[Riedmiller, 2005]{riedmiller2005neural}
 Riedmiller, M. (2005).
 \newblock Neural fitted q iteration--first experiences with a data efficient
