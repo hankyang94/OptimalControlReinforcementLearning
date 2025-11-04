@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-11-03" />
+<meta name="date" content="2025-11-04" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -268,7 +268,7 @@ div.csl-indent {
 <ul>
 <li class="chapter" data-level="A.1.1" data-path="appconvex.html"><a href="appconvex.html#sets"><i class="fa fa-check"></i><b>A.1.1</b> Sets</a></li>
 <li class="chapter" data-level="A.1.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-convexfunction"><i class="fa fa-check"></i><b>A.1.2</b> Convex function</a></li>
-<li class="chapter" data-level="A.1.3" data-path="appconvex.html"><a href="appconvex.html#lagrange-dual"><i class="fa fa-check"></i><b>A.1.3</b> Lagrange dual</a></li>
+<li class="chapter" data-level="A.1.3" data-path="appconvex.html"><a href="appconvex.html#lagrangian-dual"><i class="fa fa-check"></i><b>A.1.3</b> Lagrange dual</a></li>
 <li class="chapter" data-level="A.1.4" data-path="appconvex.html"><a href="appconvex.html#appconvex-theory-kkt"><i class="fa fa-check"></i><b>A.1.4</b> KKT condition</a></li>
 </ul></li>
 <li class="chapter" data-level="A.2" data-path="appconvex.html"><a href="appconvex.html#appconvex-practice"><i class="fa fa-check"></i><b>A.2</b> Practice</a>
@@ -1148,11 +1148,16 @@ Then the horizon-wide problem is a <strong>QP</strong>:
 \tag{4.42}
 \]</span>
 Here <span class="math inline">\(H\succeq 0\)</span> is block-sparse (banded) due to the stagewise structure; the constraint matrices are also sparse/banded because each dynamic constraint couples only <span class="math inline">\((x_t,u_t,x_{t+1})\)</span>.</p>
-<p><strong>Convexity.</strong> If all stage Hessians <span class="math inline">\(H_t\succeq 0\)</span> and <span class="math inline">\(Q_N\succeq 0\)</span>, <a href="model-based-plan-optimize.html#eq:qp-stacked">(4.42)</a> is a <strong>convex QP</strong> with a <strong>unique</strong> minimizer when <span class="math inline">\(H\)</span> is positive definite on the feasible subspace (e.g., via <span class="math inline">\(R_t\succ 0\)</span>). Such QPs can be solved efficiently by primal-dual interior-point or active-set methods, exploiting block sparsity.</p>
+<div class="exercisebox">
+<div class="exercise">
+<p><span id="exr:unlabeled-div-23" class="exercise"><strong>Exercise 4.1  </strong></span>Can you write down the blocks in <span class="math inline">\(H\)</span>, <span class="math inline">\(A\)</span>, and <span class="math inline">\(G\)</span>, as functions of <span class="math inline">\(H_t,A_t,B_t,G^x_t, G^u_t\)</span>? Then, observe the block-sparsity patterns.</p>
+</div>
+</div>
+<p><strong>Convexity.</strong> If all stage Hessians <span class="math inline">\(H_t\succeq 0\)</span> and <span class="math inline">\(Q_N\succeq 0\)</span>, <a href="model-based-plan-optimize.html#eq:qp-stacked">(4.42)</a> is a <strong>convex QP</strong> with a <strong>unique</strong> minimizer when <span class="math inline">\(H\)</span> is positive definite on the feasible subspace (e.g., via <span class="math inline">\(R_t\succ 0\)</span>).</p>
 </div>
 <div id="solving-the-quadratic-program" class="section level4 hasAnchor" number="4.3.3.2">
 <h4><span class="header-section-number">4.3.3.2</span> Solving the Quadratic Program<a href="model-based-plan-optimize.html#solving-the-quadratic-program" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>We now discuss how to solve a general convex quadratic program containing both equality and inequality constraints:
+<p>We now discuss how to solve a general convex quadratic program (QP) containing both equality and inequality constraints:
 <span class="math display" id="eq:qp-general">\[
 \begin{aligned}
 \min_{z \in \mathbb{R}^n}\quad &amp; \frac{1}{2}\, z^\top H\, z \;+\; h^\top z \\
@@ -1163,18 +1168,47 @@ Here <span class="math inline">\(H\succeq 0\)</span> is block-sparse (banded) du
 \tag{4.43}
 \]</span>
 where <span class="math inline">\(z \in \mathbb{R}^n\)</span> is the decision variable, <span class="math inline">\(H \in \mathbb{S}^{n}, h \in \mathbb{R}^n, A \in \mathbb{R}^{m \times n}, b \in \mathbb{R}^m, G \in \mathbb{R}^{p \times n}, g \in \mathbb{R}^p\)</span> are given problem data (e.g., generated as in Section <a href="model-based-plan-optimize.html#to-qp">4.3.3.1</a>). We assume <span class="math inline">\(H \succeq 0\)</span> is positive semidefinite.</p>
-<p>There are multiple popular algorithms to solve <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a>, e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the <em>primal–dual interior point method</em> (PD-IPM) due to its generality and robustness.</p>
+<p>There are multiple popular algorithms to solve <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a>, e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the <em>primal–dual interior point method</em> (PD-IPM) due to its generality and robustness. Before presenting the PD-IPM algorithm, it is beneficial to review Newton’s method for solving a system of equations.</p>
+<div class="highlightbox">
+<p style="text-align: center;">
+<b>Newton’s Method</b>
+</p>
+<p>Given a function <span class="math inline">\(f: \mathbb{R} \rightarrow \mathbb{R}\)</span> that is continuously differentiable, Newton’s method is designed to find a root of
+<span class="math display">\[
+f(x) = 0.
+\]</span>
+Given an initial iterate <span class="math inline">\(x^{(0)}\)</span>, Newton’s method works as follows
+<span class="math display">\[
+x^{(k+1)} = x^{(k)} - \frac{f(x^{(k)})}{f&#39;(x^{(k)})},
+\]</span>
+where <span class="math inline">\(f&#39;(x^{(k)})\)</span> denotes the derivative of <span class="math inline">\(f\)</span> at the current iterate <span class="math inline">\(x^{(k)}\)</span>. This simple algorithm is indeed the most important foundation of modern numerical optimization. Under mild conditions, Newton’s method has at least quadratic convergence rate, that is to say, if <span class="math inline">\(|x^{(k)} - x^\star| = \epsilon\)</span>, then <span class="math inline">\(|x^{(k+1)} - x^\star| = O(\epsilon^2)\)</span> (it should be noted that there exist pathological cases where even linear convergence is not guaranteed, e.g., when <span class="math inline">\(f&#39;(x^\star) = 0\)</span>).</p>
+<p>Newton’s method can be generalized to find a point at which multiple functions vanish simultaneously. Given a function <span class="math inline">\(F: \mathbb{R}^{n} \rightarrow \mathbb{R}^{n}\)</span> that is continuously differentiable, and an initial iterate <span class="math inline">\(x^{(0)}\)</span>, Newton’s method reads
+<span class="math display" id="eq:newton-method-vector">\[\begin{equation}
+x^{(k+1)} = x^{(k)} - J_F(x^{(k)})^{-1} F(x^{(k)}),
+\tag{4.44}
+\end{equation}\]</span>
+where <span class="math inline">\(J_F(\cdot)\)</span> denotes the Jacobian of <span class="math inline">\(F\)</span>. Iteration <a href="model-based-plan-optimize.html#eq:newton-method-vector">(4.44)</a> is equivalent to
+<span class="math display" id="eq:newton-method-vector-1">\[\begin{equation}
+\begin{split}
+J_F(x^{(k)}) \Delta x^{(k)} &amp; = - F(x^{(k)}) \\
+x^{(k+1)} &amp; = x^{(k)} + \Delta x^{(k)}
+\end{split}
+\tag{4.45}
+\end{equation}\]</span>
+i.e., one first solves a linear system of equations to find an update direction <span class="math inline">\(\Delta x^{(k)}\)</span>, and then take a step along the direction.</p>
+<p>As we will see, PD-IPMs for solving convex QPs can be seen as applying Newton’s method to the perturbed KKT system of optimality conditions.</p>
+</div>
 <p><strong>Slacks, Lagrangian, and KKT Optimality.</strong> Introduce <span class="math inline">\(s\in\mathbb{R}^p\)</span> so that
 <span class="math display" id="eq:ipm-slack">\[
 Gz + s = g,\qquad s \ge 0.
-\tag{4.44}
+\tag{4.46}
 \]</span>
-Let <span class="math inline">\(y\in\mathbb{R}^m\)</span> be multipliers for <span class="math inline">\(Az=b\)</span>, <span class="math inline">\(\nu\in\mathbb{R}^p\)</span> for the equality <span class="math inline">\(Gz+s=g\)</span>, and <span class="math inline">\(w\in\mathbb{R}^p\)</span> (with <span class="math inline">\(w\ge 0\)</span>) for the inequality <span class="math inline">\(s\ge 0\)</span>. The Lagrangian for the QP <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a> is
+Let <span class="math inline">\(y\in\mathbb{R}^m\)</span> be the Lagrangian multipliers for <span class="math inline">\(Az=b\)</span>, <span class="math inline">\(\nu\in\mathbb{R}^p\)</span> for the equality <span class="math inline">\(Gz+s=g\)</span>, and <span class="math inline">\(w\in\mathbb{R}^p\)</span> (with <span class="math inline">\(w\ge 0\)</span>) for the inequality <span class="math inline">\(s\ge 0\)</span>. The Lagrangian for the QP <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a> is
 <span class="math display" id="eq:qp-Lagrangian">\[
 \mathcal L(z,s,y,\nu,w)
 = \frac{1}{2} z^\top H z + h^\top z
 + y^\top(Az-b) + \nu^\top(Gz+s-g) - w^\top s.
-\tag{4.45}
+\tag{4.47}
 \]</span>
 From the Lagrangian, we can derive the KKT optimality conditions, i.e., under technical conditions (such as constraint qualification), a point <span class="math inline">\((z,s)\)</span> is a local minimizer of the QP if and only if there exists dual variables <span class="math inline">\((\nu,w)\)</span> satisfying:
 <span class="math display" id="eq:ipm-kkt">\[
@@ -1189,15 +1223,18 @@ w \ge 0,\\
 \text{(complementarity)}&amp;:\quad
 s_i w_i = 0,\quad i=1,\dots,p.
 \end{aligned}
-\tag{4.46}
+\tag{4.48}
 \]</span>
-Using <span class="math inline">\(\nu=w\)</span> we eliminate <span class="math inline">\(\nu\)</span> and keep variables <span class="math inline">\((z,s,y,w)\)</span>. Since the QP is convex, we know that any local minimizer is a global minimizer. Hence, if we can solve the KKT system <a href="model-based-plan-optimize.html#eq:ipm-kkt">(4.46)</a>, we can find an optimal solution of the QP.</p>
-<p><strong>Central Path and Residuals.</strong> Replace complementarity by the <strong>perturbed</strong> condition
+Using <span class="math inline">\(\nu=w\)</span> we eliminate <span class="math inline">\(\nu\)</span> and keep variables <span class="math inline">\((z,s,y,w)\)</span>. Since the QP is convex, we know that any local minimizer is a global minimizer. Hence, if we can solve the KKT system <a href="model-based-plan-optimize.html#eq:ipm-kkt">(4.48)</a>, we can find an optimal solution of the QP.</p>
+<blockquote>
+<p>If you are not familiar with the Lagrangian and the KKT optimality conditions, make sure to review Appendix <a href="appconvex.html#lagrangian-dual">A.1.3</a> and <a href="appconvex.html#appconvex-theory-kkt">A.1.4</a>.</p>
+</blockquote>
+<p><strong>Central Path and Residuals.</strong> Replace complementarity by the <em>perturbed</em> condition
 <span class="math display" id="eq:ipm-central">\[
 S W \mathbf{1} = \sigma \mu\,\mathbf{1},
 \qquad
-\mu := \tfrac{1}{p}\, s^\top w, \qquad \sigma \in (0,1)
-\tag{4.47}
+\mu := \frac{1}{p}\, s^\top w, \qquad \sigma \in (0,1)
+\tag{4.49}
 \]</span>
 with <span class="math inline">\(S=\mathrm{diag}(s)\)</span>, <span class="math inline">\(W=\mathrm{diag}(w)\)</span>.
 At a current iterate <span class="math inline">\((z,s,y,w)\)</span> define residuals
@@ -1208,9 +1245,13 @@ r_{\mathrm{pe}}   &amp;= A z - b,\\
 r_{\mathrm{pi}}   &amp;= G z + s - g,\\
 r_{\mathrm{cent}} &amp;= S W \mathbf{1} - \sigma \mu\,\mathbf{1}.
 \end{aligned}
-\tag{4.48}
+\tag{4.50}
 \]</span></p>
-<p><strong>Newton System (primal–dual step).</strong> Solve for the Newton direction <span class="math inline">\((\Delta z,\Delta s,\Delta y,\Delta w)\)</span>:
+<p><strong>Newton System (primal–dual step).</strong> Now that we have arrived at the perturbed KKT system of equations in <a href="model-based-plan-optimize.html#eq:ipm-residuals">(4.50)</a> where we aim to drive all the residuals to zero. This is a system of <span class="math inline">\((n+m+p+p)\)</span> nonlinear equations in <span class="math inline">\((n + m + p + p)\)</span> variables. Therefore, we can apply Newton’s method to solve the system of equations.</p>
+<blockquote>
+<p>Note that we actually want to solve the original KKT system with <span class="math inline">\(\sigma \mu = 0\)</span>. However, this system is ill-conditioned and directly applying Newton’s method would lead to instability. Therefore, we solve the perturbed KKT system with <span class="math inline">\(\sigma \mu &gt; 0\)</span> and at each iteration we move closer to the original KKT system with <span class="math inline">\(\sigma \in (0,1)\)</span> so that in the limit we will converge (arbitrarily close) to a solution of the original KKT system.</p>
+</blockquote>
+<p>Solve for the Newton direction <span class="math inline">\((\Delta z,\Delta s,\Delta y,\Delta w)\)</span>:
 <span class="math display" id="eq:ipm-newton">\[
 \begin{aligned}
 H\,\Delta z + A^\top \Delta y + G^\top \Delta w &amp;= -\,r_{\mathrm{dual}},\\
@@ -1218,7 +1259,7 @@ A\,\Delta z &amp;= -\,r_{\mathrm{pe}},\\
 G\,\Delta z + \Delta s &amp;= -\,r_{\mathrm{pi}},\\
 W\,\Delta s + S\,\Delta w &amp;= -\,r_{\mathrm{cent}}.
 \end{aligned}
-\tag{4.49}
+\tag{4.51}
 \]</span>
 Eliminate <span class="math inline">\(\Delta s = -r_{\mathrm{pi}} - G\Delta z\)</span> in the last equation to get
 <span class="math display">\[
@@ -1229,7 +1270,6 @@ S\,\Delta w
 \]</span>
 Substitute into the first equation to obtain the <strong>reduced symmetric system</strong> in <span class="math inline">\((\Delta z,\Delta y)\)</span>:
 <span class="math display" id="eq:ipm-reduced">\[
-\boxed{
 \begin{bmatrix}
 H + G^\top D G &amp; A^\top\\
 A &amp; \ \ 0
@@ -1240,8 +1280,8 @@ A &amp; \ \ 0
 \begin{bmatrix}
 r_{\mathrm{dual}} - G^\top S^{-1} \big(r_{\mathrm{cent}} + W r_{\mathrm{pi}}\big)\\[2pt]
 r_{\mathrm{pe}}
-\end{bmatrix}}
-\tag{4.50}
+\end{bmatrix}
+\tag{4.52}
 \]</span>
 with <span class="math inline">\(D := S^{-1} W\)</span>. Then recover
 <span class="math display">\[
@@ -1252,7 +1292,7 @@ with <span class="math inline">\(D := S^{-1} W\)</span>. Then recover
 <span class="math display" id="eq:ipm-steps">\[
 \alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i&lt;0}\tfrac{-s_i}{\Delta s_i}\Big),\qquad
 \alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i&lt;0}\tfrac{-w_i}{\Delta w_i}\Big),
-\tag{4.51}
+\tag{4.53}
 \]</span>
 with <span class="math inline">\(\eta\in(0,1)\)</span> (e.g., <span class="math inline">\(0.99\)</span>). Update both primal and dual variables
 <span class="math display">\[
@@ -1300,14 +1340,14 @@ for a small tolerance <span class="math inline">\(\varepsilon\)</span> (e.g., <s
 <p>The following pseudocode implements the PD-IPM algorithm for solving convex QP.</p>
 <div class="highlightbox">
 <p><strong>Algorithm: Primal–Dual Interior-Point for Convex QP</strong></p>
-<p><strong>Input:</strong> <span class="math inline">\(H\succeq 0, h, A,b, G,g\)</span>; tolerance <span class="math inline">\(\varepsilon\)</span>; <span class="math inline">\(\eta=0.99\)</span>; (0,1)</p>
+<p><strong>Input:</strong> <span class="math inline">\(H\succeq 0, h, A,b, G,g\)</span>; tolerance <span class="math inline">\(\varepsilon\)</span>; <span class="math inline">\(\eta=0.99\)</span>; <span class="math inline">\(\sigma \in (0,1)\)</span></p>
 <ol style="list-style-type: decimal">
 <li>Initialize <span class="math inline">\(z\)</span> with <span class="math inline">\(Az=b\)</span>; set <span class="math inline">\(s&gt;0, w&gt;0\)</span> (e.g., <span class="math inline">\(s=\max\{1,g-Gz\}\)</span>, <span class="math inline">\(w=\mathbf{1}\)</span>); set <span class="math inline">\(y=0\)</span>.</li>
 <li>Repeat until convergence:
 <ol style="list-style-type: decimal">
 <li>Compute residuals <span class="math inline">\(r_{\mathrm{dual}}, r_{\mathrm{pe}}, r_{\mathrm{pi}}\)</span>, <span class="math inline">\(\mu=(s^\top w)/p\)</span>.</li>
-<li>Solve the reduced system <a href="model-based-plan-optimize.html#eq:ipm-reduced">(4.50)</a> to obtain Newton direction.</li>
-<li>Compute <span class="math inline">\(\alpha_{\mathrm{pri}},\alpha_{\mathrm{du}}\)</span> by <a href="model-based-plan-optimize.html#eq:ipm-steps">(4.51)</a>.</li>
+<li>Solve the reduced system <a href="model-based-plan-optimize.html#eq:ipm-reduced">(4.52)</a> to obtain Newton direction.</li>
+<li>Compute <span class="math inline">\(\alpha_{\mathrm{pri}},\alpha_{\mathrm{du}}\)</span> by <a href="model-based-plan-optimize.html#eq:ipm-steps">(4.53)</a>.</li>
 <li>Update <span class="math inline">\((z,s,y,w)\)</span>.</li>
 <li>Check stopping criteria; if satisfied, <strong>return</strong> <span class="math inline">\(z^\star\)</span>.</li>
 </ol></li>
@@ -1318,6 +1358,140 @@ for a small tolerance <span class="math inline">\(\varepsilon\)</span> (e.g., <s
 <li><p>For QPs obtained from trajectory optimization problems, the matrices are typically sparse (e.g., time-banded sparsity). This sparsity can be leveraged when forming and solving the Newton direction.</p></li>
 <li><p>In practice, <a href="https://en.wikipedia.org/wiki/Mehrotra_predictor%E2%80%93corrector_method">Mehrotra’s predictor–corrector method</a> is used to improve the robustness and convergence of PD-IPM.</p></li>
 </ul>
+<p><strong>Software.</strong> It is important to understand the high-level algorithmic idea for solving a convex QP. However, in practice, there are many mature QP solvers and it takes just a few lines of code to call your favorite QP solver.</p>
+<p>The following code snippet shows how to define a QP in <a href="https://www.cvxpy.org"><code>cvxpy</code></a> and then solve it using MOSEK (which implements PD-IPM).</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="model-based-plan-optimize.html#cb7-1" tabindex="-1"></a><span class="co"># Minimal dense QP with CVXPY</span></span>
+<span id="cb7-2"><a href="model-based-plan-optimize.html#cb7-2" tabindex="-1"></a><span class="co">#   minimize    (1/2) x^T P x + q^T x</span></span>
+<span id="cb7-3"><a href="model-based-plan-optimize.html#cb7-3" tabindex="-1"></a><span class="co">#   subject to  Ax &lt;= b, 1^T x = 1</span></span>
+<span id="cb7-4"><a href="model-based-plan-optimize.html#cb7-4" tabindex="-1"></a><span class="co">#</span></span>
+<span id="cb7-5"><a href="model-based-plan-optimize.html#cb7-5" tabindex="-1"></a><span class="co"># pip install cvxpy</span></span>
+<span id="cb7-6"><a href="model-based-plan-optimize.html#cb7-6" tabindex="-1"></a></span>
+<span id="cb7-7"><a href="model-based-plan-optimize.html#cb7-7" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb7-8"><a href="model-based-plan-optimize.html#cb7-8" tabindex="-1"></a><span class="im">import</span> cvxpy <span class="im">as</span> cp</span>
+<span id="cb7-9"><a href="model-based-plan-optimize.html#cb7-9" tabindex="-1"></a></span>
+<span id="cb7-10"><a href="model-based-plan-optimize.html#cb7-10" tabindex="-1"></a><span class="co"># ----- QP data (dense) -----</span></span>
+<span id="cb7-11"><a href="model-based-plan-optimize.html#cb7-11" tabindex="-1"></a>P <span class="op">=</span> np.array([</span>
+<span id="cb7-12"><a href="model-based-plan-optimize.html#cb7-12" tabindex="-1"></a>    [<span class="fl">4.0</span>, <span class="fl">1.0</span>, <span class="fl">0.5</span>],</span>
+<span id="cb7-13"><a href="model-based-plan-optimize.html#cb7-13" tabindex="-1"></a>    [<span class="fl">1.0</span>, <span class="fl">2.0</span>, <span class="fl">0.3</span>],</span>
+<span id="cb7-14"><a href="model-based-plan-optimize.html#cb7-14" tabindex="-1"></a>    [<span class="fl">0.5</span>, <span class="fl">0.3</span>, <span class="fl">1.5</span>]</span>
+<span id="cb7-15"><a href="model-based-plan-optimize.html#cb7-15" tabindex="-1"></a>], dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb7-16"><a href="model-based-plan-optimize.html#cb7-16" tabindex="-1"></a><span class="co"># Make sure P is symmetric positive definite</span></span>
+<span id="cb7-17"><a href="model-based-plan-optimize.html#cb7-17" tabindex="-1"></a>P <span class="op">=</span> <span class="fl">0.5</span> <span class="op">*</span> (P <span class="op">+</span> P.T) <span class="op">+</span> <span class="fl">1e-9</span> <span class="op">*</span> np.eye(<span class="dv">3</span>)</span>
+<span id="cb7-18"><a href="model-based-plan-optimize.html#cb7-18" tabindex="-1"></a></span>
+<span id="cb7-19"><a href="model-based-plan-optimize.html#cb7-19" tabindex="-1"></a>q <span class="op">=</span> np.array([<span class="op">-</span><span class="fl">1.0</span>, <span class="op">-</span><span class="fl">2.0</span>, <span class="op">-</span><span class="fl">3.0</span>])</span>
+<span id="cb7-20"><a href="model-based-plan-optimize.html#cb7-20" tabindex="-1"></a></span>
+<span id="cb7-21"><a href="model-based-plan-optimize.html#cb7-21" tabindex="-1"></a>A <span class="op">=</span> np.array([</span>
+<span id="cb7-22"><a href="model-based-plan-optimize.html#cb7-22" tabindex="-1"></a>    [<span class="fl">1.0</span>, <span class="op">-</span><span class="fl">2.0</span>, <span class="fl">1.0</span>],   <span class="co"># linear inequality:  x1 - 2 x2 + x3 ≤ 2</span></span>
+<span id="cb7-23"><a href="model-based-plan-optimize.html#cb7-23" tabindex="-1"></a>    [<span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>],   <span class="co"># x1 ≥ 0  -&gt;  -x1 ≤ 0</span></span>
+<span id="cb7-24"><a href="model-based-plan-optimize.html#cb7-24" tabindex="-1"></a>    [<span class="fl">0.0</span>, <span class="op">-</span><span class="fl">1.0</span>, <span class="fl">0.0</span>],   <span class="co"># x2 ≥ 0  -&gt;  -x2 ≤ 0</span></span>
+<span id="cb7-25"><a href="model-based-plan-optimize.html#cb7-25" tabindex="-1"></a>    [<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="op">-</span><span class="fl">1.0</span>],   <span class="co"># x3 ≥ 0  -&gt;  -x3 ≤ 0</span></span>
+<span id="cb7-26"><a href="model-based-plan-optimize.html#cb7-26" tabindex="-1"></a>    [<span class="fl">1.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>],    <span class="co"># x1 ≤ 1.5</span></span>
+<span id="cb7-27"><a href="model-based-plan-optimize.html#cb7-27" tabindex="-1"></a>    [<span class="fl">0.0</span>, <span class="fl">1.0</span>, <span class="fl">0.0</span>],    <span class="co"># x2 ≤ 1.5</span></span>
+<span id="cb7-28"><a href="model-based-plan-optimize.html#cb7-28" tabindex="-1"></a>    [<span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.0</span>],    <span class="co"># x3 ≤ 1.5</span></span>
+<span id="cb7-29"><a href="model-based-plan-optimize.html#cb7-29" tabindex="-1"></a>])</span>
+<span id="cb7-30"><a href="model-based-plan-optimize.html#cb7-30" tabindex="-1"></a>b <span class="op">=</span> np.array([<span class="fl">2.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">0.0</span>, <span class="fl">1.5</span>, <span class="fl">1.5</span>, <span class="fl">1.5</span>])</span>
+<span id="cb7-31"><a href="model-based-plan-optimize.html#cb7-31" tabindex="-1"></a></span>
+<span id="cb7-32"><a href="model-based-plan-optimize.html#cb7-32" tabindex="-1"></a><span class="co"># Equality: sum(x) = 1</span></span>
+<span id="cb7-33"><a href="model-based-plan-optimize.html#cb7-33" tabindex="-1"></a>e <span class="op">=</span> np.ones((<span class="dv">1</span>, <span class="dv">3</span>))</span>
+<span id="cb7-34"><a href="model-based-plan-optimize.html#cb7-34" tabindex="-1"></a>d <span class="op">=</span> np.array([<span class="fl">1.0</span>])</span>
+<span id="cb7-35"><a href="model-based-plan-optimize.html#cb7-35" tabindex="-1"></a></span>
+<span id="cb7-36"><a href="model-based-plan-optimize.html#cb7-36" tabindex="-1"></a><span class="co"># ----- CVXPY problem -----</span></span>
+<span id="cb7-37"><a href="model-based-plan-optimize.html#cb7-37" tabindex="-1"></a>x <span class="op">=</span> cp.Variable(<span class="dv">3</span>)</span>
+<span id="cb7-38"><a href="model-based-plan-optimize.html#cb7-38" tabindex="-1"></a></span>
+<span id="cb7-39"><a href="model-based-plan-optimize.html#cb7-39" tabindex="-1"></a>objective <span class="op">=</span> cp.Minimize(<span class="fl">0.5</span> <span class="op">*</span> cp.quad_form(x, P) <span class="op">+</span> q <span class="op">@</span> x)</span>
+<span id="cb7-40"><a href="model-based-plan-optimize.html#cb7-40" tabindex="-1"></a>constraints <span class="op">=</span> [</span>
+<span id="cb7-41"><a href="model-based-plan-optimize.html#cb7-41" tabindex="-1"></a>    A <span class="op">@</span> x <span class="op">&lt;=</span> b,</span>
+<span id="cb7-42"><a href="model-based-plan-optimize.html#cb7-42" tabindex="-1"></a>    e <span class="op">@</span> x <span class="op">==</span> d</span>
+<span id="cb7-43"><a href="model-based-plan-optimize.html#cb7-43" tabindex="-1"></a>]</span>
+<span id="cb7-44"><a href="model-based-plan-optimize.html#cb7-44" tabindex="-1"></a></span>
+<span id="cb7-45"><a href="model-based-plan-optimize.html#cb7-45" tabindex="-1"></a>prob <span class="op">=</span> cp.Problem(objective, constraints)</span>
+<span id="cb7-46"><a href="model-based-plan-optimize.html#cb7-46" tabindex="-1"></a><span class="co"># You can choose a solver; OSQP is common for QPs. ECOS/SCS also work.</span></span>
+<span id="cb7-47"><a href="model-based-plan-optimize.html#cb7-47" tabindex="-1"></a>prob.solve(solver<span class="op">=</span>cp.MOSEK, verbose<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb7-48"><a href="model-based-plan-optimize.html#cb7-48" tabindex="-1"></a></span>
+<span id="cb7-49"><a href="model-based-plan-optimize.html#cb7-49" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Status:&quot;</span>, prob.status)</span>
+<span id="cb7-50"><a href="model-based-plan-optimize.html#cb7-50" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Optimal value:&quot;</span>, prob.value)</span>
+<span id="cb7-51"><a href="model-based-plan-optimize.html#cb7-51" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;x* =&quot;</span>, x.value.<span class="bu">round</span>(<span class="dv">6</span>))</span>
+<span id="cb7-52"><a href="model-based-plan-optimize.html#cb7-52" tabindex="-1"></a></span>
+<span id="cb7-53"><a href="model-based-plan-optimize.html#cb7-53" tabindex="-1"></a><span class="co"># (Optional) check constraints</span></span>
+<span id="cb7-54"><a href="model-based-plan-optimize.html#cb7-54" tabindex="-1"></a>ineq_res <span class="op">=</span> (A <span class="op">@</span> x.value <span class="op">-</span> b)</span>
+<span id="cb7-55"><a href="model-based-plan-optimize.html#cb7-55" tabindex="-1"></a>eq_res <span class="op">=</span> (e <span class="op">@</span> x.value <span class="op">-</span> d)</span>
+<span id="cb7-56"><a href="model-based-plan-optimize.html#cb7-56" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Max inequality residual (&lt;=0):&quot;</span>, np.<span class="bu">max</span>(ineq_res))</span>
+<span id="cb7-57"><a href="model-based-plan-optimize.html#cb7-57" tabindex="-1"></a><span class="bu">print</span>(<span class="st">&quot;Equality residual (≈0):&quot;</span>, eq_res.item())</span></code></pre></div>
+<p>Running the code produces the following output. You should now be able to interpret the iterations of MOSEK.</p>
+<pre><code>-------------------------------------------------------------------------------
+                                Numerical solver                               
+-------------------------------------------------------------------------------
+(CVXPY) Nov 04 12:06:51 PM: Invoking solver MOSEK  to obtain a solution.
+
+
+(CVXPY) Nov 04 12:06:52 PM: Problem
+(CVXPY) Nov 04 12:06:52 PM:   Name                   :                 
+(CVXPY) Nov 04 12:06:52 PM:   Objective sense        : maximize        
+(CVXPY) Nov 04 12:06:52 PM:   Type                   : CONIC (conic optimization problem)
+(CVXPY) Nov 04 12:06:52 PM:   Constraints            : 4               
+(CVXPY) Nov 04 12:06:52 PM:   Affine conic cons.     : 0               
+(CVXPY) Nov 04 12:06:52 PM:   Disjunctive cons.      : 0               
+(CVXPY) Nov 04 12:06:52 PM:   Cones                  : 1               
+(CVXPY) Nov 04 12:06:52 PM:   Scalar variables       : 13              
+(CVXPY) Nov 04 12:06:52 PM:   Matrix variables       : 0               
+(CVXPY) Nov 04 12:06:52 PM:   Integer variables      : 0               
+(CVXPY) Nov 04 12:06:52 PM: 
+(CVXPY) Nov 04 12:06:52 PM: Optimizer started.
+(CVXPY) Nov 04 12:06:52 PM: Presolve started.
+(CVXPY) Nov 04 12:06:52 PM: Linear dependency checker started.
+(CVXPY) Nov 04 12:06:52 PM: Linear dependency checker terminated.
+(CVXPY) Nov 04 12:06:52 PM: Eliminator started.
+(CVXPY) Nov 04 12:06:52 PM: Freed constraints in eliminator : 1
+(CVXPY) Nov 04 12:06:52 PM: Eliminator terminated.
+(CVXPY) Nov 04 12:06:52 PM: Eliminator started.
+(CVXPY) Nov 04 12:06:52 PM: Freed constraints in eliminator : 0
+(CVXPY) Nov 04 12:06:52 PM: Eliminator terminated.
+(CVXPY) Nov 04 12:06:52 PM: Eliminator - tries                  : 2                 time                   : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - tries                  : 1                 time                   : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - primal attempts        : 1                 successes              : 1               
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - dual attempts          : 0                 successes              : 0               
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - primal deps.           : 0                 dual deps.             : 0               
+(CVXPY) Nov 04 12:06:52 PM: Presolve terminated. Time: 0.00    
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - threads                : 12              
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - solved problem         : the primal      
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Constraints            : 3               
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Cones                  : 1               
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Scalar variables       : 10                conic                  : 5               
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
+(CVXPY) Nov 04 12:06:52 PM: Factor     - setup time             : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Factor     - dense det. time        : 0.00              GP order time          : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Factor     - nonzeros before factor : 6                 after factor           : 6               
+(CVXPY) Nov 04 12:06:52 PM: Factor     - dense dim.             : 0                 flops                  : 6.40e+01        
+(CVXPY) Nov 04 12:06:52 PM: ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
+(CVXPY) Nov 04 12:06:52 PM: 0   1.3e+00  3.0e+00  2.0e+00  0.00e+00   -2.000000000e+00  -1.000000000e+00  1.0e+00  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 1   2.2e-01  5.3e-01  2.4e-01  1.05e-01   -1.810182709e+00  -1.723136430e+00  1.8e-01  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 2   3.7e-02  8.9e-02  1.6e-02  9.48e-01   -2.154687486e+00  -2.135415569e+00  3.0e-02  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 3   1.0e-02  2.5e-02  2.2e-03  1.01e+00   -2.236775806e+00  -2.230836084e+00  8.2e-03  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 4   2.8e-03  6.7e-03  3.2e-04  1.02e+00   -2.250313751e+00  -2.248643381e+00  2.2e-03  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 5   7.7e-04  1.8e-03  4.5e-05  1.00e+00   -2.256166317e+00  -2.255708191e+00  6.1e-04  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 6   2.1e-05  5.1e-05  2.1e-07  1.00e+00   -2.256863865e+00  -2.256850955e+00  1.7e-05  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 7   1.0e-07  2.4e-07  6.8e-11  1.00e+00   -2.256896295e+00  -2.256896233e+00  8.1e-08  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 8   8.5e-09  2.0e-08  1.6e-12  1.00e+00   -2.256896526e+00  -2.256896521e+00  6.7e-09  0.00  
+(CVXPY) Nov 04 12:06:52 PM: Optimizer terminated. Time: 0.00    
+(CVXPY) Nov 04 12:06:52 PM: 
+(CVXPY) Nov 04 12:06:52 PM: 
+(CVXPY) Nov 04 12:06:52 PM: Interior-point solution summary
+(CVXPY) Nov 04 12:06:52 PM:   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+(CVXPY) Nov 04 12:06:52 PM:   Solution status : OPTIMAL
+(CVXPY) Nov 04 12:06:52 PM:   Primal.  obj: -2.2568965259e+00   nrm: 3e+00    Viol.  con: 2e-08    var: 1e-08    cones: 0e+00  
+(CVXPY) Nov 04 12:06:52 PM:   Dual.    obj: -2.2568965208e+00   nrm: 1e+00    Viol.  con: 0e+00    var: 2e-08    cones: 0e+00  
+-------------------------------------------------------------------------------
+                                    Summary                                    
+-------------------------------------------------------------------------------
+(CVXPY) Nov 04 12:06:52 PM: Problem status: optimal
+(CVXPY) Nov 04 12:06:52 PM: Optimal value: -2.257e+00
+(CVXPY) Nov 04 12:06:52 PM: Compilation took 3.196e-03 seconds
+(CVXPY) Nov 04 12:06:52 PM: Solver (including time spent in interface) took 1.100e+00 seconds
+Status: optimal
+Optimal value: -2.256896525744356
+x* = [0.       0.068914 0.931086]
+Max inequality residual (&lt;=0): -1.938693250380652e-08
+Equality residual (≈0): 0.0</code></pre>
 </div>
 </div>
 <div id="sequential-quadratic-programming" class="section level3 hasAnchor" number="4.3.4">
