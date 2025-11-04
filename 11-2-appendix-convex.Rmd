@@ -170,7 +170,7 @@ For the same purpose, some operations that preserve the convexity of the convex 
 :::
 
 
-### Lagrange dual
+### Lagrange dual {#lagrangian-dual}
 
 We consider an optimization problem in the standard form (without assuming convexity of anything):
 \begin{equation}

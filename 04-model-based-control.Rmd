@@ -906,11 +906,17 @@ Then the horizon-wide problem is a **QP**:
 \]
 Here \(H\succeq 0\) is block-sparse (banded) due to the stagewise structure; the constraint matrices are also sparse/banded because each dynamic constraint couples only \((x_t,u_t,x_{t+1})\).
 
-**Convexity.** If all stage Hessians \(H_t\succeq 0\) and \(Q_N\succeq 0\), \@ref(eq:qp-stacked) is a **convex QP** with a **unique** minimizer when \(H\) is positive definite on the feasible subspace (e.g., via \(R_t\succ 0\)). Such QPs can be solved efficiently by primal-dual interior-point or active-set methods, exploiting block sparsity.
+::: {.exercisebox}
+::: {.exercise}
+Can you write down the blocks in $H$, $A$, and $G$, as functions of $H_t,A_t,B_t,G^x_t, G^u_t$? Then, observe the block-sparsity patterns.
+:::
+:::
+
+**Convexity.** If all stage Hessians \(H_t\succeq 0\) and \(Q_N\succeq 0\), \@ref(eq:qp-stacked) is a **convex QP** with a **unique** minimizer when \(H\) is positive definite on the feasible subspace (e.g., via \(R_t\succ 0\)).
 
 #### Solving the Quadratic Program 
 
-We now discuss how to solve a general convex quadratic program containing both equality and inequality constraints:
+We now discuss how to solve a general convex quadratic program (QP) containing both equality and inequality constraints:
 \[
 \begin{aligned}
 \min_{z \in \mathbb{R}^n}\quad & \frac{1}{2}\, z^\top H\, z \;+\; h^\top z \\
@@ -922,14 +928,46 @@ We now discuss how to solve a general convex quadratic program containing both e
 \]
 where $z \in \mathbb{R}^n$ is the decision variable, $H \in \mathbb{S}^{n}, h \in \mathbb{R}^n, A \in \mathbb{R}^{m \times n}, b \in \mathbb{R}^m, G \in \mathbb{R}^{p \times n}, g \in \mathbb{R}^p$ are given problem data (e.g., generated as in Section \@ref(to-qp)). We assume $H \succeq 0$ is positive semidefinite.
 
-There are multiple popular algorithms to solve \@ref(eq:qp-general), e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the *primal--dual interior point method* (PD-IPM) due to its generality and robustness. 
+There are multiple popular algorithms to solve \@ref(eq:qp-general), e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the *primal--dual interior point method* (PD-IPM) due to its generality and robustness. Before presenting the PD-IPM algorithm, it is beneficial to review Newton's method for solving a system of equations.
+
+
+::: {.highlightbox}
+<p style="text-align: center;"><b>Newton's Method</b></p>
+
+Given a function $f: \mathbb{R} \rightarrow \mathbb{R}$ that is continuously differentiable, Newton's method is designed to find a root of
+$$
+f(x) = 0.
+$$ 
+Given an initial iterate $x^{(0)}$, Newton's method works as follows 
+$$
+x^{(k+1)} = x^{(k)} - \frac{f(x^{(k)})}{f'(x^{(k)})},
+$$
+where $f'(x^{(k)})$ denotes the derivative of $f$ at the current iterate $x^{(k)}$. This simple algorithm is indeed the most important foundation of modern numerical optimization. Under mild conditions, Newton's method has at least quadratic convergence rate, that is to say, if $|x^{(k)} - x^\star| = \epsilon$, then $|x^{(k+1)} - x^\star| = O(\epsilon^2)$ (it should be noted that there exist pathological cases where even linear convergence is not guaranteed, e.g., when $f'(x^\star) = 0$). 
+
+Newton's method can be generalized to find a point at which multiple functions vanish simultaneously. Given a function $F: \mathbb{R}^{n} \rightarrow \mathbb{R}^{n}$ that is continuously differentiable, and an initial iterate $x^{(0)}$, Newton's method reads 
+\begin{equation}
+x^{(k+1)} = x^{(k)} - J_F(x^{(k)})^{-1} F(x^{(k)}),
+(\#eq:newton-method-vector)
+\end{equation}
+where $J_F(\cdot)$ denotes the Jacobian of $F$. Iteration \@ref(eq:newton-method-vector) is equivalent to 
+\begin{equation}
+\begin{split}
+J_F(x^{(k)}) \Delta x^{(k)} & = - F(x^{(k)}) \\
+x^{(k+1)} & = x^{(k)} + \Delta x^{(k)}
+\end{split}
+(\#eq:newton-method-vector-1)
+\end{equation}
+i.e., one first solves a linear system of equations to find an update direction $\Delta x^{(k)}$, and then take a step along the direction.
+
+As we will see, PD-IPMs for solving convex QPs can be seen as applying Newton's method to the perturbed KKT system of optimality conditions.
+:::
 
 **Slacks, Lagrangian, and KKT Optimality.** Introduce \(s\in\mathbb{R}^p\) so that
 \[
 Gz + s = g,\qquad s \ge 0. 
 (\#eq:ipm-slack)
 \]
-Let \(y\in\mathbb{R}^m\) be multipliers for \(Az=b\), \(\nu\in\mathbb{R}^p\) for the equality \(Gz+s=g\), and \(w\in\mathbb{R}^p\) (with \(w\ge 0\)) for the inequality \(s\ge 0\). The Lagrangian for the QP \@ref(eq:qp-general) is
+Let \(y\in\mathbb{R}^m\) be the Lagrangian multipliers for \(Az=b\), \(\nu\in\mathbb{R}^p\) for the equality \(Gz+s=g\), and \(w\in\mathbb{R}^p\) (with \(w\ge 0\)) for the inequality \(s\ge 0\). The Lagrangian for the QP \@ref(eq:qp-general) is
 \[
 \mathcal L(z,s,y,\nu,w)
 = \frac{1}{2} z^\top H z + h^\top z
@@ -953,11 +991,13 @@ s_i w_i = 0,\quad i=1,\dots,p.
 \]
 Using \(\nu=w\) we eliminate \(\nu\) and keep variables \((z,s,y,w)\). Since the QP is convex, we know that any local minimizer is a global minimizer. Hence, if we can solve the KKT system \@ref(eq:ipm-kkt), we can find an optimal solution of the QP.
 
-**Central Path and Residuals.** Replace complementarity by the **perturbed** condition
+> If you are not familiar with the Lagrangian and the KKT optimality conditions, make sure to review Appendix \@ref(lagrangian-dual) and \@ref(appconvex-theory-kkt).
+
+**Central Path and Residuals.** Replace complementarity by the *perturbed* condition
 \[
 S W \mathbf{1} = \sigma \mu\,\mathbf{1},
 \qquad
-\mu := \tfrac{1}{p}\, s^\top w, \qquad \sigma \in (0,1)
+\mu := \frac{1}{p}\, s^\top w, \qquad \sigma \in (0,1)
 (\#eq:ipm-central)
 \]
 with \(S=\mathrm{diag}(s)\), \(W=\mathrm{diag}(w)\).
@@ -972,7 +1012,11 @@ r_{\mathrm{cent}} &= S W \mathbf{1} - \sigma \mu\,\mathbf{1}.
 (\#eq:ipm-residuals)
 \]
 
-**Newton System (primal–dual step).** Solve for the Newton direction \((\Delta z,\Delta s,\Delta y,\Delta w)\):
+**Newton System (primal–dual step).** Now that we have arrived at the perturbed KKT system of equations in \@ref(eq:ipm-residuals) where we aim to drive all the residuals to zero. This is a system of $(n+m+p+p)$ nonlinear equations in $(n + m + p + p)$ variables. Therefore, we can apply Newton's method to solve the system of equations. 
+
+> Note that we actually want to solve the original KKT system with $\sigma \mu = 0$. However, this system is ill-conditioned and directly applying Newton's method would lead to instability. Therefore, we solve the perturbed KKT system with $\sigma \mu > 0$ and at each iteration we move closer to the original KKT system with $\sigma \in (0,1)$ so that in the limit we will converge (arbitrarily close) to a solution of the original KKT system.
+
+Solve for the Newton direction \((\Delta z,\Delta s,\Delta y,\Delta w)\):
 \[
 \begin{aligned}
 H\,\Delta z + A^\top \Delta y + G^\top \Delta w &= -\,r_{\mathrm{dual}},\\
@@ -991,7 +1035,6 @@ S\,\Delta w
 \]
 Substitute into the first equation to obtain the **reduced symmetric system** in \((\Delta z,\Delta y)\):
 \[
-\boxed{
 \begin{bmatrix}
 H + G^\top D G & A^\top\\
 A & \ \ 0
@@ -1002,7 +1045,7 @@ A & \ \ 0
 \begin{bmatrix}
 r_{\mathrm{dual}} - G^\top S^{-1} \big(r_{\mathrm{cent}} + W r_{\mathrm{pi}}\big)\\[2pt]
 r_{\mathrm{pe}}
-\end{bmatrix}}
+\end{bmatrix}
 (\#eq:ipm-reduced)
 \]
 with $D := S^{-1} W$. Then recover
@@ -1068,7 +1111,7 @@ The following pseudocode implements the PD-IPM algorithm for solving convex QP.
 ::: {.highlightbox}
 **Algorithm: Primal–Dual Interior-Point for Convex QP**
 
-**Input:** \(H\succeq 0, h, A,b, G,g\); tolerance \(\varepsilon\); \(\eta=0.99\); \sigma \in (0,1)
+**Input:** \(H\succeq 0, h, A,b, G,g\); tolerance \(\varepsilon\); \(\eta=0.99\); $\sigma \in (0,1)$
 
 1. Initialize \(z\) with \(Az=b\); set \(s>0, w>0\) (e.g., \(s=\max\{1,g-Gz\}\), \(w=\mathbf{1}\)); set \(y=0\).
 2. Repeat until convergence:
@@ -1084,6 +1127,151 @@ The following pseudocode implements the PD-IPM algorithm for solving convex QP.
 - For QPs obtained from trajectory optimization problems, the matrices are typically sparse (e.g., time-banded sparsity). This sparsity can be leveraged when forming and solving the Newton direction.
 
 - In practice, [Mehrotra's predictor–corrector method](https://en.wikipedia.org/wiki/Mehrotra_predictor%E2%80%93corrector_method) is used to improve the robustness and convergence of PD-IPM.
+
+**Software.** It is important to understand the high-level algorithmic idea for solving a convex QP. However, in practice, there are many mature QP solvers and it takes just a few lines of code to call your favorite QP solver.
+
+The following code snippet shows how to define a QP in [`cvxpy`](https://www.cvxpy.org) and then solve it using MOSEK (which implements PD-IPM).
+
+```python
+# Minimal dense QP with CVXPY
+#   minimize    (1/2) x^T P x + q^T x
+#   subject to  Ax <= b, 1^T x = 1
+#
+# pip install cvxpy
+
+import numpy as np
+import cvxpy as cp
+
+# ----- QP data (dense) -----
+P = np.array([
+    [4.0, 1.0, 0.5],
+    [1.0, 2.0, 0.3],
+    [0.5, 0.3, 1.5]
+], dtype=float)
+# Make sure P is symmetric positive definite
+P = 0.5 * (P + P.T) + 1e-9 * np.eye(3)
+
+q = np.array([-1.0, -2.0, -3.0])
+
+A = np.array([
+    [1.0, -2.0, 1.0],   # linear inequality:  x1 - 2 x2 + x3 ≤ 2
+    [-1.0, 0.0, 0.0],   # x1 ≥ 0  ->  -x1 ≤ 0
+    [0.0, -1.0, 0.0],   # x2 ≥ 0  ->  -x2 ≤ 0
+    [0.0, 0.0, -1.0],   # x3 ≥ 0  ->  -x3 ≤ 0
+    [1.0, 0.0, 0.0],    # x1 ≤ 1.5
+    [0.0, 1.0, 0.0],    # x2 ≤ 1.5
+    [0.0, 0.0, 1.0],    # x3 ≤ 1.5
+])
+b = np.array([2.0, 0.0, 0.0, 0.0, 1.5, 1.5, 1.5])
+
+# Equality: sum(x) = 1
+e = np.ones((1, 3))
+d = np.array([1.0])
+
+# ----- CVXPY problem -----
+x = cp.Variable(3)
+
+objective = cp.Minimize(0.5 * cp.quad_form(x, P) + q @ x)
+constraints = [
+    A @ x <= b,
+    e @ x == d
+]
+
+prob = cp.Problem(objective, constraints)
+# You can choose a solver; OSQP is common for QPs. ECOS/SCS also work.
+prob.solve(solver=cp.MOSEK, verbose=True)
+
+print("Status:", prob.status)
+print("Optimal value:", prob.value)
+print("x* =", x.value.round(6))
+
+# (Optional) check constraints
+ineq_res = (A @ x.value - b)
+eq_res = (e @ x.value - d)
+print("Max inequality residual (<=0):", np.max(ineq_res))
+print("Equality residual (≈0):", eq_res.item())
+```
+
+Running the code produces the following output. You should now be able to interpret the iterations of MOSEK.
+
+```
+-------------------------------------------------------------------------------
+                                Numerical solver                               
+-------------------------------------------------------------------------------
+(CVXPY) Nov 04 12:06:51 PM: Invoking solver MOSEK  to obtain a solution.
+
+
+(CVXPY) Nov 04 12:06:52 PM: Problem
+(CVXPY) Nov 04 12:06:52 PM:   Name                   :                 
+(CVXPY) Nov 04 12:06:52 PM:   Objective sense        : maximize        
+(CVXPY) Nov 04 12:06:52 PM:   Type                   : CONIC (conic optimization problem)
+(CVXPY) Nov 04 12:06:52 PM:   Constraints            : 4               
+(CVXPY) Nov 04 12:06:52 PM:   Affine conic cons.     : 0               
+(CVXPY) Nov 04 12:06:52 PM:   Disjunctive cons.      : 0               
+(CVXPY) Nov 04 12:06:52 PM:   Cones                  : 1               
+(CVXPY) Nov 04 12:06:52 PM:   Scalar variables       : 13              
+(CVXPY) Nov 04 12:06:52 PM:   Matrix variables       : 0               
+(CVXPY) Nov 04 12:06:52 PM:   Integer variables      : 0               
+(CVXPY) Nov 04 12:06:52 PM: 
+(CVXPY) Nov 04 12:06:52 PM: Optimizer started.
+(CVXPY) Nov 04 12:06:52 PM: Presolve started.
+(CVXPY) Nov 04 12:06:52 PM: Linear dependency checker started.
+(CVXPY) Nov 04 12:06:52 PM: Linear dependency checker terminated.
+(CVXPY) Nov 04 12:06:52 PM: Eliminator started.
+(CVXPY) Nov 04 12:06:52 PM: Freed constraints in eliminator : 1
+(CVXPY) Nov 04 12:06:52 PM: Eliminator terminated.
+(CVXPY) Nov 04 12:06:52 PM: Eliminator started.
+(CVXPY) Nov 04 12:06:52 PM: Freed constraints in eliminator : 0
+(CVXPY) Nov 04 12:06:52 PM: Eliminator terminated.
+(CVXPY) Nov 04 12:06:52 PM: Eliminator - tries                  : 2                 time                   : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - tries                  : 1                 time                   : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - primal attempts        : 1                 successes              : 1               
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - dual attempts          : 0                 successes              : 0               
+(CVXPY) Nov 04 12:06:52 PM: Lin. dep.  - primal deps.           : 0                 dual deps.             : 0               
+(CVXPY) Nov 04 12:06:52 PM: Presolve terminated. Time: 0.00    
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - threads                : 12              
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - solved problem         : the primal      
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Constraints            : 3               
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Cones                  : 1               
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Scalar variables       : 10                conic                  : 5               
+(CVXPY) Nov 04 12:06:52 PM: Optimizer  - Semi-definite variables: 0                 scalarized             : 0               
+(CVXPY) Nov 04 12:06:52 PM: Factor     - setup time             : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Factor     - dense det. time        : 0.00              GP order time          : 0.00            
+(CVXPY) Nov 04 12:06:52 PM: Factor     - nonzeros before factor : 6                 after factor           : 6               
+(CVXPY) Nov 04 12:06:52 PM: Factor     - dense dim.             : 0                 flops                  : 6.40e+01        
+(CVXPY) Nov 04 12:06:52 PM: ITE PFEAS    DFEAS    GFEAS    PRSTATUS   POBJ              DOBJ              MU       TIME  
+(CVXPY) Nov 04 12:06:52 PM: 0   1.3e+00  3.0e+00  2.0e+00  0.00e+00   -2.000000000e+00  -1.000000000e+00  1.0e+00  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 1   2.2e-01  5.3e-01  2.4e-01  1.05e-01   -1.810182709e+00  -1.723136430e+00  1.8e-01  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 2   3.7e-02  8.9e-02  1.6e-02  9.48e-01   -2.154687486e+00  -2.135415569e+00  3.0e-02  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 3   1.0e-02  2.5e-02  2.2e-03  1.01e+00   -2.236775806e+00  -2.230836084e+00  8.2e-03  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 4   2.8e-03  6.7e-03  3.2e-04  1.02e+00   -2.250313751e+00  -2.248643381e+00  2.2e-03  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 5   7.7e-04  1.8e-03  4.5e-05  1.00e+00   -2.256166317e+00  -2.255708191e+00  6.1e-04  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 6   2.1e-05  5.1e-05  2.1e-07  1.00e+00   -2.256863865e+00  -2.256850955e+00  1.7e-05  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 7   1.0e-07  2.4e-07  6.8e-11  1.00e+00   -2.256896295e+00  -2.256896233e+00  8.1e-08  0.00  
+(CVXPY) Nov 04 12:06:52 PM: 8   8.5e-09  2.0e-08  1.6e-12  1.00e+00   -2.256896526e+00  -2.256896521e+00  6.7e-09  0.00  
+(CVXPY) Nov 04 12:06:52 PM: Optimizer terminated. Time: 0.00    
+(CVXPY) Nov 04 12:06:52 PM: 
+(CVXPY) Nov 04 12:06:52 PM: 
+(CVXPY) Nov 04 12:06:52 PM: Interior-point solution summary
+(CVXPY) Nov 04 12:06:52 PM:   Problem status  : PRIMAL_AND_DUAL_FEASIBLE
+(CVXPY) Nov 04 12:06:52 PM:   Solution status : OPTIMAL
+(CVXPY) Nov 04 12:06:52 PM:   Primal.  obj: -2.2568965259e+00   nrm: 3e+00    Viol.  con: 2e-08    var: 1e-08    cones: 0e+00  
+(CVXPY) Nov 04 12:06:52 PM:   Dual.    obj: -2.2568965208e+00   nrm: 1e+00    Viol.  con: 0e+00    var: 2e-08    cones: 0e+00  
+-------------------------------------------------------------------------------
+                                    Summary                                    
+-------------------------------------------------------------------------------
+(CVXPY) Nov 04 12:06:52 PM: Problem status: optimal
+(CVXPY) Nov 04 12:06:52 PM: Optimal value: -2.257e+00
+(CVXPY) Nov 04 12:06:52 PM: Compilation took 3.196e-03 seconds
+(CVXPY) Nov 04 12:06:52 PM: Solver (including time spent in interface) took 1.100e+00 seconds
+Status: optimal
+Optimal value: -2.256896525744356
+x* = [0.       0.068914 0.931086]
+Max inequality residual (<=0): -1.938693250380652e-08
+Equality residual (≈0): 0.0
+```
+
+
 
 
 ### Sequential Quadratic Programming
