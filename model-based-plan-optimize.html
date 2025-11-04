@@ -255,7 +255,7 @@ div.csl-indent {
 <li class="chapter" data-level="4.3.1" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#traj-opt-ilqr"><i class="fa fa-check"></i><b>4.3.1</b> Iterative LQR</a></li>
 <li class="chapter" data-level="4.3.2" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#ddp"><i class="fa fa-check"></i><b>4.3.2</b> Differential Dynamic Programming</a></li>
 <li class="chapter" data-level="4.3.3" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#qp"><i class="fa fa-check"></i><b>4.3.3</b> Quadratic Programming</a></li>
-<li class="chapter" data-level="4.3.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#sequential-quadratic-programming"><i class="fa fa-check"></i><b>4.3.4</b> Sequential Quadratic Programming</a></li>
+<li class="chapter" data-level="4.3.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#sqp"><i class="fa fa-check"></i><b>4.3.4</b> Sequential Quadratic Programming</a></li>
 <li class="chapter" data-level="4.3.5" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#interior-point-method"><i class="fa fa-check"></i><b>4.3.5</b> Interior Point Method</a></li>
 </ul></li>
 <li class="chapter" data-level="4.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#mpc"><i class="fa fa-check"></i><b>4.4</b> Model Predictive Control</a></li>
@@ -1109,7 +1109,7 @@ Figure 4.5: iLQR Trajectory Generation for Rocket Landing.
 <h3><span class="header-section-number">4.3.3</span> Quadratic Programming<a href="model-based-plan-optimize.html#qp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>Trajectory optimization (TO) with nonlinear dynamics and objectives is well served by iLQR/DDP: at each outer iteration, they <em>linearize</em> the dynamics and <em>quadratize</em> the objective, then solve a <em>time-varying LQR</em> subproblem. This works remarkably well for <em>unconstrained</em> or softly constrained problems.</p>
 <p>However, many TO tasks are <strong>constrained</strong>—e.g., obstacle avoidance, actuator limits, keep-out zones, terminal envelopes. Hard constraints are awkward for iLQR/DDP (they typically enter via penalties or saturations), and feasibility can be fragile. For such cases, it is often more natural to frame TO as a <strong>nonlinear program (NLP)</strong>—an optimization problem with general nonlinear objective and constraints. This brings the full machinery of modern numerical optimization (see, e.g., <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>).</p>
-<p>As a first step, we study the <strong>convex</strong> special case where the linearization already yields linear dynamics, affine constraints, and a quadratic objective. This leads to <strong>Quadratic Programming (QP)</strong>, a cornerstone problem class with mature, efficient solvers. In the next section, we will lift these ideas to <strong>Sequential Quadratic Programming (SQP)</strong> to handle <em>general</em> constrained TO.</p>
+<p>As a first step, we study the <strong>convex</strong> special case where the linearization already yields linear dynamics, affine constraints, and a quadratic objective (these are typically known as “constrained LQR” problems). This leads to <strong>Quadratic Programming (QP)</strong>, a cornerstone problem class with mature, efficient solvers. In the next section, we will lift these ideas to <strong>Sequential Quadratic Programming (SQP)</strong> to handle <em>general</em> constrained TO.</p>
 <div id="to-qp" class="section level4 hasAnchor" number="4.3.3.1">
 <h4><span class="header-section-number">4.3.3.1</span> From Trajectory Optimization to Quadratic Programming<a href="model-based-plan-optimize.html#to-qp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>Start from the constrained TO template in <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>. Suppose:</p>
@@ -1494,8 +1494,319 @@ Max inequality residual (&lt;=0): -1.938693250380652e-08
 Equality residual (≈0): 0.0</code></pre>
 </div>
 </div>
-<div id="sequential-quadratic-programming" class="section level3 hasAnchor" number="4.3.4">
-<h3><span class="header-section-number">4.3.4</span> Sequential Quadratic Programming<a href="model-based-plan-optimize.html#sequential-quadratic-programming" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="sqp" class="section level3 hasAnchor" number="4.3.4">
+<h3><span class="header-section-number">4.3.4</span> Sequential Quadratic Programming<a href="model-based-plan-optimize.html#sqp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We have seen that quadratic programs (QPs) gracefully handle <em>constrained LQR–style</em> trajectory optimization: convex quadratic costs, linear dynamics, and affine path/terminal constraints. With time-stacked sparsity, these problems are solved efficiently (e.g., via interior-point methods), making QP a strong tool for that regime.</p>
+<p>The natural next step is the general trajectory optimization problem in <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>, which features nonlinear dynamics, <em>nonconvex</em> objectives, and <em>nonlinear</em> constraints. To tackle this, we turn to <em>Sequential Quadratic Programming (SQP)</em>—a Newton-like framework that <em>iteratively</em> linearizes the dynamics/constraints and quadratizes the objective to form a sequence of QP subproblems. Each QP is solved to produce a step and updated multipliers; with globalization and appropriate Hessian modeling, the sequence converges to a <em>locally optimal</em> solution (a KKT point) of the original nonlinear TO problem. In short: QP handles the convex linearized case; SQP extends that logic to the full nonlinear setting by repeatedly building and solving the right QP at the current iterate.</p>
+<div id="problem-statement" class="section level4 hasAnchor" number="4.3.4.1">
+<h4><span class="header-section-number">4.3.4.1</span> Problem Statement<a href="model-based-plan-optimize.html#problem-statement" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>We will consider the following general nonlinear program (NLP)
+<span class="math display" id="eq:sqp-nlp">\[
+\begin{aligned}
+\min_{x\in\mathbb{R}^n}\quad &amp; f(x) \\
+\text{s.t.}\quad &amp; c(x)=0 \quad (c:\mathbb{R}^n\!\to\mathbb{R}^{m}),\\
+&amp; d(x)\le 0 \quad (d:\mathbb{R}^n\!\to\mathbb{R}^{p}),
+\end{aligned}
+\tag{4.54}
+\]</span>
+with objective function <span class="math inline">\(f(x)\)</span>, equality constraints <span class="math inline">\(c(x)=0\)</span>, and inequality constraints <span class="math inline">\(d(x)\leq 0\)</span>. To obtain the NLP formulation <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a> from the TO template <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>, one needs to define the set constraints <span class="math inline">\(x_t \in \mathcal{X}_t\)</span> and <span class="math inline">\(u_t \in \mathcal{U}_t\)</span> as general equality and inequality constraints. The decision variable <span class="math inline">\(x\)</span> contains the entire sequence of states and actions.</p>
+<blockquote>
+<p>While in many cases the functions <span class="math inline">\(f,c,d\)</span> are defined analytically, technically speaking, we only need zero-order and first-order oracles of these functions to implement numerical algorithms. That is, given a point <span class="math inline">\(x\)</span>, we need to evaluate <span class="math inline">\(f(x), c(x), d(x)\)</span> and their first-order derivatives.</p>
+</blockquote>
+<p>With dual variables <span class="math inline">\(\lambda \in \mathbb{R}^m\)</span> and <span class="math inline">\(\mu \in \mathbb{R}^p\)</span>, define the Lagrangian of <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a> as
+<span class="math display">\[
+\mathcal L(x,\lambda,\mu) \;=\; f(x) + \lambda^\top c(x) + \mu^\top d(x),\qquad \mu\ge 0,
+\]</span>
+and Jacobians <span class="math inline">\(J_c(x):=\nabla c(x)\in\mathbb{R}^{m\times n}\)</span>, <span class="math inline">\(J_d(x):=\nabla d(x)\in\mathbb{R}^{p\times n}\)</span>.</p>
+</div>
+<div id="high-level-intuition" class="section level4 hasAnchor" number="4.3.4.2">
+<h4><span class="header-section-number">4.3.4.2</span> High-Level Intuition<a href="model-based-plan-optimize.html#high-level-intuition" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>At a current iterate <span class="math inline">\(x_k\)</span>, we (1) Linearize the constraints and (2) quadratize the Lagrangian to build a local QP. Solving this QP yields a primal step <span class="math inline">\(p_k\)</span> and updated multipliers <span class="math inline">\((\lambda_{k+1},\mu_{k+1})\)</span> (from QP duals). A line-search (or trust-region) with a merit or filter globalization ensures convergence from remote starts.</p>
+<p>Key ingredients:</p>
+<ul>
+<li><p>A Hessian (or quasi-Newton) approximation <span class="math inline">\(H_k \approx \nabla_{xx}^2\mathcal L(x_k,\lambda_k,\mu_k)\)</span>.</p></li>
+<li><p>A QP subproblem capturing first-order feasibility and second-order optimality locally.</p></li>
+<li><p>A globalization mechanism (<span class="math inline">\(\ell_1\)</span> merit or filter) + optional second-order correction (SOC) to mitigate linearization error in active inequalities.</p></li>
+</ul>
+</div>
+<div id="the-sqp-qp-subproblem" class="section level4 hasAnchor" number="4.3.4.3">
+<h4><span class="header-section-number">4.3.4.3</span> The SQP QP Subproblem<a href="model-based-plan-optimize.html#the-sqp-qp-subproblem" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>Given the current iterate <span class="math inline">\((x_k,\lambda_k,\mu_k)\)</span>, define
+<span class="math display">\[
+g_k := \nabla f(x_k),\qquad
+c_k := c(x_k),\qquad
+d_k := d(x_k),\qquad
+A_k := J_c(x_k),\qquad
+G_k := J_d(x_k).
+\]</span>
+Let <span class="math inline">\(H_k\)</span> be a symmetric approximation to <span class="math inline">\(\nabla_{xx}^2 \mathcal L(x_k,\lambda_k,\mu_k)\)</span> (see Section <a href="model-based-plan-optimize.html#sqp-Hessian-approximate">4.3.4.4</a>).</p>
+<p>The QP subproblem in this step is
+<span class="math display" id="eq:sqp-qp">\[
+\begin{aligned}
+\min_{p\in\mathbb{R}^n}\quad &amp;
+\frac{1}{2} p^\top H_k\, p + g_k^\top p \\[1mm]
+\text{s.t.}\quad &amp;
+A_k\, p + c_k = 0, \\
+&amp; G_k\, p + d_k \le 0.
+\end{aligned}
+\tag{4.55}
+\]</span>
+This defines a local quadratic model of <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a>: constraints are linearized; the objective is the second-order Taylor model of the Lagrangian (up to a constant).</p>
+<p>Solving the QP subproblem <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.55)</a> returns:</p>
+<ul>
+<li><strong>Primal step</strong> <span class="math inline">\(p_k\)</span>.</li>
+<li><strong>Dual estimates</strong> <span class="math inline">\(\lambda_{k+1}^{\text{QP}}, \mu_{k+1}^{\text{QP}}\)</span> (the QP multipliers), which we use as new multipliers.</li>
+</ul>
+</div>
+<div id="sqp-Hessian-approximate" class="section level4 hasAnchor" number="4.3.4.4">
+<h4><span class="header-section-number">4.3.4.4</span> Hessian Approximation<a href="model-based-plan-optimize.html#sqp-Hessian-approximate" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>The most natural choice for <span class="math inline">\(H_k\)</span> in the QP subproblem <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.55)</a> is the exact Hessian:
+<span class="math display">\[
+H_k = \nabla_{xx}^2 \mathcal{L}(x_k, \lambda_k, \mu_k) = \nabla_{xx}^2 f(x_k) + \sum_{i} \lambda_{k,i} \nabla_{xx}^2 c_i(x_k) + \sum_{i} \mu_{k,i} \nabla_{xx}^2 d_i(x_k).
+\]</span>
+However, two potential issues with the exact Hessian are (i) it can be costly to build and store the analytic Hessians <span class="math inline">\(\nabla_{xx}^2 f, \nabla_{xx}^2 c_i, \nabla_{xx}^2 d_i\)</span>; (ii) the exact Hessian <span class="math inline">\(H_k\)</span> may not be positive semidefinite, which may lead to failure of convexity in the QP subproblem.</p>
+<p>A cornerstone result in numerical optimization, due to <a href="https://en.wikipedia.org/wiki/Broyden%E2%80%93Fletcher%E2%80%93Goldfarb%E2%80%93Shanno_algorithm">Broyden–Fletcher–Goldfarb–Shanno</a> (BFGS), is to build an approximate Hessian from first-order derivatives. In particular, given two consecutive primal iterates <span class="math inline">\(x_{k+1}, x_k\)</span> (and their associated dual variables) and first-order gradients of the Lagrangian <span class="math inline">\(\nabla_x \mathcal{L}(x_{k+1}, \lambda_{k+1}, \mu_{k+1})\)</span>, <span class="math inline">\(\nabla_x \mathcal{L}(x_{k}, \lambda_{k}, \mu_{k})\)</span>, define
+<span class="math display">\[
+s_k := x_{k+1}-x_k,\qquad
+   y_k := \nabla_x \mathcal L(x_{k+1},\lambda_{k+1},\mu_{k+1})
+          - \nabla_x \mathcal L(x_k,\lambda_k,\mu_k).
+\]</span>
+The BFGS quasi-Newton method updates <span class="math inline">\(H_{k+1}\)</span> from <span class="math inline">\(H_k\)</span> as follows
+<span class="math display" id="eq:BFGS">\[
+H_{k+1} = H_k - \frac{H_k s_k s_k^\top H_k}{s_k^\top H_k s_k}
+          + \frac{y_k y_k^\top}{s_k^\top y_k}.
+\tag{4.56}
+\]</span>
+One can show that if <span class="math inline">\(y_k^\top s_k &gt; 0\)</span> holds, the BFGS Hessian approximation is always positive definite (provided <span class="math inline">\(H_0 \succ 0\)</span>). Therefore, the BFGS Hessian approximation ensures the QP subproblem is convex. If the curvature condition <span class="math inline">\(y_k^\top s_k &gt; 0\)</span> fails to hold, one can resort to damped BFGS, see <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p>
+<blockquote>
+<p>There is a broad family of quasi-Newton methods with BFGS being one of the most popular instances. For example, the <a href="https://en.wikipedia.org/wiki/Symmetric_rank-one">symmetric rank-one</a> (SR1) method is another popular quasi-Newton variant. In addition, the “limited memory” version of quasi-Newton methods (e.g., limited memory BFGS <span class="citation">(<a href="#ref-liu1989limited">Liu and Nocedal 1989</a>)</span>) can further reduce the price of Hessian approximation by only looking at the history of a small amount of gradients.</p>
+</blockquote>
+</div>
+<div id="globalization-merit-or-filter" class="section level4 hasAnchor" number="4.3.4.5">
+<h4><span class="header-section-number">4.3.4.5</span> Globalization: Merit or Filter<a href="model-based-plan-optimize.html#globalization-merit-or-filter" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>To accept a step, we assess optimality improvement + feasibility improvement:</p>
+<ul>
+<li><p><strong><span class="math inline">\(\ell_1\)</span> merit</strong> (exact-penalty style): define the merit function
+<span class="math display">\[
+\phi_\rho(x) = f(x) + \rho \big(\|c(x)\|_1 + \|d^+(x)\|_1\big),\quad d^+ := \max(d,0),
+\]</span>
+with penalty <span class="math inline">\(\rho\)</span> large enough (<span class="math inline">\(\rho\)</span> can also be adaptive with respect to iterations). Use backtracking line search on <span class="math inline">\(\phi_\rho(x_k+\alpha p_k)\)</span> to ensure decrease of the merit function.</p></li>
+<li><p><strong>Filter</strong> method: Maintain a set of pairs <span class="math inline">\((\text{feasibility},\text{objective})\)</span>. Accept steps that reduce <strong>either</strong> feasibility or objective sufficiently without worsening the other beyond the filter. Often paired with Second-order correction, see more details in <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p></li>
+</ul>
+<p>The following pseudocode implements a basic line-search SQP with quasi-Newton Hessian approximation.</p>
+<div class="highlightbox">
+<p><strong>Algorithm: Line-Search SQP</strong></p>
+<p><strong>Inputs:</strong> <span class="math inline">\(x_0\)</span>, multipliers <span class="math inline">\((\lambda_0,\mu_0\ge 0)\)</span>, initial Hessian <span class="math inline">\(H_0\succ 0\)</span> (e.g., <span class="math inline">\(\gamma I\)</span>), globalization parameters.</p>
+<p>For <span class="math inline">\(k=0,1,2,\dots\)</span></p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Linearize &amp; build QP</strong>: form <span class="math inline">\(g_k, A_k, G_k, c_k, d_k\)</span> and <span class="math inline">\(H_k\)</span>, then solve the QP <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.55)</a> to get <span class="math inline">\(p_k\)</span> and QP multipliers <span class="math inline">\((\hat\lambda_{k+1},\hat\mu_{k+1}\ge 0)\)</span>.</p></li>
+<li><p><strong>Globalization</strong>: Choose step size <span class="math inline">\(\alpha_k\in(0,1]\)</span> by backtracking on the <span class="math inline">\(\ell_1\)</span>-merit.</p></li>
+<li><p><strong>Update</strong>:
+<span class="math display">\[
+x_{k+1} = x_k + \alpha_k p_k,\qquad
+\lambda_{k+1} = \hat\lambda_{k+1},\qquad
+\mu_{k+1} = \Pi_{\ge 0}(\hat\mu_{k+1}).
+\]</span></p></li>
+<li><p><strong>Hessian (quasi-Newton) update</strong>: define
+<span class="math display">\[
+s_k := x_{k+1}-x_k,\qquad
+y_k := \nabla_x \mathcal L(x_{k+1},\lambda_{k+1},\mu_{k+1})
+       - \nabla_x \mathcal L(x_k,\lambda_k,\mu_k).
+\]</span>
+update
+<span class="math display">\[
+H_{k+1} = H_k - \frac{H_k s_k s_k^\top H_k}{s_k^\top H_k s_k}
+          + \frac{y_k y_k^\top}{s_k^\top y_k}.
+\]</span></p></li>
+<li><p><strong>Stopping:</strong> if KKT residuals (stationarity, primal feasibility, complementarity) are below tolerance, <strong>terminate</strong>.</p></li>
+</ol>
+</div>
+<p><strong>Notes.</strong></p>
+<ul>
+<li><p><strong>Trust-region SQP.</strong> An alternative globalization: add <span class="math inline">\(\|p\|\le \Delta\)</span> or a quadratic trust region, and update <span class="math inline">\(\Delta\)</span> by comparing predicted vs. actual reduction in a composite model.</p></li>
+<li><p><strong>Software.</strong> The <code>scipy</code> package in Python implements SLSQP, which is basically the line-search SQP we presented above. A more advanced version of SQP is provided by the <a href="https://ccom.ucsd.edu/~optimizers/solvers/snopt/">SNOPT</a> commercial software. The <a href="https://github.com/ComputationalRobotics/CRISP">CRISP</a> software provides a C++ implementation of an SQP algorithm. Additionally, Matlab’s <a href="https://www.mathworks.com/help/optim/ug/fmincon.html"><code>fmincon</code></a> provides an implementation of SQP.</p></li>
+</ul>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:sqp-to" class="example"><strong>Example 4.4  (Trajectory Optimization with SQP) </strong></span>We formulate a trajectory optimization (TO) problem for a unicycle robot that must travel from a start pose <span class="math inline">\(A\)</span> to a goal pose <span class="math inline">\(B\)</span> while avoiding circular (ball-shaped) obstacles.</p>
+<p><strong>System Model.</strong> We use the standard unicycle (Dubins-like) kinematics in continuous time:
+<span class="math display" id="eq:uni-cts">\[
+\dot{x}(t)=
+\begin{bmatrix}
+\dot{p}_x\\[2pt]\dot{p}_y\\[2pt]\dot{\theta}
+\end{bmatrix}
+=
+\begin{bmatrix}
+v(t)\cos\theta(t)\\
+v(t)\sin\theta(t)\\
+\omega(t)
+\end{bmatrix},
+\qquad
+x=[p_x,p_y,\theta]^\top,\ \ u=[v,\omega]^\top.
+\tag{4.57}
+\]</span></p>
+<p>We discretize on a uniform grid <span class="math inline">\(t_k=k h,\ k=0,\dots,N\)</span> with step <span class="math inline">\(h&gt;0\)</span> by forward Euler:
+<span class="math display" id="eq:uni-disc">\[
+x_{k+1} \;=\; f_h(x_k,u_k)
+\;:=\;
+\begin{bmatrix}
+p_{x,k} + h\, v_k \cos \theta_k\\
+p_{y,k} + h\, v_k \sin \theta_k\\
+\theta_k + h\, \omega_k
+\end{bmatrix}.
+\tag{4.58}
+\]</span></p>
+<!-- For later use (e.g., analytic Jacobians in SQP), the **discrete-time Jacobians** are
+\[
+A_k := \frac{\partial f_h}{\partial x}(x_k,u_k)
+=
+\begin{bmatrix}
+1 & 0 & -h v_k \sin\theta_k\\
+0 & 1 & \ \ h v_k \cos\theta_k\\
+0 & 0 & 1
+\end{bmatrix},
+\qquad
+B_k := \frac{\partial f_h}{\partial u}(x_k,u_k)
+=
+\begin{bmatrix}
+h\cos\theta_k & 0\\
+h\sin\theta_k & 0\\
+0 & h
+\end{bmatrix}.
+(\#eq:uni-jacobians)
+\]
+
+--- -->
+<p><strong>Decision Variables.</strong> We optimize over the state–control sequence
+<span class="math display">\[
+\{x_k\}_{k=0}^N,\quad \{u_k\}_{k=0}^{N-1},
+\]</span>
+and collect them into a single vector
+<span class="math display" id="eq:uni-stacked-z">\[
+z
+=
+\big[x_0^\top,\ u_0^\top,\ x_1^\top,\ u_1^\top,\ \dots,\ x_{N-1}^\top,\ u_{N-1}^\top,\ x_N^\top\big]^\top
+\;\in\;\mathbb{R}^{(3+2)N+3}.
+\tag{4.59}
+\]</span></p>
+<p><strong>Constraints.</strong> We impose the following constraints.</p>
+<p><strong>(i) Initial condition.</strong>
+<span class="math display" id="eq:uni-x0">\[
+x_0 = A \in \mathbb{R}^3.
+\tag{4.60}
+\]</span></p>
+<p><strong>(ii) System dynamics (equality constraints).</strong> For <span class="math inline">\(k=0,\dots,N-1\)</span>,
+<span class="math display" id="eq:uni-dyn-eq">\[
+x_{k+1} - f_h(x_k,u_k) = 0.
+\tag{4.61}
+\]</span></p>
+<p><strong>(iii) Obstacle avoidance (inequalities).</strong> Let the set of circular obstacles be <span class="math inline">\(\mathcal{O}=\{(c_j,r_j)\}_{j=1}^{n_{\text{obs}}}\)</span> with centers <span class="math inline">\(c_j=[c_{x,j},c_{y,j}]^\top\)</span> and radii <span class="math inline">\(r_j&gt;0\)</span>. We require the robot’s position to stay outside each inflated disk of radius <span class="math inline">\(r_j+\delta\)</span> (safety margin <span class="math inline">\(\delta\ge 0\)</span>) at every knot:
+<span class="math display">\[
+\underbrace{(p_{x,k}-c_{x,j})^2 + (p_{y,k}-c_{y,j})^2}_{\text{dist}^2(x_k,\text{center}_j)}
+\;\;\ge\;\; (r_j+\delta)^2,
+\qquad
+\forall k=0,\dots,N,\ \forall j.
+\]</span>
+In “<span class="math inline">\(c(x)\le 0\)</span>” form (e.g., for <code>fmincon</code>):
+<span class="math display" id="eq:uni-obstacles">\[
+c_{j,k}(x_k) \;:=\; (r_j+\delta)^2 - \big((p_{x,k}-c_{x,j})^2 + (p_{y,k}-c_{y,j})^2\big) \;\le\; 0.
+\tag{4.62}
+\]</span></p>
+<p><strong>(iv) Simple bounds.</strong> Box limits on controls (and possibly states):
+<span class="math display" id="eq:uni-bounds">\[
+v_{\min} \le v_k \le v_{\max},\qquad
+\omega_{\min} \le \omega_k \le \omega_{\max},\qquad k=0,\dots,N-1.
+\tag{4.63}
+\]</span></p>
+<p><strong>Objective function.</strong> We use a smooth quadratic objective combining (a) terminal goal tracking, (b) control effort, and (c) control smoothness (temporal regularization):</p>
+<ul>
+<li><strong>Terminal goal tracking</strong> to a desired pose <span class="math inline">\(B=[p_x^\star,p_y^\star,\theta^\star]^\top\)</span>:
+<span class="math display">\[
+J_{\text{goal}}
+\;=\;
+w_{\text{pos}} \,\big\|x_N^{\text{pos}} - B^{\text{pos}}\big\|_2^2
+\;+\;
+w_{\theta}\,(\theta_N-\theta^\star)^2,
+\quad
+x_N^{\text{pos}}=[p_{x,N},p_{y,N}]^\top.
+\]</span></li>
+<li><strong>Control effort</strong>:
+<span class="math display">\[
+J_{u} \;=\; \sum_{k=0}^{N-1} w_u \,\|u_k\|_2^2
+\;=\;
+\sum_{k=0}^{N-1} w_u\,(v_k^2+\omega_k^2).
+\]</span></li>
+<li><strong>Control smoothness</strong> (discrete total-variation-like quadratic):
+<span class="math display">\[
+J_{\Delta u}
+\;=\;
+\sum_{k=0}^{N-2} w_{\Delta u}\,\|u_{k+1}-u_k\|_2^2.
+\]</span></li>
+</ul>
+<p>The complete cost is
+<span class="math display" id="eq:uni-obj">\[
+J(x_{0:N},u_{0:N-1})
+=
+\frac{1}{2}\Big(
+J_{\text{goal}} + J_u + J_{\Delta u}
+\Big),
+\tag{4.64}
+\]</span>
+where the outer factor <span class="math inline">\(\tfrac12\)</span> is conventional in quadratic objectives.</p>
+<p><strong>Complete optimization problem.</strong> Given <span class="math inline">\(A,B,\{(c_j,r_j)\},\delta,h,N\)</span>, choose <span class="math inline">\(\{x_k\}_{k=0}^N,\{u_k\}_{k=0}^{N-1}\)</span> to
+<span class="math display">\[
+\begin{aligned}
+\min_{\{x_k,u_k\}} \quad
+&amp; \frac{1}{2}\Big(
+w_{\text{pos}} \|x_N^{\text{pos}}-B^{\text{pos}}\|_2^2
++ w_{\theta}(\theta_N-\theta^\star)^2
++ \sum_{k=0}^{N-1} w_u \|u_k\|_2^2
++ \sum_{k=0}^{N-2} w_{\Delta u} \|u_{k+1}-u_k\|_2^2
+\Big) \\[2mm]
+\text{s.t.}\quad
+&amp; x_0 = A, \\[2pt]
+&amp; x_{k+1} = f_h(x_k,u_k)\quad \text{for } k=0,\dots,N-1, \\[2pt]
+&amp; (r_j+\delta)^2 - \big((p_{x,k}-c_{x,j})^2 + (p_{y,k}-c_{y,j})^2\big) \le 0,
+\ \ \forall j,\ \forall k, \\[2pt]
+&amp; v_{\min} \le v_k \le v_{\max},\quad
+  \omega_{\min} \le \omega_k \le \omega_{\max},\quad k=0,\dots,N-1.
+\end{aligned}
+\]</span>
+This is a smooth, sparse nonlinear program (NLP).</p>
+<p><strong>Experimental setup.</strong></p>
+<ul>
+<li>Horizon <span class="math inline">\(N=60\)</span>, step <span class="math inline">\(h=0.1\)</span> s.<br />
+</li>
+<li>Start <span class="math inline">\(A=[0,0,0]^\top\)</span>, goal <span class="math inline">\(B=[6,5,0]^\top\)</span>.<br />
+</li>
+<li>Obstacles <span class="math inline">\(\{(c_j,r_j)\}\)</span> with a margin <span class="math inline">\(\delta=0.25\)</span> m.<br />
+</li>
+<li>Control bounds <span class="math inline">\(v\in[-1.5,1.5]\)</span> m/s, <span class="math inline">\(\omega\in[-2,2]\)</span> rad/s.<br />
+</li>
+<li>Weights <span class="math inline">\(w_{\text{pos}}=400,\ w_\theta=20,\ w_u=0.05,\ w_{\Delta u}=0.2\)</span>.<br />
+</li>
+<li><strong>Initialization:</strong> straight-line interpolation of positions from <span class="math inline">\(A\)</span> to <span class="math inline">\(B\)</span>, heading toward the line, constant <span class="math inline">\(v\)</span>, <span class="math inline">\(\omega=0\)</span>.</li>
+</ul>
+<p><strong>Two obstacles (success).</strong> Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-sqp-2obs">4.6</a> shows the results for trajectory optimization with two obstacles. As we can see, the SQP algorithm generates a smooth trajectory that avoids the two circular obstacles, despite the fact that the initial guess crosses both obstacles.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-to-sqp-2obs"></span>
+<img src="images/Model-based-optimization/unicycle_to_sqp_2_obstacles.jpg" alt="Trajectory optimization for unicyle using SQP (two obstacles). Dotted line: initial guess; solid line: optimized trajectory." width="90%" />
+<p class="caption">
+Figure 4.6: Trajectory optimization for unicyle using SQP (two obstacles). Dotted line: initial guess; solid line: optimized trajectory.
+</p>
+</div>
+<p><strong>Two obstacles (failure).</strong> However, when we add a third obstacle, Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-sqp-3obs">4.7</a> shows that the SQP algorithm converges to an infeasible solution that collides with the obstacles.</p>
+<p>You can play with the Matlab code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/to_unicycle_sqp.m">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-to-sqp-3obs"></span>
+<img src="images/Model-based-optimization/unicycle_to_sqp_3_obstacles.jpg" alt="Trajectory optimization for unicyle using SQP (three obstacles). Dotted line: initial guess; solid line: optimized trajectory." width="90%" />
+<p class="caption">
+Figure 4.7: Trajectory optimization for unicyle using SQP (three obstacles). Dotted line: initial guess; solid line: optimized trajectory.
+</p>
+</div>
+</div>
+</div>
+<p>The example above highlights both the strengths and the limitations of solving TO with numerical NLP methods such as SQP. Because the TO problem is generally <em>nonconvex</em>, a <em>local</em> method’s outcome depends strongly on the <em>initialization</em>. With a <em>good</em> initial guess, local NLP solvers often converge quickly to a high-quality solution (e.g., Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-sqp-2obs">4.6</a>). With a <em>poor</em> initialization—especially when the landscape has many local minima—the solver may settle in a suboptimal basin or even fail to find a feasible trajectory (e.g., Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-sqp-3obs">4.7</a>).</p>
+<p>Global optimization methods can avoid initialization sensitivity and provide <strong>global optimality guarantees</strong>. These techniques can be substantially more expensive and require additional structure or reformulation, but when applicable they yield powerful <em>initialization-free</em> solutions; see, e.g., <span class="citation">(<a href="#ref-kang2024fast">Kang et al. 2024</a>)</span> and references therein.</p>
+</div>
 </div>
 <div id="interior-point-method" class="section level3 hasAnchor" number="4.3.5">
 <h3><span class="header-section-number">4.3.5</span> Interior Point Method<a href="model-based-plan-optimize.html#interior-point-method" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -1510,6 +1821,12 @@ Equality residual (≈0): 0.0</code></pre>
 <div id="refs" class="references csl-bib-body hanging-indent" entry-spacing="0">
 <div id="ref-arnold84ieee-generalized" class="csl-entry">
 Arnold, William F, and Alan J Laub. 1984. <span>“Generalized Eigenproblem Algorithms and Software for Algebraic Riccati Equations.”</span> <em>Proceedings of the IEEE</em> 72 (12): 1746–54.
+</div>
+<div id="ref-kang2024fast" class="csl-entry">
+Kang, Shucheng, Xiaoyang Xu, Jay Sarva, Ling Liang, and Heng Yang. 2024. <span>“Fast and Certifiable Trajectory Optimization.”</span> In <em>International Workshop on the Algorithmic Foundations of Robotics</em>.
+</div>
+<div id="ref-liu1989limited" class="csl-entry">
+Liu, Dong C, and Jorge Nocedal. 1989. <span>“On the Limited Memory BFGS Method for Large Scale Optimization.”</span> <em>Mathematical Programming</em> 45 (1): 503–28.
 </div>
 <div id="ref-nocedal99book-numerical" class="csl-entry">
 Nocedal, Jorge, and Stephen J Wright. 1999. <em>Numerical Optimization</em>. Springer.
