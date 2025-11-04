@@ -62,6 +62,12 @@ Kakade, S.~M. (2001).
 \newblock A natural policy gradient.
 \newblock {\em Advances in neural information processing systems}, 14.
 
+\bibitem[Kang et~al., 2024]{kang2024fast}
+Kang, S., Xu, X., Sarva, J., Liang, L., and Yang, H. (2024).
+\newblock Fast and certifiable trajectory optimization.
+\newblock In {\em International Workshop on the Algorithmic Foundations of
+  Robotics}.
+
 \bibitem[Kearns and Singh, 2000]{kearns2000bias}
 Kearns, M.~J. and Singh, S. (2000).
 \newblock Bias-variance error bounds for temporal difference updates.
@@ -72,6 +78,11 @@ Lillicrap, T.~P., Hunt, J.~J., Pritzel, A., Heess, N., Erez, T., Tassa, Y.,
   Silver, D., and Wierstra, D. (2015).
 \newblock Continuous control with deep reinforcement learning.
 \newblock {\em arXiv preprint arXiv:1509.02971}.
+
+\bibitem[Liu and Nocedal, 1989]{liu1989limited}
+Liu, D.~C. and Nocedal, J. (1989).
+\newblock On the limited memory bfgs method for large scale optimization.
+\newblock {\em Mathematical programming}, 45(1):503--528.
 
 \bibitem[Mahmood et~al., 2015]{mahmood2015emphatic}
 Mahmood, A.~R., Yu, H., White, M., and Sutton, R.~S. (2015).
