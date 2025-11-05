@@ -1598,7 +1598,7 @@ This is a smooth, sparse nonlinear program (NLP).
 knitr::include_graphics('images/Model-based-optimization/unicycle_to_sqp_2_obstacles.jpg')
 ```
 
-**Two obstacles (failure).** However, when we add a third obstacle, Fig. \@ref(fig:unicycle-to-sqp-3obs) shows that the SQP algorithm converges to an infeasible solution that collides with the obstacles.
+**Three obstacles (failure).** However, when we add a third obstacle, Fig. \@ref(fig:unicycle-to-sqp-3obs) shows that the SQP algorithm converges to an infeasible solution that collides with the obstacles.
 
 You can play with the Matlab code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/to_unicycle_sqp.m).
 
