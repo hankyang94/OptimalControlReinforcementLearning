@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-11-05" />
+<meta name="date" content="2025-11-09" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -256,7 +256,7 @@ div.csl-indent {
 <li class="chapter" data-level="4.3.2" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#ddp"><i class="fa fa-check"></i><b>4.3.2</b> Differential Dynamic Programming</a></li>
 <li class="chapter" data-level="4.3.3" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#qp"><i class="fa fa-check"></i><b>4.3.3</b> Quadratic Programming</a></li>
 <li class="chapter" data-level="4.3.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#sqp"><i class="fa fa-check"></i><b>4.3.4</b> Sequential Quadratic Programming</a></li>
-<li class="chapter" data-level="4.3.5" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#interior-point-method"><i class="fa fa-check"></i><b>4.3.5</b> Interior Point Method</a></li>
+<li class="chapter" data-level="4.3.5" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#ipm-nlp"><i class="fa fa-check"></i><b>4.3.5</b> Interior-Point Methods</a></li>
 </ul></li>
 <li class="chapter" data-level="4.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#mpc"><i class="fa fa-check"></i><b>4.4</b> Model Predictive Control</a></li>
 </ul></li>
@@ -711,7 +711,7 @@ p_{y,t} + h\, v_t\sin\theta_t\\[2pt]
 \end{equation}\]</span>
 and generate the <em>nominal state</em> recursively under the discrete dynamics <a href="model-based-plan-optimize.html#eq:unicycle-dt">(4.22)</a>:
 <span class="math display" id="eq:unicycle-discrete-nominal">\[\begin{equation}
-\bar x_{t+1} \;=\; f(\bar x_t,\bar u_t),\qquad \bar x_0 = \begin{bmatrix}R\\ 0\\ \tfrac{\pi}{2}\end{bmatrix}.
+\bar x_{t+1} \;=\; f(\bar x_t,\bar u_t),\qquad \bar x_0 = \begin{bmatrix}R\\ 0\\ \frac{\pi}{2}\end{bmatrix}.
 \tag{4.24}
 \end{equation}\]</span></p>
 <p>We define <em>deviations</em> from the nominal:
@@ -994,7 +994,7 @@ x_{t+1}^{\text{cand}} &amp;= f_t\big(x_t^{\text{cand}},u_t^{\text{cand}}\big),\q
 \end{aligned}
 \tag{4.37}
 \]</span>
-Choose <span class="math inline">\(\alpha\)</span> (e.g., <span class="math inline">\(\{1,\frac{1}{2},\tfrac14,\dots\}\)</span>) to reduce the <strong>true</strong> cost and respect constraints, then update the nominal:
+Choose <span class="math inline">\(\alpha\)</span> (e.g., <span class="math inline">\(\{1,\frac{1}{2},\frac14,\dots\}\)</span>) to reduce the <strong>true</strong> cost and respect constraints, then update the nominal:
 <span class="math display">\[
 (\bar x_t,\bar u_t)\ \leftarrow\ (x_t^{\text{cand}},u_t^{\text{cand}}).
 \]</span></p>
@@ -1030,7 +1030,7 @@ where <span class="math inline">\((p_x,p_y)\)</span> is position, <span class="m
 \end{aligned}
 \tag{4.38}
 \]</span>
-In simulation we use RK4 with stepsize <span class="math inline">\(h\)</span> to propagate the true dynamics <a href="model-based-plan-optimize.html#eq:rocket-ct">(4.38)</a>. For iLQR’s local subproblems we form the continuous Jacobians <span class="math inline">\((A_c,B_c)=\big(\tfrac{\partial f}{\partial x},\tfrac{\partial f}{\partial u}\big)\)</span> at the current nominal and use the standard first-order discrete map
+In simulation we use RK4 with stepsize <span class="math inline">\(h\)</span> to propagate the true dynamics <a href="model-based-plan-optimize.html#eq:rocket-ct">(4.38)</a>. For iLQR’s local subproblems we form the continuous Jacobians <span class="math inline">\((A_c,B_c)=\big(\frac{\partial f}{\partial x},\frac{\partial f}{\partial u}\big)\)</span> at the current nominal and use the standard first-order discrete map
 <span class="math display" id="eq:rocket-disc-lin">\[
 A_t \;\approx\; I + h\,A_c(\bar x_t,\bar u_t),\qquad
 B_t \;\approx\; h\,B_c(\bar x_t,\bar u_t).
@@ -1084,7 +1084,7 @@ i.e., 10 m altitude, lateral offset, small descent and slight pitch.</p></li>
 <span class="math display">\[
 u_t^{\text{new}} = \bar u_t + \alpha\,k_t + K_t\big(x_t^{\text{new}}-\bar x_t\big),
 \]</span>
-using a backtracking line search over <span class="math inline">\(\alpha\in\{1,\frac{1}{2},\tfrac14,\dots\}\)</span> (note: <span class="math inline">\(\alpha\)</span> scales only the <strong>feedforward</strong> <span class="math inline">\(k_t\)</span>, not the feedback <span class="math inline">\(K_t\)</span>);<br />
+using a backtracking line search over <span class="math inline">\(\alpha\in\{1,\frac{1}{2},\frac14,\dots\}\)</span> (note: <span class="math inline">\(\alpha\)</span> scales only the <strong>feedforward</strong> <span class="math inline">\(k_t\)</span>, not the feedback <span class="math inline">\(K_t\)</span>);<br />
 </li>
 <li>Update the nominal and repeat until cost reduction is small.</li>
 </ol></li>
@@ -1290,8 +1290,8 @@ with <span class="math inline">\(D := S^{-1} W\)</span>. Then recover
 \]</span></p>
 <p><strong>Step Lengths.</strong> Choose step sizes to preserve positivity of <span class="math inline">\(s,w\)</span>:
 <span class="math display" id="eq:ipm-steps">\[
-\alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i&lt;0}\tfrac{-s_i}{\Delta s_i}\Big),\qquad
-\alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i&lt;0}\tfrac{-w_i}{\Delta w_i}\Big),
+\alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i&lt;0}\frac{-s_i}{\Delta s_i}\Big),\qquad
+\alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i&lt;0}\frac{-w_i}{\Delta w_i}\Big),
 \tag{4.53}
 \]</span>
 with <span class="math inline">\(\eta\in(0,1)\)</span> (e.g., <span class="math inline">\(0.99\)</span>). Update both primal and dual variables
@@ -1497,7 +1497,7 @@ Equality residual (≈0): 0.0</code></pre>
 <div id="sqp" class="section level3 hasAnchor" number="4.3.4">
 <h3><span class="header-section-number">4.3.4</span> Sequential Quadratic Programming<a href="model-based-plan-optimize.html#sqp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>We have seen that quadratic programs (QPs) gracefully handle <em>constrained LQR–style</em> trajectory optimization: convex quadratic costs, linear dynamics, and affine path/terminal constraints. With time-stacked sparsity, these problems are solved efficiently (e.g., via interior-point methods), making QP a strong tool for that regime.</p>
-<p>The natural next step is the general trajectory optimization problem in <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>, which features nonlinear dynamics, <em>nonconvex</em> objectives, and <em>nonlinear</em> constraints. To tackle this, we turn to <em>Sequential Quadratic Programming (SQP)</em>—a Newton-like framework that <em>iteratively</em> linearizes the dynamics/constraints and quadratizes the objective to form a sequence of QP subproblems. Each QP is solved to produce a step and updated multipliers; with globalization and appropriate Hessian modeling, the sequence converges to a <em>locally optimal</em> solution (a KKT point) of the original nonlinear TO problem. In short: QP handles the convex linearized case; SQP extends that logic to the full nonlinear setting by repeatedly building and solving the right QP at the current iterate.</p>
+<p>The natural next step is the general trajectory optimization problem in <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>, which features nonlinear dynamics, <em>nonconvex</em> objectives, and <em>nonlinear</em> constraints. To tackle this, we turn to <em>Sequential Quadratic Programming (SQP)</em>—a Newton-like framework that <em>iteratively</em> linearizes the dynamics/constraints and quadratizes the objective to form a sequence of QP subproblems. Each QP is solved to produce a step and updated multipliers; with globalization and appropriate Hessian modeling, the sequence converges to a <em>locally optimal</em> solution (a KKT point) of the original nonlinear TO problem. In short: QP handles the convex linearized case; SQP extends that logic to the full nonlinear setting by repeatedly building and solving the right QP at the current iterate. For an in-depth presentation of SQP for nonlinear programming, we refer to Chapter 18 of <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p>
 <div id="problem-statement" class="section level4 hasAnchor" number="4.3.4.1">
 <h4><span class="header-section-number">4.3.4.1</span> Problem Statement<a href="model-based-plan-optimize.html#problem-statement" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>We will consider the following general nonlinear program (NLP)
@@ -1752,7 +1752,7 @@ J_{\text{goal}} + J_u + J_{\Delta u}
 \Big),
 \tag{4.64}
 \]</span>
-where the outer factor <span class="math inline">\(\tfrac12\)</span> is conventional in quadratic objectives.</p>
+where the outer factor <span class="math inline">\(\frac{1}{2}\)</span> is conventional in quadratic objectives.</p>
 <p><strong>Complete optimization problem.</strong> Given <span class="math inline">\(A,B,\{(c_j,r_j)\},\delta,h,N\)</span>, choose <span class="math inline">\(\{x_k\}_{k=0}^N,\{u_k\}_{k=0}^{N-1}\)</span> to
 <span class="math display">\[
 \begin{aligned}
@@ -1808,8 +1808,227 @@ Figure 4.7: Trajectory optimization for unicyle using SQP (three obstacles). Dot
 <p>Global optimization methods can avoid initialization sensitivity and provide <strong>global optimality guarantees</strong>. These techniques can be substantially more expensive and require additional structure or reformulation, but when applicable they yield powerful <em>initialization-free</em> solutions; see, e.g., <span class="citation">(<a href="#ref-kang2024fast">Kang et al. 2024</a>)</span> and references therein.</p>
 </div>
 </div>
-<div id="interior-point-method" class="section level3 hasAnchor" number="4.3.5">
-<h3><span class="header-section-number">4.3.5</span> Interior Point Method<a href="model-based-plan-optimize.html#interior-point-method" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<div id="ipm-nlp" class="section level3 hasAnchor" number="4.3.5">
+<h3><span class="header-section-number">4.3.5</span> Interior-Point Methods<a href="model-based-plan-optimize.html#ipm-nlp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We have seen that Primal–Dual Interior-Point Methods (PD-IPM) efficiently solve convex QPs (Section <a href="model-based-plan-optimize.html#qp">4.3.3</a>). The key idea was to write the KKT optimality conditions as a system of nonlinear equations and apply Newton’s method. We now extend this idea to the general NLP in <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a>:
+<span class="math display">\[
+\min_{x\in\mathbb{R}^n} f(x)\quad\text{s.t.}\quad c(x)=0,\;\; d(x)\le 0,
+\]</span>
+where <span class="math inline">\(f:\mathbb{R}^n \to \mathbb{R}, c:\mathbb{R}^n \to \mathbb{R}^m\)</span> and <span class="math inline">\(d:\mathbb{R}^n \to\mathbb{R}^p\)</span> are smooth.</p>
+<div id="lagrangian-and-kkt" class="section level4 hasAnchor" number="4.3.5.1">
+<h4><span class="header-section-number">4.3.5.1</span> Lagrangian and KKT<a href="model-based-plan-optimize.html#lagrangian-and-kkt" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>Introduce slack variables <span class="math inline">\(s\in\mathbb{R}^p\)</span> to convert inequalities to equalities:
+<span class="math display" id="eq:nlp-slack">\[
+c(x)=0,\qquad d(x)+s=0,\qquad s\ge 0.
+\tag{4.65}
+\]</span></p>
+<p>With equality multipliers <span class="math inline">\(y\in\mathbb{R}^m, \nu \in \mathbb{R}^p\)</span> and inequality multipliers <span class="math inline">\(\mu\in\mathbb{R}^p\)</span> (with <span class="math inline">\(\lambda \ge 0\)</span>), the <strong>Lagrangian</strong> of the slack-form problem is
+<span class="math display" id="eq:nlp-L">\[
+\mathcal L(x,s,y,\nu,\lambda) \;=\; f(x) + y^\top c(x) + \nu^\top \big(d(x)+s\big) - \lambda^\top s.
+\tag{4.66}
+\]</span></p>
+<p>The KKT optimality conditions are (after eliminating <span class="math inline">\(\nu\)</span>)
+<span class="math display" id="eq:nlp-kkt">\[
+\begin{aligned}
+\text{stationarity:}&amp;\quad
+\nabla f(x) + J_c(x)^\top y + J_d(x)^\top \lambda = 0,\\
+\text{primal feasibility:}&amp;\quad
+c(x)=0,\;\; d(x)+s=0,\;\; s\ge 0,\\
+\text{dual feasibility:}&amp;\quad
+\lambda\ge 0,\\
+\text{complementarity:}&amp;\quad
+s_i\,\lambda_i = 0,\quad i=1,\dots,p,
+\end{aligned}
+\tag{4.67}
+\]</span>
+where <span class="math inline">\(J_c=\nabla c(x) \in \mathbb{R}^{m \times n}\)</span>, <span class="math inline">\(J_d=\nabla d(x) \in \mathbb{R}^{p \times n}\)</span>.</p>
+</div>
+<div id="two-equivalent-views" class="section level4 hasAnchor" number="4.3.5.2">
+<h4><span class="header-section-number">4.3.5.2</span> Two Equivalent Views<a href="model-based-plan-optimize.html#two-equivalent-views" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>There are two equivalent ways to derive primal–dual IPMs.</p>
+<p><strong>Homotopy / Perturbed KKT (primal–dual view).</strong> Replace the complementarity slackness condition in the KKT system <a href="model-based-plan-optimize.html#eq:nlp-kkt">(4.67)</a> by a <em>perturbed</em> relation that defines the <em>central path</em>:
+<span class="math display" id="eq:nlp-central-mu">\[
+S\,\lambda \;=\; \mu \,\mathbf{1},\qquad S:=\operatorname{diag}(s),\;\; \mu &gt;0.
+\tag{4.68}
+\]</span>
+Driving the parameter <span class="math inline">\(\mu \downarrow 0\)</span> yields iterates approaching a KKT point.</p>
+<p><strong>Barrier (log-barrier view).</strong> Solve the barrier subproblem
+<span class="math display" id="eq:nlp-barrier">\[
+\min_{x,s&gt;0}\; f(x) - \mu \sum_{i=1}^p \log s_i
+\quad\text{s.t.}\quad
+c(x)=0,\;\; d(x)+s=0,
+\tag{4.69}
+\]</span>
+then reduce <span class="math inline">\(\mu\)</span>. The KKT conditions of <a href="model-based-plan-optimize.html#eq:nlp-barrier">(4.69)</a> imply <span class="math inline">\(S\lambda = \mu \mathbf{1}\)</span>, hence the barrier and homotopy views are equivalent (different perspectives on the same central path).</p>
+</div>
+<div id="primaldual-residuals-and-newton-system" class="section level4 hasAnchor" number="4.3.5.3">
+<h4><span class="header-section-number">4.3.5.3</span> Primal–Dual Residuals and Newton System<a href="model-based-plan-optimize.html#primaldual-residuals-and-newton-system" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>Define residuals at <span class="math inline">\((x,s,y,\lambda)\)</span>:
+<span class="math display" id="eq:nlp-res">\[
+\begin{aligned}
+r_{\mathrm{dual}} &amp;= \nabla f(x) + J_c^\top y + J_d^\top \lambda,\\
+r_{\mathrm{pe}}   &amp;= c(x),\\
+r_{\mathrm{pi}}   &amp;= d(x)+s,\\
+r_{\mathrm{cent}} &amp;= S\lambda - \mu \,\mathbf{1}.
+\end{aligned}
+\tag{4.70}
+\]</span>
+Let
+<span class="math display" id="eq:nlp-H">\[
+H \;:=\; \nabla^2_{xx}\mathcal L(x,s,y,\lambda)
+= \nabla^2 f(x) + \sum_{i=1}^m y_i \nabla^2 c_i(x) + \sum_{j=1}^p \lambda_j \nabla^2 d_j(x)
+\tag{4.71}
+\]</span>
+be the exact Hessian of the Lagrangian with respect to <span class="math inline">\(x\)</span>.</p>
+<p>A primal–dual Newton step <span class="math inline">\((\Delta x,\Delta s,\Delta y,\Delta \lambda)\)</span> solves
+<span class="math display" id="eq:nlp-newton">\[
+\begin{aligned}
+H\,\Delta x + J_c^\top \Delta y + J_d^\top \Delta \lambda &amp;= -\,r_{\mathrm{dual}},\\
+J_c\,\Delta x &amp;= -\,r_{\mathrm{pe}},\\
+J_d\,\Delta x + \Delta s &amp;= -\,r_{\mathrm{pi}},\\
+S\,\Delta \lambda + M\,\Delta s &amp;= -\,r_{\mathrm{cent}},\qquad M:=\operatorname{diag}(\lambda).
+\end{aligned}
+\tag{4.72}
+\]</span></p>
+<p>Eliminating <span class="math inline">\(\Delta s=-r_{\mathrm{pi}}-J_d\Delta x\)</span> gives
+<span class="math display" id="eq:nlp-dmu">\[
+\Delta \lambda = S^{-1}\!\left(-r_{\mathrm{cent}} + M\,r_{\mathrm{pi}} + M\,J_d\,\Delta x\right).
+\tag{4.73}
+\]</span>
+Substitute into the first line to obtain the reduced symmetric system in <span class="math inline">\((\Delta x,\Delta y)\)</span>:
+<span class="math display" id="eq:nlp-reduced">\[
+\begin{bmatrix}
+H + J_d^\top D\,J_d &amp; J_c^\top\\[2pt]
+J_c &amp; 0
+\end{bmatrix}
+\begin{bmatrix}\Delta x\\ \Delta y\end{bmatrix}
+= -
+\begin{bmatrix}
+r_{\mathrm{dual}} + J_d^\top S^{-1}\!\big(-r_{\mathrm{cent}} + M r_{\mathrm{pi}}\big)\\[2pt]
+r_{\mathrm{pe}}
+\end{bmatrix}
+\tag{4.74}
+\]</span>
+with <span class="math inline">\(D:=S^{-1}M\)</span>. Then recover <span class="math inline">\(\Delta \lambda\)</span> via <a href="model-based-plan-optimize.html#eq:nlp-dmu">(4.73)</a> and <span class="math inline">\(\Delta s=-r_{\mathrm{pi}}-J_d\Delta x\)</span>.</p>
+</div>
+<div id="ipm-line-search" class="section level4 hasAnchor" number="4.3.5.4">
+<h4><span class="header-section-number">4.3.5.4</span> Line-search IPM<a href="model-based-plan-optimize.html#ipm-line-search" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p><strong>Step lengths (fraction-to-the-boundary).</strong> Choose positive step sizes that keep strict interiority:
+<span class="math display" id="eq:nlp-steps">\[
+\alpha_{\mathrm{pri}}=\min\!\Big(1,\ \eta \min_{\Delta s_i&lt;0}\frac{-s_i}{\Delta s_i}\Big),\quad
+\alpha_{\mathrm{du}} =\min\!\Big(1,\ \eta \min_{\Delta \lambda_i&lt;0}\frac{-\lambda_i}{\Delta \lambda_i}\Big),\quad
+\eta\in(0,1).
+\tag{4.75}
+\]</span></p>
+<p><strong>Merit (or filter) globalization.</strong> Use a barrier merit for backtracking,
+<span class="math display" id="eq:nlp-merit">\[
+\Phi_{\mu}(x,s) \;=\; f(x) - \mu \sum_i \log s_i
++ \frac{\rho}{2}\,\|c(x)\|_2^2
++ \frac{\rho}{2}\,\|d(x)+s\|_2^2,
+\tag{4.76}
+\]</span>
+or a filter that accepts steps reducing either infeasibility or the barrier objective.</p>
+<p><strong>Mehrotra predictor–corrector (recommended).</strong></p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Predictor (affine) step:</strong> solve <a href="model-based-plan-optimize.html#eq:nlp-reduced">(4.74)</a> with <span class="math inline">\(\mu=0\)</span> to get <span class="math inline">\((\Delta x^{\mathrm{aff}},\Delta s^{\mathrm{aff}},\Delta y^{\mathrm{aff}},\Delta\lambda^{\mathrm{aff}})\)</span>, and affine step sizes <span class="math inline">\(\alpha_{\mathrm{pri}}^{\mathrm{aff}},\alpha_{\mathrm{du}}^{\mathrm{aff}}\)</span>.</p></li>
+<li><p><strong>Centering:</strong> set
+<span class="math display">\[
+\tau_{\mathrm{aff}}=\frac{(s+\alpha_{\mathrm{pri}}^{\mathrm{aff}}\Delta s^{\mathrm{aff}})^\top
+(\lambda+\alpha_{\mathrm{du}}^{\mathrm{aff}}\Delta\lambda^{\mathrm{aff}})}{p},\qquad
+\sigma=\left(\frac{\tau_{\mathrm{aff}}}{\frac{s^\top\mu}{p}}\right)^{3},
+\]</span>
+and replace the complementarity RHS by <span class="math inline">\(\mu=\sigma\,\frac{s^\top\lambda}{p}\)</span>.</p></li>
+<li><p><strong>Corrector:</strong> resolve <a href="model-based-plan-optimize.html#eq:nlp-reduced">(4.74)</a> with the corrected central residual
+<span class="math display" id="eq:nlp-corr">\[
+r_{\mathrm{cent}}^{\mathrm{corr}}
+= S\lambda - \mu \,\mathbf{1} - \Delta S^{\mathrm{aff}}\Delta\lambda^{\mathrm{aff}}\mathbf{1}.
+\tag{4.77}
+\]</span></p></li>
+<li><p><strong>Line search &amp; update:</strong> use <a href="model-based-plan-optimize.html#eq:nlp-steps">(4.75)</a> and backtrack on <span class="math inline">\(\Phi_{\mu}\)</span>.</p></li>
+<li><p><strong>Stopping:</strong> terminate inner loop when <span class="math inline">\(\|r_{\mathrm{dual}}\|_\infty,\|r_{\mathrm{pe}}\|_\infty,\|r_{\mathrm{pi}}\|_\infty\)</span> and the average complementarity <span class="math inline">\(\frac{s^\top\mu}{p}\)</span> are below tolerance; then reduce <span class="math inline">\(\mu\)</span> and repeat.</p></li>
+</ol>
+<p><strong>Hessian Modeling.</strong> Use <span class="math inline">\(H=\nabla^2_{xx}\mathcal L\)</span>, or a damped (L-)BFGS / Gauss–Newton model as in Section <a href="model-based-plan-optimize.html#sqp-Hessian-approximate">4.3.4.4</a>.</p>
+</div>
+<div id="ipm-trust-region" class="section level4 hasAnchor" number="4.3.5.5">
+<h4><span class="header-section-number">4.3.5.5</span> Trust-Region IPM<a href="model-based-plan-optimize.html#ipm-trust-region" class="anchor-section" aria-label="Anchor link to header"></a></h4>
+<p>The trust-region (TR) IPM solves the barrier subproblem <a href="model-based-plan-optimize.html#eq:nlp-barrier">(4.69)</a> <em>inexactly</em> within a TR globalization that is scaled to the slacks to avoid steps that approach the boundary too aggressively.</p>
+<p>The TR-IPM subproblem is the local quadratic model of the barrier problem together with
+a metric that respects distance to the boundary.</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Quadratic model of the barrier objective.</strong> Start from the barrier problem
+<span class="math display">\[
+\min_{x,s&gt;0}\ f(x)-\mu\sum_i\log s_i
+\quad\text{s.t.}\quad c(x)=0,\ d(x)+s=0.
+\]</span>
+A second-order Taylor model at <span class="math inline">\((x,s)\)</span> gives (constants omitted)
+<span class="math display">\[
+m(p_x,p_s)\;\approx\; \nabla f^\top p_x+\frac{1}{2} p_x^\top H\,p_x
+\;-\;\mu\,\mathbf 1^\top S^{-1}p_s
+\;+\;\frac{1}{2}\,\mu\,\|S^{-1}p_s\|_2^2,
+\]</span>
+where <span class="math inline">\(H=\nabla^2_{xx}\mathcal L\)</span> and <span class="math inline">\(S=\operatorname{diag}(s)\)</span>. The linear term <span class="math inline">\(-\mu\,\mathbf1^\top S^{-1}p_s\)</span> is exactly the gradient of the log-barrier in the slack coordinates. The quadratic curvature in <span class="math inline">\(p_s\)</span> is <span class="math inline">\(\mu S^{-2}\)</span>.</p>
+<p>Many implementations move (part of) this curvature into the TR metric, replacing the explicit <span class="math inline">\(+\frac{1}{2}\,\mu\|S^{-1}p_s\|^2\)</span> by the <em>scaled trust region</em> below. This avoids double-counting and makes the subproblem simpler while keeping the right geometry.</p></li>
+<li><p><strong>Linearized constraints for a consistent local step.</strong><br />
+<span class="math display">\[
+J_c\,p_x + c(x)=0,\qquad J_d\,p_x + p_s + d(x)=0.
+\]</span>
+These are the first-order feasibility conditions of the barrier constraints.</p>
+<!-- They enable the *normal/tangential split*: first reduce constraint violations (normal step), then reduce the model in the approximate nullspace (tangential step). --></li>
+<li><p><strong>Scaled trust region <span class="math inline">\(\| (p_x,\;S^{-1}p_s)\|\le \Delta\)</span>.</strong> The scaling by <span class="math inline">\(S^{-1}\)</span> measures <span class="math inline">\(p_s\)</span> relative to the current distance to the boundary. If a slack <span class="math inline">\(s_i\)</span> is tiny, even a small absolute change <span class="math inline">\(p_{s,i}\)</span> is risky; the scaled norm automatically shrinks the allowable step in that direction. This yields:</p>
+<ul>
+<li><strong>Boundary awareness:</strong> steps cannot run into <span class="math inline">\(s_i\le0\)</span> unless the trust region is (incorrectly) large.<br />
+</li>
+<li><strong>Scale invariance:</strong> the step is insensitive to units or simple rescalings of the inequalities.<br />
+</li>
+<li><strong>Numerical stability:</strong> the local subproblem remains well conditioned near the boundary.</li>
+</ul></li>
+<li><p><strong>Fraction-to-the-boundary safeguard <span class="math inline">\(p_s\ge -\tau s\)</span>.</strong> This is a simple interiority constraint ensuring <span class="math inline">\(s+\alpha p_s&gt;0\)</span> for admissible step sizes.</p></li>
+</ol>
+<p>Putting these choices together yields the subproblem
+<span class="math display" id="eq:tr-ipm-subproblem">\[
+\min_{p_x,p_s}\ \nabla f^\top p_x+\frac{1}{2} p_x^\top H p_x - \mu\,\mathbf1^\top S^{-1}p_s
+\quad\text{s.t.}\quad
+\begin{cases}
+J_c p_x + c(x)=0,\\
+J_d p_x + p_s + d(x)=0,\\
+\|(p_x,S^{-1}p_s)\|\le\Delta,\ p_s\ge-\tau s,
+\end{cases}
+\tag{4.78}
+\]</span>
+which is exactly a trust-region SQP step on the barrier problem in the barrier metric.</p>
+<p>The outer loop adapts the trust-region radius <span class="math inline">\(\Delta\)</span> and the barrier parameter <span class="math inline">\(\mu\)</span> as follows.</p>
+<ul>
+<li><strong>Updating <span class="math inline">\(\Delta\)</span> (model–reality agreement).</strong> After computing a trial step <span class="math inline">\(p=(p_x,p_s)\)</span> from the scaled TR subproblem <a href="model-based-plan-optimize.html#eq:tr-ipm-subproblem">(4.78)</a>, compare the <em>predicted</em> reduction from the quadratic model to the <em>actual</em> reduction in the barrier merit:
+<span class="math display">\[
+\rho \;=\; \frac{\text{ared}}{\text{pred}}
+\;=\;
+\frac{\Phi_\mu(x,s)-\Phi_\mu(x+p_x,\,s+p_s)}
+     {\text{model}(0)-\text{model}(p)}.
+\]</span>
+With thresholds <span class="math inline">\(0&lt;\eta_1&lt;\eta_2&lt;1\)</span> and factors <span class="math inline">\(\gamma_{\text{dec}}\in(0,1)\)</span>, <span class="math inline">\(\gamma_{\text{inc}}&gt;1\)</span>:
+<ul>
+<li>If <span class="math inline">\(\rho\ge \eta_2\)</span>: accept the step and enlarge the radius,
+<span class="math inline">\(\Delta \leftarrow \min(\gamma_{\text{inc}}\Delta,\Delta_{\max})\)</span>.</li>
+<li>If <span class="math inline">\(\eta_1 \le \rho &lt; \eta_2\)</span>: accept and keep <span class="math inline">\(\Delta\)</span>.</li>
+<li>If <span class="math inline">\(\rho&lt;\eta_1\)</span>: reject the step and shrink the radius,
+<span class="math inline">\(\Delta \leftarrow \gamma_{\text{dec}}\Delta\)</span>, then resolve the TR subproblem.</li>
+</ul></li>
+<li><strong>Updating <span class="math inline">\(\mu\)</span> (centrality progress).</strong> Decrease the barrier parameter <span class="math inline">\(\mu\)</span> only when the current barrier subproblem is solved to an accuracy commensurate with <span class="math inline">\(\mu\)</span>. Using KKT residuals and average complementarity
+<span class="math display">\[
+\tau \;:=\; \frac{s^\top \lambda}{p},
+\]</span>
+require (for some constants <span class="math inline">\(\kappa_{\rm dual},\kappa_{\rm pe},\kappa_{\rm pi},\kappa_{\rm cent}&gt;0\)</span>)
+<span class="math display">\[
+\|r_{\rm dual}\|_\infty \le \kappa_{\rm dual}\,\mu,\quad
+\|r_{\rm pe}\|_\infty \le \kappa_{\rm pe}\,\mu,\quad
+\|r_{\rm pi}\|_\infty \le \kappa_{\rm pi}\,\mu,\quad
+|\tau-\mu| \le \kappa_{\rm cent}\,\mu.
+\]</span>
+When these hold, reduce <span class="math inline">\(\mu\)</span> (e.g., <span class="math inline">\(\mu\leftarrow\theta\,\mu\)</span> with <span class="math inline">\(\theta\in(0,1)\)</span>). If the tests are not met, hold <span class="math inline">\(\mu\)</span> fixed and continue improving the inner TR solve (possibly with an updated <span class="math inline">\(\Delta\)</span>).</li>
+</ul>
+<p><strong>When to favor TR-IPM.</strong> TR globalization is robust for nonconvex <span class="math inline">\(H\)</span>, allows inexact linear solves (e.g., Krylov), and integrates naturally with limited-memory updates and scaling.</p>
+<p><strong>Software.</strong> Implementing a robust interior-point method that reliably solves <em>general</em> nonlinear programs is nontrivial. Fortunately, the open-source solver <a href="https://github.com/coin-or/Ipopt">IPOPT</a> <span class="citation">(<a href="#ref-wachter2006implementation">Wächter and Biegler 2006</a>)</span> is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate several trajectory-optimization problems and solve them with IPOPT to illustrate end-to-end modeling and solver usage.</p>
+</div>
 </div>
 </div>
 <div id="mpc" class="section level2 hasAnchor" number="4.4">
@@ -1830,6 +2049,9 @@ Liu, Dong C, and Jorge Nocedal. 1989. <span>“On the Limited Memory BFGS Method
 </div>
 <div id="ref-nocedal99book-numerical" class="csl-entry">
 Nocedal, Jorge, and Stephen J Wright. 1999. <em>Numerical Optimization</em>. Springer.
+</div>
+<div id="ref-wachter2006implementation" class="csl-entry">
+Wächter, Andreas, and Lorenz T Biegler. 2006. <span>“On the Implementation of an Interior-Point Filter Line-Search Algorithm for Large-Scale Nonlinear Programming.”</span> <em>Mathematical Programming</em> 106 (1): 25–57.
 </div>
 </div>
             </section>

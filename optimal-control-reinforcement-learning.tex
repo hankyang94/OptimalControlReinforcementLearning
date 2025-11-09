@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-11-05}
+\date{2025-11-09}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -7159,7 +7159,7 @@ p_{y,t} + h\, v_t\sin\theta_t\\[2pt]
 \end{equation}
 and generate the \emph{nominal state} recursively under the discrete dynamics \eqref{eq:unicycle-dt}:
 \begin{equation}
-\bar x_{t+1} \;=\; f(\bar x_t,\bar u_t),\qquad \bar x_0 = \begin{bmatrix}R\\ 0\\ \tfrac{\pi}{2}\end{bmatrix}.
+\bar x_{t+1} \;=\; f(\bar x_t,\bar u_t),\qquad \bar x_0 = \begin{bmatrix}R\\ 0\\ \frac{\pi}{2}\end{bmatrix}.
 \label{eq:unicycle-discrete-nominal}
 \end{equation}
 
@@ -7489,7 +7489,7 @@ x_{t+1}^{\text{cand}} &= f_t\big(x_t^{\text{cand}},u_t^{\text{cand}}\big),\qquad
 \end{aligned}
 \label{eq:ilqr-forward}
 \]
-Choose \(\alpha\) (e.g., \(\{1,\frac{1}{2},\tfrac14,\dots\}\)) to reduce the \textbf{true} cost and respect constraints, then update the nominal:
+Choose \(\alpha\) (e.g., \(\{1,\frac{1}{2},\frac14,\dots\}\)) to reduce the \textbf{true} cost and respect constraints, then update the nominal:
 \[
 (\bar x_t,\bar u_t)\ \leftarrow\ (x_t^{\text{cand}},u_t^{\text{cand}}).
 \]
@@ -7537,7 +7537,7 @@ where \((p_x,p_y)\) is position, \((v_x,v_y)\) is velocity, \(\theta\) is attitu
 \end{aligned}
 \label{eq:rocket-ct}
 \]
-In simulation we use RK4 with stepsize \(h\) to propagate the true dynamics \eqref{eq:rocket-ct}. For iLQR's local subproblems we form the continuous Jacobians \((A_c,B_c)=\big(\tfrac{\partial f}{\partial x},\tfrac{\partial f}{\partial u}\big)\) at the current nominal and use the standard first-order discrete map
+In simulation we use RK4 with stepsize \(h\) to propagate the true dynamics \eqref{eq:rocket-ct}. For iLQR's local subproblems we form the continuous Jacobians \((A_c,B_c)=\big(\frac{\partial f}{\partial x},\frac{\partial f}{\partial u}\big)\) at the current nominal and use the standard first-order discrete map
 \[
 A_t \;\approx\; I + h\,A_c(\bar x_t,\bar u_t),\qquad
 B_t \;\approx\; h\,B_c(\bar x_t,\bar u_t).
@@ -7604,7 +7604,7 @@ These weights place strong emphasis on terminal altitude and attitude (\(p_y,\th
     \[
     u_t^{\text{new}} = \bar u_t + \alpha\,k_t + K_t\big(x_t^{\text{new}}-\bar x_t\big),
     \]
-    using a backtracking line search over \(\alpha\in\{1,\frac{1}{2},\tfrac14,\dots\}\) (note: \(\alpha\) scales only the \textbf{feedforward} \(k_t\), not the feedback \(K_t\));\\
+    using a backtracking line search over \(\alpha\in\{1,\frac{1}{2},\frac14,\dots\}\) (note: \(\alpha\) scales only the \textbf{feedforward} \(k_t\), not the feedback \(K_t\));\\
   \item
     Update the nominal and repeat until cost reduction is small.
   \end{enumerate}
@@ -7831,8 +7831,8 @@ with \(D := S^{-1} W\). Then recover
 
 \textbf{Step Lengths.} Choose step sizes to preserve positivity of \(s,w\):
 \[
-\alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i<0}\tfrac{-s_i}{\Delta s_i}\Big),\qquad
-\alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i<0}\tfrac{-w_i}{\Delta w_i}\Big),
+\alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i<0}\frac{-s_i}{\Delta s_i}\Big),\qquad
+\alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i<0}\frac{-w_i}{\Delta w_i}\Big),
 \label{eq:ipm-steps}
 \]
 with \(\eta\in(0,1)\) (e.g., \(0.99\)). Update both primal and dual variables
@@ -8054,7 +8054,7 @@ Equality residual (≈0): 0.0
 
 We have seen that quadratic programs (QPs) gracefully handle \emph{constrained LQR--style} trajectory optimization: convex quadratic costs, linear dynamics, and affine path/terminal constraints. With time-stacked sparsity, these problems are solved efficiently (e.g., via interior-point methods), making QP a strong tool for that regime.
 
-The natural next step is the general trajectory optimization problem in \eqref{eq:to-general}, which features nonlinear dynamics, \emph{nonconvex} objectives, and \emph{nonlinear} constraints. To tackle this, we turn to \emph{Sequential Quadratic Programming (SQP)}---a Newton-like framework that \emph{iteratively} linearizes the dynamics/constraints and quadratizes the objective to form a sequence of QP subproblems. Each QP is solved to produce a step and updated multipliers; with globalization and appropriate Hessian modeling, the sequence converges to a \emph{locally optimal} solution (a KKT point) of the original nonlinear TO problem. In short: QP handles the convex linearized case; SQP extends that logic to the full nonlinear setting by repeatedly building and solving the right QP at the current iterate.
+The natural next step is the general trajectory optimization problem in \eqref{eq:to-general}, which features nonlinear dynamics, \emph{nonconvex} objectives, and \emph{nonlinear} constraints. To tackle this, we turn to \emph{Sequential Quadratic Programming (SQP)}---a Newton-like framework that \emph{iteratively} linearizes the dynamics/constraints and quadratizes the objective to form a sequence of QP subproblems. Each QP is solved to produce a step and updated multipliers; with globalization and appropriate Hessian modeling, the sequence converges to a \emph{locally optimal} solution (a KKT point) of the original nonlinear TO problem. In short: QP handles the convex linearized case; SQP extends that logic to the full nonlinear setting by repeatedly building and solving the right QP at the current iterate. For an in-depth presentation of SQP for nonlinear programming, we refer to Chapter 18 of \citep{nocedal99book-numerical}.
 
 \subsubsection{Problem Statement}\label{problem-statement}
 
@@ -8337,7 +8337,7 @@ J_{\text{goal}} + J_u + J_{\Delta u}
 \Big),
 \label{eq:uni-obj}
 \]
-where the outer factor \(\tfrac12\) is conventional in quadratic objectives.
+where the outer factor \(\frac{1}{2}\) is conventional in quadratic objectives.
 
 \textbf{Complete optimization problem.} Given \(A,B,\{(c_j,r_j)\},\delta,h,N\), choose \(\{x_k\}_{k=0}^N,\{u_k\}_{k=0}^{N-1}\) to
 \[
@@ -8408,7 +8408,266 @@ The example above highlights both the strengths and the limitations of solving T
 
 Global optimization methods can avoid initialization sensitivity and provide \textbf{global optimality guarantees}. These techniques can be substantially more expensive and require additional structure or reformulation, but when applicable they yield powerful \emph{initialization-free} solutions; see, e.g., \citep{kang2024fast} and references therein.
 
-\subsection{Interior Point Method}\label{interior-point-method}
+\subsection{Interior-Point Methods}\label{ipm-nlp}
+
+We have seen that Primal--Dual Interior-Point Methods (PD-IPM) efficiently solve convex QPs (Section \ref{qp}). The key idea was to write the KKT optimality conditions as a system of nonlinear equations and apply Newton's method. We now extend this idea to the general NLP in \eqref{eq:sqp-nlp}:
+\[
+\min_{x\in\mathbb{R}^n} f(x)\quad\text{s.t.}\quad c(x)=0,\;\; d(x)\le 0,
+\]
+where \(f:\mathbb{R}^n \to \mathbb{R}, c:\mathbb{R}^n \to \mathbb{R}^m\) and \(d:\mathbb{R}^n \to\mathbb{R}^p\) are smooth.
+
+\subsubsection{Lagrangian and KKT}\label{lagrangian-and-kkt}
+
+Introduce slack variables \(s\in\mathbb{R}^p\) to convert inequalities to equalities:
+\[
+c(x)=0,\qquad d(x)+s=0,\qquad s\ge 0.
+\label{eq:nlp-slack}
+\]
+
+With equality multipliers \(y\in\mathbb{R}^m, \nu \in \mathbb{R}^p\) and inequality multipliers \(\mu\in\mathbb{R}^p\) (with \(\lambda \ge 0\)), the \textbf{Lagrangian} of the slack-form problem is
+\[
+\mathcal L(x,s,y,\nu,\lambda) \;=\; f(x) + y^\top c(x) + \nu^\top \big(d(x)+s\big) - \lambda^\top s.
+\label{eq:nlp-L}
+\]
+
+The KKT optimality conditions are (after eliminating \(\nu\))
+\[
+\begin{aligned}
+\text{stationarity:}&\quad
+\nabla f(x) + J_c(x)^\top y + J_d(x)^\top \lambda = 0,\\
+\text{primal feasibility:}&\quad
+c(x)=0,\;\; d(x)+s=0,\;\; s\ge 0,\\
+\text{dual feasibility:}&\quad
+\lambda\ge 0,\\
+\text{complementarity:}&\quad
+s_i\,\lambda_i = 0,\quad i=1,\dots,p,
+\end{aligned}
+\label{eq:nlp-kkt}
+\]
+where \(J_c=\nabla c(x) \in \mathbb{R}^{m \times n}\), \(J_d=\nabla d(x) \in \mathbb{R}^{p \times n}\).
+
+\subsubsection{Two Equivalent Views}\label{two-equivalent-views}
+
+There are two equivalent ways to derive primal--dual IPMs.
+
+\textbf{Homotopy / Perturbed KKT (primal--dual view).} Replace the complementarity slackness condition in the KKT system \eqref{eq:nlp-kkt} by a \emph{perturbed} relation that defines the \emph{central path}:
+\[
+S\,\lambda \;=\; \mu \,\mathbf{1},\qquad S:=\operatorname{diag}(s),\;\; \mu >0.
+\label{eq:nlp-central-mu}
+\]
+Driving the parameter \(\mu \downarrow 0\) yields iterates approaching a KKT point.
+
+\textbf{Barrier (log-barrier view).} Solve the barrier subproblem
+\[
+\min_{x,s>0}\; f(x) - \mu \sum_{i=1}^p \log s_i
+\quad\text{s.t.}\quad
+c(x)=0,\;\; d(x)+s=0,
+\label{eq:nlp-barrier}
+\]
+then reduce \(\mu\). The KKT conditions of \eqref{eq:nlp-barrier} imply \(S\lambda = \mu \mathbf{1}\), hence the barrier and homotopy views are equivalent (different perspectives on the same central path).
+
+\subsubsection{Primal--Dual Residuals and Newton System}\label{primaldual-residuals-and-newton-system}
+
+Define residuals at \((x,s,y,\lambda)\):
+\[
+\begin{aligned}
+r_{\mathrm{dual}} &= \nabla f(x) + J_c^\top y + J_d^\top \lambda,\\
+r_{\mathrm{pe}}   &= c(x),\\
+r_{\mathrm{pi}}   &= d(x)+s,\\
+r_{\mathrm{cent}} &= S\lambda - \mu \,\mathbf{1}.
+\end{aligned}
+\label{eq:nlp-res}
+\]
+Let
+\[
+H \;:=\; \nabla^2_{xx}\mathcal L(x,s,y,\lambda)
+= \nabla^2 f(x) + \sum_{i=1}^m y_i \nabla^2 c_i(x) + \sum_{j=1}^p \lambda_j \nabla^2 d_j(x)
+\label{eq:nlp-H}
+\]
+be the exact Hessian of the Lagrangian with respect to \(x\).
+
+A primal--dual Newton step \((\Delta x,\Delta s,\Delta y,\Delta \lambda)\) solves
+\[
+\begin{aligned}
+H\,\Delta x + J_c^\top \Delta y + J_d^\top \Delta \lambda &= -\,r_{\mathrm{dual}},\\
+J_c\,\Delta x &= -\,r_{\mathrm{pe}},\\
+J_d\,\Delta x + \Delta s &= -\,r_{\mathrm{pi}},\\
+S\,\Delta \lambda + M\,\Delta s &= -\,r_{\mathrm{cent}},\qquad M:=\operatorname{diag}(\lambda).
+\end{aligned}
+\label{eq:nlp-newton}
+\]
+
+Eliminating \(\Delta s=-r_{\mathrm{pi}}-J_d\Delta x\) gives
+\[
+\Delta \lambda = S^{-1}\!\left(-r_{\mathrm{cent}} + M\,r_{\mathrm{pi}} + M\,J_d\,\Delta x\right).
+\label{eq:nlp-dmu}
+\]
+Substitute into the first line to obtain the reduced symmetric system in \((\Delta x,\Delta y)\):
+\[
+\begin{bmatrix}
+H + J_d^\top D\,J_d & J_c^\top\\[2pt]
+J_c & 0
+\end{bmatrix}
+\begin{bmatrix}\Delta x\\ \Delta y\end{bmatrix}
+= -
+\begin{bmatrix}
+r_{\mathrm{dual}} + J_d^\top S^{-1}\!\big(-r_{\mathrm{cent}} + M r_{\mathrm{pi}}\big)\\[2pt]
+r_{\mathrm{pe}}
+\end{bmatrix}
+\label{eq:nlp-reduced}
+\]
+with \(D:=S^{-1}M\). Then recover \(\Delta \lambda\) via \eqref{eq:nlp-dmu} and \(\Delta s=-r_{\mathrm{pi}}-J_d\Delta x\).
+
+\subsubsection{Line-search IPM}\label{ipm-line-search}
+
+\textbf{Step lengths (fraction-to-the-boundary).} Choose positive step sizes that keep strict interiority:
+\[
+\alpha_{\mathrm{pri}}=\min\!\Big(1,\ \eta \min_{\Delta s_i<0}\frac{-s_i}{\Delta s_i}\Big),\quad
+\alpha_{\mathrm{du}} =\min\!\Big(1,\ \eta \min_{\Delta \lambda_i<0}\frac{-\lambda_i}{\Delta \lambda_i}\Big),\quad
+\eta\in(0,1).
+\label{eq:nlp-steps}
+\]
+
+\textbf{Merit (or filter) globalization.} Use a barrier merit for backtracking,
+\[
+\Phi_{\mu}(x,s) \;=\; f(x) - \mu \sum_i \log s_i
++ \frac{\rho}{2}\,\|c(x)\|_2^2
++ \frac{\rho}{2}\,\|d(x)+s\|_2^2,
+\label{eq:nlp-merit}
+\]
+or a filter that accepts steps reducing either infeasibility or the barrier objective.
+
+\textbf{Mehrotra predictor--corrector (recommended).}
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Predictor (affine) step:} solve \eqref{eq:nlp-reduced} with \(\mu=0\) to get \((\Delta x^{\mathrm{aff}},\Delta s^{\mathrm{aff}},\Delta y^{\mathrm{aff}},\Delta\lambda^{\mathrm{aff}})\), and affine step sizes \(\alpha_{\mathrm{pri}}^{\mathrm{aff}},\alpha_{\mathrm{du}}^{\mathrm{aff}}\).
+\item
+  \textbf{Centering:} set
+  \[
+  \tau_{\mathrm{aff}}=\frac{(s+\alpha_{\mathrm{pri}}^{\mathrm{aff}}\Delta s^{\mathrm{aff}})^\top
+  (\lambda+\alpha_{\mathrm{du}}^{\mathrm{aff}}\Delta\lambda^{\mathrm{aff}})}{p},\qquad
+  \sigma=\left(\frac{\tau_{\mathrm{aff}}}{\frac{s^\top\mu}{p}}\right)^{3},
+  \]
+  and replace the complementarity RHS by \(\mu=\sigma\,\frac{s^\top\lambda}{p}\).
+\item
+  \textbf{Corrector:} resolve \eqref{eq:nlp-reduced} with the corrected central residual
+  \[
+  r_{\mathrm{cent}}^{\mathrm{corr}}
+  = S\lambda - \mu \,\mathbf{1} - \Delta S^{\mathrm{aff}}\Delta\lambda^{\mathrm{aff}}\mathbf{1}.
+  \label{eq:nlp-corr}
+  \]
+\item
+  \textbf{Line search \& update:} use \eqref{eq:nlp-steps} and backtrack on \(\Phi_{\mu}\).
+\item
+  \textbf{Stopping:} terminate inner loop when \(\|r_{\mathrm{dual}}\|_\infty,\|r_{\mathrm{pe}}\|_\infty,\|r_{\mathrm{pi}}\|_\infty\) and the average complementarity \(\frac{s^\top\mu}{p}\) are below tolerance; then reduce \(\mu\) and repeat.
+\end{enumerate}
+
+\textbf{Hessian Modeling.} Use \(H=\nabla^2_{xx}\mathcal L\), or a damped (L-)BFGS / Gauss--Newton model as in Section \ref{sqp-Hessian-approximate}.
+
+\subsubsection{Trust-Region IPM}\label{ipm-trust-region}
+
+The trust-region (TR) IPM solves the barrier subproblem \eqref{eq:nlp-barrier} \emph{inexactly} within a TR globalization that is scaled to the slacks to avoid steps that approach the boundary too aggressively.
+
+The TR-IPM subproblem is the local quadratic model of the barrier problem together with
+a metric that respects distance to the boundary.
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Quadratic model of the barrier objective.} Start from the barrier problem
+  \[
+  \min_{x,s>0}\ f(x)-\mu\sum_i\log s_i
+  \quad\text{s.t.}\quad c(x)=0,\ d(x)+s=0.
+  \]
+  A second-order Taylor model at \((x,s)\) gives (constants omitted)
+  \[
+  m(p_x,p_s)\;\approx\; \nabla f^\top p_x+\frac{1}{2} p_x^\top H\,p_x
+  \;-\;\mu\,\mathbf 1^\top S^{-1}p_s
+  \;+\;\frac{1}{2}\,\mu\,\|S^{-1}p_s\|_2^2,
+  \]
+  where \(H=\nabla^2_{xx}\mathcal L\) and \(S=\operatorname{diag}(s)\). The linear term \(-\mu\,\mathbf1^\top S^{-1}p_s\) is exactly the gradient of the log-barrier in the slack coordinates. The quadratic curvature in \(p_s\) is \(\mu S^{-2}\).
+
+  Many implementations move (part of) this curvature into the TR metric, replacing the explicit \(+\frac{1}{2}\,\mu\|S^{-1}p_s\|^2\) by the \emph{scaled trust region} below. This avoids double-counting and makes the subproblem simpler while keeping the right geometry.
+\item
+  \textbf{Linearized constraints for a consistent local step.}\\
+  \[
+  J_c\,p_x + c(x)=0,\qquad J_d\,p_x + p_s + d(x)=0.
+  \]
+  These are the first-order feasibility conditions of the barrier constraints.
+\item
+  \textbf{Scaled trust region \(\| (p_x,\;S^{-1}p_s)\|\le \Delta\).} The scaling by \(S^{-1}\) measures \(p_s\) relative to the current distance to the boundary. If a slack \(s_i\) is tiny, even a small absolute change \(p_{s,i}\) is risky; the scaled norm automatically shrinks the allowable step in that direction. This yields:
+
+  \begin{itemize}
+  \tightlist
+  \item
+    \textbf{Boundary awareness:} steps cannot run into \(s_i\le0\) unless the trust region is (incorrectly) large.\\
+  \item
+    \textbf{Scale invariance:} the step is insensitive to units or simple rescalings of the inequalities.\\
+  \item
+    \textbf{Numerical stability:} the local subproblem remains well conditioned near the boundary.
+  \end{itemize}
+\item
+  \textbf{Fraction-to-the-boundary safeguard \(p_s\ge -\tau s\).} This is a simple interiority constraint ensuring \(s+\alpha p_s>0\) for admissible step sizes.
+\end{enumerate}
+
+Putting these choices together yields the subproblem
+\[
+\min_{p_x,p_s}\ \nabla f^\top p_x+\frac{1}{2} p_x^\top H p_x - \mu\,\mathbf1^\top S^{-1}p_s
+\quad\text{s.t.}\quad
+\begin{cases}
+J_c p_x + c(x)=0,\\
+J_d p_x + p_s + d(x)=0,\\
+\|(p_x,S^{-1}p_s)\|\le\Delta,\ p_s\ge-\tau s,
+\end{cases}
+\label{eq:tr-ipm-subproblem}
+\]
+which is exactly a trust-region SQP step on the barrier problem in the barrier metric.
+
+The outer loop adapts the trust-region radius \(\Delta\) and the barrier parameter \(\mu\) as follows.
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Updating \(\Delta\) (model--reality agreement).} After computing a trial step \(p=(p_x,p_s)\) from the scaled TR subproblem \eqref{eq:tr-ipm-subproblem}, compare the \emph{predicted} reduction from the quadratic model to the \emph{actual} reduction in the barrier merit:
+  \[
+  \rho \;=\; \frac{\text{ared}}{\text{pred}}
+  \;=\;
+  \frac{\Phi_\mu(x,s)-\Phi_\mu(x+p_x,\,s+p_s)}
+       {\text{model}(0)-\text{model}(p)}.
+  \]
+  With thresholds \(0<\eta_1<\eta_2<1\) and factors \(\gamma_{\text{dec}}\in(0,1)\), \(\gamma_{\text{inc}}>1\):
+
+  \begin{itemize}
+  \tightlist
+  \item
+    If \(\rho\ge \eta_2\): accept the step and enlarge the radius,
+    \(\Delta \leftarrow \min(\gamma_{\text{inc}}\Delta,\Delta_{\max})\).
+  \item
+    If \(\eta_1 \le \rho < \eta_2\): accept and keep \(\Delta\).
+  \item
+    If \(\rho<\eta_1\): reject the step and shrink the radius,
+    \(\Delta \leftarrow \gamma_{\text{dec}}\Delta\), then resolve the TR subproblem.
+  \end{itemize}
+\item
+  \textbf{Updating \(\mu\) (centrality progress).} Decrease the barrier parameter \(\mu\) only when the current barrier subproblem is solved to an accuracy commensurate with \(\mu\). Using KKT residuals and average complementarity
+  \[
+  \tau \;:=\; \frac{s^\top \lambda}{p},
+  \]
+  require (for some constants \(\kappa_{\rm dual},\kappa_{\rm pe},\kappa_{\rm pi},\kappa_{\rm cent}>0\))
+  \[
+  \|r_{\rm dual}\|_\infty \le \kappa_{\rm dual}\,\mu,\quad
+  \|r_{\rm pe}\|_\infty \le \kappa_{\rm pe}\,\mu,\quad
+  \|r_{\rm pi}\|_\infty \le \kappa_{\rm pi}\,\mu,\quad
+  |\tau-\mu| \le \kappa_{\rm cent}\,\mu.
+  \]
+  When these hold, reduce \(\mu\) (e.g., \(\mu\leftarrow\theta\,\mu\) with \(\theta\in(0,1)\)). If the tests are not met, hold \(\mu\) fixed and continue improving the inner TR solve (possibly with an updated \(\Delta\)).
+\end{itemize}
+
+\textbf{When to favor TR-IPM.} TR globalization is robust for nonconvex \(H\), allows inexact linear solves (e.g., Krylov), and integrates naturally with limited-memory updates and scaling.
+
+\textbf{Software.} Implementing a robust interior-point method that reliably solves \emph{general} nonlinear programs is nontrivial. Fortunately, the open-source solver \href{https://github.com/coin-or/Ipopt}{IPOPT} \citep{wachter2006implementation} is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate several trajectory-optimization problems and solve them with IPOPT to illustrate end-to-end modeling and solver usage.
 
 \section{Model Predictive Control}\label{mpc}
 
