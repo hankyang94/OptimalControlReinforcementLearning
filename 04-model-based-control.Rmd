@@ -2028,6 +2028,12 @@ Combining the derivations above, we can see the Jacobian \(\nabla_z g\) is block
 
 - Each obstacle row touches only \((p_{x,k}, p_{y,k})\).
 
+Fig. \@ref(fig:unicycle-jacobian-sparsity) illustrates the sparsity structure of the constraint Jacobian.
+
+```{r unicycle-jacobian-sparsity, out.width='90%', fig.show='hold', fig.cap='Sparsity structure of constraint Jacobian.', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/jacobian-sparsity-unicycle.png')
+```
+
 The following Python code snippet defines a problem class `UnicycleTO` with definitions of the objective, constraints, objective gradient, and constraints Jacobian. Note that the definition of the constraints Jacobian is highly involved because it defines the Jacobian as a sparse matrix with a predefined sparsity pattern. The solver can leverage this sparsity pattern to be highly efficient.
 
 ```python
