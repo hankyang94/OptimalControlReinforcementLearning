@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-11-09" />
+<meta name="date" content="2025-11-10" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -1628,7 +1628,7 @@ H_{k+1} = H_k - \frac{H_k s_k s_k^\top H_k}{s_k^\top H_k s_k}
 </ul>
 <div class="examplebox">
 <div class="example">
-<p><span id="exm:sqp-to" class="example"><strong>Example 4.4  (Trajectory Optimization with SQP) </strong></span>We formulate a trajectory optimization (TO) problem for a unicycle robot that must travel from a start pose <span class="math inline">\(A\)</span> to a goal pose <span class="math inline">\(B\)</span> while avoiding circular (ball-shaped) obstacles.</p>
+<p><span id="exm:sqp-to-unicyle" class="example"><strong>Example 4.4  (Trajectory Optimization with SQP) </strong></span>We formulate a trajectory optimization (TO) problem for a unicycle robot that must travel from a start pose <span class="math inline">\(A\)</span> to a goal pose <span class="math inline">\(B\)</span> while avoiding circular (ball-shaped) obstacles.</p>
 <p><strong>System Model.</strong> We use the standard unicycle (Dubins-like) kinematics in continuous time:
 <span class="math display" id="eq:uni-cts">\[
 \dot{x}(t)=
@@ -1656,27 +1656,6 @@ p_{y,k} + h\, v_k \sin \theta_k\\
 \end{bmatrix}.
 \tag{4.58}
 \]</span></p>
-<!-- For later use (e.g., analytic Jacobians in SQP), the **discrete-time Jacobians** are
-\[
-A_k := \frac{\partial f_h}{\partial x}(x_k,u_k)
-=
-\begin{bmatrix}
-1 & 0 & -h v_k \sin\theta_k\\
-0 & 1 & \ \ h v_k \cos\theta_k\\
-0 & 0 & 1
-\end{bmatrix},
-\qquad
-B_k := \frac{\partial f_h}{\partial u}(x_k,u_k)
-=
-\begin{bmatrix}
-h\cos\theta_k & 0\\
-h\sin\theta_k & 0\\
-0 & h
-\end{bmatrix}.
-(\#eq:uni-jacobians)
-\]
-
---- -->
 <p><strong>Decision Variables.</strong> We optimize over the state–control sequence
 <span class="math display">\[
 \{x_k\}_{k=0}^N,\quad \{u_k\}_{k=0}^{N-1},
@@ -2027,7 +2006,438 @@ require (for some constants <span class="math inline">\(\kappa_{\rm dual},\kappa
 When these hold, reduce <span class="math inline">\(\mu\)</span> (e.g., <span class="math inline">\(\mu\leftarrow\theta\,\mu\)</span> with <span class="math inline">\(\theta\in(0,1)\)</span>). If the tests are not met, hold <span class="math inline">\(\mu\)</span> fixed and continue improving the inner TR solve (possibly with an updated <span class="math inline">\(\Delta\)</span>).</li>
 </ul>
 <p><strong>When to favor TR-IPM.</strong> TR globalization is robust for nonconvex <span class="math inline">\(H\)</span>, allows inexact linear solves (e.g., Krylov), and integrates naturally with limited-memory updates and scaling.</p>
-<p><strong>Software.</strong> Implementing a robust interior-point method that reliably solves <em>general</em> nonlinear programs is nontrivial. Fortunately, the open-source solver <a href="https://github.com/coin-or/Ipopt">IPOPT</a> <span class="citation">(<a href="#ref-wachter2006implementation">Wächter and Biegler 2006</a>)</span> is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate several trajectory-optimization problems and solve them with IPOPT to illustrate end-to-end modeling and solver usage.</p>
+<p><strong>Software.</strong> Implementing a robust interior-point method that reliably solves <em>general</em> nonlinear programs is nontrivial. Fortunately, the open-source solver <a href="https://github.com/coin-or/Ipopt">IPOPT</a> <span class="citation">(<a href="#ref-wachter2006implementation">Wächter and Biegler 2006</a>)</span> is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate a trajectory-optimization problem and solve it with IPOPT to illustrate end-to-end modeling and solver usage.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:unicycle-ipopt" class="example"><strong>Example 4.5  (Trajectory Optimization with IPOPT) </strong></span>We solve a unicycle trajectory optimization (TO) problem (same as the one in Example <a href="model-based-plan-optimize.html#exm:sqp-to-unicyle">4.4</a>) from start pose <span class="math inline">\(A\)</span> to goal pose <span class="math inline">\(B\)</span> while avoiding circular obstacles, now using IPOPT via <a href="https://cyipopt.readthedocs.io/en/stable/"><code>cyipopt</code></a> in Python.</p>
+<p><strong>Dynamics.</strong> With state <span class="math inline">\(x=[p_x,p_y,\theta]^\top\)</span> and control <span class="math inline">\(u=[v,\omega]^\top\)</span>,
+<span class="math display" id="eq:ipopt-uni-cts">\[
+\dot{x}(t)=
+\begin{bmatrix}
+v\cos\theta\\[2pt]
+v\sin\theta\\
+\omega
+\end{bmatrix}.
+\tag{4.79}
+\]</span>
+We discretize at <span class="math inline">\(t_k=kh\)</span> by forward Euler:
+<span class="math display" id="eq:ipopt-uni-disc">\[
+x_{k+1} = f_h(x_k,u_k) :=
+\begin{bmatrix}
+p_{x,k} + h\, v_k \cos \theta_k\\
+p_{y,k} + h\, v_k \sin \theta_k\\
+\theta_k + h\, \omega_k
+\end{bmatrix},\quad k=0,\ldots,N-1.
+\tag{4.80}
+\]</span></p>
+<p><strong>Decision vector.</strong> We stack the state and control trajectories into a single decision vector
+<span class="math display" id="eq:ipopt-uni-z">\[
+z=\big[x_0^\top,u_0^\top,x_1^\top,u_1^\top,\dots,x_{N-1}^\top,u_{N-1}^\top,x_N^\top\big]^\top
+\in\mathbb{R}^{(3+2)N+3}.
+\tag{4.81}
+\]</span></p>
+<p><strong>Constraints.</strong> The state and control trajectories need to satisfy the following constraints:</p>
+<ul>
+<li><p>Initial condition: <span class="math inline">\(x_0=A\)</span>.</p></li>
+<li><p>Dynamics equalities: <span class="math inline">\(x_{k+1}-f_h(x_k,u_k)=0\)</span> for <span class="math inline">\(k=0,\dots,N-1\)</span>.</p></li>
+<li><p>Obstacle inequalities: for each circular obstacle <span class="math inline">\((c_j=[c_{x,j},c_{y,j}]^\top,r_j)\)</span> and all <span class="math inline">\(k=0,\dots,N\)</span>,
+<span class="math display" id="eq:ipopt-obs">\[
+c_{j,k}(x_k):=(r_j+\delta)^2-\big((p_{x,k}-c_{x,j})^2+(p_{y,k}-c_{y,j})^2\big)\le 0,
+\tag{4.82}
+\]</span>
+where <span class="math inline">\(\delta &gt; 0\)</span> is a safety margin.</p></li>
+<li><p>Box bounds on controls:
+<span class="math display" id="eq:ipopt-bounds">\[
+v_{\min}\le v_k\le v_{\max},\qquad
+\omega_{\min}\le \omega_k\le \omega_{\max}.
+\tag{4.83}
+\]</span></p></li>
+</ul>
+<p>In total, there are <span class="math inline">\(m = 3 + 3N\)</span> equality constraints and <span class="math inline">\(p = (N+1)O\)</span> inequality constraints, where <span class="math inline">\(O\)</span> is the number of obstacles.</p>
+<p><strong>Objective.</strong> A smooth quadratic cost with terminal goal tracking, control effort, and control smoothness:
+<span class="math display" id="eq:unicycle-objective">\[\begin{equation}
+\hspace{-16mm} J = \frac12\Big(
+w_{\text{pos}}\|x_N^{\text{pos}}-B^{\text{pos}}\|_2^2
++ w_\theta(\theta_N-\theta^\star)^2
++ \sum_{k=0}^{N-1} w_u \|u_k\|_2^2
++ \sum_{k=0}^{N-2} w_{\Delta u}\|u_{k+1}-u_k\|_2^2
+\Big),
+\tag{4.84}
+\end{equation}\]</span>
+with <span class="math inline">\(x_N^{\text{pos}}=[p_{x,N},p_{y,N}]^\top\)</span> the terminal position and <span class="math inline">\(B=[B_x,B_y,\theta^\star]^\top\)</span> the terminal pose. <span class="math inline">\(w_{\text{pos}}\)</span>, <span class="math inline">\(w_\theta\)</span>, <span class="math inline">\(w_u\)</span>, and <span class="math inline">\(w_{\Delta u}\)</span> are positive weights.</p>
+<p><strong>Jacobians.</strong> We derive the gradient of the objective and the Jacobian of the constraints with respect to the stacked decision vector
+<span class="math display">\[
+z \;=\; \big[x_0^\top,\ u_0^\top,\ x_1^\top,\ u_1^\top,\ \dots,\ x_{N-1}^\top,\ u_{N-1}^\top,\ x_N^\top\big]^\top
+\in \mathbb{R}^{(3+2)N+3},
+\]</span>
+where <span class="math inline">\(x_k=[p_{x,k},\,p_{y,k},\,\theta_k]^\top\)</span> and <span class="math inline">\(u_k=[v_k,\,\omega_k]^\top\)</span>.</p>
+<p><strong>Objective gradient <span class="math inline">\(\nabla_z J\)</span>.</strong> Recall the objective function from <a href="model-based-plan-optimize.html#eq:unicycle-objective">(4.84)</a>. Let <span class="math inline">\(e_{\text{pos}} := x_N^{\text{pos}}-B^{\text{pos}}\)</span> and <span class="math inline">\(e_\theta := \theta_N-\theta^\star\)</span>, we have
+<span class="math display">\[
+\frac{\partial J}{\partial p_{x,N}} = w_{\text{pos}}\, e_{\text{pos},x},\qquad
+\frac{\partial J}{\partial p_{y,N}} = w_{\text{pos}}\, e_{\text{pos},y},\qquad
+\frac{\partial J}{\partial \theta_N} = w_\theta\, e_\theta.
+\]</span></p>
+<p>All other states <span class="math inline">\(x_k\)</span> for <span class="math inline">\(k&lt;N\)</span> do not appear in the objective, so
+<span class="math display">\[
+\frac{\partial J}{\partial x_k} = 0,\quad k=0,\dots,N-1.
+\]</span></p>
+<p>The control effort term in the objective has gradients w.r.t. controls:
+<span class="math display">\[
+J_u \;=\; \frac{1}{2}\sum_{k=0}^{N-1}  w_u \| u_k \|^2 \Rightarrow\;
+\frac{\partial J_u}{\partial u_k} \;=\; w_u\,u_k
+\quad\text{for }k=0,\dots,N-1.
+\]</span></p>
+<p>The control smoothness term in the objective reads:
+<span class="math display">\[
+J_{\Delta u} \;=\; \frac{1}{2}\sum_{k=0}^{N-2} w_{\Delta u}\,\|u_{k+1}-u_k\|_2^2.
+\]</span>
+By collecting contributions from the two adjacent differences that contain <span class="math inline">\(u_k\)</span>, we obtain the gradient
+<span class="math display" id="eq:unicycle-objective-smoothness-gradient">\[
+\frac{\partial J_{\Delta u}}{\partial u_k} =
+\begin{cases}
+w_{\Delta u}\,(u_0 - u_1), &amp; k=0,\\[4pt]
+w_{\Delta u}\,(2u_k - u_{k-1} - u_{k+1}), &amp; k=1,\dots,N-2,\\[4pt]
+w_{\Delta u}\,(u_{N-1} - u_{N-2}), &amp; k=N-1.
+\end{cases}
+\tag{4.85}
+\]</span></p>
+<p>Combining the above derivations, the only nonzero blocks of <span class="math inline">\(\nabla_z J\)</span> are:</p>
+<ul>
+<li><p>the <strong>terminal state block</strong> <span class="math inline">\(x_N\)</span>: entries shown above for <span class="math inline">\(p_{x,N},p_{y,N},\theta_N\)</span>;</p></li>
+<li><p>the <strong>control blocks</strong> <span class="math inline">\(u_k\)</span>: <span class="math inline">\(w_u u_k\)</span> plus the smoothness terms <a href="model-based-plan-optimize.html#eq:unicycle-objective-smoothness-gradient">(4.85)</a>.</p></li>
+</ul>
+<p>All other entries are zero. Thus <span class="math inline">\(\nabla_z J\)</span> is extremely sparse.</p>
+<p><strong>Constraint Jacobian <span class="math inline">\(\nabla_z g(z)\)</span>.</strong> We stack constraints as
+<span class="math display">\[
+g(z)=\begin{bmatrix}
+g^{\text{init}}\\ g^{\text{dyn}}\\ g^{\text{obs}}
+\end{bmatrix}
+\in \mathbb{R}^{3+3N+(N+1)O}
+\]</span>
+in the order:</p>
+<ol style="list-style-type: decimal">
+<li><p><strong>Initial condition</strong> <span class="math inline">\(g^{\text{init}} = x_0 - A = 0\)</span>.</p></li>
+<li><p><strong>Dynamics</strong> for <span class="math inline">\(k=0,\dots,N-1\)</span> (forward Euler with step <span class="math inline">\(h\)</span>):
+<span class="math display">\[
+\begin{aligned}
+g^{\text{dyn}}_{x,k}&amp;:= p_{x,k+1} - \big(p_{x,k} + h\,v_k\cos\theta_k\big) = 0,\\
+g^{\text{dyn}}_{y,k}&amp;:= p_{y,k+1} - \big(p_{y,k} + h\,v_k\sin\theta_k\big) = 0,\\
+g^{\text{dyn}}_{\theta,k}&amp;:= \theta_{k+1} - \big(\theta_k + h\,\omega_k\big) = 0.
+\end{aligned}
+\]</span></p></li>
+<li><p><strong>Obstacle inequalities</strong> for each obstacle <span class="math inline">\(j=1,\dots,O\)</span> and each knot <span class="math inline">\(k=0,\dots,N\)</span>:
+<span class="math display">\[
+g^{\text{obs}}_{j,k} \;:=\; (r_j+\delta)^2 - \Big((p_{x,k}-c_{x,j})^2 + (p_{y,k}-c_{y,j})^2\Big) \;\le\; 0.
+\]</span></p></li>
+</ol>
+<p>Below we list nonzero partial derivatives; all missing entries are <span class="math inline">\(0\)</span>.</p>
+<p><strong>(i) Initial condition <span class="math inline">\(g^{\text{init}}=x_0-A\)</span></strong>
+<span class="math display">\[
+\frac{\partial g^{\text{init}}}{\partial x_0} = I_3.
+\]</span></p>
+<p><strong>(ii) Dynamics rows at time <span class="math inline">\(k\)</span></strong></p>
+<ul>
+<li><p><strong><span class="math inline">\(x\)</span>-row</strong> <span class="math inline">\(g^{\text{dyn}}_{x,k}\)</span>:
+<span class="math display">\[
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial p_{x,k+1}}=1,\quad
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial p_{x,k}}=-1,\quad
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial \theta_k}=h\,v_k\sin\theta_k,\quad
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial v_k}=-h\cos\theta_k.
+\]</span></p></li>
+<li><p><strong><span class="math inline">\(y\)</span>-row</strong> <span class="math inline">\(g^{\text{dyn}}_{y,k}\)</span>:
+<span class="math display">\[
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial p_{y,k+1}}=1,\quad
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial p_{y,k}}=-1,\quad
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial \theta_k}=-h\,v_k\cos\theta_k,\quad
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial v_k}=-h\sin\theta_k.
+\]</span></p></li>
+<li><p><strong>Heading row</strong> <span class="math inline">\(g^{\text{dyn}}_{\theta,k}\)</span>:
+<span class="math display">\[
+\frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \theta_{k+1}}=1,\quad
+\frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \theta_k}=-1,\quad
+\frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \omega_k}=-h.
+\]</span></p></li>
+</ul>
+<p>All other partials in each row are zero. Each dynamics triple only touches the <strong>local block</strong> <span class="math inline">\((x_k,u_k,x_{k+1})\)</span>, yielding a <strong>banded, block-sparse</strong> Jacobian in time.</p>
+<p><strong>(iii) Obstacle row for <span class="math inline">\((j,k)\)</span></strong>
+<span class="math display">\[
+g^{\text{obs}}_{j,k}=(r_j+\delta)^2 - \big((p_{x,k}-c_{x,j})^2+(p_{y,k}-c_{y,j})^2\big).
+\]</span>
+Nonzeros:
+<span class="math display">\[
+\frac{\partial g^{\text{obs}}_{j,k}}{\partial p_{x,k}}=-2\,(p_{x,k}-c_{x,j}),\qquad
+\frac{\partial g^{\text{obs}}_{j,k}}{\partial p_{y,k}}=-2\,(p_{y,k}-c_{y,j}).
+\]</span>
+This row depends only on the position of <span class="math inline">\(x_k\)</span>, so each obstacle row touches exactly two columns <span class="math inline">\((p_{x,k},p_{y,k})\)</span>.</p>
+<p>Combining the derivations above, we can see the Jacobian <span class="math inline">\(\nabla_z g\)</span> is block-banded in time.</p>
+<ul>
+<li><p>Initial block at <span class="math inline">\(x_0\)</span> is identity.</p></li>
+<li><p>Each dynamics row touches <span class="math inline">\((x_k, u_k, x_{k+1})\)</span> with at most 4 nonzeros in the <span class="math inline">\(x\)</span>- and <span class="math inline">\(y\)</span>-rows and 3 nonzeros in the <span class="math inline">\(\theta\)</span>-row.</p></li>
+<li><p>Each obstacle row touches only <span class="math inline">\((p_{x,k}, p_{y,k})\)</span>.</p></li>
+</ul>
+<p>The following Python code snippet defines a problem class <code>UnicycleTO</code> with definitions of the objective, constraints, objective gradient, and constraints Jacobian. Note that the definition of the constraints Jacobian is highly involved because it defines the Jacobian as a sparse matrix with a predefined sparsity pattern. The solver can leverage this sparsity pattern to be highly efficient.</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="model-based-plan-optimize.html#cb9-1" tabindex="-1"></a><span class="kw">class</span> UnicycleTO:</span>
+<span id="cb9-2"><a href="model-based-plan-optimize.html#cb9-2" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, P: Params):</span>
+<span id="cb9-3"><a href="model-based-plan-optimize.html#cb9-3" tabindex="-1"></a>        <span class="va">self</span>.P <span class="op">=</span> P</span>
+<span id="cb9-4"><a href="model-based-plan-optimize.html#cb9-4" tabindex="-1"></a>        <span class="co"># --- Build bounds on variables ---</span></span>
+<span id="cb9-5"><a href="model-based-plan-optimize.html#cb9-5" tabindex="-1"></a>        lb <span class="op">=</span> <span class="op">-</span>np.inf <span class="op">*</span> np.ones(P.Z_DIM)</span>
+<span id="cb9-6"><a href="model-based-plan-optimize.html#cb9-6" tabindex="-1"></a>        ub <span class="op">=</span>  np.inf <span class="op">*</span> np.ones(P.Z_DIM)</span>
+<span id="cb9-7"><a href="model-based-plan-optimize.html#cb9-7" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N):</span>
+<span id="cb9-8"><a href="model-based-plan-optimize.html#cb9-8" tabindex="-1"></a>            iu <span class="op">=</span> idx_u(k, P)</span>
+<span id="cb9-9"><a href="model-based-plan-optimize.html#cb9-9" tabindex="-1"></a>            lb[iu.start <span class="op">+</span> <span class="dv">0</span>] <span class="op">=</span> P.v_min</span>
+<span id="cb9-10"><a href="model-based-plan-optimize.html#cb9-10" tabindex="-1"></a>            ub[iu.start <span class="op">+</span> <span class="dv">0</span>] <span class="op">=</span> P.v_max</span>
+<span id="cb9-11"><a href="model-based-plan-optimize.html#cb9-11" tabindex="-1"></a>            lb[iu.start <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> P.w_min</span>
+<span id="cb9-12"><a href="model-based-plan-optimize.html#cb9-12" tabindex="-1"></a>            ub[iu.start <span class="op">+</span> <span class="dv">1</span>] <span class="op">=</span> P.w_max</span>
+<span id="cb9-13"><a href="model-based-plan-optimize.html#cb9-13" tabindex="-1"></a>        <span class="va">self</span>.lb <span class="op">=</span> lb</span>
+<span id="cb9-14"><a href="model-based-plan-optimize.html#cb9-14" tabindex="-1"></a>        <span class="va">self</span>.ub <span class="op">=</span> ub</span>
+<span id="cb9-15"><a href="model-based-plan-optimize.html#cb9-15" tabindex="-1"></a></span>
+<span id="cb9-16"><a href="model-based-plan-optimize.html#cb9-16" tabindex="-1"></a>        <span class="co"># --- Build bounds on constraints ---</span></span>
+<span id="cb9-17"><a href="model-based-plan-optimize.html#cb9-17" tabindex="-1"></a>        cl <span class="op">=</span> np.zeros(P.M)</span>
+<span id="cb9-18"><a href="model-based-plan-optimize.html#cb9-18" tabindex="-1"></a>        cu <span class="op">=</span> np.zeros(P.M)</span>
+<span id="cb9-19"><a href="model-based-plan-optimize.html#cb9-19" tabindex="-1"></a>        <span class="co"># equalities: exactly 0</span></span>
+<span id="cb9-20"><a href="model-based-plan-optimize.html#cb9-20" tabindex="-1"></a>        cl[:P.n_ceq] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb9-21"><a href="model-based-plan-optimize.html#cb9-21" tabindex="-1"></a>        cu[:P.n_ceq] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb9-22"><a href="model-based-plan-optimize.html#cb9-22" tabindex="-1"></a>        <span class="co"># inequalities: c &lt;= 0</span></span>
+<span id="cb9-23"><a href="model-based-plan-optimize.html#cb9-23" tabindex="-1"></a>        cl[P.n_ceq:] <span class="op">=</span> <span class="op">-</span>np.inf</span>
+<span id="cb9-24"><a href="model-based-plan-optimize.html#cb9-24" tabindex="-1"></a>        cu[P.n_ceq:] <span class="op">=</span> <span class="fl">0.0</span></span>
+<span id="cb9-25"><a href="model-based-plan-optimize.html#cb9-25" tabindex="-1"></a>        <span class="va">self</span>.cl <span class="op">=</span> cl</span>
+<span id="cb9-26"><a href="model-based-plan-optimize.html#cb9-26" tabindex="-1"></a>        <span class="va">self</span>.cu <span class="op">=</span> cu</span>
+<span id="cb9-27"><a href="model-based-plan-optimize.html#cb9-27" tabindex="-1"></a></span>
+<span id="cb9-28"><a href="model-based-plan-optimize.html#cb9-28" tabindex="-1"></a>        <span class="co"># --- Precompute Jacobian sparsity (row, col) ---</span></span>
+<span id="cb9-29"><a href="model-based-plan-optimize.html#cb9-29" tabindex="-1"></a>        <span class="va">self</span>.jac_rows, <span class="va">self</span>.jac_cols <span class="op">=</span> <span class="va">self</span>._build_jacobian_structure()</span>
+<span id="cb9-30"><a href="model-based-plan-optimize.html#cb9-30" tabindex="-1"></a></span>
+<span id="cb9-31"><a href="model-based-plan-optimize.html#cb9-31" tabindex="-1"></a>    <span class="co"># Objective</span></span>
+<span id="cb9-32"><a href="model-based-plan-optimize.html#cb9-32" tabindex="-1"></a>    <span class="kw">def</span> objective(<span class="va">self</span>, z):</span>
+<span id="cb9-33"><a href="model-based-plan-optimize.html#cb9-33" tabindex="-1"></a>        P <span class="op">=</span> <span class="va">self</span>.P</span>
+<span id="cb9-34"><a href="model-based-plan-optimize.html#cb9-34" tabindex="-1"></a>        X, U <span class="op">=</span> unpack(z, P)</span>
+<span id="cb9-35"><a href="model-based-plan-optimize.html#cb9-35" tabindex="-1"></a></span>
+<span id="cb9-36"><a href="model-based-plan-optimize.html#cb9-36" tabindex="-1"></a>        <span class="co"># Terminal goal tracking</span></span>
+<span id="cb9-37"><a href="model-based-plan-optimize.html#cb9-37" tabindex="-1"></a>        pos_err <span class="op">=</span> X[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>:<span class="dv">2</span>] <span class="op">-</span> P.B[<span class="dv">0</span>:<span class="dv">2</span>]</span>
+<span id="cb9-38"><a href="model-based-plan-optimize.html#cb9-38" tabindex="-1"></a>        th_err  <span class="op">=</span> X[<span class="op">-</span><span class="dv">1</span>, <span class="dv">2</span>]   <span class="op">-</span> P.B[<span class="dv">2</span>]</span>
+<span id="cb9-39"><a href="model-based-plan-optimize.html#cb9-39" tabindex="-1"></a>        J_goal <span class="op">=</span> P.w_goal_pos <span class="op">*</span> np.dot(pos_err, pos_err) <span class="op">+</span> P.w_goal_theta <span class="op">*</span> (th_err<span class="op">**</span><span class="dv">2</span>)</span>
+<span id="cb9-40"><a href="model-based-plan-optimize.html#cb9-40" tabindex="-1"></a></span>
+<span id="cb9-41"><a href="model-based-plan-optimize.html#cb9-41" tabindex="-1"></a>        <span class="co"># Control effort</span></span>
+<span id="cb9-42"><a href="model-based-plan-optimize.html#cb9-42" tabindex="-1"></a>        J_u <span class="op">=</span> P.w_u <span class="op">*</span> np.<span class="bu">sum</span>(U <span class="op">*</span> U)</span>
+<span id="cb9-43"><a href="model-based-plan-optimize.html#cb9-43" tabindex="-1"></a></span>
+<span id="cb9-44"><a href="model-based-plan-optimize.html#cb9-44" tabindex="-1"></a>        <span class="co"># Control smoothness</span></span>
+<span id="cb9-45"><a href="model-based-plan-optimize.html#cb9-45" tabindex="-1"></a>        dU <span class="op">=</span> U[<span class="dv">1</span>:, :] <span class="op">-</span> U[:<span class="op">-</span><span class="dv">1</span>, :]</span>
+<span id="cb9-46"><a href="model-based-plan-optimize.html#cb9-46" tabindex="-1"></a>        J_du <span class="op">=</span> P.w_du <span class="op">*</span> np.<span class="bu">sum</span>(dU <span class="op">*</span> dU)</span>
+<span id="cb9-47"><a href="model-based-plan-optimize.html#cb9-47" tabindex="-1"></a></span>
+<span id="cb9-48"><a href="model-based-plan-optimize.html#cb9-48" tabindex="-1"></a>        <span class="cf">return</span> <span class="fl">0.5</span> <span class="op">*</span> (J_goal <span class="op">+</span> J_u <span class="op">+</span> J_du)</span>
+<span id="cb9-49"><a href="model-based-plan-optimize.html#cb9-49" tabindex="-1"></a></span>
+<span id="cb9-50"><a href="model-based-plan-optimize.html#cb9-50" tabindex="-1"></a>    <span class="co"># Gradient of objective</span></span>
+<span id="cb9-51"><a href="model-based-plan-optimize.html#cb9-51" tabindex="-1"></a>    <span class="kw">def</span> gradient(<span class="va">self</span>, z):</span>
+<span id="cb9-52"><a href="model-based-plan-optimize.html#cb9-52" tabindex="-1"></a>        P <span class="op">=</span> <span class="va">self</span>.P</span>
+<span id="cb9-53"><a href="model-based-plan-optimize.html#cb9-53" tabindex="-1"></a>        X, U <span class="op">=</span> unpack(z, P)</span>
+<span id="cb9-54"><a href="model-based-plan-optimize.html#cb9-54" tabindex="-1"></a>        grad <span class="op">=</span> np.zeros(P.Z_DIM)</span>
+<span id="cb9-55"><a href="model-based-plan-optimize.html#cb9-55" tabindex="-1"></a></span>
+<span id="cb9-56"><a href="model-based-plan-optimize.html#cb9-56" tabindex="-1"></a>        <span class="co"># Terminal contributions (no 0.5 after derivative: cancels 2)</span></span>
+<span id="cb9-57"><a href="model-based-plan-optimize.html#cb9-57" tabindex="-1"></a>        pos_err <span class="op">=</span> X[<span class="op">-</span><span class="dv">1</span>, <span class="dv">0</span>:<span class="dv">2</span>] <span class="op">-</span> P.B[<span class="dv">0</span>:<span class="dv">2</span>]</span>
+<span id="cb9-58"><a href="model-based-plan-optimize.html#cb9-58" tabindex="-1"></a>        th_err  <span class="op">=</span> X[<span class="op">-</span><span class="dv">1</span>, <span class="dv">2</span>]   <span class="op">-</span> P.B[<span class="dv">2</span>]</span>
+<span id="cb9-59"><a href="model-based-plan-optimize.html#cb9-59" tabindex="-1"></a>        gN <span class="op">=</span> np.array([P.w_goal_pos <span class="op">*</span> pos_err[<span class="dv">0</span>],</span>
+<span id="cb9-60"><a href="model-based-plan-optimize.html#cb9-60" tabindex="-1"></a>                       P.w_goal_pos <span class="op">*</span> pos_err[<span class="dv">1</span>],</span>
+<span id="cb9-61"><a href="model-based-plan-optimize.html#cb9-61" tabindex="-1"></a>                       P.w_goal_theta <span class="op">*</span> th_err])</span>
+<span id="cb9-62"><a href="model-based-plan-optimize.html#cb9-62" tabindex="-1"></a>        grad[idx_x(P.N, P)] <span class="op">+=</span> gN</span>
+<span id="cb9-63"><a href="model-based-plan-optimize.html#cb9-63" tabindex="-1"></a></span>
+<span id="cb9-64"><a href="model-based-plan-optimize.html#cb9-64" tabindex="-1"></a>        <span class="co"># Control effort: 0.5 * 2 * w_u * u = w_u * u</span></span>
+<span id="cb9-65"><a href="model-based-plan-optimize.html#cb9-65" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N):</span>
+<span id="cb9-66"><a href="model-based-plan-optimize.html#cb9-66" tabindex="-1"></a>            iu <span class="op">=</span> idx_u(k, P)</span>
+<span id="cb9-67"><a href="model-based-plan-optimize.html#cb9-67" tabindex="-1"></a>            grad[iu] <span class="op">+=</span> P.w_u <span class="op">*</span> U[k, :]</span>
+<span id="cb9-68"><a href="model-based-plan-optimize.html#cb9-68" tabindex="-1"></a></span>
+<span id="cb9-69"><a href="model-based-plan-optimize.html#cb9-69" tabindex="-1"></a>        <span class="co"># Control smoothness: 0.5 * w_du * sum ||u_{k+1}-u_k||^2</span></span>
+<span id="cb9-70"><a href="model-based-plan-optimize.html#cb9-70" tabindex="-1"></a>        <span class="co"># d/d u_k:   -w_du*(u_{k+1}-u_k)  from (k,k+1)</span></span>
+<span id="cb9-71"><a href="model-based-plan-optimize.html#cb9-71" tabindex="-1"></a>        <span class="co"># d/d u_{k+1}: +w_du*(u_{k+1}-u_k)</span></span>
+<span id="cb9-72"><a href="model-based-plan-optimize.html#cb9-72" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N <span class="op">-</span> <span class="dv">1</span>):</span>
+<span id="cb9-73"><a href="model-based-plan-optimize.html#cb9-73" tabindex="-1"></a>            du <span class="op">=</span> U[k <span class="op">+</span> <span class="dv">1</span>, :] <span class="op">-</span> U[k, :]</span>
+<span id="cb9-74"><a href="model-based-plan-optimize.html#cb9-74" tabindex="-1"></a>            grad[idx_u(k, P)]     <span class="op">+=</span> <span class="op">-</span>P.w_du <span class="op">*</span> du</span>
+<span id="cb9-75"><a href="model-based-plan-optimize.html#cb9-75" tabindex="-1"></a>            grad[idx_u(k <span class="op">+</span> <span class="dv">1</span>, P)] <span class="op">+=</span>  P.w_du <span class="op">*</span> du</span>
+<span id="cb9-76"><a href="model-based-plan-optimize.html#cb9-76" tabindex="-1"></a></span>
+<span id="cb9-77"><a href="model-based-plan-optimize.html#cb9-77" tabindex="-1"></a>        <span class="cf">return</span> grad</span>
+<span id="cb9-78"><a href="model-based-plan-optimize.html#cb9-78" tabindex="-1"></a></span>
+<span id="cb9-79"><a href="model-based-plan-optimize.html#cb9-79" tabindex="-1"></a>    <span class="co"># Constraints g(z)</span></span>
+<span id="cb9-80"><a href="model-based-plan-optimize.html#cb9-80" tabindex="-1"></a>    <span class="kw">def</span> constraints(<span class="va">self</span>, z):</span>
+<span id="cb9-81"><a href="model-based-plan-optimize.html#cb9-81" tabindex="-1"></a>        P <span class="op">=</span> <span class="va">self</span>.P</span>
+<span id="cb9-82"><a href="model-based-plan-optimize.html#cb9-82" tabindex="-1"></a>        X, U <span class="op">=</span> unpack(z, P)</span>
+<span id="cb9-83"><a href="model-based-plan-optimize.html#cb9-83" tabindex="-1"></a>        g <span class="op">=</span> np.zeros(P.M)</span>
+<span id="cb9-84"><a href="model-based-plan-optimize.html#cb9-84" tabindex="-1"></a>        r <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-85"><a href="model-based-plan-optimize.html#cb9-85" tabindex="-1"></a></span>
+<span id="cb9-86"><a href="model-based-plan-optimize.html#cb9-86" tabindex="-1"></a>        <span class="co"># Initial equality: X0 - A = 0</span></span>
+<span id="cb9-87"><a href="model-based-plan-optimize.html#cb9-87" tabindex="-1"></a>        g[r:r<span class="op">+</span><span class="dv">3</span>] <span class="op">=</span> X[<span class="dv">0</span>, :] <span class="op">-</span> P.A</span>
+<span id="cb9-88"><a href="model-based-plan-optimize.html#cb9-88" tabindex="-1"></a>        r <span class="op">+=</span> <span class="dv">3</span></span>
+<span id="cb9-89"><a href="model-based-plan-optimize.html#cb9-89" tabindex="-1"></a></span>
+<span id="cb9-90"><a href="model-based-plan-optimize.html#cb9-90" tabindex="-1"></a>        <span class="co"># Dynamics equalities</span></span>
+<span id="cb9-91"><a href="model-based-plan-optimize.html#cb9-91" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N):</span>
+<span id="cb9-92"><a href="model-based-plan-optimize.html#cb9-92" tabindex="-1"></a>            xk <span class="op">=</span> X[k, :]</span>
+<span id="cb9-93"><a href="model-based-plan-optimize.html#cb9-93" tabindex="-1"></a>            uk <span class="op">=</span> U[k, :]</span>
+<span id="cb9-94"><a href="model-based-plan-optimize.html#cb9-94" tabindex="-1"></a>            xnext <span class="op">=</span> f_disc(xk, uk, P.h)</span>
+<span id="cb9-95"><a href="model-based-plan-optimize.html#cb9-95" tabindex="-1"></a>            g[r:r<span class="op">+</span><span class="dv">3</span>] <span class="op">=</span> X[k <span class="op">+</span> <span class="dv">1</span>, :] <span class="op">-</span> xnext</span>
+<span id="cb9-96"><a href="model-based-plan-optimize.html#cb9-96" tabindex="-1"></a>            r <span class="op">+=</span> <span class="dv">3</span></span>
+<span id="cb9-97"><a href="model-based-plan-optimize.html#cb9-97" tabindex="-1"></a></span>
+<span id="cb9-98"><a href="model-based-plan-optimize.html#cb9-98" tabindex="-1"></a>        <span class="co"># Obstacle inequalities: (r+margin)^2 - ((px-cx)^2 + (py-cy)^2) &lt;= 0</span></span>
+<span id="cb9-99"><a href="model-based-plan-optimize.html#cb9-99" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb9-100"><a href="model-based-plan-optimize.html#cb9-100" tabindex="-1"></a>            px, py <span class="op">=</span> X[k, <span class="dv">0</span>], X[k, <span class="dv">1</span>]</span>
+<span id="cb9-101"><a href="model-based-plan-optimize.html#cb9-101" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(P.nObs):</span>
+<span id="cb9-102"><a href="model-based-plan-optimize.html#cb9-102" tabindex="-1"></a>                cx, cy, r0 <span class="op">=</span> P.obstacles[j]</span>
+<span id="cb9-103"><a href="model-based-plan-optimize.html#cb9-103" tabindex="-1"></a>                r_eff <span class="op">=</span> r0 <span class="op">+</span> P.safety_margin</span>
+<span id="cb9-104"><a href="model-based-plan-optimize.html#cb9-104" tabindex="-1"></a>                g[r] <span class="op">=</span> (r_eff <span class="op">**</span> <span class="dv">2</span>) <span class="op">-</span> ((px <span class="op">-</span> cx) <span class="op">**</span> <span class="dv">2</span> <span class="op">+</span> (py <span class="op">-</span> cy) <span class="op">**</span> <span class="dv">2</span>)</span>
+<span id="cb9-105"><a href="model-based-plan-optimize.html#cb9-105" tabindex="-1"></a>                r <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb9-106"><a href="model-based-plan-optimize.html#cb9-106" tabindex="-1"></a></span>
+<span id="cb9-107"><a href="model-based-plan-optimize.html#cb9-107" tabindex="-1"></a>        <span class="cf">return</span> g</span>
+<span id="cb9-108"><a href="model-based-plan-optimize.html#cb9-108" tabindex="-1"></a></span>
+<span id="cb9-109"><a href="model-based-plan-optimize.html#cb9-109" tabindex="-1"></a>    <span class="co"># Jacobian sparsity</span></span>
+<span id="cb9-110"><a href="model-based-plan-optimize.html#cb9-110" tabindex="-1"></a>    <span class="kw">def</span> jacobianstructure(<span class="va">self</span>):</span>
+<span id="cb9-111"><a href="model-based-plan-optimize.html#cb9-111" tabindex="-1"></a>        <span class="cf">return</span> (np.array(<span class="va">self</span>.jac_rows, dtype<span class="op">=</span><span class="bu">int</span>),</span>
+<span id="cb9-112"><a href="model-based-plan-optimize.html#cb9-112" tabindex="-1"></a>                np.array(<span class="va">self</span>.jac_cols, dtype<span class="op">=</span><span class="bu">int</span>))</span>
+<span id="cb9-113"><a href="model-based-plan-optimize.html#cb9-113" tabindex="-1"></a></span>
+<span id="cb9-114"><a href="model-based-plan-optimize.html#cb9-114" tabindex="-1"></a>    <span class="co"># Jacobian values (in the same order as jacobianstructure)</span></span>
+<span id="cb9-115"><a href="model-based-plan-optimize.html#cb9-115" tabindex="-1"></a>    <span class="kw">def</span> jacobian(<span class="va">self</span>, z):</span>
+<span id="cb9-116"><a href="model-based-plan-optimize.html#cb9-116" tabindex="-1"></a>        P <span class="op">=</span> <span class="va">self</span>.P</span>
+<span id="cb9-117"><a href="model-based-plan-optimize.html#cb9-117" tabindex="-1"></a>        X, U <span class="op">=</span> unpack(z, P)</span>
+<span id="cb9-118"><a href="model-based-plan-optimize.html#cb9-118" tabindex="-1"></a>        vals <span class="op">=</span> []</span>
+<span id="cb9-119"><a href="model-based-plan-optimize.html#cb9-119" tabindex="-1"></a>        r <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-120"><a href="model-based-plan-optimize.html#cb9-120" tabindex="-1"></a></span>
+<span id="cb9-121"><a href="model-based-plan-optimize.html#cb9-121" tabindex="-1"></a>        <span class="co"># Initial eq: d/dX0 is identity (one per row)</span></span>
+<span id="cb9-122"><a href="model-based-plan-optimize.html#cb9-122" tabindex="-1"></a>        <span class="co"># rows r..r+2 with columns X0(px,py,th)</span></span>
+<span id="cb9-123"><a href="model-based-plan-optimize.html#cb9-123" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb9-124"><a href="model-based-plan-optimize.html#cb9-124" tabindex="-1"></a>            vals.append(<span class="fl">1.0</span>)</span>
+<span id="cb9-125"><a href="model-based-plan-optimize.html#cb9-125" tabindex="-1"></a>        r <span class="op">+=</span> <span class="dv">3</span></span>
+<span id="cb9-126"><a href="model-based-plan-optimize.html#cb9-126" tabindex="-1"></a></span>
+<span id="cb9-127"><a href="model-based-plan-optimize.html#cb9-127" tabindex="-1"></a>        <span class="co"># Dynamics eqs</span></span>
+<span id="cb9-128"><a href="model-based-plan-optimize.html#cb9-128" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N):</span>
+<span id="cb9-129"><a href="model-based-plan-optimize.html#cb9-129" tabindex="-1"></a>            xk <span class="op">=</span> X[k, :]</span>
+<span id="cb9-130"><a href="model-based-plan-optimize.html#cb9-130" tabindex="-1"></a>            uk <span class="op">=</span> U[k, :]</span>
+<span id="cb9-131"><a href="model-based-plan-optimize.html#cb9-131" tabindex="-1"></a>            th <span class="op">=</span> xk[<span class="dv">2</span>]</span>
+<span id="cb9-132"><a href="model-based-plan-optimize.html#cb9-132" tabindex="-1"></a>            v  <span class="op">=</span> uk[<span class="dv">0</span>]</span>
+<span id="cb9-133"><a href="model-based-plan-optimize.html#cb9-133" tabindex="-1"></a></span>
+<span id="cb9-134"><a href="model-based-plan-optimize.html#cb9-134" tabindex="-1"></a>            <span class="co"># Row r: g1 = x_{k+1,px} - [px_k + h v cos(th_k)]</span></span>
+<span id="cb9-135"><a href="model-based-plan-optimize.html#cb9-135" tabindex="-1"></a>            <span class="co"># d wrt X_{k+1,px}</span></span>
+<span id="cb9-136"><a href="model-based-plan-optimize.html#cb9-136" tabindex="-1"></a>            vals.append(<span class="fl">1.0</span>)</span>
+<span id="cb9-137"><a href="model-based-plan-optimize.html#cb9-137" tabindex="-1"></a>            <span class="co"># d wrt X_k,px</span></span>
+<span id="cb9-138"><a href="model-based-plan-optimize.html#cb9-138" tabindex="-1"></a>            vals.append(<span class="op">-</span><span class="fl">1.0</span>)</span>
+<span id="cb9-139"><a href="model-based-plan-optimize.html#cb9-139" tabindex="-1"></a>            <span class="co"># d wrt X_k,theta ( + h v sin(th) )</span></span>
+<span id="cb9-140"><a href="model-based-plan-optimize.html#cb9-140" tabindex="-1"></a>            vals.append(P.h <span class="op">*</span> v <span class="op">*</span> np.sin(th))</span>
+<span id="cb9-141"><a href="model-based-plan-optimize.html#cb9-141" tabindex="-1"></a>            <span class="co"># d wrt U_k,v ( - h cos(th) )</span></span>
+<span id="cb9-142"><a href="model-based-plan-optimize.html#cb9-142" tabindex="-1"></a>            vals.append(<span class="op">-</span>P.h <span class="op">*</span> np.cos(th))</span>
+<span id="cb9-143"><a href="model-based-plan-optimize.html#cb9-143" tabindex="-1"></a></span>
+<span id="cb9-144"><a href="model-based-plan-optimize.html#cb9-144" tabindex="-1"></a>            <span class="co"># Row r+1: g2 = x_{k+1,py} - [py_k + h v sin(th_k)]</span></span>
+<span id="cb9-145"><a href="model-based-plan-optimize.html#cb9-145" tabindex="-1"></a>            vals.append(<span class="fl">1.0</span>)                  <span class="co"># d wrt X_{k+1,py}</span></span>
+<span id="cb9-146"><a href="model-based-plan-optimize.html#cb9-146" tabindex="-1"></a>            vals.append(<span class="op">-</span><span class="fl">1.0</span>)                 <span class="co"># d wrt X_k,py</span></span>
+<span id="cb9-147"><a href="model-based-plan-optimize.html#cb9-147" tabindex="-1"></a>            vals.append(<span class="op">-</span>P.h <span class="op">*</span> v <span class="op">*</span> np.cos(th))<span class="co"># d wrt X_k,theta</span></span>
+<span id="cb9-148"><a href="model-based-plan-optimize.html#cb9-148" tabindex="-1"></a>            vals.append(<span class="op">-</span>P.h <span class="op">*</span> np.sin(th))    <span class="co"># d wrt U_k,v</span></span>
+<span id="cb9-149"><a href="model-based-plan-optimize.html#cb9-149" tabindex="-1"></a></span>
+<span id="cb9-150"><a href="model-based-plan-optimize.html#cb9-150" tabindex="-1"></a>            <span class="co"># Row r+2: g3 = x_{k+1,th} - [th_k + h w_k]</span></span>
+<span id="cb9-151"><a href="model-based-plan-optimize.html#cb9-151" tabindex="-1"></a>            vals.append(<span class="fl">1.0</span>)   <span class="co"># d wrt X_{k+1,theta}</span></span>
+<span id="cb9-152"><a href="model-based-plan-optimize.html#cb9-152" tabindex="-1"></a>            vals.append(<span class="op">-</span><span class="fl">1.0</span>)  <span class="co"># d wrt X_k,theta</span></span>
+<span id="cb9-153"><a href="model-based-plan-optimize.html#cb9-153" tabindex="-1"></a>            vals.append(<span class="op">-</span>P.h)  <span class="co"># d wrt U_k,omega</span></span>
+<span id="cb9-154"><a href="model-based-plan-optimize.html#cb9-154" tabindex="-1"></a></span>
+<span id="cb9-155"><a href="model-based-plan-optimize.html#cb9-155" tabindex="-1"></a>            r <span class="op">+=</span> <span class="dv">3</span></span>
+<span id="cb9-156"><a href="model-based-plan-optimize.html#cb9-156" tabindex="-1"></a></span>
+<span id="cb9-157"><a href="model-based-plan-optimize.html#cb9-157" tabindex="-1"></a>        <span class="co"># Obstacle inequalities</span></span>
+<span id="cb9-158"><a href="model-based-plan-optimize.html#cb9-158" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb9-159"><a href="model-based-plan-optimize.html#cb9-159" tabindex="-1"></a>            px, py <span class="op">=</span> X[k, <span class="dv">0</span>], X[k, <span class="dv">1</span>]</span>
+<span id="cb9-160"><a href="model-based-plan-optimize.html#cb9-160" tabindex="-1"></a>            <span class="cf">for</span> j <span class="kw">in</span> <span class="bu">range</span>(P.nObs):</span>
+<span id="cb9-161"><a href="model-based-plan-optimize.html#cb9-161" tabindex="-1"></a>                cx, cy, _ <span class="op">=</span> P.obstacles[j]</span>
+<span id="cb9-162"><a href="model-based-plan-optimize.html#cb9-162" tabindex="-1"></a>                <span class="co"># d/d px_k: -2(px - cx)</span></span>
+<span id="cb9-163"><a href="model-based-plan-optimize.html#cb9-163" tabindex="-1"></a>                vals.append(<span class="op">-</span><span class="fl">2.0</span> <span class="op">*</span> (px <span class="op">-</span> cx))</span>
+<span id="cb9-164"><a href="model-based-plan-optimize.html#cb9-164" tabindex="-1"></a>                <span class="co"># d/d py_k: -2(py - cy)</span></span>
+<span id="cb9-165"><a href="model-based-plan-optimize.html#cb9-165" tabindex="-1"></a>                vals.append(<span class="op">-</span><span class="fl">2.0</span> <span class="op">*</span> (py <span class="op">-</span> cy))</span>
+<span id="cb9-166"><a href="model-based-plan-optimize.html#cb9-166" tabindex="-1"></a>                r <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb9-167"><a href="model-based-plan-optimize.html#cb9-167" tabindex="-1"></a></span>
+<span id="cb9-168"><a href="model-based-plan-optimize.html#cb9-168" tabindex="-1"></a>        <span class="cf">return</span> np.array(vals, dtype<span class="op">=</span><span class="bu">float</span>)</span>
+<span id="cb9-169"><a href="model-based-plan-optimize.html#cb9-169" tabindex="-1"></a></span>
+<span id="cb9-170"><a href="model-based-plan-optimize.html#cb9-170" tabindex="-1"></a>    <span class="co"># --- Internal: build Jacobian sparsity pattern once ---</span></span>
+<span id="cb9-171"><a href="model-based-plan-optimize.html#cb9-171" tabindex="-1"></a>    <span class="kw">def</span> _build_jacobian_structure(<span class="va">self</span>):</span>
+<span id="cb9-172"><a href="model-based-plan-optimize.html#cb9-172" tabindex="-1"></a>        P <span class="op">=</span> <span class="va">self</span>.P</span>
+<span id="cb9-173"><a href="model-based-plan-optimize.html#cb9-173" tabindex="-1"></a>        rows <span class="op">=</span> []</span>
+<span id="cb9-174"><a href="model-based-plan-optimize.html#cb9-174" tabindex="-1"></a>        cols <span class="op">=</span> []</span>
+<span id="cb9-175"><a href="model-based-plan-optimize.html#cb9-175" tabindex="-1"></a>        r <span class="op">=</span> <span class="dv">0</span></span>
+<span id="cb9-176"><a href="model-based-plan-optimize.html#cb9-176" tabindex="-1"></a></span>
+<span id="cb9-177"><a href="model-based-plan-optimize.html#cb9-177" tabindex="-1"></a>        <span class="co"># Initial equality: g0..g2 depend on X0(px,py,th) diagonally</span></span>
+<span id="cb9-178"><a href="model-based-plan-optimize.html#cb9-178" tabindex="-1"></a>        <span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">3</span>):</span>
+<span id="cb9-179"><a href="model-based-plan-optimize.html#cb9-179" tabindex="-1"></a>            rows.append(r <span class="op">+</span> i)</span>
+<span id="cb9-180"><a href="model-based-plan-optimize.html#cb9-180" tabindex="-1"></a>            cols.append(idx_x(<span class="dv">0</span>, P).start <span class="op">+</span> i)</span>
+<span id="cb9-181"><a href="model-based-plan-optimize.html#cb9-181" tabindex="-1"></a>        r <span class="op">+=</span> <span class="dv">3</span></span>
+<span id="cb9-182"><a href="model-based-plan-optimize.html#cb9-182" tabindex="-1"></a></span>
+<span id="cb9-183"><a href="model-based-plan-optimize.html#cb9-183" tabindex="-1"></a>        <span class="co"># Dynamics equalities</span></span>
+<span id="cb9-184"><a href="model-based-plan-optimize.html#cb9-184" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N):</span>
+<span id="cb9-185"><a href="model-based-plan-optimize.html#cb9-185" tabindex="-1"></a>            ixk   <span class="op">=</span> idx_x(k, P)</span>
+<span id="cb9-186"><a href="model-based-plan-optimize.html#cb9-186" tabindex="-1"></a>            ixkp1 <span class="op">=</span> idx_x(k <span class="op">+</span> <span class="dv">1</span>, P)</span>
+<span id="cb9-187"><a href="model-based-plan-optimize.html#cb9-187" tabindex="-1"></a>            iuk   <span class="op">=</span> idx_u(k, P)</span>
+<span id="cb9-188"><a href="model-based-plan-optimize.html#cb9-188" tabindex="-1"></a></span>
+<span id="cb9-189"><a href="model-based-plan-optimize.html#cb9-189" tabindex="-1"></a>            <span class="co"># Row r (px)</span></span>
+<span id="cb9-190"><a href="model-based-plan-optimize.html#cb9-190" tabindex="-1"></a>            rows.extend([r, r, r, r])</span>
+<span id="cb9-191"><a href="model-based-plan-optimize.html#cb9-191" tabindex="-1"></a>            cols.extend([</span>
+<span id="cb9-192"><a href="model-based-plan-optimize.html#cb9-192" tabindex="-1"></a>                ixkp1.start <span class="op">+</span> <span class="dv">0</span>,   <span class="co"># X_{k+1,px}</span></span>
+<span id="cb9-193"><a href="model-based-plan-optimize.html#cb9-193" tabindex="-1"></a>                ixk.start   <span class="op">+</span> <span class="dv">0</span>,   <span class="co"># X_k,px</span></span>
+<span id="cb9-194"><a href="model-based-plan-optimize.html#cb9-194" tabindex="-1"></a>                ixk.start   <span class="op">+</span> <span class="dv">2</span>,   <span class="co"># X_k,theta</span></span>
+<span id="cb9-195"><a href="model-based-plan-optimize.html#cb9-195" tabindex="-1"></a>                iuk.start   <span class="op">+</span> <span class="dv">0</span>    <span class="co"># U_k,v</span></span>
+<span id="cb9-196"><a href="model-based-plan-optimize.html#cb9-196" tabindex="-1"></a>            ])</span>
+<span id="cb9-197"><a href="model-based-plan-optimize.html#cb9-197" tabindex="-1"></a>            <span class="co"># Row r+1 (py)</span></span>
+<span id="cb9-198"><a href="model-based-plan-optimize.html#cb9-198" tabindex="-1"></a>            rows.extend([r <span class="op">+</span> <span class="dv">1</span>, r <span class="op">+</span> <span class="dv">1</span>, r <span class="op">+</span> <span class="dv">1</span>, r <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb9-199"><a href="model-based-plan-optimize.html#cb9-199" tabindex="-1"></a>            cols.extend([</span>
+<span id="cb9-200"><a href="model-based-plan-optimize.html#cb9-200" tabindex="-1"></a>                ixkp1.start <span class="op">+</span> <span class="dv">1</span>,   <span class="co"># X_{k+1,py}</span></span>
+<span id="cb9-201"><a href="model-based-plan-optimize.html#cb9-201" tabindex="-1"></a>                ixk.start   <span class="op">+</span> <span class="dv">1</span>,   <span class="co"># X_k,py</span></span>
+<span id="cb9-202"><a href="model-based-plan-optimize.html#cb9-202" tabindex="-1"></a>                ixk.start   <span class="op">+</span> <span class="dv">2</span>,   <span class="co"># X_k,theta</span></span>
+<span id="cb9-203"><a href="model-based-plan-optimize.html#cb9-203" tabindex="-1"></a>                iuk.start   <span class="op">+</span> <span class="dv">0</span>    <span class="co"># U_k,v</span></span>
+<span id="cb9-204"><a href="model-based-plan-optimize.html#cb9-204" tabindex="-1"></a>            ])</span>
+<span id="cb9-205"><a href="model-based-plan-optimize.html#cb9-205" tabindex="-1"></a>            <span class="co"># Row r+2 (theta)</span></span>
+<span id="cb9-206"><a href="model-based-plan-optimize.html#cb9-206" tabindex="-1"></a>            rows.extend([r <span class="op">+</span> <span class="dv">2</span>, r <span class="op">+</span> <span class="dv">2</span>, r <span class="op">+</span> <span class="dv">2</span>])</span>
+<span id="cb9-207"><a href="model-based-plan-optimize.html#cb9-207" tabindex="-1"></a>            cols.extend([</span>
+<span id="cb9-208"><a href="model-based-plan-optimize.html#cb9-208" tabindex="-1"></a>                ixkp1.start <span class="op">+</span> <span class="dv">2</span>,   <span class="co"># X_{k+1,theta}</span></span>
+<span id="cb9-209"><a href="model-based-plan-optimize.html#cb9-209" tabindex="-1"></a>                ixk.start   <span class="op">+</span> <span class="dv">2</span>,   <span class="co"># X_k,theta</span></span>
+<span id="cb9-210"><a href="model-based-plan-optimize.html#cb9-210" tabindex="-1"></a>                iuk.start   <span class="op">+</span> <span class="dv">1</span>    <span class="co"># U_k,omega</span></span>
+<span id="cb9-211"><a href="model-based-plan-optimize.html#cb9-211" tabindex="-1"></a>            ])</span>
+<span id="cb9-212"><a href="model-based-plan-optimize.html#cb9-212" tabindex="-1"></a>            r <span class="op">+=</span> <span class="dv">3</span></span>
+<span id="cb9-213"><a href="model-based-plan-optimize.html#cb9-213" tabindex="-1"></a></span>
+<span id="cb9-214"><a href="model-based-plan-optimize.html#cb9-214" tabindex="-1"></a>        <span class="co"># Obstacle inequalities: each depends only on px_k, py_k</span></span>
+<span id="cb9-215"><a href="model-based-plan-optimize.html#cb9-215" tabindex="-1"></a>        <span class="cf">for</span> k <span class="kw">in</span> <span class="bu">range</span>(P.N <span class="op">+</span> <span class="dv">1</span>):</span>
+<span id="cb9-216"><a href="model-based-plan-optimize.html#cb9-216" tabindex="-1"></a>            ixk <span class="op">=</span> idx_x(k, P)</span>
+<span id="cb9-217"><a href="model-based-plan-optimize.html#cb9-217" tabindex="-1"></a>            <span class="cf">for</span> _ <span class="kw">in</span> <span class="bu">range</span>(P.nObs):</span>
+<span id="cb9-218"><a href="model-based-plan-optimize.html#cb9-218" tabindex="-1"></a>                rows.extend([r, r])</span>
+<span id="cb9-219"><a href="model-based-plan-optimize.html#cb9-219" tabindex="-1"></a>                cols.extend([ixk.start <span class="op">+</span> <span class="dv">0</span>, ixk.start <span class="op">+</span> <span class="dv">1</span>])</span>
+<span id="cb9-220"><a href="model-based-plan-optimize.html#cb9-220" tabindex="-1"></a>                r <span class="op">+=</span> <span class="dv">1</span></span>
+<span id="cb9-221"><a href="model-based-plan-optimize.html#cb9-221" tabindex="-1"></a></span>
+<span id="cb9-222"><a href="model-based-plan-optimize.html#cb9-222" tabindex="-1"></a>        <span class="cf">assert</span> r <span class="op">==</span> P.M, <span class="st">&quot;Jacobian structure row count mismatch&quot;</span></span>
+<span id="cb9-223"><a href="model-based-plan-optimize.html#cb9-223" tabindex="-1"></a>        <span class="cf">return</span> rows, cols</span></code></pre></div>
+<p>After defining the problem class, we pass it to the interface of IPOPT using the folowing snippet.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="model-based-plan-optimize.html#cb10-1" tabindex="-1"></a><span class="co"># Initial guess</span></span>
+<span id="cb10-2"><a href="model-based-plan-optimize.html#cb10-2" tabindex="-1"></a>z0 <span class="op">=</span> initial_guess(P)</span>
+<span id="cb10-3"><a href="model-based-plan-optimize.html#cb10-3" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="model-based-plan-optimize.html#cb10-4" tabindex="-1"></a><span class="co"># Problem + IPOPT</span></span>
+<span id="cb10-5"><a href="model-based-plan-optimize.html#cb10-5" tabindex="-1"></a>problem <span class="op">=</span> UnicycleTO(P)</span>
+<span id="cb10-6"><a href="model-based-plan-optimize.html#cb10-6" tabindex="-1"></a>nlp <span class="op">=</span> cyipopt.Problem(</span>
+<span id="cb10-7"><a href="model-based-plan-optimize.html#cb10-7" tabindex="-1"></a>    n<span class="op">=</span>P.Z_DIM, m<span class="op">=</span>P.M,</span>
+<span id="cb10-8"><a href="model-based-plan-optimize.html#cb10-8" tabindex="-1"></a>    problem_obj<span class="op">=</span>problem,</span>
+<span id="cb10-9"><a href="model-based-plan-optimize.html#cb10-9" tabindex="-1"></a>    lb<span class="op">=</span>problem.lb, ub<span class="op">=</span>problem.ub,</span>
+<span id="cb10-10"><a href="model-based-plan-optimize.html#cb10-10" tabindex="-1"></a>    cl<span class="op">=</span>problem.cl, cu<span class="op">=</span>problem.cu</span>
+<span id="cb10-11"><a href="model-based-plan-optimize.html#cb10-11" tabindex="-1"></a>)</span>
+<span id="cb10-12"><a href="model-based-plan-optimize.html#cb10-12" tabindex="-1"></a></span>
+<span id="cb10-13"><a href="model-based-plan-optimize.html#cb10-13" tabindex="-1"></a><span class="co"># Options (tweak as desired)</span></span>
+<span id="cb10-14"><a href="model-based-plan-optimize.html#cb10-14" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;tol&quot;</span>, <span class="fl">1e-6</span>)</span>
+<span id="cb10-15"><a href="model-based-plan-optimize.html#cb10-15" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;dual_inf_tol&quot;</span>, <span class="fl">1e-6</span>)</span>
+<span id="cb10-16"><a href="model-based-plan-optimize.html#cb10-16" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;constr_viol_tol&quot;</span>, <span class="fl">1e-6</span>)</span>
+<span id="cb10-17"><a href="model-based-plan-optimize.html#cb10-17" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;compl_inf_tol&quot;</span>, <span class="fl">1e-6</span>)</span>
+<span id="cb10-18"><a href="model-based-plan-optimize.html#cb10-18" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;max_iter&quot;</span>, <span class="dv">2000</span>)</span>
+<span id="cb10-19"><a href="model-based-plan-optimize.html#cb10-19" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;hessian_approximation&quot;</span>, <span class="st">&quot;limited-memory&quot;</span>)</span>
+<span id="cb10-20"><a href="model-based-plan-optimize.html#cb10-20" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;print_level&quot;</span>, <span class="dv">5</span>)</span>
+<span id="cb10-21"><a href="model-based-plan-optimize.html#cb10-21" tabindex="-1"></a></span>
+<span id="cb10-22"><a href="model-based-plan-optimize.html#cb10-22" tabindex="-1"></a>z_star, info <span class="op">=</span> nlp.solve(z0)</span></code></pre></div>
+<p>In the case of three obstacles (<span class="math inline">\(\delta=0\)</span>), we obtain the trajectory shown in Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-ipopt-all-zero">4.8</a> with an all-zero initialization, and the trajectory shown in Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-ipopt-straight">4.9</a> with a straight-line initialization.</p>
+<p>You can play with the full code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/to_unicycle_ipopt.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-to-ipopt-all-zero"></span>
+<img src="images/Model-based-optimization/to_unicycle_ipopt_all-zero.png" alt="Trajectory optimization for unicyle using IPOPT (all-zero initialization)." width="90%" />
+<p class="caption">
+Figure 4.8: Trajectory optimization for unicyle using IPOPT (all-zero initialization).
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-to-ipopt-straight"></span>
+<img src="images/Model-based-optimization/to_unicyle_ipopt_straight.png" alt="Trajectory optimization for unicyle using IPOPT (straight-line initialization)." width="90%" />
+<p class="caption">
+Figure 4.9: Trajectory optimization for unicyle using IPOPT (straight-line initialization).
+</p>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>

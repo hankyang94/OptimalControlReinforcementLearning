@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-11-09}
+\date{2025-11-10}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -8217,7 +8217,7 @@ For \(k=0,1,2,\dots\)
 \end{itemize}
 
 \begin{example}[Trajectory Optimization with SQP]
-\protect\hypertarget{exm:sqp-to}{}\label{exm:sqp-to}
+\protect\hypertarget{exm:sqp-to-unicyle}{}\label{exm:sqp-to-unicyle}
 
 We formulate a trajectory optimization (TO) problem for a unicycle robot that must travel from a start pose \(A\) to a goal pose \(B\) while avoiding circular (ball-shaped) obstacles.
 
@@ -8667,7 +8667,500 @@ The outer loop adapts the trust-region radius \(\Delta\) and the barrier paramet
 
 \textbf{When to favor TR-IPM.} TR globalization is robust for nonconvex \(H\), allows inexact linear solves (e.g., Krylov), and integrates naturally with limited-memory updates and scaling.
 
-\textbf{Software.} Implementing a robust interior-point method that reliably solves \emph{general} nonlinear programs is nontrivial. Fortunately, the open-source solver \href{https://github.com/coin-or/Ipopt}{IPOPT} \citep{wachter2006implementation} is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate several trajectory-optimization problems and solve them with IPOPT to illustrate end-to-end modeling and solver usage.
+\textbf{Software.} Implementing a robust interior-point method that reliably solves \emph{general} nonlinear programs is nontrivial. Fortunately, the open-source solver \href{https://github.com/coin-or/Ipopt}{IPOPT} \citep{wachter2006implementation} is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate a trajectory-optimization problem and solve it with IPOPT to illustrate end-to-end modeling and solver usage.
+
+\begin{example}[Trajectory Optimization with IPOPT]
+\protect\hypertarget{exm:unicycle-ipopt}{}\label{exm:unicycle-ipopt}
+
+We solve a unicycle trajectory optimization (TO) problem (same as the one in Example \ref{exm:sqp-to-unicyle}) from start pose \(A\) to goal pose \(B\) while avoiding circular obstacles, now using IPOPT via \href{https://cyipopt.readthedocs.io/en/stable/}{\texttt{cyipopt}} in Python.
+
+\textbf{Dynamics.} With state \(x=[p_x,p_y,\theta]^\top\) and control \(u=[v,\omega]^\top\),
+\[
+\dot{x}(t)=
+\begin{bmatrix}
+v\cos\theta\\[2pt]
+v\sin\theta\\
+\omega
+\end{bmatrix}.
+\label{eq:ipopt-uni-cts}
+\]
+We discretize at \(t_k=kh\) by forward Euler:
+\[
+x_{k+1} = f_h(x_k,u_k) :=
+\begin{bmatrix}
+p_{x,k} + h\, v_k \cos \theta_k\\
+p_{y,k} + h\, v_k \sin \theta_k\\
+\theta_k + h\, \omega_k
+\end{bmatrix},\quad k=0,\ldots,N-1.
+\label{eq:ipopt-uni-disc}
+\]
+
+\textbf{Decision vector.} We stack the state and control trajectories into a single decision vector
+\[
+z=\big[x_0^\top,u_0^\top,x_1^\top,u_1^\top,\dots,x_{N-1}^\top,u_{N-1}^\top,x_N^\top\big]^\top
+\in\mathbb{R}^{(3+2)N+3}.
+\label{eq:ipopt-uni-z}
+\]
+
+\textbf{Constraints.} The state and control trajectories need to satisfy the following constraints:
+
+\begin{itemize}
+\item
+  Initial condition: \(x_0=A\).
+\item
+  Dynamics equalities: \(x_{k+1}-f_h(x_k,u_k)=0\) for \(k=0,\dots,N-1\).
+\item
+  Obstacle inequalities: for each circular obstacle \((c_j=[c_{x,j},c_{y,j}]^\top,r_j)\) and all \(k=0,\dots,N\),
+  \[
+  c_{j,k}(x_k):=(r_j+\delta)^2-\big((p_{x,k}-c_{x,j})^2+(p_{y,k}-c_{y,j})^2\big)\le 0,
+  \label{eq:ipopt-obs}
+  \]
+  where \(\delta > 0\) is a safety margin.
+\item
+  Box bounds on controls:
+  \[
+  v_{\min}\le v_k\le v_{\max},\qquad
+  \omega_{\min}\le \omega_k\le \omega_{\max}. 
+  \label{eq:ipopt-bounds}
+  \]
+\end{itemize}
+
+In total, there are \(m = 3 + 3N\) equality constraints and \(p = (N+1)O\) inequality constraints, where \(O\) is the number of obstacles.
+
+\textbf{Objective.} A smooth quadratic cost with terminal goal tracking, control effort, and control smoothness:
+\begin{equation}
+\hspace{-16mm} J = \frac12\Big(
+w_{\text{pos}}\|x_N^{\text{pos}}-B^{\text{pos}}\|_2^2
++ w_\theta(\theta_N-\theta^\star)^2
++ \sum_{k=0}^{N-1} w_u \|u_k\|_2^2
++ \sum_{k=0}^{N-2} w_{\Delta u}\|u_{k+1}-u_k\|_2^2
+\Big),
+\label{eq:unicycle-objective}
+\end{equation}
+with \(x_N^{\text{pos}}=[p_{x,N},p_{y,N}]^\top\) the terminal position and \(B=[B_x,B_y,\theta^\star]^\top\) the terminal pose. \(w_{\text{pos}}\), \(w_\theta\), \(w_u\), and \(w_{\Delta u}\) are positive weights.
+
+\textbf{Jacobians.} We derive the gradient of the objective and the Jacobian of the constraints with respect to the stacked decision vector
+\[
+z \;=\; \big[x_0^\top,\ u_0^\top,\ x_1^\top,\ u_1^\top,\ \dots,\ x_{N-1}^\top,\ u_{N-1}^\top,\ x_N^\top\big]^\top
+\in \mathbb{R}^{(3+2)N+3},
+\]
+where \(x_k=[p_{x,k},\,p_{y,k},\,\theta_k]^\top\) and \(u_k=[v_k,\,\omega_k]^\top\).
+
+\textbf{Objective gradient \(\nabla_z J\).} Recall the objective function from \eqref{eq:unicycle-objective}. Let \(e_{\text{pos}} := x_N^{\text{pos}}-B^{\text{pos}}\) and \(e_\theta := \theta_N-\theta^\star\), we have
+\[
+\frac{\partial J}{\partial p_{x,N}} = w_{\text{pos}}\, e_{\text{pos},x},\qquad
+\frac{\partial J}{\partial p_{y,N}} = w_{\text{pos}}\, e_{\text{pos},y},\qquad
+\frac{\partial J}{\partial \theta_N} = w_\theta\, e_\theta.
+\]
+
+All other states \(x_k\) for \(k<N\) do not appear in the objective, so
+\[
+\frac{\partial J}{\partial x_k} = 0,\quad k=0,\dots,N-1.
+\]
+
+The control effort term in the objective has gradients w.r.t. controls:
+\[
+J_u \;=\; \frac{1}{2}\sum_{k=0}^{N-1}  w_u \| u_k \|^2 \Rightarrow\;
+\frac{\partial J_u}{\partial u_k} \;=\; w_u\,u_k
+\quad\text{for }k=0,\dots,N-1.
+\]
+
+The control smoothness term in the objective reads:
+\[
+J_{\Delta u} \;=\; \frac{1}{2}\sum_{k=0}^{N-2} w_{\Delta u}\,\|u_{k+1}-u_k\|_2^2.
+\]
+By collecting contributions from the two adjacent differences that contain \(u_k\), we obtain the gradient
+\[
+\frac{\partial J_{\Delta u}}{\partial u_k} = 
+\begin{cases}
+w_{\Delta u}\,(u_0 - u_1), & k=0,\\[4pt]
+w_{\Delta u}\,(2u_k - u_{k-1} - u_{k+1}), & k=1,\dots,N-2,\\[4pt]
+w_{\Delta u}\,(u_{N-1} - u_{N-2}), & k=N-1.
+\end{cases}
+\label{eq:unicycle-objective-smoothness-gradient}
+\]
+
+Combining the above derivations, the only nonzero blocks of \(\nabla_z J\) are:
+
+\begin{itemize}
+\item
+  the \textbf{terminal state block} \(x_N\): entries shown above for \(p_{x,N},p_{y,N},\theta_N\);
+\item
+  the \textbf{control blocks} \(u_k\): \(w_u u_k\) plus the smoothness terms \eqref{eq:unicycle-objective-smoothness-gradient}.
+\end{itemize}
+
+All other entries are zero. Thus \(\nabla_z J\) is extremely sparse.
+
+\textbf{Constraint Jacobian \(\nabla_z g(z)\).} We stack constraints as
+\[
+g(z)=\begin{bmatrix}
+g^{\text{init}}\\ g^{\text{dyn}}\\ g^{\text{obs}}
+\end{bmatrix}
+\in \mathbb{R}^{3+3N+(N+1)O}
+\]
+in the order:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Initial condition} \(g^{\text{init}} = x_0 - A = 0\).
+\item
+  \textbf{Dynamics} for \(k=0,\dots,N-1\) (forward Euler with step \(h\)):
+  \[
+  \begin{aligned}
+  g^{\text{dyn}}_{x,k}&:= p_{x,k+1} - \big(p_{x,k} + h\,v_k\cos\theta_k\big) = 0,\\
+  g^{\text{dyn}}_{y,k}&:= p_{y,k+1} - \big(p_{y,k} + h\,v_k\sin\theta_k\big) = 0,\\
+  g^{\text{dyn}}_{\theta,k}&:= \theta_{k+1} - \big(\theta_k + h\,\omega_k\big) = 0.
+  \end{aligned}
+  \]
+\item
+  \textbf{Obstacle inequalities} for each obstacle \(j=1,\dots,O\) and each knot \(k=0,\dots,N\):
+  \[
+  g^{\text{obs}}_{j,k} \;:=\; (r_j+\delta)^2 - \Big((p_{x,k}-c_{x,j})^2 + (p_{y,k}-c_{y,j})^2\Big) \;\le\; 0.
+  \]
+\end{enumerate}
+
+Below we list nonzero partial derivatives; all missing entries are \(0\).
+
+\textbf{(i) Initial condition \(g^{\text{init}}=x_0-A\)}
+\[
+\frac{\partial g^{\text{init}}}{\partial x_0} = I_3.
+\]
+
+\textbf{(ii) Dynamics rows at time \(k\)}
+
+\begin{itemize}
+\item
+  \textbf{\(x\)-row} \(g^{\text{dyn}}_{x,k}\):
+  \[
+  \frac{\partial g^{\text{dyn}}_{x,k}}{\partial p_{x,k+1}}=1,\quad
+  \frac{\partial g^{\text{dyn}}_{x,k}}{\partial p_{x,k}}=-1,\quad
+  \frac{\partial g^{\text{dyn}}_{x,k}}{\partial \theta_k}=h\,v_k\sin\theta_k,\quad
+  \frac{\partial g^{\text{dyn}}_{x,k}}{\partial v_k}=-h\cos\theta_k.
+  \]
+\item
+  \textbf{\(y\)-row} \(g^{\text{dyn}}_{y,k}\):
+  \[
+  \frac{\partial g^{\text{dyn}}_{y,k}}{\partial p_{y,k+1}}=1,\quad
+  \frac{\partial g^{\text{dyn}}_{y,k}}{\partial p_{y,k}}=-1,\quad
+  \frac{\partial g^{\text{dyn}}_{y,k}}{\partial \theta_k}=-h\,v_k\cos\theta_k,\quad
+  \frac{\partial g^{\text{dyn}}_{y,k}}{\partial v_k}=-h\sin\theta_k.
+  \]
+\item
+  \textbf{Heading row} \(g^{\text{dyn}}_{\theta,k}\):
+  \[
+  \frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \theta_{k+1}}=1,\quad
+  \frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \theta_k}=-1,\quad
+  \frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \omega_k}=-h.
+  \]
+\end{itemize}
+
+All other partials in each row are zero. Each dynamics triple only touches the \textbf{local block} \((x_k,u_k,x_{k+1})\), yielding a \textbf{banded, block-sparse} Jacobian in time.
+
+\textbf{(iii) Obstacle row for \((j,k)\)}
+\[
+g^{\text{obs}}_{j,k}=(r_j+\delta)^2 - \big((p_{x,k}-c_{x,j})^2+(p_{y,k}-c_{y,j})^2\big).
+\]
+Nonzeros:
+\[
+\frac{\partial g^{\text{obs}}_{j,k}}{\partial p_{x,k}}=-2\,(p_{x,k}-c_{x,j}),\qquad
+\frac{\partial g^{\text{obs}}_{j,k}}{\partial p_{y,k}}=-2\,(p_{y,k}-c_{y,j}).
+\]
+This row depends only on the position of \(x_k\), so each obstacle row touches exactly two columns \((p_{x,k},p_{y,k})\).
+
+Combining the derivations above, we can see the Jacobian \(\nabla_z g\) is block-banded in time.
+
+\begin{itemize}
+\item
+  Initial block at \(x_0\) is identity.
+\item
+  Each dynamics row touches \((x_k, u_k, x_{k+1})\) with at most 4 nonzeros in the \(x\)- and \(y\)-rows and 3 nonzeros in the \(\theta\)-row.
+\item
+  Each obstacle row touches only \((p_{x,k}, p_{y,k})\).
+\end{itemize}
+
+The following Python code snippet defines a problem class \texttt{UnicycleTO} with definitions of the objective, constraints, objective gradient, and constraints Jacobian. Note that the definition of the constraints Jacobian is highly involved because it defines the Jacobian as a sparse matrix with a predefined sparsity pattern. The solver can leverage this sparsity pattern to be highly efficient.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{class}\NormalTok{ UnicycleTO:}
+    \KeywordTok{def} \FunctionTok{\_\_init\_\_}\NormalTok{(}\VariableTok{self}\NormalTok{, P: Params):}
+        \VariableTok{self}\NormalTok{.P }\OperatorTok{=}\NormalTok{ P}
+        \CommentTok{\# {-}{-}{-} Build bounds on variables {-}{-}{-}}
+\NormalTok{        lb }\OperatorTok{=} \OperatorTok{{-}}\NormalTok{np.inf }\OperatorTok{*}\NormalTok{ np.ones(P.Z\_DIM)}
+\NormalTok{        ub }\OperatorTok{=}\NormalTok{  np.inf }\OperatorTok{*}\NormalTok{ np.ones(P.Z\_DIM)}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N):}
+\NormalTok{            iu }\OperatorTok{=}\NormalTok{ idx\_u(k, P)}
+\NormalTok{            lb[iu.start }\OperatorTok{+} \DecValTok{0}\NormalTok{] }\OperatorTok{=}\NormalTok{ P.v\_min}
+\NormalTok{            ub[iu.start }\OperatorTok{+} \DecValTok{0}\NormalTok{] }\OperatorTok{=}\NormalTok{ P.v\_max}
+\NormalTok{            lb[iu.start }\OperatorTok{+} \DecValTok{1}\NormalTok{] }\OperatorTok{=}\NormalTok{ P.w\_min}
+\NormalTok{            ub[iu.start }\OperatorTok{+} \DecValTok{1}\NormalTok{] }\OperatorTok{=}\NormalTok{ P.w\_max}
+        \VariableTok{self}\NormalTok{.lb }\OperatorTok{=}\NormalTok{ lb}
+        \VariableTok{self}\NormalTok{.ub }\OperatorTok{=}\NormalTok{ ub}
+
+        \CommentTok{\# {-}{-}{-} Build bounds on constraints {-}{-}{-}}
+\NormalTok{        cl }\OperatorTok{=}\NormalTok{ np.zeros(P.M)}
+\NormalTok{        cu }\OperatorTok{=}\NormalTok{ np.zeros(P.M)}
+        \CommentTok{\# equalities: exactly 0}
+\NormalTok{        cl[:P.n\_ceq] }\OperatorTok{=} \FloatTok{0.0}
+\NormalTok{        cu[:P.n\_ceq] }\OperatorTok{=} \FloatTok{0.0}
+        \CommentTok{\# inequalities: c \textless{}= 0}
+\NormalTok{        cl[P.n\_ceq:] }\OperatorTok{=} \OperatorTok{{-}}\NormalTok{np.inf}
+\NormalTok{        cu[P.n\_ceq:] }\OperatorTok{=} \FloatTok{0.0}
+        \VariableTok{self}\NormalTok{.cl }\OperatorTok{=}\NormalTok{ cl}
+        \VariableTok{self}\NormalTok{.cu }\OperatorTok{=}\NormalTok{ cu}
+
+        \CommentTok{\# {-}{-}{-} Precompute Jacobian sparsity (row, col) {-}{-}{-}}
+        \VariableTok{self}\NormalTok{.jac\_rows, }\VariableTok{self}\NormalTok{.jac\_cols }\OperatorTok{=} \VariableTok{self}\NormalTok{.\_build\_jacobian\_structure()}
+
+    \CommentTok{\# Objective}
+    \KeywordTok{def}\NormalTok{ objective(}\VariableTok{self}\NormalTok{, z):}
+\NormalTok{        P }\OperatorTok{=} \VariableTok{self}\NormalTok{.P}
+\NormalTok{        X, U }\OperatorTok{=}\NormalTok{ unpack(z, P)}
+
+        \CommentTok{\# Terminal goal tracking}
+\NormalTok{        pos\_err }\OperatorTok{=}\NormalTok{ X[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{:}\DecValTok{2}\NormalTok{] }\OperatorTok{{-}}\NormalTok{ P.B[}\DecValTok{0}\NormalTok{:}\DecValTok{2}\NormalTok{]}
+\NormalTok{        th\_err  }\OperatorTok{=}\NormalTok{ X[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{]   }\OperatorTok{{-}}\NormalTok{ P.B[}\DecValTok{2}\NormalTok{]}
+\NormalTok{        J\_goal }\OperatorTok{=}\NormalTok{ P.w\_goal\_pos }\OperatorTok{*}\NormalTok{ np.dot(pos\_err, pos\_err) }\OperatorTok{+}\NormalTok{ P.w\_goal\_theta }\OperatorTok{*}\NormalTok{ (th\_err}\OperatorTok{**}\DecValTok{2}\NormalTok{)}
+
+        \CommentTok{\# Control effort}
+\NormalTok{        J\_u }\OperatorTok{=}\NormalTok{ P.w\_u }\OperatorTok{*}\NormalTok{ np.}\BuiltInTok{sum}\NormalTok{(U }\OperatorTok{*}\NormalTok{ U)}
+
+        \CommentTok{\# Control smoothness}
+\NormalTok{        dU }\OperatorTok{=}\NormalTok{ U[}\DecValTok{1}\NormalTok{:, :] }\OperatorTok{{-}}\NormalTok{ U[:}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, :]}
+\NormalTok{        J\_du }\OperatorTok{=}\NormalTok{ P.w\_du }\OperatorTok{*}\NormalTok{ np.}\BuiltInTok{sum}\NormalTok{(dU }\OperatorTok{*}\NormalTok{ dU)}
+
+        \ControlFlowTok{return} \FloatTok{0.5} \OperatorTok{*}\NormalTok{ (J\_goal }\OperatorTok{+}\NormalTok{ J\_u }\OperatorTok{+}\NormalTok{ J\_du)}
+
+    \CommentTok{\# Gradient of objective}
+    \KeywordTok{def}\NormalTok{ gradient(}\VariableTok{self}\NormalTok{, z):}
+\NormalTok{        P }\OperatorTok{=} \VariableTok{self}\NormalTok{.P}
+\NormalTok{        X, U }\OperatorTok{=}\NormalTok{ unpack(z, P)}
+\NormalTok{        grad }\OperatorTok{=}\NormalTok{ np.zeros(P.Z\_DIM)}
+
+        \CommentTok{\# Terminal contributions (no 0.5 after derivative: cancels 2)}
+\NormalTok{        pos\_err }\OperatorTok{=}\NormalTok{ X[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{0}\NormalTok{:}\DecValTok{2}\NormalTok{] }\OperatorTok{{-}}\NormalTok{ P.B[}\DecValTok{0}\NormalTok{:}\DecValTok{2}\NormalTok{]}
+\NormalTok{        th\_err  }\OperatorTok{=}\NormalTok{ X[}\OperatorTok{{-}}\DecValTok{1}\NormalTok{, }\DecValTok{2}\NormalTok{]   }\OperatorTok{{-}}\NormalTok{ P.B[}\DecValTok{2}\NormalTok{]}
+\NormalTok{        gN }\OperatorTok{=}\NormalTok{ np.array([P.w\_goal\_pos }\OperatorTok{*}\NormalTok{ pos\_err[}\DecValTok{0}\NormalTok{],}
+\NormalTok{                       P.w\_goal\_pos }\OperatorTok{*}\NormalTok{ pos\_err[}\DecValTok{1}\NormalTok{],}
+\NormalTok{                       P.w\_goal\_theta }\OperatorTok{*}\NormalTok{ th\_err])}
+\NormalTok{        grad[idx\_x(P.N, P)] }\OperatorTok{+=}\NormalTok{ gN}
+
+        \CommentTok{\# Control effort: 0.5 * 2 * w\_u * u = w\_u * u}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N):}
+\NormalTok{            iu }\OperatorTok{=}\NormalTok{ idx\_u(k, P)}
+\NormalTok{            grad[iu] }\OperatorTok{+=}\NormalTok{ P.w\_u }\OperatorTok{*}\NormalTok{ U[k, :]}
+
+        \CommentTok{\# Control smoothness: 0.5 * w\_du * sum ||u\_\{k+1\}{-}u\_k||\^{}2}
+        \CommentTok{\# d/d u\_k:   {-}w\_du*(u\_\{k+1\}{-}u\_k)  from (k,k+1)}
+        \CommentTok{\# d/d u\_\{k+1\}: +w\_du*(u\_\{k+1\}{-}u\_k)}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N }\OperatorTok{{-}} \DecValTok{1}\NormalTok{):}
+\NormalTok{            du }\OperatorTok{=}\NormalTok{ U[k }\OperatorTok{+} \DecValTok{1}\NormalTok{, :] }\OperatorTok{{-}}\NormalTok{ U[k, :]}
+\NormalTok{            grad[idx\_u(k, P)]     }\OperatorTok{+=} \OperatorTok{{-}}\NormalTok{P.w\_du }\OperatorTok{*}\NormalTok{ du}
+\NormalTok{            grad[idx\_u(k }\OperatorTok{+} \DecValTok{1}\NormalTok{, P)] }\OperatorTok{+=}\NormalTok{  P.w\_du }\OperatorTok{*}\NormalTok{ du}
+
+        \ControlFlowTok{return}\NormalTok{ grad}
+
+    \CommentTok{\# Constraints g(z)}
+    \KeywordTok{def}\NormalTok{ constraints(}\VariableTok{self}\NormalTok{, z):}
+\NormalTok{        P }\OperatorTok{=} \VariableTok{self}\NormalTok{.P}
+\NormalTok{        X, U }\OperatorTok{=}\NormalTok{ unpack(z, P)}
+\NormalTok{        g }\OperatorTok{=}\NormalTok{ np.zeros(P.M)}
+\NormalTok{        r }\OperatorTok{=} \DecValTok{0}
+
+        \CommentTok{\# Initial equality: X0 {-} A = 0}
+\NormalTok{        g[r:r}\OperatorTok{+}\DecValTok{3}\NormalTok{] }\OperatorTok{=}\NormalTok{ X[}\DecValTok{0}\NormalTok{, :] }\OperatorTok{{-}}\NormalTok{ P.A}
+\NormalTok{        r }\OperatorTok{+=} \DecValTok{3}
+
+        \CommentTok{\# Dynamics equalities}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N):}
+\NormalTok{            xk }\OperatorTok{=}\NormalTok{ X[k, :]}
+\NormalTok{            uk }\OperatorTok{=}\NormalTok{ U[k, :]}
+\NormalTok{            xnext }\OperatorTok{=}\NormalTok{ f\_disc(xk, uk, P.h)}
+\NormalTok{            g[r:r}\OperatorTok{+}\DecValTok{3}\NormalTok{] }\OperatorTok{=}\NormalTok{ X[k }\OperatorTok{+} \DecValTok{1}\NormalTok{, :] }\OperatorTok{{-}}\NormalTok{ xnext}
+\NormalTok{            r }\OperatorTok{+=} \DecValTok{3}
+
+        \CommentTok{\# Obstacle inequalities: (r+margin)\^{}2 {-} ((px{-}cx)\^{}2 + (py{-}cy)\^{}2) \textless{}= 0}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N }\OperatorTok{+} \DecValTok{1}\NormalTok{):}
+\NormalTok{            px, py }\OperatorTok{=}\NormalTok{ X[k, }\DecValTok{0}\NormalTok{], X[k, }\DecValTok{1}\NormalTok{]}
+            \ControlFlowTok{for}\NormalTok{ j }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.nObs):}
+\NormalTok{                cx, cy, r0 }\OperatorTok{=}\NormalTok{ P.obstacles[j]}
+\NormalTok{                r\_eff }\OperatorTok{=}\NormalTok{ r0 }\OperatorTok{+}\NormalTok{ P.safety\_margin}
+\NormalTok{                g[r] }\OperatorTok{=}\NormalTok{ (r\_eff }\OperatorTok{**} \DecValTok{2}\NormalTok{) }\OperatorTok{{-}}\NormalTok{ ((px }\OperatorTok{{-}}\NormalTok{ cx) }\OperatorTok{**} \DecValTok{2} \OperatorTok{+}\NormalTok{ (py }\OperatorTok{{-}}\NormalTok{ cy) }\OperatorTok{**} \DecValTok{2}\NormalTok{)}
+\NormalTok{                r }\OperatorTok{+=} \DecValTok{1}
+
+        \ControlFlowTok{return}\NormalTok{ g}
+
+    \CommentTok{\# Jacobian sparsity}
+    \KeywordTok{def}\NormalTok{ jacobianstructure(}\VariableTok{self}\NormalTok{):}
+        \ControlFlowTok{return}\NormalTok{ (np.array(}\VariableTok{self}\NormalTok{.jac\_rows, dtype}\OperatorTok{=}\BuiltInTok{int}\NormalTok{),}
+\NormalTok{                np.array(}\VariableTok{self}\NormalTok{.jac\_cols, dtype}\OperatorTok{=}\BuiltInTok{int}\NormalTok{))}
+
+    \CommentTok{\# Jacobian values (in the same order as jacobianstructure)}
+    \KeywordTok{def}\NormalTok{ jacobian(}\VariableTok{self}\NormalTok{, z):}
+\NormalTok{        P }\OperatorTok{=} \VariableTok{self}\NormalTok{.P}
+\NormalTok{        X, U }\OperatorTok{=}\NormalTok{ unpack(z, P)}
+\NormalTok{        vals }\OperatorTok{=}\NormalTok{ []}
+\NormalTok{        r }\OperatorTok{=} \DecValTok{0}
+
+        \CommentTok{\# Initial eq: d/dX0 is identity (one per row)}
+        \CommentTok{\# rows r..r+2 with columns X0(px,py,th)}
+        \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(}\DecValTok{3}\NormalTok{):}
+\NormalTok{            vals.append(}\FloatTok{1.0}\NormalTok{)}
+\NormalTok{        r }\OperatorTok{+=} \DecValTok{3}
+
+        \CommentTok{\# Dynamics eqs}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N):}
+\NormalTok{            xk }\OperatorTok{=}\NormalTok{ X[k, :]}
+\NormalTok{            uk }\OperatorTok{=}\NormalTok{ U[k, :]}
+\NormalTok{            th }\OperatorTok{=}\NormalTok{ xk[}\DecValTok{2}\NormalTok{]}
+\NormalTok{            v  }\OperatorTok{=}\NormalTok{ uk[}\DecValTok{0}\NormalTok{]}
+
+            \CommentTok{\# Row r: g1 = x\_\{k+1,px\} {-} [px\_k + h v cos(th\_k)]}
+            \CommentTok{\# d wrt X\_\{k+1,px\}}
+\NormalTok{            vals.append(}\FloatTok{1.0}\NormalTok{)}
+            \CommentTok{\# d wrt X\_k,px}
+\NormalTok{            vals.append(}\OperatorTok{{-}}\FloatTok{1.0}\NormalTok{)}
+            \CommentTok{\# d wrt X\_k,theta ( + h v sin(th) )}
+\NormalTok{            vals.append(P.h }\OperatorTok{*}\NormalTok{ v }\OperatorTok{*}\NormalTok{ np.sin(th))}
+            \CommentTok{\# d wrt U\_k,v ( {-} h cos(th) )}
+\NormalTok{            vals.append(}\OperatorTok{{-}}\NormalTok{P.h }\OperatorTok{*}\NormalTok{ np.cos(th))}
+
+            \CommentTok{\# Row r+1: g2 = x\_\{k+1,py\} {-} [py\_k + h v sin(th\_k)]}
+\NormalTok{            vals.append(}\FloatTok{1.0}\NormalTok{)                  }\CommentTok{\# d wrt X\_\{k+1,py\}}
+\NormalTok{            vals.append(}\OperatorTok{{-}}\FloatTok{1.0}\NormalTok{)                 }\CommentTok{\# d wrt X\_k,py}
+\NormalTok{            vals.append(}\OperatorTok{{-}}\NormalTok{P.h }\OperatorTok{*}\NormalTok{ v }\OperatorTok{*}\NormalTok{ np.cos(th))}\CommentTok{\# d wrt X\_k,theta}
+\NormalTok{            vals.append(}\OperatorTok{{-}}\NormalTok{P.h }\OperatorTok{*}\NormalTok{ np.sin(th))    }\CommentTok{\# d wrt U\_k,v}
+
+            \CommentTok{\# Row r+2: g3 = x\_\{k+1,th\} {-} [th\_k + h w\_k]}
+\NormalTok{            vals.append(}\FloatTok{1.0}\NormalTok{)   }\CommentTok{\# d wrt X\_\{k+1,theta\}}
+\NormalTok{            vals.append(}\OperatorTok{{-}}\FloatTok{1.0}\NormalTok{)  }\CommentTok{\# d wrt X\_k,theta}
+\NormalTok{            vals.append(}\OperatorTok{{-}}\NormalTok{P.h)  }\CommentTok{\# d wrt U\_k,omega}
+
+\NormalTok{            r }\OperatorTok{+=} \DecValTok{3}
+
+        \CommentTok{\# Obstacle inequalities}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N }\OperatorTok{+} \DecValTok{1}\NormalTok{):}
+\NormalTok{            px, py }\OperatorTok{=}\NormalTok{ X[k, }\DecValTok{0}\NormalTok{], X[k, }\DecValTok{1}\NormalTok{]}
+            \ControlFlowTok{for}\NormalTok{ j }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.nObs):}
+\NormalTok{                cx, cy, \_ }\OperatorTok{=}\NormalTok{ P.obstacles[j]}
+                \CommentTok{\# d/d px\_k: {-}2(px {-} cx)}
+\NormalTok{                vals.append(}\OperatorTok{{-}}\FloatTok{2.0} \OperatorTok{*}\NormalTok{ (px }\OperatorTok{{-}}\NormalTok{ cx))}
+                \CommentTok{\# d/d py\_k: {-}2(py {-} cy)}
+\NormalTok{                vals.append(}\OperatorTok{{-}}\FloatTok{2.0} \OperatorTok{*}\NormalTok{ (py }\OperatorTok{{-}}\NormalTok{ cy))}
+\NormalTok{                r }\OperatorTok{+=} \DecValTok{1}
+
+        \ControlFlowTok{return}\NormalTok{ np.array(vals, dtype}\OperatorTok{=}\BuiltInTok{float}\NormalTok{)}
+
+    \CommentTok{\# {-}{-}{-} Internal: build Jacobian sparsity pattern once {-}{-}{-}}
+    \KeywordTok{def}\NormalTok{ \_build\_jacobian\_structure(}\VariableTok{self}\NormalTok{):}
+\NormalTok{        P }\OperatorTok{=} \VariableTok{self}\NormalTok{.P}
+\NormalTok{        rows }\OperatorTok{=}\NormalTok{ []}
+\NormalTok{        cols }\OperatorTok{=}\NormalTok{ []}
+\NormalTok{        r }\OperatorTok{=} \DecValTok{0}
+
+        \CommentTok{\# Initial equality: g0..g2 depend on X0(px,py,th) diagonally}
+        \ControlFlowTok{for}\NormalTok{ i }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(}\DecValTok{3}\NormalTok{):}
+\NormalTok{            rows.append(r }\OperatorTok{+}\NormalTok{ i)}
+\NormalTok{            cols.append(idx\_x(}\DecValTok{0}\NormalTok{, P).start }\OperatorTok{+}\NormalTok{ i)}
+\NormalTok{        r }\OperatorTok{+=} \DecValTok{3}
+
+        \CommentTok{\# Dynamics equalities}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N):}
+\NormalTok{            ixk   }\OperatorTok{=}\NormalTok{ idx\_x(k, P)}
+\NormalTok{            ixkp1 }\OperatorTok{=}\NormalTok{ idx\_x(k }\OperatorTok{+} \DecValTok{1}\NormalTok{, P)}
+\NormalTok{            iuk   }\OperatorTok{=}\NormalTok{ idx\_u(k, P)}
+
+            \CommentTok{\# Row r (px)}
+\NormalTok{            rows.extend([r, r, r, r])}
+\NormalTok{            cols.extend([}
+\NormalTok{                ixkp1.start }\OperatorTok{+} \DecValTok{0}\NormalTok{,   }\CommentTok{\# X\_\{k+1,px\}}
+\NormalTok{                ixk.start   }\OperatorTok{+} \DecValTok{0}\NormalTok{,   }\CommentTok{\# X\_k,px}
+\NormalTok{                ixk.start   }\OperatorTok{+} \DecValTok{2}\NormalTok{,   }\CommentTok{\# X\_k,theta}
+\NormalTok{                iuk.start   }\OperatorTok{+} \DecValTok{0}    \CommentTok{\# U\_k,v}
+\NormalTok{            ])}
+            \CommentTok{\# Row r+1 (py)}
+\NormalTok{            rows.extend([r }\OperatorTok{+} \DecValTok{1}\NormalTok{, r }\OperatorTok{+} \DecValTok{1}\NormalTok{, r }\OperatorTok{+} \DecValTok{1}\NormalTok{, r }\OperatorTok{+} \DecValTok{1}\NormalTok{])}
+\NormalTok{            cols.extend([}
+\NormalTok{                ixkp1.start }\OperatorTok{+} \DecValTok{1}\NormalTok{,   }\CommentTok{\# X\_\{k+1,py\}}
+\NormalTok{                ixk.start   }\OperatorTok{+} \DecValTok{1}\NormalTok{,   }\CommentTok{\# X\_k,py}
+\NormalTok{                ixk.start   }\OperatorTok{+} \DecValTok{2}\NormalTok{,   }\CommentTok{\# X\_k,theta}
+\NormalTok{                iuk.start   }\OperatorTok{+} \DecValTok{0}    \CommentTok{\# U\_k,v}
+\NormalTok{            ])}
+            \CommentTok{\# Row r+2 (theta)}
+\NormalTok{            rows.extend([r }\OperatorTok{+} \DecValTok{2}\NormalTok{, r }\OperatorTok{+} \DecValTok{2}\NormalTok{, r }\OperatorTok{+} \DecValTok{2}\NormalTok{])}
+\NormalTok{            cols.extend([}
+\NormalTok{                ixkp1.start }\OperatorTok{+} \DecValTok{2}\NormalTok{,   }\CommentTok{\# X\_\{k+1,theta\}}
+\NormalTok{                ixk.start   }\OperatorTok{+} \DecValTok{2}\NormalTok{,   }\CommentTok{\# X\_k,theta}
+\NormalTok{                iuk.start   }\OperatorTok{+} \DecValTok{1}    \CommentTok{\# U\_k,omega}
+\NormalTok{            ])}
+\NormalTok{            r }\OperatorTok{+=} \DecValTok{3}
+
+        \CommentTok{\# Obstacle inequalities: each depends only on px\_k, py\_k}
+        \ControlFlowTok{for}\NormalTok{ k }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.N }\OperatorTok{+} \DecValTok{1}\NormalTok{):}
+\NormalTok{            ixk }\OperatorTok{=}\NormalTok{ idx\_x(k, P)}
+            \ControlFlowTok{for}\NormalTok{ \_ }\KeywordTok{in} \BuiltInTok{range}\NormalTok{(P.nObs):}
+\NormalTok{                rows.extend([r, r])}
+\NormalTok{                cols.extend([ixk.start }\OperatorTok{+} \DecValTok{0}\NormalTok{, ixk.start }\OperatorTok{+} \DecValTok{1}\NormalTok{])}
+\NormalTok{                r }\OperatorTok{+=} \DecValTok{1}
+
+        \ControlFlowTok{assert}\NormalTok{ r }\OperatorTok{==}\NormalTok{ P.M, }\StringTok{"Jacobian structure row count mismatch"}
+        \ControlFlowTok{return}\NormalTok{ rows, cols}
+\end{Highlighting}
+\end{Shaded}
+
+After defining the problem class, we pass it to the interface of IPOPT using the folowing snippet.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Initial guess}
+\NormalTok{z0 }\OperatorTok{=}\NormalTok{ initial\_guess(P)}
+
+\CommentTok{\# Problem + IPOPT}
+\NormalTok{problem }\OperatorTok{=}\NormalTok{ UnicycleTO(P)}
+\NormalTok{nlp }\OperatorTok{=}\NormalTok{ cyipopt.Problem(}
+\NormalTok{    n}\OperatorTok{=}\NormalTok{P.Z\_DIM, m}\OperatorTok{=}\NormalTok{P.M,}
+\NormalTok{    problem\_obj}\OperatorTok{=}\NormalTok{problem,}
+\NormalTok{    lb}\OperatorTok{=}\NormalTok{problem.lb, ub}\OperatorTok{=}\NormalTok{problem.ub,}
+\NormalTok{    cl}\OperatorTok{=}\NormalTok{problem.cl, cu}\OperatorTok{=}\NormalTok{problem.cu}
+\NormalTok{)}
+
+\CommentTok{\# Options (tweak as desired)}
+\NormalTok{nlp.add\_option(}\StringTok{"tol"}\NormalTok{, }\FloatTok{1e{-}6}\NormalTok{)}
+\NormalTok{nlp.add\_option(}\StringTok{"dual\_inf\_tol"}\NormalTok{, }\FloatTok{1e{-}6}\NormalTok{)}
+\NormalTok{nlp.add\_option(}\StringTok{"constr\_viol\_tol"}\NormalTok{, }\FloatTok{1e{-}6}\NormalTok{)}
+\NormalTok{nlp.add\_option(}\StringTok{"compl\_inf\_tol"}\NormalTok{, }\FloatTok{1e{-}6}\NormalTok{)}
+\NormalTok{nlp.add\_option(}\StringTok{"max\_iter"}\NormalTok{, }\DecValTok{2000}\NormalTok{)}
+\NormalTok{nlp.add\_option(}\StringTok{"hessian\_approximation"}\NormalTok{, }\StringTok{"limited{-}memory"}\NormalTok{)}
+\NormalTok{nlp.add\_option(}\StringTok{"print\_level"}\NormalTok{, }\DecValTok{5}\NormalTok{)}
+
+\NormalTok{z\_star, info }\OperatorTok{=}\NormalTok{ nlp.solve(z0)}
+\end{Highlighting}
+\end{Shaded}
+
+In the case of three obstacles (\(\delta=0\)), we obtain the trajectory shown in Fig. \ref{fig:unicycle-to-ipopt-all-zero} with an all-zero initialization, and the trajectory shown in Fig. \ref{fig:unicycle-to-ipopt-straight} with a straight-line initialization.
+
+You can play with the full code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/to_unicycle_ipopt.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{images/Model-based-optimization/to_unicycle_ipopt_all-zero} 
+
+}
+
+\caption{Trajectory optimization for unicyle using IPOPT (all-zero initialization).}\label{fig:unicycle-to-ipopt-all-zero}
+\end{figure}
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.9\linewidth]{images/Model-based-optimization/to_unicyle_ipopt_straight} 
+
+}
+
+\caption{Trajectory optimization for unicyle using IPOPT (straight-line initialization).}\label{fig:unicycle-to-ipopt-straight}
+\end{figure}
+
+\end{example}
 
 \section{Model Predictive Control}\label{mpc}
 
