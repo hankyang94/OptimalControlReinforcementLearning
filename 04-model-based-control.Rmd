@@ -1421,7 +1421,7 @@ For \(k=0,1,2,\dots\)
 - **Software.** The `scipy` package in Python implements SLSQP, which is basically the line-search SQP we presented above. A more advanced version of SQP is provided by the [SNOPT](https://ccom.ucsd.edu/~optimizers/solvers/snopt/) commercial software. The [CRISP](https://github.com/ComputationalRobotics/CRISP) software provides a C++ implementation of an SQP algorithm. Additionally, Matlab's [`fmincon`](https://www.mathworks.com/help/optim/ug/fmincon.html) provides an implementation of SQP.
 
 ::: {.examplebox}
-::: {.example #sqp-to name="Trajectory Optimization with SQP"}
+::: {.example #sqp-to-unicyle name="Trajectory Optimization with SQP"}
 
 We formulate a trajectory optimization (TO) problem for a unicycle robot that must travel from a start pose \(A\) to a goal pose \(B\) while avoiding circular (ball-shaped) obstacles. 
 
@@ -1453,28 +1453,6 @@ p_{y,k} + h\, v_k \sin \theta_k\\
 \end{bmatrix}.
 (\#eq:uni-disc)
 \]
-
-<!-- For later use (e.g., analytic Jacobians in SQP), the **discrete-time Jacobians** are
-\[
-A_k := \frac{\partial f_h}{\partial x}(x_k,u_k)
-=
-\begin{bmatrix}
-1 & 0 & -h v_k \sin\theta_k\\
-0 & 1 & \ \ h v_k \cos\theta_k\\
-0 & 0 & 1
-\end{bmatrix},
-\qquad
-B_k := \frac{\partial f_h}{\partial u}(x_k,u_k)
-=
-\begin{bmatrix}
-h\cos\theta_k & 0\\
-h\sin\theta_k & 0\\
-0 & h
-\end{bmatrix}.
-(\#eq:uni-jacobians)
-\]
-
---- -->
 
 **Decision Variables.** We optimize over the state–control sequence
 \[
@@ -1854,9 +1832,471 @@ The outer loop adapts the trust-region radius \(\Delta\) and the barrier paramet
 **When to favor TR-IPM.** TR globalization is robust for nonconvex \(H\), allows inexact linear solves (e.g., Krylov), and integrates naturally with limited-memory updates and scaling.
 
 
-**Software.** Implementing a robust interior-point method that reliably solves *general* nonlinear programs is nontrivial. Fortunately, the open-source solver [IPOPT](https://github.com/coin-or/Ipopt) [@wachter2006implementation] is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate several trajectory-optimization problems and solve them with IPOPT to illustrate end-to-end modeling and solver usage.
+**Software.** Implementing a robust interior-point method that reliably solves *general* nonlinear programs is nontrivial. Fortunately, the open-source solver [IPOPT](https://github.com/coin-or/Ipopt) [@wachter2006implementation] is a mature, widely used option that exploits sparsity and supports exact or quasi-Newton Hessians. In what follows, we formulate a trajectory-optimization problem and solve it with IPOPT to illustrate end-to-end modeling and solver usage.
 
+::: {.examplebox}
+::: {.example #unicycle-ipopt name="Trajectory Optimization with IPOPT"}
 
+We solve a unicycle trajectory optimization (TO) problem (same as the one in Example \@ref(exm:sqp-to-unicyle)) from start pose \(A\) to goal pose \(B\) while avoiding circular obstacles, now using IPOPT via [`cyipopt`](https://cyipopt.readthedocs.io/en/stable/) in Python.
+
+**Dynamics.** With state \(x=[p_x,p_y,\theta]^\top\) and control \(u=[v,\omega]^\top\),
+\[
+\dot{x}(t)=
+\begin{bmatrix}
+v\cos\theta\\[2pt]
+v\sin\theta\\
+\omega
+\end{bmatrix}.
+(\#eq:ipopt-uni-cts)
+\]
+We discretize at \(t_k=kh\) by forward Euler:
+\[
+x_{k+1} = f_h(x_k,u_k) :=
+\begin{bmatrix}
+p_{x,k} + h\, v_k \cos \theta_k\\
+p_{y,k} + h\, v_k \sin \theta_k\\
+\theta_k + h\, \omega_k
+\end{bmatrix},\quad k=0,\ldots,N-1.
+(\#eq:ipopt-uni-disc)
+\]
+
+**Decision vector.** We stack the state and control trajectories into a single decision vector
+\[
+z=\big[x_0^\top,u_0^\top,x_1^\top,u_1^\top,\dots,x_{N-1}^\top,u_{N-1}^\top,x_N^\top\big]^\top
+\in\mathbb{R}^{(3+2)N+3}.
+(\#eq:ipopt-uni-z)
+\]
+
+**Constraints.** The state and control trajectories need to satisfy the following constraints:
+
+- Initial condition: \(x_0=A\).
+
+- Dynamics equalities: \(x_{k+1}-f_h(x_k,u_k)=0\) for \(k=0,\dots,N-1\). 
+
+- Obstacle inequalities: for each circular obstacle \((c_j=[c_{x,j},c_{y,j}]^\top,r_j)\) and all \(k=0,\dots,N\),
+\[
+c_{j,k}(x_k):=(r_j+\delta)^2-\big((p_{x,k}-c_{x,j})^2+(p_{y,k}-c_{y,j})^2\big)\le 0,
+(\#eq:ipopt-obs)
+\]
+where $\delta > 0$ is a safety margin.
+
+- Box bounds on controls:
+\[
+v_{\min}\le v_k\le v_{\max},\qquad
+\omega_{\min}\le \omega_k\le \omega_{\max}. 
+(\#eq:ipopt-bounds)
+\]
+
+In total, there are $m = 3 + 3N$ equality constraints and $p = (N+1)O$ inequality constraints, where $O$ is the number of obstacles.
+
+**Objective.** A smooth quadratic cost with terminal goal tracking, control effort, and control smoothness:
+\begin{equation}
+\hspace{-16mm} J = \frac12\Big(
+w_{\text{pos}}\|x_N^{\text{pos}}-B^{\text{pos}}\|_2^2
++ w_\theta(\theta_N-\theta^\star)^2
++ \sum_{k=0}^{N-1} w_u \|u_k\|_2^2
++ \sum_{k=0}^{N-2} w_{\Delta u}\|u_{k+1}-u_k\|_2^2
+\Big),
+(\#eq:unicycle-objective)
+\end{equation}
+with \(x_N^{\text{pos}}=[p_{x,N},p_{y,N}]^\top\) the terminal position and \(B=[B_x,B_y,\theta^\star]^\top\) the terminal pose. $w_{\text{pos}}$, $w_\theta$, $w_u$, and $w_{\Delta u}$ are positive weights.
+
+**Jacobians.** We derive the gradient of the objective and the Jacobian of the constraints with respect to the stacked decision vector
+\[
+z \;=\; \big[x_0^\top,\ u_0^\top,\ x_1^\top,\ u_1^\top,\ \dots,\ x_{N-1}^\top,\ u_{N-1}^\top,\ x_N^\top\big]^\top
+\in \mathbb{R}^{(3+2)N+3},
+\]
+where \(x_k=[p_{x,k},\,p_{y,k},\,\theta_k]^\top\) and \(u_k=[v_k,\,\omega_k]^\top\).
+
+**Objective gradient \(\nabla_z J\).** Recall the objective function from \@ref(eq:unicycle-objective). Let \(e_{\text{pos}} := x_N^{\text{pos}}-B^{\text{pos}}\) and \(e_\theta := \theta_N-\theta^\star\), we have
+\[
+\frac{\partial J}{\partial p_{x,N}} = w_{\text{pos}}\, e_{\text{pos},x},\qquad
+\frac{\partial J}{\partial p_{y,N}} = w_{\text{pos}}\, e_{\text{pos},y},\qquad
+\frac{\partial J}{\partial \theta_N} = w_\theta\, e_\theta.
+\]
+
+All other states \(x_k\) for \(k<N\) do not appear in the objective, so
+\[
+\frac{\partial J}{\partial x_k} = 0,\quad k=0,\dots,N-1.
+\]
+
+The control effort term in the objective has gradients w.r.t. controls:
+\[
+J_u \;=\; \frac{1}{2}\sum_{k=0}^{N-1}  w_u \| u_k \|^2 \Rightarrow\;
+\frac{\partial J_u}{\partial u_k} \;=\; w_u\,u_k
+\quad\text{for }k=0,\dots,N-1.
+\]
+
+The control smoothness term in the objective reads:
+\[
+J_{\Delta u} \;=\; \frac{1}{2}\sum_{k=0}^{N-2} w_{\Delta u}\,\|u_{k+1}-u_k\|_2^2.
+\]
+By collecting contributions from the two adjacent differences that contain \(u_k\), we obtain the gradient
+\[
+\frac{\partial J_{\Delta u}}{\partial u_k} = 
+\begin{cases}
+w_{\Delta u}\,(u_0 - u_1), & k=0,\\[4pt]
+w_{\Delta u}\,(2u_k - u_{k-1} - u_{k+1}), & k=1,\dots,N-2,\\[4pt]
+w_{\Delta u}\,(u_{N-1} - u_{N-2}), & k=N-1.
+\end{cases}
+(\#eq:unicycle-objective-smoothness-gradient)
+\]
+
+Combining the above derivations, the only nonzero blocks of \(\nabla_z J\) are:
+
+- the **terminal state block** \(x_N\): entries shown above for \(p_{x,N},p_{y,N},\theta_N\);
+
+- the **control blocks** \(u_k\): \(w_u u_k\) plus the smoothness terms \@ref(eq:unicycle-objective-smoothness-gradient).
+
+All other entries are zero. Thus \(\nabla_z J\) is extremely sparse.
+
+**Constraint Jacobian \(\nabla_z g(z)\).** We stack constraints as
+\[
+g(z)=\begin{bmatrix}
+g^{\text{init}}\\ g^{\text{dyn}}\\ g^{\text{obs}}
+\end{bmatrix}
+\in \mathbb{R}^{3+3N+(N+1)O}
+\]
+in the order:
+
+1. **Initial condition** \(g^{\text{init}} = x_0 - A = 0\).
+
+2. **Dynamics** for \(k=0,\dots,N-1\) (forward Euler with step \(h\)):
+   \[
+   \begin{aligned}
+   g^{\text{dyn}}_{x,k}&:= p_{x,k+1} - \big(p_{x,k} + h\,v_k\cos\theta_k\big) = 0,\\
+   g^{\text{dyn}}_{y,k}&:= p_{y,k+1} - \big(p_{y,k} + h\,v_k\sin\theta_k\big) = 0,\\
+   g^{\text{dyn}}_{\theta,k}&:= \theta_{k+1} - \big(\theta_k + h\,\omega_k\big) = 0.
+   \end{aligned}
+   \]
+
+3. **Obstacle inequalities** for each obstacle \(j=1,\dots,O\) and each knot \(k=0,\dots,N\):
+   \[
+   g^{\text{obs}}_{j,k} \;:=\; (r_j+\delta)^2 - \Big((p_{x,k}-c_{x,j})^2 + (p_{y,k}-c_{y,j})^2\Big) \;\le\; 0.
+   \]
+
+Below we list nonzero partial derivatives; all missing entries are \(0\).
+
+**(i) Initial condition \(g^{\text{init}}=x_0-A\)**
+\[
+\frac{\partial g^{\text{init}}}{\partial x_0} = I_3.
+\]
+
+**(ii) Dynamics rows at time \(k\)**
+
+- **\(x\)-row** \(g^{\text{dyn}}_{x,k}\):
+\[
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial p_{x,k+1}}=1,\quad
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial p_{x,k}}=-1,\quad
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial \theta_k}=h\,v_k\sin\theta_k,\quad
+\frac{\partial g^{\text{dyn}}_{x,k}}{\partial v_k}=-h\cos\theta_k.
+\]
+
+- **\(y\)-row** \(g^{\text{dyn}}_{y,k}\):
+\[
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial p_{y,k+1}}=1,\quad
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial p_{y,k}}=-1,\quad
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial \theta_k}=-h\,v_k\cos\theta_k,\quad
+\frac{\partial g^{\text{dyn}}_{y,k}}{\partial v_k}=-h\sin\theta_k.
+\]
+
+- **Heading row** \(g^{\text{dyn}}_{\theta,k}\):
+\[
+\frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \theta_{k+1}}=1,\quad
+\frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \theta_k}=-1,\quad
+\frac{\partial g^{\text{dyn}}_{\theta,k}}{\partial \omega_k}=-h.
+\]
+
+All other partials in each row are zero. Each dynamics triple only touches the **local block** \((x_k,u_k,x_{k+1})\), yielding a **banded, block-sparse** Jacobian in time.
+
+**(iii) Obstacle row for \((j,k)\)**
+\[
+g^{\text{obs}}_{j,k}=(r_j+\delta)^2 - \big((p_{x,k}-c_{x,j})^2+(p_{y,k}-c_{y,j})^2\big).
+\]
+Nonzeros:
+\[
+\frac{\partial g^{\text{obs}}_{j,k}}{\partial p_{x,k}}=-2\,(p_{x,k}-c_{x,j}),\qquad
+\frac{\partial g^{\text{obs}}_{j,k}}{\partial p_{y,k}}=-2\,(p_{y,k}-c_{y,j}).
+\]
+This row depends only on the position of \(x_k\), so each obstacle row touches exactly two columns \((p_{x,k},p_{y,k})\).
+
+Combining the derivations above, we can see the Jacobian \(\nabla_z g\) is block-banded in time.  
+
+- Initial block at \(x_0\) is identity.  
+
+- Each dynamics row touches \((x_k, u_k, x_{k+1})\) with at most 4 nonzeros in the \(x\)- and \(y\)-rows and 3 nonzeros in the \(\theta\)-row.  
+
+- Each obstacle row touches only \((p_{x,k}, p_{y,k})\).
+
+The following Python code snippet defines a problem class `UnicycleTO` with definitions of the objective, constraints, objective gradient, and constraints Jacobian. Note that the definition of the constraints Jacobian is highly involved because it defines the Jacobian as a sparse matrix with a predefined sparsity pattern. The solver can leverage this sparsity pattern to be highly efficient.
+
+```python
+class UnicycleTO:
+    def __init__(self, P: Params):
+        self.P = P
+        # --- Build bounds on variables ---
+        lb = -np.inf * np.ones(P.Z_DIM)
+        ub =  np.inf * np.ones(P.Z_DIM)
+        for k in range(P.N):
+            iu = idx_u(k, P)
+            lb[iu.start + 0] = P.v_min
+            ub[iu.start + 0] = P.v_max
+            lb[iu.start + 1] = P.w_min
+            ub[iu.start + 1] = P.w_max
+        self.lb = lb
+        self.ub = ub
+
+        # --- Build bounds on constraints ---
+        cl = np.zeros(P.M)
+        cu = np.zeros(P.M)
+        # equalities: exactly 0
+        cl[:P.n_ceq] = 0.0
+        cu[:P.n_ceq] = 0.0
+        # inequalities: c <= 0
+        cl[P.n_ceq:] = -np.inf
+        cu[P.n_ceq:] = 0.0
+        self.cl = cl
+        self.cu = cu
+
+        # --- Precompute Jacobian sparsity (row, col) ---
+        self.jac_rows, self.jac_cols = self._build_jacobian_structure()
+
+    # Objective
+    def objective(self, z):
+        P = self.P
+        X, U = unpack(z, P)
+
+        # Terminal goal tracking
+        pos_err = X[-1, 0:2] - P.B[0:2]
+        th_err  = X[-1, 2]   - P.B[2]
+        J_goal = P.w_goal_pos * np.dot(pos_err, pos_err) + P.w_goal_theta * (th_err**2)
+
+        # Control effort
+        J_u = P.w_u * np.sum(U * U)
+
+        # Control smoothness
+        dU = U[1:, :] - U[:-1, :]
+        J_du = P.w_du * np.sum(dU * dU)
+
+        return 0.5 * (J_goal + J_u + J_du)
+
+    # Gradient of objective
+    def gradient(self, z):
+        P = self.P
+        X, U = unpack(z, P)
+        grad = np.zeros(P.Z_DIM)
+
+        # Terminal contributions (no 0.5 after derivative: cancels 2)
+        pos_err = X[-1, 0:2] - P.B[0:2]
+        th_err  = X[-1, 2]   - P.B[2]
+        gN = np.array([P.w_goal_pos * pos_err[0],
+                       P.w_goal_pos * pos_err[1],
+                       P.w_goal_theta * th_err])
+        grad[idx_x(P.N, P)] += gN
+
+        # Control effort: 0.5 * 2 * w_u * u = w_u * u
+        for k in range(P.N):
+            iu = idx_u(k, P)
+            grad[iu] += P.w_u * U[k, :]
+
+        # Control smoothness: 0.5 * w_du * sum ||u_{k+1}-u_k||^2
+        # d/d u_k:   -w_du*(u_{k+1}-u_k)  from (k,k+1)
+        # d/d u_{k+1}: +w_du*(u_{k+1}-u_k)
+        for k in range(P.N - 1):
+            du = U[k + 1, :] - U[k, :]
+            grad[idx_u(k, P)]     += -P.w_du * du
+            grad[idx_u(k + 1, P)] +=  P.w_du * du
+
+        return grad
+
+    # Constraints g(z)
+    def constraints(self, z):
+        P = self.P
+        X, U = unpack(z, P)
+        g = np.zeros(P.M)
+        r = 0
+
+        # Initial equality: X0 - A = 0
+        g[r:r+3] = X[0, :] - P.A
+        r += 3
+
+        # Dynamics equalities
+        for k in range(P.N):
+            xk = X[k, :]
+            uk = U[k, :]
+            xnext = f_disc(xk, uk, P.h)
+            g[r:r+3] = X[k + 1, :] - xnext
+            r += 3
+
+        # Obstacle inequalities: (r+margin)^2 - ((px-cx)^2 + (py-cy)^2) <= 0
+        for k in range(P.N + 1):
+            px, py = X[k, 0], X[k, 1]
+            for j in range(P.nObs):
+                cx, cy, r0 = P.obstacles[j]
+                r_eff = r0 + P.safety_margin
+                g[r] = (r_eff ** 2) - ((px - cx) ** 2 + (py - cy) ** 2)
+                r += 1
+
+        return g
+
+    # Jacobian sparsity
+    def jacobianstructure(self):
+        return (np.array(self.jac_rows, dtype=int),
+                np.array(self.jac_cols, dtype=int))
+
+    # Jacobian values (in the same order as jacobianstructure)
+    def jacobian(self, z):
+        P = self.P
+        X, U = unpack(z, P)
+        vals = []
+        r = 0
+
+        # Initial eq: d/dX0 is identity (one per row)
+        # rows r..r+2 with columns X0(px,py,th)
+        for i in range(3):
+            vals.append(1.0)
+        r += 3
+
+        # Dynamics eqs
+        for k in range(P.N):
+            xk = X[k, :]
+            uk = U[k, :]
+            th = xk[2]
+            v  = uk[0]
+
+            # Row r: g1 = x_{k+1,px} - [px_k + h v cos(th_k)]
+            # d wrt X_{k+1,px}
+            vals.append(1.0)
+            # d wrt X_k,px
+            vals.append(-1.0)
+            # d wrt X_k,theta ( + h v sin(th) )
+            vals.append(P.h * v * np.sin(th))
+            # d wrt U_k,v ( - h cos(th) )
+            vals.append(-P.h * np.cos(th))
+
+            # Row r+1: g2 = x_{k+1,py} - [py_k + h v sin(th_k)]
+            vals.append(1.0)                  # d wrt X_{k+1,py}
+            vals.append(-1.0)                 # d wrt X_k,py
+            vals.append(-P.h * v * np.cos(th))# d wrt X_k,theta
+            vals.append(-P.h * np.sin(th))    # d wrt U_k,v
+
+            # Row r+2: g3 = x_{k+1,th} - [th_k + h w_k]
+            vals.append(1.0)   # d wrt X_{k+1,theta}
+            vals.append(-1.0)  # d wrt X_k,theta
+            vals.append(-P.h)  # d wrt U_k,omega
+
+            r += 3
+
+        # Obstacle inequalities
+        for k in range(P.N + 1):
+            px, py = X[k, 0], X[k, 1]
+            for j in range(P.nObs):
+                cx, cy, _ = P.obstacles[j]
+                # d/d px_k: -2(px - cx)
+                vals.append(-2.0 * (px - cx))
+                # d/d py_k: -2(py - cy)
+                vals.append(-2.0 * (py - cy))
+                r += 1
+
+        return np.array(vals, dtype=float)
+
+    # --- Internal: build Jacobian sparsity pattern once ---
+    def _build_jacobian_structure(self):
+        P = self.P
+        rows = []
+        cols = []
+        r = 0
+
+        # Initial equality: g0..g2 depend on X0(px,py,th) diagonally
+        for i in range(3):
+            rows.append(r + i)
+            cols.append(idx_x(0, P).start + i)
+        r += 3
+
+        # Dynamics equalities
+        for k in range(P.N):
+            ixk   = idx_x(k, P)
+            ixkp1 = idx_x(k + 1, P)
+            iuk   = idx_u(k, P)
+
+            # Row r (px)
+            rows.extend([r, r, r, r])
+            cols.extend([
+                ixkp1.start + 0,   # X_{k+1,px}
+                ixk.start   + 0,   # X_k,px
+                ixk.start   + 2,   # X_k,theta
+                iuk.start   + 0    # U_k,v
+            ])
+            # Row r+1 (py)
+            rows.extend([r + 1, r + 1, r + 1, r + 1])
+            cols.extend([
+                ixkp1.start + 1,   # X_{k+1,py}
+                ixk.start   + 1,   # X_k,py
+                ixk.start   + 2,   # X_k,theta
+                iuk.start   + 0    # U_k,v
+            ])
+            # Row r+2 (theta)
+            rows.extend([r + 2, r + 2, r + 2])
+            cols.extend([
+                ixkp1.start + 2,   # X_{k+1,theta}
+                ixk.start   + 2,   # X_k,theta
+                iuk.start   + 1    # U_k,omega
+            ])
+            r += 3
+
+        # Obstacle inequalities: each depends only on px_k, py_k
+        for k in range(P.N + 1):
+            ixk = idx_x(k, P)
+            for _ in range(P.nObs):
+                rows.extend([r, r])
+                cols.extend([ixk.start + 0, ixk.start + 1])
+                r += 1
+
+        assert r == P.M, "Jacobian structure row count mismatch"
+        return rows, cols
+```
+
+After defining the problem class, we pass it to the interface of IPOPT using the folowing snippet.
+
+```python
+# Initial guess
+z0 = initial_guess(P)
+
+# Problem + IPOPT
+problem = UnicycleTO(P)
+nlp = cyipopt.Problem(
+    n=P.Z_DIM, m=P.M,
+    problem_obj=problem,
+    lb=problem.lb, ub=problem.ub,
+    cl=problem.cl, cu=problem.cu
+)
+
+# Options (tweak as desired)
+nlp.add_option("tol", 1e-6)
+nlp.add_option("dual_inf_tol", 1e-6)
+nlp.add_option("constr_viol_tol", 1e-6)
+nlp.add_option("compl_inf_tol", 1e-6)
+nlp.add_option("max_iter", 2000)
+nlp.add_option("hessian_approximation", "limited-memory")
+nlp.add_option("print_level", 5)
+
+z_star, info = nlp.solve(z0)
+```
+
+In the case of three obstacles ($\delta=0$), we obtain the trajectory shown in Fig. \@ref(fig:unicycle-to-ipopt-all-zero) with an all-zero initialization, and the trajectory shown in Fig. \@ref(fig:unicycle-to-ipopt-straight) with a straight-line initialization.
+
+You can play with the full code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/to_unicycle_ipopt.py).
+
+```{r unicycle-to-ipopt-all-zero, out.width='90%', fig.show='hold', fig.cap='Trajectory optimization for unicyle using IPOPT (all-zero initialization).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/to_unicycle_ipopt_all-zero.png')
+```
+
+```{r unicycle-to-ipopt-straight, out.width='90%', fig.show='hold', fig.cap='Trajectory optimization for unicyle using IPOPT (straight-line initialization).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/to_unicyle_ipopt_straight.png')
+```
+
+:::
+:::
 
 
 
