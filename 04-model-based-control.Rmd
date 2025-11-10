@@ -2283,7 +2283,7 @@ nlp.add_option("print_level", 5)
 z_star, info = nlp.solve(z0)
 ```
 
-In the case of three obstacles ($\delta=0$), we obtain the trajectory shown in Fig. \@ref(fig:unicycle-to-ipopt-all-zero) with an all-zero initialization, and the trajectory shown in Fig. \@ref(fig:unicycle-to-ipopt-straight) with a straight-line initialization.
+In the case of three obstacles ($\delta=0$), we obtain the trajectory shown in Fig. \@ref(fig:unicycle-to-ipopt-all-zero) with an all-zero initialization; the trajectory shown in Fig. \@ref(fig:unicycle-to-ipopt-straight) with a straight-line initialization; and the trajectory shown in Fig. \@ref(fig: unicycle-to-ipopt-random) with a random initialization.
 
 You can play with the full code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/to_unicycle_ipopt.py).
 
@@ -2292,7 +2292,11 @@ knitr::include_graphics('images/Model-based-optimization/to_unicycle_ipopt_all-z
 ```
 
 ```{r unicycle-to-ipopt-straight, out.width='90%', fig.show='hold', fig.cap='Trajectory optimization for unicyle using IPOPT (straight-line initialization).', fig.align='center', echo=FALSE}
-knitr::include_graphics('images/Model-based-optimization/to_unicyle_ipopt_straight.png')
+knitr::include_graphics('images/Model-based-optimization/to_unicycle_ipopt_straight.png')
+```
+
+```{r unicycle-to-ipopt-random, out.width='90%', fig.show='hold', fig.cap='Trajectory optimization for unicyle using IPOPT (random initialization).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/to_unicycle_ipopt_random-init.png')
 ```
 
 :::
