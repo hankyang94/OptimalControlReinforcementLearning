@@ -2175,6 +2175,13 @@ This row depends only on the position of <span class="math inline">\(x_k\)</span
 <li><p>Each dynamics row touches <span class="math inline">\((x_k, u_k, x_{k+1})\)</span> with at most 4 nonzeros in the <span class="math inline">\(x\)</span>- and <span class="math inline">\(y\)</span>-rows and 3 nonzeros in the <span class="math inline">\(\theta\)</span>-row.</p></li>
 <li><p>Each obstacle row touches only <span class="math inline">\((p_{x,k}, p_{y,k})\)</span>.</p></li>
 </ul>
+<p>Fig. <a href="model-based-plan-optimize.html#fig:unicycle-jacobian-sparsity">4.8</a> illustrates the sparsity structure of the constraint Jacobian.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-jacobian-sparsity"></span>
+<img src="images/Model-based-optimization/jacobian-sparsity-unicycle.png" alt="Sparsity structure of constraint Jacobian." width="90%" />
+<p class="caption">
+Figure 4.8: Sparsity structure of constraint Jacobian.
+</p>
+</div>
 <p>The following Python code snippet defines a problem class <code>UnicycleTO</code> with definitions of the objective, constraints, objective gradient, and constraints Jacobian. Note that the definition of the constraints Jacobian is highly involved because it defines the Jacobian as a sparse matrix with a predefined sparsity pattern. The solver can leverage this sparsity pattern to be highly efficient.</p>
 <div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="model-based-plan-optimize.html#cb9-1" tabindex="-1"></a><span class="kw">class</span> UnicycleTO:</span>
 <span id="cb9-2"><a href="model-based-plan-optimize.html#cb9-2" tabindex="-1"></a>    <span class="kw">def</span> <span class="fu">__init__</span>(<span class="va">self</span>, P: Params):</span>
@@ -2422,24 +2429,24 @@ This row depends only on the position of <span class="math inline">\(x_k\)</span
 <span id="cb10-20"><a href="model-based-plan-optimize.html#cb10-20" tabindex="-1"></a>nlp.add_option(<span class="st">&quot;print_level&quot;</span>, <span class="dv">5</span>)</span>
 <span id="cb10-21"><a href="model-based-plan-optimize.html#cb10-21" tabindex="-1"></a></span>
 <span id="cb10-22"><a href="model-based-plan-optimize.html#cb10-22" tabindex="-1"></a>z_star, info <span class="op">=</span> nlp.solve(z0)</span></code></pre></div>
-<p>In the case of three obstacles (<span class="math inline">\(\delta=0\)</span>), we obtain the trajectory shown in Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-ipopt-all-zero">4.8</a> with an all-zero initialization; the trajectory shown in Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-ipopt-straight">4.9</a> with a straight-line initialization; and the trajectory shown in Fig. @ref(fig: unicycle-to-ipopt-random) with a random initialization.</p>
+<p>In the case of three obstacles (<span class="math inline">\(\delta=0\)</span>), we obtain the trajectory shown in Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-ipopt-all-zero">4.9</a> with an all-zero initialization; the trajectory shown in Fig. <a href="model-based-plan-optimize.html#fig:unicycle-to-ipopt-straight">4.10</a> with a straight-line initialization; and the trajectory shown in Fig. @ref(fig: unicycle-to-ipopt-random) with a random initialization.</p>
 <p>You can play with the full code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/to_unicycle_ipopt.py">here</a>.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-to-ipopt-all-zero"></span>
 <img src="images/Model-based-optimization/to_unicycle_ipopt_all-zero.png" alt="Trajectory optimization for unicyle using IPOPT (all-zero initialization)." width="90%" />
 <p class="caption">
-Figure 4.8: Trajectory optimization for unicyle using IPOPT (all-zero initialization).
+Figure 4.9: Trajectory optimization for unicyle using IPOPT (all-zero initialization).
 </p>
 </div>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-to-ipopt-straight"></span>
 <img src="images/Model-based-optimization/to_unicycle_ipopt_straight.png" alt="Trajectory optimization for unicyle using IPOPT (straight-line initialization)." width="90%" />
 <p class="caption">
-Figure 4.9: Trajectory optimization for unicyle using IPOPT (straight-line initialization).
+Figure 4.10: Trajectory optimization for unicyle using IPOPT (straight-line initialization).
 </p>
 </div>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:unicycle-to-ipopt-random"></span>
 <img src="images/Model-based-optimization/to_unicycle_ipopt_random-init.png" alt="Trajectory optimization for unicyle using IPOPT (random initialization)." width="90%" />
 <p class="caption">
-Figure 4.10: Trajectory optimization for unicyle using IPOPT (random initialization).
+Figure 4.11: Trajectory optimization for unicyle using IPOPT (random initialization).
 </p>
 </div>
 </div>
