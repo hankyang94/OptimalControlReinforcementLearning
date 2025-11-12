@@ -2410,7 +2410,12 @@ Unlike the policy in the case of RL, which is an explicit neural network, the po
 s_{t+1} = f(s_t, \mu(s_t), w_t) := f_{\text{CL}}(s_t, w_t),
 (\#eq:mpc-closed-loop)
 \end{equation}
-which becomes an uncontrolled system with disturbance $w_t$. Lots of research have studied properties of the closed-loop system, such as stability and robustness to disturbance. One of the most important results states that, as long as the terminal loss function $\Phi(\cdot)$ satisfies a technical condition (being a control Lyapunov function), then the closed-loop system is stable. We do not go deep into these results for MPC analysis and refer the reader to [@rawlings2020model].
+which becomes an uncontrolled system with disturbance $w_t$. The diagram of the closed-loop system is shown in Fig. \@ref(fig:mpc-diagram). Lots of research have studied properties of the closed-loop system, such as stability and robustness to disturbance. One of the most important results states that, as long as the terminal loss function $\Phi(\cdot)$ satisfies a technical condition (being a control Lyapunov function), then the closed-loop system is stable. We do not go deep into these results for MPC analysis and refer the reader to [@rawlings2020model].
+
+```{r mpc-diagram, out.width='90%', fig.show='hold', fig.cap='Model Predictive Control.', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/mpc-diagram.png')
+```
+
 
 **Warmstart for Parametric Optimization.** The requirement that an MPC feedback policy solve an optimization problem online makes it computationally expensive. In some domains, e.g., chemical process control, control updates are infrequent (for example, every 10 minutes) and MPC is practical. In other domains such as robotics, control rates are much higher (e.g., 10\,Hz), so reducing MPC's computational cost is critical.  A common strategy is *warm-starting*: when solving the optimization for the new parameter $s_{t+1}$ at time $t+1$, initialize the numerical solver with the previous solution \@ref(eq:mpc-solution-t-implicit) computed for $s_t$ at time $t$.  If the change from $s_t$ to $s_{t+1}$ is small, the optimal solution at $t+1$ is likely close to that at $t$, and warm-starting typically reduces the solver's required iterations.
 
