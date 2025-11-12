@@ -2547,7 +2547,13 @@ Unlike the policy in the case of RL, which is an explicit neural network, the po
 s_{t+1} = f(s_t, \mu(s_t), w_t) := f_{\text{CL}}(s_t, w_t),
 \tag{4.95}
 \end{equation}\]</span>
-which becomes an uncontrolled system with disturbance <span class="math inline">\(w_t\)</span>. Lots of research have studied properties of the closed-loop system, such as stability and robustness to disturbance. One of the most important results states that, as long as the terminal loss function <span class="math inline">\(\Phi(\cdot)\)</span> satisfies a technical condition (being a control Lyapunov function), then the closed-loop system is stable. We do not go deep into these results for MPC analysis and refer the reader to <span class="citation">(<a href="#ref-rawlings2020model">Rawlings, Mayne, and Diehl 2020</a>)</span>.</p>
+which becomes an uncontrolled system with disturbance <span class="math inline">\(w_t\)</span>. The diagram of the closed-loop system is shown in Fig. <a href="model-based-plan-optimize.html#fig:mpc-diagram">4.12</a>. Lots of research have studied properties of the closed-loop system, such as stability and robustness to disturbance. One of the most important results states that, as long as the terminal loss function <span class="math inline">\(\Phi(\cdot)\)</span> satisfies a technical condition (being a control Lyapunov function), then the closed-loop system is stable. We do not go deep into these results for MPC analysis and refer the reader to <span class="citation">(<a href="#ref-rawlings2020model">Rawlings, Mayne, and Diehl 2020</a>)</span>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mpc-diagram"></span>
+<img src="images/Model-based-optimization/mpc-diagram.png" alt="Model Predictive Control." width="90%" />
+<p class="caption">
+Figure 4.12: Model Predictive Control.
+</p>
+</div>
 <p><strong>Warmstart for Parametric Optimization.</strong> The requirement that an MPC feedback policy solve an optimization problem online makes it computationally expensive. In some domains, e.g., chemical process control, control updates are infrequent (for example, every 10 minutes) and MPC is practical. In other domains such as robotics, control rates are much higher (e.g., 10,Hz), so reducing MPC’s computational cost is critical. A common strategy is <em>warm-starting</em>: when solving the optimization for the new parameter <span class="math inline">\(s_{t+1}\)</span> at time <span class="math inline">\(t+1\)</span>, initialize the numerical solver with the previous solution <a href="model-based-plan-optimize.html#eq:mpc-solution-t-implicit">(4.92)</a> computed for <span class="math inline">\(s_t\)</span> at time <span class="math inline">\(t\)</span>. If the change from <span class="math inline">\(s_t\)</span> to <span class="math inline">\(s_{t+1}\)</span> is small, the optimal solution at <span class="math inline">\(t+1\)</span> is likely close to that at <span class="math inline">\(t\)</span>, and warm-starting typically reduces the solver’s required iterations.</p>
 <p>We now apply MPC to the stabilization of a double integrator with control constraints.</p>
 <div class="examplebox">
@@ -2609,20 +2615,20 @@ where <span class="math inline">\(w_t\)</span> is zero-mean noise. In the code, 
 <li><p><strong>QP solver and structure.</strong> We solve with OSQP via CVXPY. The problem is constructed once; at each step we update the parameter <span class="math inline">\(x_0=s_t\)</span>. This preserves the QP structure (matrices <span class="math inline">\(P\)</span> and <span class="math inline">\(A\)</span>), enabling factorization reuse and faster solves.</p></li>
 <li><p><strong>Warm-start.</strong> Shift the previous optimal sequence <span class="math inline">\(u^\star\)</span> left by one step and hold the last value, then roll out the dynamics from the new <span class="math inline">\(s_t\)</span> to seed a feasible <span class="math inline">\(x\)</span>-trajectory guess. These are passed to the solver via <code>warm_start=True</code>.</p></li>
 </ul>
-<p>Fig. <a href="model-based-plan-optimize.html#fig:mpc-double-integrator-small-noise">4.12</a> shows the closed-loop position and velocity under the MPC controller in the case of small disturbancen (the standard deviations of the two elements of <span class="math inline">\(w_t\)</span> are <span class="math inline">\(0.002\)</span> and <span class="math inline">\(0.005\)</span>).</p>
-<p>Fig. <a href="model-based-plan-optimize.html#fig:mpc-double-integrator-large-noise">4.13</a> shows the closed-loop position and velocity under the MPC controller in the case of large disturbancen (the standard deviations of the two elements of <span class="math inline">\(w_t\)</span> are <span class="math inline">\(0.02\)</span> and <span class="math inline">\(0.05\)</span>).</p>
+<p>Fig. <a href="model-based-plan-optimize.html#fig:mpc-double-integrator-small-noise">4.13</a> shows the closed-loop position and velocity under the MPC controller in the case of small disturbancen (the standard deviations of the two elements of <span class="math inline">\(w_t\)</span> are <span class="math inline">\(0.002\)</span> and <span class="math inline">\(0.005\)</span>).</p>
+<p>Fig. <a href="model-based-plan-optimize.html#fig:mpc-double-integrator-large-noise">4.14</a> shows the closed-loop position and velocity under the MPC controller in the case of large disturbancen (the standard deviations of the two elements of <span class="math inline">\(w_t\)</span> are <span class="math inline">\(0.02\)</span> and <span class="math inline">\(0.05\)</span>).</p>
 <p>In both cases, the MPC policy successfully regulates the system around the origin, illustrating robustness of the MPC policy to disturbances.</p>
 <p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mpc_double_integrator.py">here</a>.</p>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:mpc-double-integrator-small-noise"></span>
 <img src="images/Model-based-optimization/mpc_double_integrator-1.png" alt="MPC for double integrator (small disturbance)." width="80%" />
 <p class="caption">
-Figure 4.12: MPC for double integrator (small disturbance).
+Figure 4.13: MPC for double integrator (small disturbance).
 </p>
 </div>
 <div class="figure" style="text-align: center"><span style="display:block;" id="fig:mpc-double-integrator-large-noise"></span>
 <img src="images/Model-based-optimization/mpc_double_integrator-2.png" alt="MPC for double integrator (large disturbance)." width="80%" />
 <p class="caption">
-Figure 4.13: MPC for double integrator (large disturbance).
+Figure 4.14: MPC for double integrator (large disturbance).
 </p>
 </div>
 </div>
