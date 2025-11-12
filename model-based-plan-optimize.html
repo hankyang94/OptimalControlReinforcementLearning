@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-11-10" />
+<meta name="date" content="2025-11-12" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -336,9 +336,10 @@ div.csl-indent {
 <li><p><strong>Model predictive control (MPC).</strong> MPC converts open-loop plans into a feedback controller by repeatedly solving a short-horizon TO problem at each time step, applying only the first action, and receding the horizon. This receding-horizon strategy brings robustness to disturbances and model mismatch while retaining the constraint-handling benefits of TO.</p></li>
 </ol>
 <p>We adopt the standard discrete-time dynamical system notation
-<span class="math display">\[
+<span class="math display" id="eq:planning-discrete-dynamics">\[\begin{equation}
 x_{t+1} = f_t(x_t, u_t, w_t),
-\]</span>
+\tag{4.1}
+\end{equation}\]</span>
 where <span class="math inline">\(x_t \in \mathbb{R}^n\)</span> is the state, <span class="math inline">\(u_t \in \mathbb{R}^m\)</span> is the control/action, <span class="math inline">\(w_t \in \mathbb{R}^d\)</span> is a (possibly stochastic) disturbance, and <span class="math inline">\(f_t\)</span> is a known transition function, potentially nonlinear or nonsmooth. The goal is to find a policy that maximizes a sum of stage rewards <span class="math inline">\(r(x_t,u_t)\)</span> and optional terminal reward <span class="math inline">\(r_T(x_T)\)</span>. We will often use the cost-minimization form <span class="math inline">\(c = -r\)</span>.
 State and action constraints are written as
 <span class="math display">\[
@@ -352,15 +353,15 @@ x_t \in \mathcal{X}, \qquad u_t \in \mathcal{U}.
 <p>Consider a linear discrete-time dynamical system
 <span class="math display" id="eq:lqr-linear-system">\[\begin{equation}
 x_{k+1} = A_k x_k + B_k u_k + w_k, \quad k=0,1,\dots,N-1,
-\tag{4.1}
+\tag{4.2}
 \end{equation}\]</span>
 where <span class="math inline">\(x_k \in \mathbb{R}^n\)</span> the state, <span class="math inline">\(u_k \in \mathbb{R}^m\)</span> the control, <span class="math inline">\(w_k \in \mathbb{R}^n\)</span> the independent, zero-mean disturbance with given probability distribution that does not depend on <span class="math inline">\(x_k,u_k\)</span>, and <span class="math inline">\(A_k \in \mathbb{R}^{n \times n}, B_k \in \mathbb{R}^{n \times m}\)</span> are known matrices determining the transition dynamics.</p>
 <p>We want to solve the following optimal control problem
 <span class="math display" id="eq:lqr-formulation">\[\begin{equation}
 \min_{\mu_0,\dots,\mu_{N-1}} \mathbb{E} \left\{ x_N^\top Q_N x_N + \sum_{k=0}^{N-1} \left( x_k^\top Q_k x_k + u_k^\top R_k u_k \right) \right\},
-\tag{4.2}
+\tag{4.3}
 \end{equation}\]</span>
-where <span class="math inline">\(\mu_0,\dots,\mu_{N-1}\)</span> are feedback policies/controllers that map states to actions and the expectation is taken over the randomness in <span class="math inline">\(w_0,\dots,w_{N-1}\)</span>. In <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a>, <span class="math inline">\(\{Q_k \}_{k=0}^N\)</span> are positive semidefinite matrices, and <span class="math inline">\(\{ R_k \}_{k=0}^{N-1}\)</span> are positive definite matrices. The formulation <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a> is known as the linear quadratic regulator (LQR) problem because the dynamics is linear, the cost is quadratic, and the formulation can be considered to “regulate” the system around the origin <span class="math inline">\(x=0\)</span>.</p>
+where <span class="math inline">\(\mu_0,\dots,\mu_{N-1}\)</span> are feedback policies/controllers that map states to actions and the expectation is taken over the randomness in <span class="math inline">\(w_0,\dots,w_{N-1}\)</span>. In <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.3)</a>, <span class="math inline">\(\{Q_k \}_{k=0}^N\)</span> are positive semidefinite matrices, and <span class="math inline">\(\{ R_k \}_{k=0}^{N-1}\)</span> are positive definite matrices. The formulation <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.3)</a> is known as the linear quadratic regulator (LQR) problem because the dynamics is linear, the cost is quadratic, and the formulation can be considered to “regulate” the system around the origin <span class="math inline">\(x=0\)</span>.</p>
 <p>The Bellman Optimality condition introduced in Theorem <a href="mdp.html#thm:FiniteHorizonMDPBellmanOptimality">1.1</a> still holds for continuous state and action spaces. Therefore, we will try to follow the dynamic programming (DP) algorithm in Section <a href="mdp.html#dp">1.1.4</a> to solve for the optimal policy.</p>
 <p>The DP algorithm computes the optimal cost-to-go backwards in time.
 The terminal cost is
@@ -373,9 +374,9 @@ by definition.</p>
 \begin{split}
 J_{N-1}(x_{N-1}) = \min_{u_{N-1}} \mathbb{E}_{w_{N-1}} \{ x_{N-1}^\top Q_{N-1} x_{N-1} + u_{N-1}^\top R_{N-1} u_{N-1} + \\ \Vert \underbrace{A_{N-1} x_{N-1} + B_{N-1} u_{N-1} + w_{N-1} }_{x_N} \Vert^2_{Q_N} \}
 \end{split}
-\tag{4.3}
+\tag{4.4}
 \end{equation}\]</span>
-where <span class="math inline">\(\Vert v \Vert_Q^2 = v^\top Q v\)</span> for <span class="math inline">\(Q \succeq 0\)</span>. Now observe that the objective in <a href="model-based-plan-optimize.html#eq:lqr-cost-N-1">(4.3)</a> is
+where <span class="math inline">\(\Vert v \Vert_Q^2 = v^\top Q v\)</span> for <span class="math inline">\(Q \succeq 0\)</span>. Now observe that the objective in <a href="model-based-plan-optimize.html#eq:lqr-cost-N-1">(4.4)</a> is
 <span class="math display">\[\begin{equation}
 \begin{split}
 x_{N-1}^\top Q_{N-1} x_{N-1} + u_{N-1}^\top R_{N-1} u_{N-1} + \Vert A_{N-1} x_{N-1} + B_{N-1} u_{N-1} \Vert_{Q_N}^2 + \\
@@ -386,12 +387,12 @@ x_{N-1}^\top Q_{N-1} x_{N-1} + u_{N-1}^\top R_{N-1} u_{N-1} + \Vert A_{N-1} x_{N
 where the second line is zero due to <span class="math inline">\(\mathbb{E}[w_{N-1}] = 0\)</span> and the third line is a constant with respect to <span class="math inline">\(u_{N-1}\)</span>. Consequently, the optimal control <span class="math inline">\(u_{N-1}^\star\)</span> can be computed by setting the derivative of the objective with respect to <span class="math inline">\(u_{N-1}\)</span> equal to zero
 <span class="math display" id="eq:optimal-u-N-1">\[\begin{equation}
 u_{N-1}^\star = - \left[ \left( R_{N-1} + B_{N-1}^\top Q_N B_{N-1} \right)^{-1} B_{N-1}^\top Q_N A_{N-1} \right] x_{N-1}.
-\tag{4.4}
+\tag{4.5}
 \end{equation}\]</span>
-Plugging the optimal controller <span class="math inline">\(u^\star_{N-1}\)</span> back to the objective of <a href="model-based-plan-optimize.html#eq:lqr-cost-N-1">(4.3)</a> leads to
+Plugging the optimal controller <span class="math inline">\(u^\star_{N-1}\)</span> back to the objective of <a href="model-based-plan-optimize.html#eq:lqr-cost-N-1">(4.4)</a> leads to
 <span class="math display" id="eq:optimal-cost-N-1">\[\begin{equation}
 J_{N-1}(x_{N-1}) = x_{N-1}^\top S_{N-1} x_{N-1} + \mathbb{E} \left[ w_{N-1}^\top Q_N w_{N-1} \right],
-\tag{4.5}
+\tag{4.6}
 \end{equation}\]</span>
 with
 <span class="math display">\[
@@ -400,20 +401,20 @@ S_{N-1} = Q_{N-1} + A_{N-1}^\top \left[ Q_N - Q_N B_{N-1} \left( R_{N-1} + B_{N-
 We note that <span class="math inline">\(S_{N-1}\)</span> is positive semidefinite (this is an exercise for you to convince yourself).</p>
 <p>Now we realize that something surprising and nice has happened.</p>
 <ol style="list-style-type: decimal">
-<li><p>The optimal controller <span class="math inline">\(u^{\star}_{N-1}\)</span> in <a href="model-based-plan-optimize.html#eq:optimal-u-N-1">(4.4)</a> is a linear feedback policy of the state <span class="math inline">\(x_{N-1}\)</span>, and</p></li>
-<li><p>The optimal cost-to-go <span class="math inline">\(J_{N-1}(x_{N-1})\)</span> in <a href="model-based-plan-optimize.html#eq:optimal-cost-N-1">(4.5)</a> is quadratic in <span class="math inline">\(x_{N-1}\)</span>, just the same as <span class="math inline">\(J_{N}(x_N)\)</span>.</p></li>
+<li><p>The optimal controller <span class="math inline">\(u^{\star}_{N-1}\)</span> in <a href="model-based-plan-optimize.html#eq:optimal-u-N-1">(4.5)</a> is a linear feedback policy of the state <span class="math inline">\(x_{N-1}\)</span>, and</p></li>
+<li><p>The optimal cost-to-go <span class="math inline">\(J_{N-1}(x_{N-1})\)</span> in <a href="model-based-plan-optimize.html#eq:optimal-cost-N-1">(4.6)</a> is quadratic in <span class="math inline">\(x_{N-1}\)</span>, just the same as <span class="math inline">\(J_{N}(x_N)\)</span>.</p></li>
 </ol>
 <p>This implies that, if we continue to compute the optimal cost-to-go at time <span class="math inline">\(N-2\)</span>, we will again compute a linear optimal controller and a quadratic optimal cost-to-go. This is the rare nice property for the LQR problem, that is,</p>
 <blockquote>
 <p>The (representation) complexity of the optimal controller and cost-to-go does not grow as we run the DP recursion backwards in time.</p>
 </blockquote>
-<p>We summarize the solution for the LQR problem <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a> as follows.</p>
+<p>We summarize the solution for the LQR problem <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.3)</a> as follows.</p>
 <div class="theorembox">
 <div class="proposition">
-<p><span id="prp:discretetimefinitehorizonlqrsolution" class="proposition"><strong>Proposition 4.1  (Solution of Discrete-Time Finite-Horizon LQR) </strong></span>The optimal controller for the LQR problem <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a> is a linear state-feedback policy
+<p><span id="prp:discretetimefinitehorizonlqrsolution" class="proposition"><strong>Proposition 4.1  (Solution of Discrete-Time Finite-Horizon LQR) </strong></span>The optimal controller for the LQR problem <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.3)</a> is a linear state-feedback policy
 <span class="math display" id="eq:lqr-solution-control">\[\begin{equation}
 \mu_k^\star(x_k) = - K_k x_k, \quad k=0,\dots,N-1.
-\tag{4.6}
+\tag{4.7}
 \end{equation}\]</span>
 The gain matrix <span class="math inline">\(K_k\)</span> can be computed as
 <span class="math display">\[
@@ -426,51 +427,51 @@ where the matrix <span class="math inline">\(S_k\)</span> satisfies the followin
 S_N &amp;= Q_N \\
 S_k &amp;= Q_k + A_k^\top \left[ S_{k+1} - S_{k+1}B_k \left( R_k + B_k^\top S_{k+1} B_k  \right)^{-1}  B_k^\top S_{k+1}  \right] A_k, k=N-1,\dots,0.
 \end{split}
-\tag{4.7}
+\tag{4.8}
 \end{equation}\]</span>
 The optimal cost-to-go is given by
 <span class="math display">\[
 J_0(x_0) = x_0^\top S_0 x_0 + \sum_{k=0}^{N-1} \mathbb{E} \left[ w_k^\top S_{k+1} w_k\right].
 \]</span>
-The recursion <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> is called the <em>discrete-time Riccati equation</em>.</p>
+The recursion <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.8)</a> is called the <em>discrete-time Riccati equation</em>.</p>
 </div>
 </div>
-<p>Proposition <a href="model-based-plan-optimize.html#prp:discretetimefinitehorizonlqrsolution">4.1</a> states that, to evaluate the optimal policy <a href="model-based-plan-optimize.html#eq:lqr-solution-control">(4.6)</a>, one can first run the backwards Riccati equation <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> to compute all the positive definite matrices <span class="math inline">\(S_k\)</span>, and then compute the gain matrices <span class="math inline">\(K_k\)</span>. For systems of reasonable dimensions, evalutating the matrix inversion in <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.7)</a> should be fairly efficient.</p>
+<p>Proposition <a href="model-based-plan-optimize.html#prp:discretetimefinitehorizonlqrsolution">4.1</a> states that, to evaluate the optimal policy <a href="model-based-plan-optimize.html#eq:lqr-solution-control">(4.7)</a>, one can first run the backwards Riccati equation <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.8)</a> to compute all the positive definite matrices <span class="math inline">\(S_k\)</span>, and then compute the gain matrices <span class="math inline">\(K_k\)</span>. For systems of reasonable dimensions, evalutating the matrix inversion in <a href="model-based-plan-optimize.html#eq:finite-discrete-lqr-riccati">(4.8)</a> should be fairly efficient.</p>
 </div>
 <div id="infinite-horizon-lqr" class="section level3 hasAnchor" number="4.1.2">
 <h3><span class="header-section-number">4.1.2</span> Infinite-Horizon LQR<a href="model-based-plan-optimize.html#infinite-horizon-lqr" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>We now switch to the infinite-horizon LQR problem
 <span class="math display" id="eq:infinite-horizon-lqr-system" id="eq:infinite-horizon-lqr-cost">\[\begin{align}
-\min_{\mu} &amp; \quad  \sum_{k=0}^{\infty} \left( x_k^\top Q x_k + u_k^\top R u_k \right) \tag{4.8} \\
-\text{subject to} &amp; \quad x_{k+1} = A x_k + B u_k, \quad k=0,\dots,\infty, \tag{4.9}
+\min_{\mu} &amp; \quad  \sum_{k=0}^{\infty} \left( x_k^\top Q x_k + u_k^\top R u_k \right) \tag{4.9} \\
+\text{subject to} &amp; \quad x_{k+1} = A x_k + B u_k, \quad k=0,\dots,\infty, \tag{4.10}
 \end{align}\]</span>
 where <span class="math inline">\(Q \succeq 0\)</span>, <span class="math inline">\(R \succ 0\)</span>, <span class="math inline">\(A,B\)</span> are constant matrices, and we seek a stationary policy <span class="math inline">\(\mu\)</span> that maps states to actions. Note that here we remove the disturbance <span class="math inline">\(w_k\)</span> because in general adding <span class="math inline">\(w_k\)</span> will make the objective function unbounded. To handle <span class="math inline">\(w_k\)</span>, we will have to either add a discount factor <span class="math inline">\(\gamma\)</span>, or switch to an average cost objective function.</p>
 <p>For infinite-horizon problems, the Bellman Optimality condition changes from a recursion to an equation. Specifically, according to Theorem <a href="mdp.html#thm:BellmanOptimalityInfiniteHorizon">1.2</a> and equation <a href="mdp.html#eq:BellmanOptimalityInfiniteHorizonStateValue">(1.28)</a>, the optimal value function should satisfy the following Bellman optimality equation, restated for the case of cost minimization instead of reward maximization:
 <span class="math display" id="eq:BellmanOptimalityInfiniteHorizonRestateMin">\[\begin{equation}
 J^\star (x) = \min_{u} \left[ c(x,u) + \sum_{x&#39;} P(x&#39; \mid x, u) J^\star (x&#39;) \right], \quad \forall x,
-\tag{4.10}
+\tag{4.11}
 \end{equation}\]</span>
 where <span class="math inline">\(c(x,u)\)</span> is the cost function.</p>
 <p><strong>Guess A Solution.</strong> Based on our derivation in the finite-horizon case, we might as well guess that the optimal value function is a quadratic function:
 <span class="math display">\[
 J(x) = x^\top S x, \quad \forall x,
 \]</span>
-for some positive definite matrix <span class="math inline">\(S\)</span>. Then, our guessed solution must satisfy the Bellman optimality stated in <a href="model-based-plan-optimize.html#eq:BellmanOptimalityInfiniteHorizonRestateMin">(4.10)</a>:
+for some positive definite matrix <span class="math inline">\(S\)</span>. Then, our guessed solution must satisfy the Bellman optimality stated in <a href="model-based-plan-optimize.html#eq:BellmanOptimalityInfiniteHorizonRestateMin">(4.11)</a>:
 <span class="math display" id="eq:infinite-horizon-lqr-invoke-dp">\[\begin{equation}
 x^\top S x = J(x) = \min_{u} \left\{ x^\top Q x + u^\top R u + \Vert \underbrace{A x + B u}_{x&#39;} \Vert_S^2  \right\}.
-\tag{4.11}
-\end{equation}\]</span>
-The minimization over <span class="math inline">\(u\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-invoke-dp">(4.11)</a> can again be solved in closed-form by setting the gradient of the objective with respect to <span class="math inline">\(u\)</span> to be zero
-<span class="math display" id="eq:infinite-horizon-lqr-control">\[\begin{equation}
-u^\star = - \underbrace{\left[ \left( R + B^\top S B \right)^{-1} B^\top S A \right]}_{K} x.
 \tag{4.12}
 \end{equation}\]</span>
-Plugging the optimal <span class="math inline">\(u^\star\)</span> back into <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-invoke-dp">(4.11)</a>, we see that the matrix <span class="math inline">\(S\)</span> has to satisfy the following equation
-<span class="math display" id="eq:algebraic-riccati">\[\begin{equation}
-S = Q + A^\top \left[  S - SB \left( R + B^\top S B  \right)^{-1} B^\top S \right] A.
+The minimization over <span class="math inline">\(u\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-invoke-dp">(4.12)</a> can again be solved in closed-form by setting the gradient of the objective with respect to <span class="math inline">\(u\)</span> to be zero
+<span class="math display" id="eq:infinite-horizon-lqr-control">\[\begin{equation}
+u^\star = - \underbrace{\left[ \left( R + B^\top S B \right)^{-1} B^\top S A \right]}_{K} x.
 \tag{4.13}
 \end{equation}\]</span>
-Equation <a href="model-based-plan-optimize.html#eq:algebraic-riccati">(4.13)</a> is known as the <em>discrete algebraic Riccati equation</em> (DARE).</p>
+Plugging the optimal <span class="math inline">\(u^\star\)</span> back into <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-invoke-dp">(4.12)</a>, we see that the matrix <span class="math inline">\(S\)</span> has to satisfy the following equation
+<span class="math display" id="eq:algebraic-riccati">\[\begin{equation}
+S = Q + A^\top \left[  S - SB \left( R + B^\top S B  \right)^{-1} B^\top S \right] A.
+\tag{4.14}
+\end{equation}\]</span>
+Equation <a href="model-based-plan-optimize.html#eq:algebraic-riccati">(4.14)</a> is known as the <em>discrete algebraic Riccati equation</em> (DARE).</p>
 <p>So the question boils down to if the DARE has a solution <span class="math inline">\(S\)</span> that is positive definite?</p>
 <div class="theorembox">
 <div class="proposition">
@@ -478,8 +479,8 @@ Equation <a href="model-based-plan-optimize.html#eq:algebraic-riccati">(4.13)</a
 <span class="math display">\[
 x_{k+1} = A x_k + B u_k,
 \]</span>
-with <span class="math inline">\((A,B)\)</span> controllable (see Section <a href="model-based-plan-optimize.html#linear-system-basics">4.1.3</a>). Let <span class="math inline">\(Q \succeq 0\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a> be such that <span class="math inline">\(Q\)</span> can be written as <span class="math inline">\(Q = C^\top C\)</span> with <span class="math inline">\((A,C)\)</span> observable.</p>
-<p>Then the optimal controller for the infinite-horizon LQR problem <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a> is a stationary linear policy
+with <span class="math inline">\((A,B)\)</span> controllable (see Section <a href="model-based-plan-optimize.html#linear-system-basics">4.1.3</a>). Let <span class="math inline">\(Q \succeq 0\)</span> in <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.9)</a> be such that <span class="math inline">\(Q\)</span> can be written as <span class="math inline">\(Q = C^\top C\)</span> with <span class="math inline">\((A,C)\)</span> observable.</p>
+<p>Then the optimal controller for the infinite-horizon LQR problem <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.9)</a> is a stationary linear policy
 <span class="math display">\[
 \mu^\star (x) = - K x,
 \]</span>
@@ -490,7 +491,7 @@ K = \left( R + B^\top S B \right)^{-1} B^\top S A.
 The matrix <span class="math inline">\(S\)</span> is the unique positive definite matrix that satisfies the discrete algebraic Riccati equation
 <span class="math display" id="eq:discrete-algebraic-riccati-equation">\[\begin{equation}
 S = Q + A^\top \left[  S - SB \left( R + B^\top S B  \right)^{-1} B^\top S \right] A.
-\tag{4.14}
+\tag{4.15}
 \end{equation}\]</span></p>
 <p>Moreover, the closed-loop system
 <span class="math display">\[
@@ -500,7 +501,7 @@ is stable, i.e., the eigenvalues of the matrix <span class="math inline">\(A - B
 </div>
 </div>
 <p><em>Remark.</em> The assumptions of <span class="math inline">\((A,B)\)</span> being controllable and <span class="math inline">\((A,C)\)</span> being observable can be relaxted to <span class="math inline">\((A,B)\)</span> being stabilizable and <span class="math inline">\((A,C)\)</span> being detectable (for definitions of stabilizability and detectability, see Appendix <a href="app-lti-system-theory.html#app-lti-system-theory">B</a>).</p>
-<p>We have not discussed how to solve the algebraic Riccati equation <a href="model-based-plan-optimize.html#eq:discrete-algebraic-riccati-equation">(4.14)</a>. It is clear that <a href="model-based-plan-optimize.html#eq:discrete-algebraic-riccati-equation">(4.14)</a> is not a linear system of equations in <span class="math inline">\(S\)</span>. In fact, the numerical algorithms for solving the algebraic Riccati equation can be highly nontrivial, for example see <span class="citation">(<a href="#ref-arnold84ieee-generalized">Arnold and Laub 1984</a>)</span>. Fortunately, such algorithms are often readily available, and as practitioners we do not need to worry about solving the algebraic Riccati equation by ourselves. For example, the Matlab <a href="https://www.mathworks.com/help/control/ref/dlqr.html"><code>dlqr</code></a> and the Python <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.solve_discrete_are.html"><code>scipy.linalg.solve_discrete_are</code></a> function computes the <span class="math inline">\(K\)</span> and <span class="math inline">\(S\)</span> matrices from <span class="math inline">\(A,B,Q,R\)</span>.</p>
+<p>We have not discussed how to solve the algebraic Riccati equation <a href="model-based-plan-optimize.html#eq:discrete-algebraic-riccati-equation">(4.15)</a>. It is clear that <a href="model-based-plan-optimize.html#eq:discrete-algebraic-riccati-equation">(4.15)</a> is not a linear system of equations in <span class="math inline">\(S\)</span>. In fact, the numerical algorithms for solving the algebraic Riccati equation can be highly nontrivial, for example see <span class="citation">(<a href="#ref-arnold84ieee-generalized">Arnold and Laub 1984</a>)</span>. Fortunately, such algorithms are often readily available, and as practitioners we do not need to worry about solving the algebraic Riccati equation by ourselves. For example, the Matlab <a href="https://www.mathworks.com/help/control/ref/dlqr.html"><code>dlqr</code></a> and the Python <a href="https://docs.scipy.org/doc/scipy/reference/generated/scipy.linalg.solve_discrete_are.html"><code>scipy.linalg.solve_discrete_are</code></a> function computes the <span class="math inline">\(K\)</span> and <span class="math inline">\(S\)</span> matrices from <span class="math inline">\(A,B,Q,R\)</span>.</p>
 <p>Let us now apply the infinite-horizon LQR solution to stabilizing a simple pendulum.</p>
 <div class="examplebox">
 <div class="example">
@@ -511,7 +512,7 @@ x = \begin{bmatrix} \theta \\ \dot{\theta} \end{bmatrix}, \quad
 \dot{\theta} \\
 -\frac{1}{ml^2}(b \dot{\theta} + mgl \sin \theta) + \frac{1}{ml^2} u
 \end{bmatrix}
-\tag{4.15}
+\tag{4.16}
 \end{equation}\]</span>
 where <span class="math inline">\(m\)</span> is the mass of the pendulum, <span class="math inline">\(l\)</span> is the length of the pole, <span class="math inline">\(g\)</span> is the gravitational constant, <span class="math inline">\(b\)</span> is the damping ratio, and <span class="math inline">\(u\)</span> is the torque applied to the pendulum.</p>
 <p>We are interested in applying the LQR controller to balance the pendulum in the upright position <span class="math inline">\(x_d = [\pi,0]^\top\)</span> with a zero velocity.</p>
@@ -527,7 +528,7 @@ Figure 4.1: A Simple Pendulum.
 z_2 \\
 \frac{1}{ml^2} \left( u - b z_2 + mgl \sin z_1  \right)
 \end{bmatrix} = f&#39;(z,u).
-\tag{4.16}
+\tag{4.17}
 \end{equation}\]</span>
 We then linearize the nonlinear dynamics <span class="math inline">\(\dot{z} = f&#39;(z,u)\)</span> at the point <span class="math inline">\(z^\star = 0, u^\star = 0\)</span>:
 <span class="math display">\[\begin{align}
@@ -553,7 +554,7 @@ Finally, we convert the continuous-time dynamics to discrete time with a fixed d
 <span class="math display">\[
 z_{k+1} = \dot{z}_k \cdot h + z_k = \underbrace{(h \cdot A_c + I )}_{A} z_k + \underbrace{(h \cdot B_c)}_{B} u_k.
 \]</span></p>
-<p>We are now ready to implement the LQR controller. In the formulation <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.8)</a>, we choose <span class="math inline">\(Q = I\)</span>, <span class="math inline">\(R = I\)</span>, and compute the gain matrix <span class="math inline">\(K\)</span> by solving the DARE.</p>
+<p>We are now ready to implement the LQR controller. In the formulation <a href="model-based-plan-optimize.html#eq:infinite-horizon-lqr-cost">(4.9)</a>, we choose <span class="math inline">\(Q = I\)</span>, <span class="math inline">\(R = I\)</span>, and compute the gain matrix <span class="math inline">\(K\)</span> by solving the DARE.</p>
 <p>Fig. <a href="model-based-plan-optimize.html#fig:pendulum-stabilization-sim">4.2</a> shows the simulation result for <span class="math inline">\(m=1,l=1,b=0.1\)</span>, <span class="math inline">\(g = 9.8\)</span>, and <span class="math inline">\(h = 0.01\)</span>, with an initial condition <span class="math inline">\(z^0 = [0.1,0.1]^\top\)</span>. We can see that the LQR controller successfully stabilizes the pendulum at <span class="math inline">\(z^\star\)</span>, the upright position.</p>
 <p>You can play with the Python code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/pendulum_lqr_stabilization.py">here</a>.</p>
 <p>Alternatively, the Matlab code can be found <a href="https://github.com/ComputationalRobotics/OptimalControlEstimation-Examples/blob/main/pendulum_stabilization_lqr.m">here</a>.</p>
@@ -630,20 +631,20 @@ and suppose we have a <em>nominal trajectory</em> <span class="math inline">\(\{
 \quad
 A_t := \left.\frac{\partial f_t}{\partial x}\right|_{(\bar x_t,\bar u_t)},\quad
 B_t := \left.\frac{\partial f_t}{\partial u}\right|_{(\bar x_t,\bar u_t)}.
-\tag{4.17}
+\tag{4.18}
 \]</span></p>
 <p>We penalize deviations with a quadratic cost
 <span class="math display" id="eq:tvlqr-deviation-cost">\[
 J \;=\; \delta x_N^\top Q_N \delta x_N
 \;+\;\sum_{t=0}^{N-1} \Big(\delta x_t^\top Q_t \delta x_t \;+\; \delta u_t^\top R_t \delta u_t\Big),
 \quad Q_t\succeq 0,\; R_t\succ 0.
-\tag{4.18}
+\tag{4.19}
 \]</span></p>
 <p><strong>LQR Tracking Algorithm.</strong> The tracking controller takes the <em>affine</em> form
 <span class="math display">\[
 u_t \;=\; \bar u_t \;-\; K_t\,(x_t-\bar x_t),
 \]</span>
-where <span class="math inline">\(\{K_t\}_{t=0}^{N-1}\)</span> are time-varying gains computed by a backward Riccati recursion on the deviation system <a href="model-based-plan-optimize.html#eq:tvlqr-deviation-dynamics">(4.17)</a> with cost <a href="model-based-plan-optimize.html#eq:tvlqr-deviation-cost">(4.18)</a>.</p>
+where <span class="math inline">\(\{K_t\}_{t=0}^{N-1}\)</span> are time-varying gains computed by a backward Riccati recursion on the deviation system <a href="model-based-plan-optimize.html#eq:tvlqr-deviation-dynamics">(4.18)</a> with cost <a href="model-based-plan-optimize.html#eq:tvlqr-deviation-cost">(4.19)</a>.</p>
 <p>From Proposition <a href="model-based-plan-optimize.html#prp:discretetimefinitehorizonlqrsolution">4.1</a>, we know the gains can be computed as follows.</p>
 <p>Initialize at terminal time:
 <span class="math display">\[
@@ -655,23 +656,23 @@ For <span class="math inline">\(t = N-1,\,N-2,\,\dots,\,0\)</span>:
 K_t &amp;= \Big(R_t + B_t^\top S_{t+1} B_t\Big)^{-1} B_t^\top S_{t+1} A_t, \\[2mm]
 S_t &amp;= Q_t \;+\; A_t^\top \!\Big(S_{t+1} - S_{t+1} B_t \big(R_t + B_t^\top S_{t+1} B_t\big)^{-1} B_t^\top S_{t+1}\Big) A_t.
 \end{split}
-\tag{4.19}
+\tag{4.20}
 \end{equation}\]</span></p>
 <p>Given the gains <span class="math inline">\(\{K_t\}\)</span>, apply at runtime:
 <span class="math display" id="eq:tvlqr-control-law">\[\begin{equation}
 u_t \;=\; \bar u_t - K_t\,(x_t-\bar x_t), \qquad t=0,\dots,N-1.
-\tag{4.20}
+\tag{4.21}
 \end{equation}\]</span></p>
 <p>The following pseudocode summarizes the algorithm.</p>
 <div class="highlightbox">
 <p><strong>Algorithm: LQR Trajectory Tracking (TVLQR)</strong></p>
 <p><strong>Inputs:</strong> nominal <span class="math inline">\(\{(\bar x_t,\bar u_t)\}_{t=0}^{N-1}\)</span>, weights <span class="math inline">\(\{Q_t,R_t\}\)</span>, terminal <span class="math inline">\(Q_N\)</span>.</p>
 <ol style="list-style-type: decimal">
-<li><strong>Linearize</strong> along the nominal to get <span class="math inline">\(A_t,B_t\)</span> via <a href="model-based-plan-optimize.html#eq:tvlqr-deviation-dynamics">(4.17)</a>.<br />
+<li><strong>Linearize</strong> along the nominal to get <span class="math inline">\(A_t,B_t\)</span> via <a href="model-based-plan-optimize.html#eq:tvlqr-deviation-dynamics">(4.18)</a>.<br />
 </li>
-<li><strong>Backward pass:</strong> compute <span class="math inline">\(K_t\)</span> and <span class="math inline">\(S_t\)</span> via <a href="model-based-plan-optimize.html#eq:tvlqr-riccati">(4.19)</a>.<br />
+<li><strong>Backward pass:</strong> compute <span class="math inline">\(K_t\)</span> and <span class="math inline">\(S_t\)</span> via <a href="model-based-plan-optimize.html#eq:tvlqr-riccati">(4.20)</a>.<br />
 </li>
-<li><strong>Apply feedback:</strong> <span class="math inline">\(u_t=\bar u_t - K_t(x_t-\bar x_t)\)</span> as in <a href="model-based-plan-optimize.html#eq:tvlqr-control-law">(4.20)</a>.</li>
+<li><strong>Apply feedback:</strong> <span class="math inline">\(u_t=\bar u_t - K_t(x_t-\bar x_t)\)</span> as in <a href="model-based-plan-optimize.html#eq:tvlqr-control-law">(4.21)</a>.</li>
 </ol>
 <p><strong>Output:</strong> time-varying gains <span class="math inline">\(\{K_t\}\)</span> giving a local stabilizer around the trajectory.</p>
 </div>
@@ -692,7 +693,7 @@ where <span class="math inline">\((p_x,p_y)\)</span> is planar position, <span c
 \dot p_x = v\cos\theta,\qquad
 \dot p_y = v\sin\theta,\qquad
 \dot\theta = \omega.
-\tag{4.21}
+\tag{4.22}
 \end{equation}\]</span></p>
 <p><strong>Discrete time (forward Euler with step <span class="math inline">\(h&gt;0\)</span>):</strong>
 <span class="math display" id="eq:unicycle-dt">\[\begin{equation}
@@ -702,26 +703,26 @@ p_{x,t} + h\, v_t\cos\theta_t\\[2pt]
 p_{y,t} + h\, v_t\sin\theta_t\\[2pt]
 \theta_t + h\,\omega_t
 \end{bmatrix}.
-\tag{4.22}
+\tag{4.23}
 \end{equation}\]</span></p>
 <p><strong>Nominal Trajectory (Circular Motion).</strong> We track a circle of radius <span class="math inline">\(R=\dfrac{\bar v}{\bar\omega}\)</span> using <em>constant nominal inputs</em>
 <span class="math display" id="eq:unicycle-nominal-control">\[\begin{equation}
 \bar u_t \equiv \begin{bmatrix}\bar v\\ \bar\omega\end{bmatrix},\qquad t=0,\dots,N-1,
-\tag{4.23}
+\tag{4.24}
 \end{equation}\]</span>
-and generate the <em>nominal state</em> recursively under the discrete dynamics <a href="model-based-plan-optimize.html#eq:unicycle-dt">(4.22)</a>:
+and generate the <em>nominal state</em> recursively under the discrete dynamics <a href="model-based-plan-optimize.html#eq:unicycle-dt">(4.23)</a>:
 <span class="math display" id="eq:unicycle-discrete-nominal">\[\begin{equation}
 \bar x_{t+1} \;=\; f(\bar x_t,\bar u_t),\qquad \bar x_0 = \begin{bmatrix}R\\ 0\\ \frac{\pi}{2}\end{bmatrix}.
-\tag{4.24}
+\tag{4.25}
 \end{equation}\]</span></p>
 <p>We define <em>deviations</em> from the nominal:
 <span class="math display">\[
 \delta x_t := x_t-\bar x_t,\qquad \delta u_t := u_t-\bar u_t.
 \]</span></p>
-<p><strong>Linearization Along the Nominal.</strong> Linearize <a href="model-based-plan-optimize.html#eq:unicycle-dt">(4.22)</a> at <span class="math inline">\((\bar x_t,\bar u_t)\)</span> to obtain the deviation dynamics
+<p><strong>Linearization Along the Nominal.</strong> Linearize <a href="model-based-plan-optimize.html#eq:unicycle-dt">(4.23)</a> at <span class="math inline">\((\bar x_t,\bar u_t)\)</span> to obtain the deviation dynamics
 <span class="math display" id="eq:unicycle-dev-dyn">\[\begin{equation}
 \delta x_{t+1} \;\approx\; A_t\,\delta x_t + B_t\,\delta u_t,
-\tag{4.25}
+\tag{4.26}
 \end{equation}\]</span>
 with Jacobians (using <span class="math inline">\(c_t:=\cos\bar\theta_t,\ s_t:=\sin\bar\theta_t\)</span>)
 <span class="math display" id="eq:unicycle-linearization">\[\begin{equation}
@@ -738,7 +739,7 @@ h\,c_t &amp; 0\\
 h\,s_t &amp; 0\\
 0 &amp; h
 \end{bmatrix}.
-\tag{4.26}
+\tag{4.27}
 \end{equation}\]</span></p>
 <p><strong>Deviation Cost (Weights <span class="math inline">\(Q,R,Q_N\)</span>).</strong> We penalize deviations with a quadratic stage/terminal cost
 <span class="math display">\[
@@ -750,7 +751,7 @@ using the weights:
 Q=\mathrm{diag}(30,\;30,\;5),\qquad
 Q_N=\mathrm{diag}(60,\;60,\;8),\qquad
 R=\mathrm{diag}(0.2,\;0.2).
-\tag{4.27}
+\tag{4.28}
 \end{equation}\]</span>
 These reflect a stronger emphasis on position tracking, a moderate penalty on heading error, and a mild penalty on control <em>deviations</em> from the nominal.</p>
 <p><strong>Experiment Setup.</strong></p>
@@ -765,7 +766,7 @@ These reflect a stronger emphasis on position tracking, a moderate penalty on he
 </li>
 <li><strong>Initialization:</strong> the nominal starts at <span class="math inline">\(\bar x_0 = [\,R,\,0,\,\pi/2\,]^\top\)</span>; the actual system may start with a small offset (see code).</li>
 </ul>
-<p>With <span class="math inline">\((A_t,B_t)\)</span> from <a href="model-based-plan-optimize.html#eq:unicycle-linearization">(4.26)</a> and weights <a href="model-based-plan-optimize.html#eq:unicycle-weights">(4.27)</a>, the TVLQR backward Riccati recursion (Section <a href="model-based-plan-optimize.html#lqr-tracking">4.2</a>) yields gains <span class="math inline">\(K_t\)</span>. We then apply the <strong>local feedback</strong>
+<p>With <span class="math inline">\((A_t,B_t)\)</span> from <a href="model-based-plan-optimize.html#eq:unicycle-linearization">(4.27)</a> and weights <a href="model-based-plan-optimize.html#eq:unicycle-weights">(4.28)</a>, the TVLQR backward Riccati recursion (Section <a href="model-based-plan-optimize.html#lqr-tracking">4.2</a>) yields gains <span class="math inline">\(K_t\)</span>. We then apply the <strong>local feedback</strong>
 <span class="math display">\[
 u_t \;=\; \bar u_t - K_t\,(x_t-\bar x_t),
 \]</span>
@@ -844,10 +845,10 @@ x_{t+1} = f_t(x_t,u_t), \qquad t=0,\dots,N-1,\\
 &amp; x_t \in \mathcal X_t,\quad u_t \in \mathcal U_t \quad \text{(bounds)},\\
 &amp; g_t(x_t,u_t) \le 0,\quad h_t(x_t,u_t)=0 \quad \text{(path/terminal constraints).}
 \end{split}
-\tag{4.28}
+\tag{4.29}
 \end{equation}\]</span>
 Here <span class="math inline">\(\ell_t\)</span> and <span class="math inline">\(\Phi\)</span> encode performance (e.g., energy, time, tracking error), <span class="math inline">\(\mathcal X_t,\mathcal U_t\)</span> capture box limits and safety sets, and <span class="math inline">\(g_t,h_t\)</span> represent additional nonlinear constraints (obstacles, terminal goals, etc.).</p>
-<p>Solving <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a> directly is difficult in general. A widely used strategy is to iteratively approximate it by <em>quadratic</em> subproblems that can be solved efficiently. This leads to <strong>iLQR</strong> and its second-order cousin <strong>DDP</strong> (see Section <a href="model-based-plan-optimize.html#ddp">4.3.2</a>).</p>
+<p>Solving <a href="model-based-plan-optimize.html#eq:to-general">(4.29)</a> directly is difficult in general. A widely used strategy is to iteratively approximate it by <em>quadratic</em> subproblems that can be solved efficiently. This leads to <strong>iLQR</strong> and its second-order cousin <strong>DDP</strong> (see Section <a href="model-based-plan-optimize.html#ddp">4.3.2</a>).</p>
 <div id="traj-opt-ilqr" class="section level3 hasAnchor" number="4.3.1">
 <h3><span class="header-section-number">4.3.1</span> Iterative LQR<a href="model-based-plan-optimize.html#traj-opt-ilqr" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p><strong>High-level intuition.</strong> iLQR (iterative LQR) alternates between:</p>
@@ -878,7 +879,7 @@ which gives both a feedforward step <span class="math inline">\(k_t\)</span> (to
 \delta x_{t+1} \;\approx\; A_t\,\delta x_t + B_t\,\delta u_t,\quad
 A_t:=\left.\frac{\partial f_t}{\partial x}\right|_{(\bar x_t,\bar u_t)},\ \
 B_t:=\left.\frac{\partial f_t}{\partial u}\right|_{(\bar x_t,\bar u_t)}.
-\tag{4.29}
+\tag{4.30}
 \]</span></p>
 <p><strong>Quadratic Cost Approximation.</strong> We perform a quadratic approximation of the objective function about <span class="math inline">\((\bar x_t,\bar u_t)\)</span>
 <span class="math display" id="eq:ilqr-quadratic-cost">\[
@@ -891,9 +892,9 @@ B_t:=\left.\frac{\partial f_t}{\partial u}\right|_{(\bar x_t,\bar u_t)}.
 \!\begin{bmatrix}\delta x_t\\ \delta u_t\end{bmatrix},\\
 \Phi(x_N) &amp;\approx \Phi + \Phi_x^\top \delta x_N + \frac{1}{2}\,\delta x_N^\top \Phi_{xx}\,\delta x_N.
 \end{aligned}
-\tag{4.30}
+\tag{4.31}
 \]</span></p>
-<p><strong>The LQR Subproblem.</strong> With <a href="model-based-plan-optimize.html#eq:ilqr-linearize">(4.29)</a>–<a href="model-based-plan-optimize.html#eq:ilqr-quadratic-cost">(4.30)</a>, the iLQR subproblem at this outer iteration is the <strong>finite-horizon linear–quadratic program in deviations</strong>:
+<p><strong>The LQR Subproblem.</strong> With <a href="model-based-plan-optimize.html#eq:ilqr-linearize">(4.30)</a>–<a href="model-based-plan-optimize.html#eq:ilqr-quadratic-cost">(4.31)</a>, the iLQR subproblem at this outer iteration is the <strong>finite-horizon linear–quadratic program in deviations</strong>:
 <span class="math display" id="eq:ilqr-lqr-subproblem">\[
 \begin{aligned}
 \min_{\{\delta x_t,\delta u_t\}} \quad
@@ -911,10 +912,10 @@ B_t:=\left.\frac{\partial f_t}{\partial u}\right|_{(\bar x_t,\bar u_t)}.
 \delta x_{t+1} = A_t\,\delta x_t + B_t\,\delta u_t,\qquad t=0,\dots,N-1,\\
 &amp; \delta x_0\ \text{given.}
 \end{aligned}
-\tag{4.31}
+\tag{4.32}
 \]</span></p>
 <blockquote>
-<p><strong>Notes.</strong> The iLQR subproblem <a href="model-based-plan-optimize.html#eq:ilqr-lqr-subproblem">(4.31)</a> is slightly different from the previous finite-horizon LQR formulation <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.2)</a> in the sense that the objective function of <a href="model-based-plan-optimize.html#eq:ilqr-lqr-subproblem">(4.31)</a> also contains <strong>linear terms</strong> in <span class="math inline">\(\delta x_t,\delta u_t\)</span>, and those linear terms come from the Taylor expansion of the original nonlinear objective fuctions. In this case, we will see in the following that the optimal policy is <strong>affine</strong> (feedforward <span class="math inline">\(k_t\)</span> + feedback <span class="math inline">\(K_t\)</span>).</p>
+<p><strong>Notes.</strong> The iLQR subproblem <a href="model-based-plan-optimize.html#eq:ilqr-lqr-subproblem">(4.32)</a> is slightly different from the previous finite-horizon LQR formulation <a href="model-based-plan-optimize.html#eq:lqr-formulation">(4.3)</a> in the sense that the objective function of <a href="model-based-plan-optimize.html#eq:ilqr-lqr-subproblem">(4.32)</a> also contains <strong>linear terms</strong> in <span class="math inline">\(\delta x_t,\delta u_t\)</span>, and those linear terms come from the Taylor expansion of the original nonlinear objective fuctions. In this case, we will see in the following that the optimal policy is <strong>affine</strong> (feedforward <span class="math inline">\(k_t\)</span> + feedback <span class="math inline">\(K_t\)</span>).</p>
 </blockquote>
 </div>
 <div id="solving-the-subproblem-by-dynamic-programming" class="section level4 hasAnchor" number="4.3.1.2">
@@ -928,7 +929,7 @@ V_{t}
 + \frac{1}{2}\,\delta x_t^\top V_{xx,t}\,\delta x_t,
 \qquad
 V_{x,N}=\Phi_x,\; V_{xx,N}=\Phi_{xx}.
-\tag{4.32}
+\tag{4.33}
 \]</span>
 Note that this quadratic value approximator also contains linear and constant terms because the objective function contains linear terms.</p>
 <p>Define the local Q-function at stage <span class="math inline">\(t\)</span> by substituting the linear dynamics into the next-step value (this is our familiar Q-value in RL):
@@ -946,7 +947,7 @@ Q_{xx,t}&amp;=\ell_{xx,t}+A_t^\top V_{xx,t+1}A_t,\quad
 Q_{ux,t}=\ell_{ux,t}+B_t^\top V_{xx,t+1}A_t,\\
 Q_{uu,t}&amp;=\ell_{uu,t}+B_t^\top V_{xx,t+1}B_t.
 \end{aligned}
-\tag{4.33}
+\tag{4.34}
 \]</span>
 The iLQR blocks assemble into a big matrix such that
 <span class="math display" id="eq:ilqr-Q-aug">\[
@@ -959,7 +960,7 @@ Q_{x,t} &amp; Q_{xx,t} &amp; Q_{xu,t}\\[2pt]
 Q_{u,t} &amp; Q_{ux,t} &amp; Q_{uu,t}
 \end{bmatrix}
 \begin{bmatrix} 1 \\ \delta x_t \\ \delta u_t \end{bmatrix}.
-\tag{4.34}
+\tag{4.35}
 \]</span>
 where <span class="math inline">\(c_t\)</span> collects all stage/terminal constants e.g., <span class="math inline">\(\ell_t+\!V_{t+1}\)</span>.</p>
 <p><strong>Solving the local Q (backward pass).</strong> Set the first-order condition w.r.t. <span class="math inline">\(\delta u\)</span>:
@@ -971,16 +972,16 @@ Solve for the affine control law
 \delta u_t^\star \;=\; k_t + K_t\,\delta x,\qquad
 k_t = -Q_{uu,t}^{-1} Q_{u,t},\quad
 K_t = -Q_{uu,t}^{-1} Q_{ux,t}\!,
-\tag{4.35}
+\tag{4.36}
 \]</span>
 which is exactly the LQR solution for the quadratic <span class="math inline">\(Q_t\)</span>.</p>
-<p>Substitute <span class="math inline">\(\delta u_t^\star\)</span> back into <a href="model-based-plan-optimize.html#eq:ilqr-Q-aug">(4.34)</a>. The minimized Q becomes a quadratic in <span class="math inline">\(\delta x\)</span> with coefficients given by
+<p>Substitute <span class="math inline">\(\delta u_t^\star\)</span> back into <a href="model-based-plan-optimize.html#eq:ilqr-Q-aug">(4.35)</a>. The minimized Q becomes a quadratic in <span class="math inline">\(\delta x\)</span> with coefficients given by
 <span class="math display" id="eq:ilqr-V">\[
 \begin{aligned}
 V_{x,t}  &amp;= Q_{x,t} + Q_{xu,t}k_t + K_t^\top Q_{uu,t}k_t + K_t^\top Q_{u,t},\\
 V_{xx,t} &amp;= Q_{xx,t} + Q_{xu,t}K_t + K_t^\top Q_{ux,t} + K_t^\top Q_{uu,t}K_t,
 \end{aligned}
-\tag{4.36}
+\tag{4.37}
 \]</span>
 with terminal
 <span class="math display">\[
@@ -992,7 +993,7 @@ V_{x,N} = \Phi_x, V_{xx,N} = \Phi_{xx}.
 u_t^{\text{cand}} &amp;= \bar u_t + \alpha k_t + K_t\big(x_t^{\text{cand}}-\bar x_t\big) ,\\
 x_{t+1}^{\text{cand}} &amp;= f_t\big(x_t^{\text{cand}},u_t^{\text{cand}}\big),\qquad x_0^{\text{cand}}=\hat x_0.
 \end{aligned}
-\tag{4.37}
+\tag{4.38}
 \]</span>
 Choose <span class="math inline">\(\alpha\)</span> (e.g., <span class="math inline">\(\{1,\frac{1}{2},\frac14,\dots\}\)</span>) to reduce the <strong>true</strong> cost and respect constraints, then update the nominal:
 <span class="math display">\[
@@ -1005,7 +1006,7 @@ Choose <span class="math inline">\(\alpha\)</span> (e.g., <span class="math inli
 <ol style="list-style-type: decimal">
 <li><strong>Initialize</strong> nominal rollout <span class="math inline">\(\{\bar x_t,\bar u_t\}\)</span> from <span class="math inline">\(\hat x_0\)</span>.</li>
 <li><strong>Linearize &amp; quadratize</strong> at <span class="math inline">\(\{(\bar x_t,\bar u_t)\}\)</span>: build <span class="math inline">\(A_t,B_t\)</span> and cost derivatives.</li>
-<li><strong>Backward pass (TVLQR):</strong> compute <span class="math inline">\(\{k_t,K_t\}\)</span> using <a href="model-based-plan-optimize.html#eq:ilqr-kK">(4.35)</a> and update <span class="math inline">\(V_{x,t},V_{xx,t}\)</span> via <a href="model-based-plan-optimize.html#eq:ilqr-V">(4.36)</a>.</li>
+<li><strong>Backward pass (TVLQR):</strong> compute <span class="math inline">\(\{k_t,K_t\}\)</span> using <a href="model-based-plan-optimize.html#eq:ilqr-kK">(4.36)</a> and update <span class="math inline">\(V_{x,t},V_{xx,t}\)</span> via <a href="model-based-plan-optimize.html#eq:ilqr-V">(4.37)</a>.</li>
 <li><strong>Forward rollout:</strong> apply <span class="math inline">\(u_t^{\text{new}}=\bar u_t+\alpha k_t+K_t(x_t^{\text{new}}-\bar x_t)\)</span> on the <strong>true</strong> dynamics, pick <span class="math inline">\(\alpha\)</span> by line search.</li>
 <li><strong>Convergence check:</strong> stop if the cost decrease and dynamics residuals fall below thresholds; otherwise, set the new nominal and <strong>repeat</strong> from Step 2.</li>
 </ol>
@@ -1028,13 +1029,13 @@ where <span class="math inline">\((p_x,p_y)\)</span> is position, <span class="m
 \dot\theta &amp;= \omega, &amp;
 \dot\omega &amp;= \frac{\tau}{I_{zz}}.
 \end{aligned}
-\tag{4.38}
+\tag{4.39}
 \]</span>
-In simulation we use RK4 with stepsize <span class="math inline">\(h\)</span> to propagate the true dynamics <a href="model-based-plan-optimize.html#eq:rocket-ct">(4.38)</a>. For iLQR’s local subproblems we form the continuous Jacobians <span class="math inline">\((A_c,B_c)=\big(\frac{\partial f}{\partial x},\frac{\partial f}{\partial u}\big)\)</span> at the current nominal and use the standard first-order discrete map
+In simulation we use RK4 with stepsize <span class="math inline">\(h\)</span> to propagate the true dynamics <a href="model-based-plan-optimize.html#eq:rocket-ct">(4.39)</a>. For iLQR’s local subproblems we form the continuous Jacobians <span class="math inline">\((A_c,B_c)=\big(\frac{\partial f}{\partial x},\frac{\partial f}{\partial u}\big)\)</span> at the current nominal and use the standard first-order discrete map
 <span class="math display" id="eq:rocket-disc-lin">\[
 A_t \;\approx\; I + h\,A_c(\bar x_t,\bar u_t),\qquad
 B_t \;\approx\; h\,B_c(\bar x_t,\bar u_t).
-\tag{4.39}
+\tag{4.40}
 \]</span></p>
 <p><strong>Soft-Landing Objective.</strong> The goal is a <strong>soft, upright landing</strong> at the origin:
 <span class="math display">\[
@@ -1049,7 +1050,7 @@ J \;=\; \frac{1}{2}\,(x_N-x_g)^\top Q_f (x_N-x_g)
 \;+\;\sum_{t=0}^{N-1}\Big[
 \frac{1}{2}\,(x_t-x_g)^\top Q (x_t-x_g) \;+\; \frac{1}{2}\,u_t^\top R u_t
 \Big],
-\tag{4.40}
+\tag{4.41}
 \]</span>
 where <span class="math inline">\(x_g=\mathbf{0}\)</span>. In the example:
 <span class="math display" id="eq:rocket-weights">\[
@@ -1058,7 +1059,7 @@ Q&amp;=\mathrm{diag}(1,\ 2,\ 0.5,\ 0.5,\ 2,\ 0.5),\\
 Q_f&amp;=\mathrm{diag}(200,\ 300,\ 50,\ 50,\ 300,\ 50),\\
 R&amp;=\mathrm{diag}(10^{-3},\ 10^{-3}).
 \end{aligned}
-\tag{4.41}
+\tag{4.42}
 \]</span>
 These weights place strong emphasis on terminal altitude and attitude (<span class="math inline">\(p_y,\theta\)</span>), moderate emphasis on velocities and lateral position, and a light regularization on the controls.</p>
 <p><strong>Experiment Setup.</strong></p>
@@ -1076,7 +1077,7 @@ i.e., 10 m altitude, lateral offset, small descent and slight pitch.</p></li>
 \]</span></p></li>
 <li><p><strong>iLQR procedure.</strong> Each outer iteration:</p>
 <ol style="list-style-type: decimal">
-<li>Linearize dynamics and quadratize the cost along the current nominal (<a href="model-based-plan-optimize.html#eq:rocket-disc-lin">(4.39)</a>, <a href="model-based-plan-optimize.html#eq:rocket-cost">(4.40)</a>);<br />
+<li>Linearize dynamics and quadratize the cost along the current nominal (<a href="model-based-plan-optimize.html#eq:rocket-disc-lin">(4.40)</a>, <a href="model-based-plan-optimize.html#eq:rocket-cost">(4.41)</a>);<br />
 </li>
 <li>Solve the <strong>time-varying LQR</strong> subproblem to get affine updates <span class="math inline">\(\delta u_t = k_t + K_t\,\delta x_t\)</span>;<br />
 </li>
@@ -1112,7 +1113,7 @@ Figure 4.5: iLQR Trajectory Generation for Rocket Landing.
 <p>As a first step, we study the <strong>convex</strong> special case where the linearization already yields linear dynamics, affine constraints, and a quadratic objective (these are typically known as “constrained LQR” problems). This leads to <strong>Quadratic Programming (QP)</strong>, a cornerstone problem class with mature, efficient solvers. In the next section, we will lift these ideas to <strong>Sequential Quadratic Programming (SQP)</strong> to handle <em>general</em> constrained TO.</p>
 <div id="to-qp" class="section level4 hasAnchor" number="4.3.3.1">
 <h4><span class="header-section-number">4.3.3.1</span> From Trajectory Optimization to Quadratic Programming<a href="model-based-plan-optimize.html#to-qp" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>Start from the constrained TO template in <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>. Suppose:</p>
+<p>Start from the constrained TO template in <a href="model-based-plan-optimize.html#eq:to-general">(4.29)</a>. Suppose:</p>
 <ul>
 <li><strong>Linear (time-varying) dynamics</strong> (from linearization or an intrinsically linear model):
 <span class="math display">\[
@@ -1145,7 +1146,7 @@ Then the horizon-wide problem is a <strong>QP</strong>:
 &amp; A_{\text{dyn}}\, z = b_{\text{dyn}} \quad \text{(stacked dynamics and } x_0=\hat x_0\text{)},\\
 &amp; G\, z \le g \qquad\quad\ \ \text{(stacked affine path/terminal constraints)}\\
 \end{aligned}
-\tag{4.42}
+\tag{4.43}
 \]</span>
 Here <span class="math inline">\(H\succeq 0\)</span> is block-sparse (banded) due to the stagewise structure; the constraint matrices are also sparse/banded because each dynamic constraint couples only <span class="math inline">\((x_t,u_t,x_{t+1})\)</span>.</p>
 <div class="exercisebox">
@@ -1153,7 +1154,7 @@ Here <span class="math inline">\(H\succeq 0\)</span> is block-sparse (banded) du
 <p><span id="exr:unlabeled-div-23" class="exercise"><strong>Exercise 4.1  </strong></span>Can you write down the blocks in <span class="math inline">\(H\)</span>, <span class="math inline">\(A\)</span>, and <span class="math inline">\(G\)</span>, as functions of <span class="math inline">\(H_t,A_t,B_t,G^x_t, G^u_t\)</span>? Then, observe the block-sparsity patterns.</p>
 </div>
 </div>
-<p><strong>Convexity.</strong> If all stage Hessians <span class="math inline">\(H_t\succeq 0\)</span> and <span class="math inline">\(Q_N\succeq 0\)</span>, <a href="model-based-plan-optimize.html#eq:qp-stacked">(4.42)</a> is a <strong>convex QP</strong> with a <strong>unique</strong> minimizer when <span class="math inline">\(H\)</span> is positive definite on the feasible subspace (e.g., via <span class="math inline">\(R_t\succ 0\)</span>).</p>
+<p><strong>Convexity.</strong> If all stage Hessians <span class="math inline">\(H_t\succeq 0\)</span> and <span class="math inline">\(Q_N\succeq 0\)</span>, <a href="model-based-plan-optimize.html#eq:qp-stacked">(4.43)</a> is a <strong>convex QP</strong> with a <strong>unique</strong> minimizer when <span class="math inline">\(H\)</span> is positive definite on the feasible subspace (e.g., via <span class="math inline">\(R_t\succ 0\)</span>).</p>
 </div>
 <div id="solving-the-quadratic-program" class="section level4 hasAnchor" number="4.3.3.2">
 <h4><span class="header-section-number">4.3.3.2</span> Solving the Quadratic Program<a href="model-based-plan-optimize.html#solving-the-quadratic-program" class="anchor-section" aria-label="Anchor link to header"></a></h4>
@@ -1165,10 +1166,10 @@ Here <span class="math inline">\(H\succeq 0\)</span> is block-sparse (banded) du
 &amp; A  z = b  \\
 &amp; G z \le g
 \end{aligned}
-\tag{4.43}
+\tag{4.44}
 \]</span>
 where <span class="math inline">\(z \in \mathbb{R}^n\)</span> is the decision variable, <span class="math inline">\(H \in \mathbb{S}^{n}, h \in \mathbb{R}^n, A \in \mathbb{R}^{m \times n}, b \in \mathbb{R}^m, G \in \mathbb{R}^{p \times n}, g \in \mathbb{R}^p\)</span> are given problem data (e.g., generated as in Section <a href="model-based-plan-optimize.html#to-qp">4.3.3.1</a>). We assume <span class="math inline">\(H \succeq 0\)</span> is positive semidefinite.</p>
-<p>There are multiple popular algorithms to solve <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a>, e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the <em>primal–dual interior point method</em> (PD-IPM) due to its generality and robustness. Before presenting the PD-IPM algorithm, it is beneficial to review Newton’s method for solving a system of equations.</p>
+<p>There are multiple popular algorithms to solve <a href="model-based-plan-optimize.html#eq:qp-general">(4.44)</a>, e.g., the active set algorithm, the interior point algorithm, and the alternating direction method of multipliers. Here we only present the <em>primal–dual interior point method</em> (PD-IPM) due to its generality and robustness. Before presenting the PD-IPM algorithm, it is beneficial to review Newton’s method for solving a system of equations.</p>
 <div class="highlightbox">
 <p style="text-align: center;">
 <b>Newton’s Method</b>
@@ -1185,15 +1186,15 @@ where <span class="math inline">\(f&#39;(x^{(k)})\)</span> denotes the derivativ
 <p>Newton’s method can be generalized to find a point at which multiple functions vanish simultaneously. Given a function <span class="math inline">\(F: \mathbb{R}^{n} \rightarrow \mathbb{R}^{n}\)</span> that is continuously differentiable, and an initial iterate <span class="math inline">\(x^{(0)}\)</span>, Newton’s method reads
 <span class="math display" id="eq:newton-method-vector">\[\begin{equation}
 x^{(k+1)} = x^{(k)} - J_F(x^{(k)})^{-1} F(x^{(k)}),
-\tag{4.44}
+\tag{4.45}
 \end{equation}\]</span>
-where <span class="math inline">\(J_F(\cdot)\)</span> denotes the Jacobian of <span class="math inline">\(F\)</span>. Iteration <a href="model-based-plan-optimize.html#eq:newton-method-vector">(4.44)</a> is equivalent to
+where <span class="math inline">\(J_F(\cdot)\)</span> denotes the Jacobian of <span class="math inline">\(F\)</span>. Iteration <a href="model-based-plan-optimize.html#eq:newton-method-vector">(4.45)</a> is equivalent to
 <span class="math display" id="eq:newton-method-vector-1">\[\begin{equation}
 \begin{split}
 J_F(x^{(k)}) \Delta x^{(k)} &amp; = - F(x^{(k)}) \\
 x^{(k+1)} &amp; = x^{(k)} + \Delta x^{(k)}
 \end{split}
-\tag{4.45}
+\tag{4.46}
 \end{equation}\]</span>
 i.e., one first solves a linear system of equations to find an update direction <span class="math inline">\(\Delta x^{(k)}\)</span>, and then take a step along the direction.</p>
 <p>As we will see, PD-IPMs for solving convex QPs can be seen as applying Newton’s method to the perturbed KKT system of optimality conditions.</p>
@@ -1201,14 +1202,14 @@ i.e., one first solves a linear system of equations to find an update direction 
 <p><strong>Slacks, Lagrangian, and KKT Optimality.</strong> Introduce <span class="math inline">\(s\in\mathbb{R}^p\)</span> so that
 <span class="math display" id="eq:ipm-slack">\[
 Gz + s = g,\qquad s \ge 0.
-\tag{4.46}
+\tag{4.47}
 \]</span>
-Let <span class="math inline">\(y\in\mathbb{R}^m\)</span> be the Lagrangian multipliers for <span class="math inline">\(Az=b\)</span>, <span class="math inline">\(\nu\in\mathbb{R}^p\)</span> for the equality <span class="math inline">\(Gz+s=g\)</span>, and <span class="math inline">\(w\in\mathbb{R}^p\)</span> (with <span class="math inline">\(w\ge 0\)</span>) for the inequality <span class="math inline">\(s\ge 0\)</span>. The Lagrangian for the QP <a href="model-based-plan-optimize.html#eq:qp-general">(4.43)</a> is
+Let <span class="math inline">\(y\in\mathbb{R}^m\)</span> be the Lagrangian multipliers for <span class="math inline">\(Az=b\)</span>, <span class="math inline">\(\nu\in\mathbb{R}^p\)</span> for the equality <span class="math inline">\(Gz+s=g\)</span>, and <span class="math inline">\(w\in\mathbb{R}^p\)</span> (with <span class="math inline">\(w\ge 0\)</span>) for the inequality <span class="math inline">\(s\ge 0\)</span>. The Lagrangian for the QP <a href="model-based-plan-optimize.html#eq:qp-general">(4.44)</a> is
 <span class="math display" id="eq:qp-Lagrangian">\[
 \mathcal L(z,s,y,\nu,w)
 = \frac{1}{2} z^\top H z + h^\top z
 + y^\top(Az-b) + \nu^\top(Gz+s-g) - w^\top s.
-\tag{4.47}
+\tag{4.48}
 \]</span>
 From the Lagrangian, we can derive the KKT optimality conditions, i.e., under technical conditions (such as constraint qualification), a point <span class="math inline">\((z,s)\)</span> is a local minimizer of the QP if and only if there exists dual variables <span class="math inline">\((\nu,w)\)</span> satisfying:
 <span class="math display" id="eq:ipm-kkt">\[
@@ -1223,9 +1224,9 @@ w \ge 0,\\
 \text{(complementarity)}&amp;:\quad
 s_i w_i = 0,\quad i=1,\dots,p.
 \end{aligned}
-\tag{4.48}
+\tag{4.49}
 \]</span>
-Using <span class="math inline">\(\nu=w\)</span> we eliminate <span class="math inline">\(\nu\)</span> and keep variables <span class="math inline">\((z,s,y,w)\)</span>. Since the QP is convex, we know that any local minimizer is a global minimizer. Hence, if we can solve the KKT system <a href="model-based-plan-optimize.html#eq:ipm-kkt">(4.48)</a>, we can find an optimal solution of the QP.</p>
+Using <span class="math inline">\(\nu=w\)</span> we eliminate <span class="math inline">\(\nu\)</span> and keep variables <span class="math inline">\((z,s,y,w)\)</span>. Since the QP is convex, we know that any local minimizer is a global minimizer. Hence, if we can solve the KKT system <a href="model-based-plan-optimize.html#eq:ipm-kkt">(4.49)</a>, we can find an optimal solution of the QP.</p>
 <blockquote>
 <p>If you are not familiar with the Lagrangian and the KKT optimality conditions, make sure to review Appendix <a href="appconvex.html#lagrangian-dual">A.1.3</a> and <a href="appconvex.html#appconvex-theory-kkt">A.1.4</a>.</p>
 </blockquote>
@@ -1234,7 +1235,7 @@ Using <span class="math inline">\(\nu=w\)</span> we eliminate <span class="math 
 S W \mathbf{1} = \sigma \mu\,\mathbf{1},
 \qquad
 \mu := \frac{1}{p}\, s^\top w, \qquad \sigma \in (0,1)
-\tag{4.49}
+\tag{4.50}
 \]</span>
 with <span class="math inline">\(S=\mathrm{diag}(s)\)</span>, <span class="math inline">\(W=\mathrm{diag}(w)\)</span>.
 At a current iterate <span class="math inline">\((z,s,y,w)\)</span> define residuals
@@ -1245,9 +1246,9 @@ r_{\mathrm{pe}}   &amp;= A z - b,\\
 r_{\mathrm{pi}}   &amp;= G z + s - g,\\
 r_{\mathrm{cent}} &amp;= S W \mathbf{1} - \sigma \mu\,\mathbf{1}.
 \end{aligned}
-\tag{4.50}
+\tag{4.51}
 \]</span></p>
-<p><strong>Newton System (primal–dual step).</strong> Now that we have arrived at the perturbed KKT system of equations in <a href="model-based-plan-optimize.html#eq:ipm-residuals">(4.50)</a> where we aim to drive all the residuals to zero. This is a system of <span class="math inline">\((n+m+p+p)\)</span> nonlinear equations in <span class="math inline">\((n + m + p + p)\)</span> variables. Therefore, we can apply Newton’s method to solve the system of equations.</p>
+<p><strong>Newton System (primal–dual step).</strong> Now that we have arrived at the perturbed KKT system of equations in <a href="model-based-plan-optimize.html#eq:ipm-residuals">(4.51)</a> where we aim to drive all the residuals to zero. This is a system of <span class="math inline">\((n+m+p+p)\)</span> nonlinear equations in <span class="math inline">\((n + m + p + p)\)</span> variables. Therefore, we can apply Newton’s method to solve the system of equations.</p>
 <blockquote>
 <p>Note that we actually want to solve the original KKT system with <span class="math inline">\(\sigma \mu = 0\)</span>. However, this system is ill-conditioned and directly applying Newton’s method would lead to instability. Therefore, we solve the perturbed KKT system with <span class="math inline">\(\sigma \mu &gt; 0\)</span> and at each iteration we move closer to the original KKT system with <span class="math inline">\(\sigma \in (0,1)\)</span> so that in the limit we will converge (arbitrarily close) to a solution of the original KKT system.</p>
 </blockquote>
@@ -1259,7 +1260,7 @@ A\,\Delta z &amp;= -\,r_{\mathrm{pe}},\\
 G\,\Delta z + \Delta s &amp;= -\,r_{\mathrm{pi}},\\
 W\,\Delta s + S\,\Delta w &amp;= -\,r_{\mathrm{cent}}.
 \end{aligned}
-\tag{4.51}
+\tag{4.52}
 \]</span>
 Eliminate <span class="math inline">\(\Delta s = -r_{\mathrm{pi}} - G\Delta z\)</span> in the last equation to get
 <span class="math display">\[
@@ -1281,7 +1282,7 @@ A &amp; \ \ 0
 r_{\mathrm{dual}} - G^\top S^{-1} \big(r_{\mathrm{cent}} + W r_{\mathrm{pi}}\big)\\[2pt]
 r_{\mathrm{pe}}
 \end{bmatrix}
-\tag{4.52}
+\tag{4.53}
 \]</span>
 with <span class="math inline">\(D := S^{-1} W\)</span>. Then recover
 <span class="math display">\[
@@ -1292,7 +1293,7 @@ with <span class="math inline">\(D := S^{-1} W\)</span>. Then recover
 <span class="math display" id="eq:ipm-steps">\[
 \alpha_{\mathrm{pri}} = \min\!\Big(1,\ \eta \min_{\Delta s_i&lt;0}\frac{-s_i}{\Delta s_i}\Big),\qquad
 \alpha_{\mathrm{du}}  = \min\!\Big(1,\ \eta \min_{\Delta w_i&lt;0}\frac{-w_i}{\Delta w_i}\Big),
-\tag{4.53}
+\tag{4.54}
 \]</span>
 with <span class="math inline">\(\eta\in(0,1)\)</span> (e.g., <span class="math inline">\(0.99\)</span>). Update both primal and dual variables
 <span class="math display">\[
@@ -1346,8 +1347,8 @@ for a small tolerance <span class="math inline">\(\varepsilon\)</span> (e.g., <s
 <li>Repeat until convergence:
 <ol style="list-style-type: decimal">
 <li>Compute residuals <span class="math inline">\(r_{\mathrm{dual}}, r_{\mathrm{pe}}, r_{\mathrm{pi}}\)</span>, <span class="math inline">\(\mu=(s^\top w)/p\)</span>.</li>
-<li>Solve the reduced system <a href="model-based-plan-optimize.html#eq:ipm-reduced">(4.52)</a> to obtain Newton direction.</li>
-<li>Compute <span class="math inline">\(\alpha_{\mathrm{pri}},\alpha_{\mathrm{du}}\)</span> by <a href="model-based-plan-optimize.html#eq:ipm-steps">(4.53)</a>.</li>
+<li>Solve the reduced system <a href="model-based-plan-optimize.html#eq:ipm-reduced">(4.53)</a> to obtain Newton direction.</li>
+<li>Compute <span class="math inline">\(\alpha_{\mathrm{pri}},\alpha_{\mathrm{du}}\)</span> by <a href="model-based-plan-optimize.html#eq:ipm-steps">(4.54)</a>.</li>
 <li>Update <span class="math inline">\((z,s,y,w)\)</span>.</li>
 <li>Check stopping criteria; if satisfied, <strong>return</strong> <span class="math inline">\(z^\star\)</span>.</li>
 </ol></li>
@@ -1497,7 +1498,7 @@ Equality residual (≈0): 0.0</code></pre>
 <div id="sqp" class="section level3 hasAnchor" number="4.3.4">
 <h3><span class="header-section-number">4.3.4</span> Sequential Quadratic Programming<a href="model-based-plan-optimize.html#sqp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
 <p>We have seen that quadratic programs (QPs) gracefully handle <em>constrained LQR–style</em> trajectory optimization: convex quadratic costs, linear dynamics, and affine path/terminal constraints. With time-stacked sparsity, these problems are solved efficiently (e.g., via interior-point methods), making QP a strong tool for that regime.</p>
-<p>The natural next step is the general trajectory optimization problem in <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>, which features nonlinear dynamics, <em>nonconvex</em> objectives, and <em>nonlinear</em> constraints. To tackle this, we turn to <em>Sequential Quadratic Programming (SQP)</em>—a Newton-like framework that <em>iteratively</em> linearizes the dynamics/constraints and quadratizes the objective to form a sequence of QP subproblems. Each QP is solved to produce a step and updated multipliers; with globalization and appropriate Hessian modeling, the sequence converges to a <em>locally optimal</em> solution (a KKT point) of the original nonlinear TO problem. In short: QP handles the convex linearized case; SQP extends that logic to the full nonlinear setting by repeatedly building and solving the right QP at the current iterate. For an in-depth presentation of SQP for nonlinear programming, we refer to Chapter 18 of <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p>
+<p>The natural next step is the general trajectory optimization problem in <a href="model-based-plan-optimize.html#eq:to-general">(4.29)</a>, which features nonlinear dynamics, <em>nonconvex</em> objectives, and <em>nonlinear</em> constraints. To tackle this, we turn to <em>Sequential Quadratic Programming (SQP)</em>—a Newton-like framework that <em>iteratively</em> linearizes the dynamics/constraints and quadratizes the objective to form a sequence of QP subproblems. Each QP is solved to produce a step and updated multipliers; with globalization and appropriate Hessian modeling, the sequence converges to a <em>locally optimal</em> solution (a KKT point) of the original nonlinear TO problem. In short: QP handles the convex linearized case; SQP extends that logic to the full nonlinear setting by repeatedly building and solving the right QP at the current iterate. For an in-depth presentation of SQP for nonlinear programming, we refer to Chapter 18 of <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p>
 <div id="problem-statement" class="section level4 hasAnchor" number="4.3.4.1">
 <h4><span class="header-section-number">4.3.4.1</span> Problem Statement<a href="model-based-plan-optimize.html#problem-statement" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>We will consider the following general nonlinear program (NLP)
@@ -1507,13 +1508,13 @@ Equality residual (≈0): 0.0</code></pre>
 \text{s.t.}\quad &amp; c(x)=0 \quad (c:\mathbb{R}^n\!\to\mathbb{R}^{m}),\\
 &amp; d(x)\le 0 \quad (d:\mathbb{R}^n\!\to\mathbb{R}^{p}),
 \end{aligned}
-\tag{4.54}
+\tag{4.55}
 \]</span>
-with objective function <span class="math inline">\(f(x)\)</span>, equality constraints <span class="math inline">\(c(x)=0\)</span>, and inequality constraints <span class="math inline">\(d(x)\leq 0\)</span>. To obtain the NLP formulation <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a> from the TO template <a href="model-based-plan-optimize.html#eq:to-general">(4.28)</a>, one needs to define the set constraints <span class="math inline">\(x_t \in \mathcal{X}_t\)</span> and <span class="math inline">\(u_t \in \mathcal{U}_t\)</span> as general equality and inequality constraints. The decision variable <span class="math inline">\(x\)</span> contains the entire sequence of states and actions.</p>
+with objective function <span class="math inline">\(f(x)\)</span>, equality constraints <span class="math inline">\(c(x)=0\)</span>, and inequality constraints <span class="math inline">\(d(x)\leq 0\)</span>. To obtain the NLP formulation <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.55)</a> from the TO template <a href="model-based-plan-optimize.html#eq:to-general">(4.29)</a>, one needs to define the set constraints <span class="math inline">\(x_t \in \mathcal{X}_t\)</span> and <span class="math inline">\(u_t \in \mathcal{U}_t\)</span> as general equality and inequality constraints. The decision variable <span class="math inline">\(x\)</span> contains the entire sequence of states and actions.</p>
 <blockquote>
 <p>While in many cases the functions <span class="math inline">\(f,c,d\)</span> are defined analytically, technically speaking, we only need zero-order and first-order oracles of these functions to implement numerical algorithms. That is, given a point <span class="math inline">\(x\)</span>, we need to evaluate <span class="math inline">\(f(x), c(x), d(x)\)</span> and their first-order derivatives.</p>
 </blockquote>
-<p>With dual variables <span class="math inline">\(\lambda \in \mathbb{R}^m\)</span> and <span class="math inline">\(\mu \in \mathbb{R}^p\)</span>, define the Lagrangian of <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a> as
+<p>With dual variables <span class="math inline">\(\lambda \in \mathbb{R}^m\)</span> and <span class="math inline">\(\mu \in \mathbb{R}^p\)</span>, define the Lagrangian of <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.55)</a> as
 <span class="math display">\[
 \mathcal L(x,\lambda,\mu) \;=\; f(x) + \lambda^\top c(x) + \mu^\top d(x),\qquad \mu\ge 0,
 \]</span>
@@ -1549,10 +1550,10 @@ Let <span class="math inline">\(H_k\)</span> be a symmetric approximation to <sp
 A_k\, p + c_k = 0, \\
 &amp; G_k\, p + d_k \le 0.
 \end{aligned}
-\tag{4.55}
+\tag{4.56}
 \]</span>
-This defines a local quadratic model of <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a>: constraints are linearized; the objective is the second-order Taylor model of the Lagrangian (up to a constant).</p>
-<p>Solving the QP subproblem <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.55)</a> returns:</p>
+This defines a local quadratic model of <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.55)</a>: constraints are linearized; the objective is the second-order Taylor model of the Lagrangian (up to a constant).</p>
+<p>Solving the QP subproblem <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.56)</a> returns:</p>
 <ul>
 <li><strong>Primal step</strong> <span class="math inline">\(p_k\)</span>.</li>
 <li><strong>Dual estimates</strong> <span class="math inline">\(\lambda_{k+1}^{\text{QP}}, \mu_{k+1}^{\text{QP}}\)</span> (the QP multipliers), which we use as new multipliers.</li>
@@ -1560,7 +1561,7 @@ This defines a local quadratic model of <a href="model-based-plan-optimize.html#
 </div>
 <div id="sqp-Hessian-approximate" class="section level4 hasAnchor" number="4.3.4.4">
 <h4><span class="header-section-number">4.3.4.4</span> Hessian Approximation<a href="model-based-plan-optimize.html#sqp-Hessian-approximate" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>The most natural choice for <span class="math inline">\(H_k\)</span> in the QP subproblem <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.55)</a> is the exact Hessian:
+<p>The most natural choice for <span class="math inline">\(H_k\)</span> in the QP subproblem <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.56)</a> is the exact Hessian:
 <span class="math display">\[
 H_k = \nabla_{xx}^2 \mathcal{L}(x_k, \lambda_k, \mu_k) = \nabla_{xx}^2 f(x_k) + \sum_{i} \lambda_{k,i} \nabla_{xx}^2 c_i(x_k) + \sum_{i} \mu_{k,i} \nabla_{xx}^2 d_i(x_k).
 \]</span>
@@ -1575,7 +1576,7 @@ The BFGS quasi-Newton method updates <span class="math inline">\(H_{k+1}\)</span
 <span class="math display" id="eq:BFGS">\[
 H_{k+1} = H_k - \frac{H_k s_k s_k^\top H_k}{s_k^\top H_k s_k}
           + \frac{y_k y_k^\top}{s_k^\top y_k}.
-\tag{4.56}
+\tag{4.57}
 \]</span>
 One can show that if <span class="math inline">\(y_k^\top s_k &gt; 0\)</span> holds, the BFGS Hessian approximation is always positive definite (provided <span class="math inline">\(H_0 \succ 0\)</span>). Therefore, the BFGS Hessian approximation ensures the QP subproblem is convex. If the curvature condition <span class="math inline">\(y_k^\top s_k &gt; 0\)</span> fails to hold, one can resort to damped BFGS, see <span class="citation">(<a href="#ref-nocedal99book-numerical">Nocedal and Wright 1999</a>)</span>.</p>
 <blockquote>
@@ -1599,7 +1600,7 @@ with penalty <span class="math inline">\(\rho\)</span> large enough (<span class
 <p><strong>Inputs:</strong> <span class="math inline">\(x_0\)</span>, multipliers <span class="math inline">\((\lambda_0,\mu_0\ge 0)\)</span>, initial Hessian <span class="math inline">\(H_0\succ 0\)</span> (e.g., <span class="math inline">\(\gamma I\)</span>), globalization parameters.</p>
 <p>For <span class="math inline">\(k=0,1,2,\dots\)</span></p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Linearize &amp; build QP</strong>: form <span class="math inline">\(g_k, A_k, G_k, c_k, d_k\)</span> and <span class="math inline">\(H_k\)</span>, then solve the QP <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.55)</a> to get <span class="math inline">\(p_k\)</span> and QP multipliers <span class="math inline">\((\hat\lambda_{k+1},\hat\mu_{k+1}\ge 0)\)</span>.</p></li>
+<li><p><strong>Linearize &amp; build QP</strong>: form <span class="math inline">\(g_k, A_k, G_k, c_k, d_k\)</span> and <span class="math inline">\(H_k\)</span>, then solve the QP <a href="model-based-plan-optimize.html#eq:sqp-qp">(4.56)</a> to get <span class="math inline">\(p_k\)</span> and QP multipliers <span class="math inline">\((\hat\lambda_{k+1},\hat\mu_{k+1}\ge 0)\)</span>.</p></li>
 <li><p><strong>Globalization</strong>: Choose step size <span class="math inline">\(\alpha_k\in(0,1]\)</span> by backtracking on the <span class="math inline">\(\ell_1\)</span>-merit.</p></li>
 <li><p><strong>Update</strong>:
 <span class="math display">\[
@@ -1643,7 +1644,7 @@ v(t)\sin\theta(t)\\
 \end{bmatrix},
 \qquad
 x=[p_x,p_y,\theta]^\top,\ \ u=[v,\omega]^\top.
-\tag{4.57}
+\tag{4.58}
 \]</span></p>
 <p>We discretize on a uniform grid <span class="math inline">\(t_k=k h,\ k=0,\dots,N\)</span> with step <span class="math inline">\(h&gt;0\)</span> by forward Euler:
 <span class="math display" id="eq:uni-disc">\[
@@ -1654,7 +1655,7 @@ p_{x,k} + h\, v_k \cos \theta_k\\
 p_{y,k} + h\, v_k \sin \theta_k\\
 \theta_k + h\, \omega_k
 \end{bmatrix}.
-\tag{4.58}
+\tag{4.59}
 \]</span></p>
 <p><strong>Decision Variables.</strong> We optimize over the state–control sequence
 <span class="math display">\[
@@ -1666,18 +1667,18 @@ z
 =
 \big[x_0^\top,\ u_0^\top,\ x_1^\top,\ u_1^\top,\ \dots,\ x_{N-1}^\top,\ u_{N-1}^\top,\ x_N^\top\big]^\top
 \;\in\;\mathbb{R}^{(3+2)N+3}.
-\tag{4.59}
+\tag{4.60}
 \]</span></p>
 <p><strong>Constraints.</strong> We impose the following constraints.</p>
 <p><strong>(i) Initial condition.</strong>
 <span class="math display" id="eq:uni-x0">\[
 x_0 = A \in \mathbb{R}^3.
-\tag{4.60}
+\tag{4.61}
 \]</span></p>
 <p><strong>(ii) System dynamics (equality constraints).</strong> For <span class="math inline">\(k=0,\dots,N-1\)</span>,
 <span class="math display" id="eq:uni-dyn-eq">\[
 x_{k+1} - f_h(x_k,u_k) = 0.
-\tag{4.61}
+\tag{4.62}
 \]</span></p>
 <p><strong>(iii) Obstacle avoidance (inequalities).</strong> Let the set of circular obstacles be <span class="math inline">\(\mathcal{O}=\{(c_j,r_j)\}_{j=1}^{n_{\text{obs}}}\)</span> with centers <span class="math inline">\(c_j=[c_{x,j},c_{y,j}]^\top\)</span> and radii <span class="math inline">\(r_j&gt;0\)</span>. We require the robot’s position to stay outside each inflated disk of radius <span class="math inline">\(r_j+\delta\)</span> (safety margin <span class="math inline">\(\delta\ge 0\)</span>) at every knot:
 <span class="math display">\[
@@ -1689,13 +1690,13 @@ x_{k+1} - f_h(x_k,u_k) = 0.
 In “<span class="math inline">\(c(x)\le 0\)</span>” form (e.g., for <code>fmincon</code>):
 <span class="math display" id="eq:uni-obstacles">\[
 c_{j,k}(x_k) \;:=\; (r_j+\delta)^2 - \big((p_{x,k}-c_{x,j})^2 + (p_{y,k}-c_{y,j})^2\big) \;\le\; 0.
-\tag{4.62}
+\tag{4.63}
 \]</span></p>
 <p><strong>(iv) Simple bounds.</strong> Box limits on controls (and possibly states):
 <span class="math display" id="eq:uni-bounds">\[
 v_{\min} \le v_k \le v_{\max},\qquad
 \omega_{\min} \le \omega_k \le \omega_{\max},\qquad k=0,\dots,N-1.
-\tag{4.63}
+\tag{4.64}
 \]</span></p>
 <p><strong>Objective function.</strong> We use a smooth quadratic objective combining (a) terminal goal tracking, (b) control effort, and (c) control smoothness (temporal regularization):</p>
 <ul>
@@ -1729,7 +1730,7 @@ J(x_{0:N},u_{0:N-1})
 \frac{1}{2}\Big(
 J_{\text{goal}} + J_u + J_{\Delta u}
 \Big),
-\tag{4.64}
+\tag{4.65}
 \]</span>
 where the outer factor <span class="math inline">\(\frac{1}{2}\)</span> is conventional in quadratic objectives.</p>
 <p><strong>Complete optimization problem.</strong> Given <span class="math inline">\(A,B,\{(c_j,r_j)\},\delta,h,N\)</span>, choose <span class="math inline">\(\{x_k\}_{k=0}^N,\{u_k\}_{k=0}^{N-1}\)</span> to
@@ -1789,7 +1790,7 @@ Figure 4.7: Trajectory optimization for unicyle using SQP (three obstacles). Dot
 </div>
 <div id="ipm-nlp" class="section level3 hasAnchor" number="4.3.5">
 <h3><span class="header-section-number">4.3.5</span> Interior-Point Methods<a href="model-based-plan-optimize.html#ipm-nlp" class="anchor-section" aria-label="Anchor link to header"></a></h3>
-<p>We have seen that Primal–Dual Interior-Point Methods (PD-IPM) efficiently solve convex QPs (Section <a href="model-based-plan-optimize.html#qp">4.3.3</a>). The key idea was to write the KKT optimality conditions as a system of nonlinear equations and apply Newton’s method. We now extend this idea to the general NLP in <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.54)</a>:
+<p>We have seen that Primal–Dual Interior-Point Methods (PD-IPM) efficiently solve convex QPs (Section <a href="model-based-plan-optimize.html#qp">4.3.3</a>). The key idea was to write the KKT optimality conditions as a system of nonlinear equations and apply Newton’s method. We now extend this idea to the general NLP in <a href="model-based-plan-optimize.html#eq:sqp-nlp">(4.55)</a>:
 <span class="math display">\[
 \min_{x\in\mathbb{R}^n} f(x)\quad\text{s.t.}\quad c(x)=0,\;\; d(x)\le 0,
 \]</span>
@@ -1799,12 +1800,12 @@ where <span class="math inline">\(f:\mathbb{R}^n \to \mathbb{R}, c:\mathbb{R}^n 
 <p>Introduce slack variables <span class="math inline">\(s\in\mathbb{R}^p\)</span> to convert inequalities to equalities:
 <span class="math display" id="eq:nlp-slack">\[
 c(x)=0,\qquad d(x)+s=0,\qquad s\ge 0.
-\tag{4.65}
+\tag{4.66}
 \]</span></p>
 <p>With equality multipliers <span class="math inline">\(y\in\mathbb{R}^m, \nu \in \mathbb{R}^p\)</span> and inequality multipliers <span class="math inline">\(\mu\in\mathbb{R}^p\)</span> (with <span class="math inline">\(\lambda \ge 0\)</span>), the <strong>Lagrangian</strong> of the slack-form problem is
 <span class="math display" id="eq:nlp-L">\[
 \mathcal L(x,s,y,\nu,\lambda) \;=\; f(x) + y^\top c(x) + \nu^\top \big(d(x)+s\big) - \lambda^\top s.
-\tag{4.66}
+\tag{4.67}
 \]</span></p>
 <p>The KKT optimality conditions are (after eliminating <span class="math inline">\(\nu\)</span>)
 <span class="math display" id="eq:nlp-kkt">\[
@@ -1818,17 +1819,17 @@ c(x)=0,\;\; d(x)+s=0,\;\; s\ge 0,\\
 \text{complementarity:}&amp;\quad
 s_i\,\lambda_i = 0,\quad i=1,\dots,p,
 \end{aligned}
-\tag{4.67}
+\tag{4.68}
 \]</span>
 where <span class="math inline">\(J_c=\nabla c(x) \in \mathbb{R}^{m \times n}\)</span>, <span class="math inline">\(J_d=\nabla d(x) \in \mathbb{R}^{p \times n}\)</span>.</p>
 </div>
 <div id="two-equivalent-views" class="section level4 hasAnchor" number="4.3.5.2">
 <h4><span class="header-section-number">4.3.5.2</span> Two Equivalent Views<a href="model-based-plan-optimize.html#two-equivalent-views" class="anchor-section" aria-label="Anchor link to header"></a></h4>
 <p>There are two equivalent ways to derive primal–dual IPMs.</p>
-<p><strong>Homotopy / Perturbed KKT (primal–dual view).</strong> Replace the complementarity slackness condition in the KKT system <a href="model-based-plan-optimize.html#eq:nlp-kkt">(4.67)</a> by a <em>perturbed</em> relation that defines the <em>central path</em>:
+<p><strong>Homotopy / Perturbed KKT (primal–dual view).</strong> Replace the complementarity slackness condition in the KKT system <a href="model-based-plan-optimize.html#eq:nlp-kkt">(4.68)</a> by a <em>perturbed</em> relation that defines the <em>central path</em>:
 <span class="math display" id="eq:nlp-central-mu">\[
 S\,\lambda \;=\; \mu \,\mathbf{1},\qquad S:=\operatorname{diag}(s),\;\; \mu &gt;0.
-\tag{4.68}
+\tag{4.69}
 \]</span>
 Driving the parameter <span class="math inline">\(\mu \downarrow 0\)</span> yields iterates approaching a KKT point.</p>
 <p><strong>Barrier (log-barrier view).</strong> Solve the barrier subproblem
@@ -1836,9 +1837,9 @@ Driving the parameter <span class="math inline">\(\mu \downarrow 0\)</span> yiel
 \min_{x,s&gt;0}\; f(x) - \mu \sum_{i=1}^p \log s_i
 \quad\text{s.t.}\quad
 c(x)=0,\;\; d(x)+s=0,
-\tag{4.69}
+\tag{4.70}
 \]</span>
-then reduce <span class="math inline">\(\mu\)</span>. The KKT conditions of <a href="model-based-plan-optimize.html#eq:nlp-barrier">(4.69)</a> imply <span class="math inline">\(S\lambda = \mu \mathbf{1}\)</span>, hence the barrier and homotopy views are equivalent (different perspectives on the same central path).</p>
+then reduce <span class="math inline">\(\mu\)</span>. The KKT conditions of <a href="model-based-plan-optimize.html#eq:nlp-barrier">(4.70)</a> imply <span class="math inline">\(S\lambda = \mu \mathbf{1}\)</span>, hence the barrier and homotopy views are equivalent (different perspectives on the same central path).</p>
 </div>
 <div id="primaldual-residuals-and-newton-system" class="section level4 hasAnchor" number="4.3.5.3">
 <h4><span class="header-section-number">4.3.5.3</span> Primal–Dual Residuals and Newton System<a href="model-based-plan-optimize.html#primaldual-residuals-and-newton-system" class="anchor-section" aria-label="Anchor link to header"></a></h4>
@@ -1850,13 +1851,13 @@ r_{\mathrm{pe}}   &amp;= c(x),\\
 r_{\mathrm{pi}}   &amp;= d(x)+s,\\
 r_{\mathrm{cent}} &amp;= S\lambda - \mu \,\mathbf{1}.
 \end{aligned}
-\tag{4.70}
+\tag{4.71}
 \]</span>
 Let
 <span class="math display" id="eq:nlp-H">\[
 H \;:=\; \nabla^2_{xx}\mathcal L(x,s,y,\lambda)
 = \nabla^2 f(x) + \sum_{i=1}^m y_i \nabla^2 c_i(x) + \sum_{j=1}^p \lambda_j \nabla^2 d_j(x)
-\tag{4.71}
+\tag{4.72}
 \]</span>
 be the exact Hessian of the Lagrangian with respect to <span class="math inline">\(x\)</span>.</p>
 <p>A primal–dual Newton step <span class="math inline">\((\Delta x,\Delta s,\Delta y,\Delta \lambda)\)</span> solves
@@ -1867,12 +1868,12 @@ J_c\,\Delta x &amp;= -\,r_{\mathrm{pe}},\\
 J_d\,\Delta x + \Delta s &amp;= -\,r_{\mathrm{pi}},\\
 S\,\Delta \lambda + M\,\Delta s &amp;= -\,r_{\mathrm{cent}},\qquad M:=\operatorname{diag}(\lambda).
 \end{aligned}
-\tag{4.72}
+\tag{4.73}
 \]</span></p>
 <p>Eliminating <span class="math inline">\(\Delta s=-r_{\mathrm{pi}}-J_d\Delta x\)</span> gives
 <span class="math display" id="eq:nlp-dmu">\[
 \Delta \lambda = S^{-1}\!\left(-r_{\mathrm{cent}} + M\,r_{\mathrm{pi}} + M\,J_d\,\Delta x\right).
-\tag{4.73}
+\tag{4.74}
 \]</span>
 Substitute into the first line to obtain the reduced symmetric system in <span class="math inline">\((\Delta x,\Delta y)\)</span>:
 <span class="math display" id="eq:nlp-reduced">\[
@@ -1886,9 +1887,9 @@ J_c &amp; 0
 r_{\mathrm{dual}} + J_d^\top S^{-1}\!\big(-r_{\mathrm{cent}} + M r_{\mathrm{pi}}\big)\\[2pt]
 r_{\mathrm{pe}}
 \end{bmatrix}
-\tag{4.74}
+\tag{4.75}
 \]</span>
-with <span class="math inline">\(D:=S^{-1}M\)</span>. Then recover <span class="math inline">\(\Delta \lambda\)</span> via <a href="model-based-plan-optimize.html#eq:nlp-dmu">(4.73)</a> and <span class="math inline">\(\Delta s=-r_{\mathrm{pi}}-J_d\Delta x\)</span>.</p>
+with <span class="math inline">\(D:=S^{-1}M\)</span>. Then recover <span class="math inline">\(\Delta \lambda\)</span> via <a href="model-based-plan-optimize.html#eq:nlp-dmu">(4.74)</a> and <span class="math inline">\(\Delta s=-r_{\mathrm{pi}}-J_d\Delta x\)</span>.</p>
 </div>
 <div id="ipm-line-search" class="section level4 hasAnchor" number="4.3.5.4">
 <h4><span class="header-section-number">4.3.5.4</span> Line-search IPM<a href="model-based-plan-optimize.html#ipm-line-search" class="anchor-section" aria-label="Anchor link to header"></a></h4>
@@ -1897,19 +1898,19 @@ with <span class="math inline">\(D:=S^{-1}M\)</span>. Then recover <span class="
 \alpha_{\mathrm{pri}}=\min\!\Big(1,\ \eta \min_{\Delta s_i&lt;0}\frac{-s_i}{\Delta s_i}\Big),\quad
 \alpha_{\mathrm{du}} =\min\!\Big(1,\ \eta \min_{\Delta \lambda_i&lt;0}\frac{-\lambda_i}{\Delta \lambda_i}\Big),\quad
 \eta\in(0,1).
-\tag{4.75}
+\tag{4.76}
 \]</span></p>
 <p><strong>Merit (or filter) globalization.</strong> Use a barrier merit for backtracking,
 <span class="math display" id="eq:nlp-merit">\[
 \Phi_{\mu}(x,s) \;=\; f(x) - \mu \sum_i \log s_i
 + \frac{\rho}{2}\,\|c(x)\|_2^2
 + \frac{\rho}{2}\,\|d(x)+s\|_2^2,
-\tag{4.76}
+\tag{4.77}
 \]</span>
 or a filter that accepts steps reducing either infeasibility or the barrier objective.</p>
 <p><strong>Mehrotra predictor–corrector (recommended).</strong></p>
 <ol style="list-style-type: decimal">
-<li><p><strong>Predictor (affine) step:</strong> solve <a href="model-based-plan-optimize.html#eq:nlp-reduced">(4.74)</a> with <span class="math inline">\(\mu=0\)</span> to get <span class="math inline">\((\Delta x^{\mathrm{aff}},\Delta s^{\mathrm{aff}},\Delta y^{\mathrm{aff}},\Delta\lambda^{\mathrm{aff}})\)</span>, and affine step sizes <span class="math inline">\(\alpha_{\mathrm{pri}}^{\mathrm{aff}},\alpha_{\mathrm{du}}^{\mathrm{aff}}\)</span>.</p></li>
+<li><p><strong>Predictor (affine) step:</strong> solve <a href="model-based-plan-optimize.html#eq:nlp-reduced">(4.75)</a> with <span class="math inline">\(\mu=0\)</span> to get <span class="math inline">\((\Delta x^{\mathrm{aff}},\Delta s^{\mathrm{aff}},\Delta y^{\mathrm{aff}},\Delta\lambda^{\mathrm{aff}})\)</span>, and affine step sizes <span class="math inline">\(\alpha_{\mathrm{pri}}^{\mathrm{aff}},\alpha_{\mathrm{du}}^{\mathrm{aff}}\)</span>.</p></li>
 <li><p><strong>Centering:</strong> set
 <span class="math display">\[
 \tau_{\mathrm{aff}}=\frac{(s+\alpha_{\mathrm{pri}}^{\mathrm{aff}}\Delta s^{\mathrm{aff}})^\top
@@ -1917,20 +1918,20 @@ or a filter that accepts steps reducing either infeasibility or the barrier obje
 \sigma=\left(\frac{\tau_{\mathrm{aff}}}{\frac{s^\top\mu}{p}}\right)^{3},
 \]</span>
 and replace the complementarity RHS by <span class="math inline">\(\mu=\sigma\,\frac{s^\top\lambda}{p}\)</span>.</p></li>
-<li><p><strong>Corrector:</strong> resolve <a href="model-based-plan-optimize.html#eq:nlp-reduced">(4.74)</a> with the corrected central residual
+<li><p><strong>Corrector:</strong> resolve <a href="model-based-plan-optimize.html#eq:nlp-reduced">(4.75)</a> with the corrected central residual
 <span class="math display" id="eq:nlp-corr">\[
 r_{\mathrm{cent}}^{\mathrm{corr}}
 = S\lambda - \mu \,\mathbf{1} - \Delta S^{\mathrm{aff}}\Delta\lambda^{\mathrm{aff}}\mathbf{1}.
-\tag{4.77}
+\tag{4.78}
 \]</span></p></li>
-<li><p><strong>Line search &amp; update:</strong> use <a href="model-based-plan-optimize.html#eq:nlp-steps">(4.75)</a> and backtrack on <span class="math inline">\(\Phi_{\mu}\)</span>.</p></li>
+<li><p><strong>Line search &amp; update:</strong> use <a href="model-based-plan-optimize.html#eq:nlp-steps">(4.76)</a> and backtrack on <span class="math inline">\(\Phi_{\mu}\)</span>.</p></li>
 <li><p><strong>Stopping:</strong> terminate inner loop when <span class="math inline">\(\|r_{\mathrm{dual}}\|_\infty,\|r_{\mathrm{pe}}\|_\infty,\|r_{\mathrm{pi}}\|_\infty\)</span> and the average complementarity <span class="math inline">\(\frac{s^\top\mu}{p}\)</span> are below tolerance; then reduce <span class="math inline">\(\mu\)</span> and repeat.</p></li>
 </ol>
 <p><strong>Hessian Modeling.</strong> Use <span class="math inline">\(H=\nabla^2_{xx}\mathcal L\)</span>, or a damped (L-)BFGS / Gauss–Newton model as in Section <a href="model-based-plan-optimize.html#sqp-Hessian-approximate">4.3.4.4</a>.</p>
 </div>
 <div id="ipm-trust-region" class="section level4 hasAnchor" number="4.3.5.5">
 <h4><span class="header-section-number">4.3.5.5</span> Trust-Region IPM<a href="model-based-plan-optimize.html#ipm-trust-region" class="anchor-section" aria-label="Anchor link to header"></a></h4>
-<p>The trust-region (TR) IPM solves the barrier subproblem <a href="model-based-plan-optimize.html#eq:nlp-barrier">(4.69)</a> <em>inexactly</em> within a TR globalization that is scaled to the slacks to avoid steps that approach the boundary too aggressively.</p>
+<p>The trust-region (TR) IPM solves the barrier subproblem <a href="model-based-plan-optimize.html#eq:nlp-barrier">(4.70)</a> <em>inexactly</em> within a TR globalization that is scaled to the slacks to avoid steps that approach the boundary too aggressively.</p>
 <p>The TR-IPM subproblem is the local quadratic model of the barrier problem together with
 a metric that respects distance to the boundary.</p>
 <ol style="list-style-type: decimal">
@@ -1972,12 +1973,12 @@ J_c p_x + c(x)=0,\\
 J_d p_x + p_s + d(x)=0,\\
 \|(p_x,S^{-1}p_s)\|\le\Delta,\ p_s\ge-\tau s,
 \end{cases}
-\tag{4.78}
+\tag{4.79}
 \]</span>
 which is exactly a trust-region SQP step on the barrier problem in the barrier metric.</p>
 <p>The outer loop adapts the trust-region radius <span class="math inline">\(\Delta\)</span> and the barrier parameter <span class="math inline">\(\mu\)</span> as follows.</p>
 <ul>
-<li><strong>Updating <span class="math inline">\(\Delta\)</span> (model–reality agreement).</strong> After computing a trial step <span class="math inline">\(p=(p_x,p_s)\)</span> from the scaled TR subproblem <a href="model-based-plan-optimize.html#eq:tr-ipm-subproblem">(4.78)</a>, compare the <em>predicted</em> reduction from the quadratic model to the <em>actual</em> reduction in the barrier merit:
+<li><strong>Updating <span class="math inline">\(\Delta\)</span> (model–reality agreement).</strong> After computing a trial step <span class="math inline">\(p=(p_x,p_s)\)</span> from the scaled TR subproblem <a href="model-based-plan-optimize.html#eq:tr-ipm-subproblem">(4.79)</a>, compare the <em>predicted</em> reduction from the quadratic model to the <em>actual</em> reduction in the barrier merit:
 <span class="math display">\[
 \rho \;=\; \frac{\text{ared}}{\text{pred}}
 \;=\;
@@ -2018,7 +2019,7 @@ v\cos\theta\\[2pt]
 v\sin\theta\\
 \omega
 \end{bmatrix}.
-\tag{4.79}
+\tag{4.80}
 \]</span>
 We discretize at <span class="math inline">\(t_k=kh\)</span> by forward Euler:
 <span class="math display" id="eq:ipopt-uni-disc">\[
@@ -2028,13 +2029,13 @@ p_{x,k} + h\, v_k \cos \theta_k\\
 p_{y,k} + h\, v_k \sin \theta_k\\
 \theta_k + h\, \omega_k
 \end{bmatrix},\quad k=0,\ldots,N-1.
-\tag{4.80}
+\tag{4.81}
 \]</span></p>
 <p><strong>Decision vector.</strong> We stack the state and control trajectories into a single decision vector
 <span class="math display" id="eq:ipopt-uni-z">\[
 z=\big[x_0^\top,u_0^\top,x_1^\top,u_1^\top,\dots,x_{N-1}^\top,u_{N-1}^\top,x_N^\top\big]^\top
 \in\mathbb{R}^{(3+2)N+3}.
-\tag{4.81}
+\tag{4.82}
 \]</span></p>
 <p><strong>Constraints.</strong> The state and control trajectories need to satisfy the following constraints:</p>
 <ul>
@@ -2043,14 +2044,14 @@ z=\big[x_0^\top,u_0^\top,x_1^\top,u_1^\top,\dots,x_{N-1}^\top,u_{N-1}^\top,x_N^\
 <li><p>Obstacle inequalities: for each circular obstacle <span class="math inline">\((c_j=[c_{x,j},c_{y,j}]^\top,r_j)\)</span> and all <span class="math inline">\(k=0,\dots,N\)</span>,
 <span class="math display" id="eq:ipopt-obs">\[
 c_{j,k}(x_k):=(r_j+\delta)^2-\big((p_{x,k}-c_{x,j})^2+(p_{y,k}-c_{y,j})^2\big)\le 0,
-\tag{4.82}
+\tag{4.83}
 \]</span>
 where <span class="math inline">\(\delta &gt; 0\)</span> is a safety margin.</p></li>
 <li><p>Box bounds on controls:
 <span class="math display" id="eq:ipopt-bounds">\[
 v_{\min}\le v_k\le v_{\max},\qquad
 \omega_{\min}\le \omega_k\le \omega_{\max}.
-\tag{4.83}
+\tag{4.84}
 \]</span></p></li>
 </ul>
 <p>In total, there are <span class="math inline">\(m = 3 + 3N\)</span> equality constraints and <span class="math inline">\(p = (N+1)O\)</span> inequality constraints, where <span class="math inline">\(O\)</span> is the number of obstacles.</p>
@@ -2062,7 +2063,7 @@ w_{\text{pos}}\|x_N^{\text{pos}}-B^{\text{pos}}\|_2^2
 + \sum_{k=0}^{N-1} w_u \|u_k\|_2^2
 + \sum_{k=0}^{N-2} w_{\Delta u}\|u_{k+1}-u_k\|_2^2
 \Big),
-\tag{4.84}
+\tag{4.85}
 \end{equation}\]</span>
 with <span class="math inline">\(x_N^{\text{pos}}=[p_{x,N},p_{y,N}]^\top\)</span> the terminal position and <span class="math inline">\(B=[B_x,B_y,\theta^\star]^\top\)</span> the terminal pose. <span class="math inline">\(w_{\text{pos}}\)</span>, <span class="math inline">\(w_\theta\)</span>, <span class="math inline">\(w_u\)</span>, and <span class="math inline">\(w_{\Delta u}\)</span> are positive weights.</p>
 <p><strong>Jacobians.</strong> We derive the gradient of the objective and the Jacobian of the constraints with respect to the stacked decision vector
@@ -2071,7 +2072,7 @@ z \;=\; \big[x_0^\top,\ u_0^\top,\ x_1^\top,\ u_1^\top,\ \dots,\ x_{N-1}^\top,\ 
 \in \mathbb{R}^{(3+2)N+3},
 \]</span>
 where <span class="math inline">\(x_k=[p_{x,k},\,p_{y,k},\,\theta_k]^\top\)</span> and <span class="math inline">\(u_k=[v_k,\,\omega_k]^\top\)</span>.</p>
-<p><strong>Objective gradient <span class="math inline">\(\nabla_z J\)</span>.</strong> Recall the objective function from <a href="model-based-plan-optimize.html#eq:unicycle-objective">(4.84)</a>. Let <span class="math inline">\(e_{\text{pos}} := x_N^{\text{pos}}-B^{\text{pos}}\)</span> and <span class="math inline">\(e_\theta := \theta_N-\theta^\star\)</span>, we have
+<p><strong>Objective gradient <span class="math inline">\(\nabla_z J\)</span>.</strong> Recall the objective function from <a href="model-based-plan-optimize.html#eq:unicycle-objective">(4.85)</a>. Let <span class="math inline">\(e_{\text{pos}} := x_N^{\text{pos}}-B^{\text{pos}}\)</span> and <span class="math inline">\(e_\theta := \theta_N-\theta^\star\)</span>, we have
 <span class="math display">\[
 \frac{\partial J}{\partial p_{x,N}} = w_{\text{pos}}\, e_{\text{pos},x},\qquad
 \frac{\partial J}{\partial p_{y,N}} = w_{\text{pos}}\, e_{\text{pos},y},\qquad
@@ -2099,12 +2100,12 @@ w_{\Delta u}\,(u_0 - u_1), &amp; k=0,\\[4pt]
 w_{\Delta u}\,(2u_k - u_{k-1} - u_{k+1}), &amp; k=1,\dots,N-2,\\[4pt]
 w_{\Delta u}\,(u_{N-1} - u_{N-2}), &amp; k=N-1.
 \end{cases}
-\tag{4.85}
+\tag{4.86}
 \]</span></p>
 <p>Combining the above derivations, the only nonzero blocks of <span class="math inline">\(\nabla_z J\)</span> are:</p>
 <ul>
 <li><p>the <strong>terminal state block</strong> <span class="math inline">\(x_N\)</span>: entries shown above for <span class="math inline">\(p_{x,N},p_{y,N},\theta_N\)</span>;</p></li>
-<li><p>the <strong>control blocks</strong> <span class="math inline">\(u_k\)</span>: <span class="math inline">\(w_u u_k\)</span> plus the smoothness terms <a href="model-based-plan-optimize.html#eq:unicycle-objective-smoothness-gradient">(4.85)</a>.</p></li>
+<li><p>the <strong>control blocks</strong> <span class="math inline">\(u_k\)</span>: <span class="math inline">\(w_u u_k\)</span> plus the smoothness terms <a href="model-based-plan-optimize.html#eq:unicycle-objective-smoothness-gradient">(4.86)</a>.</p></li>
 </ul>
 <p>All other entries are zero. Thus <span class="math inline">\(\nabla_z J\)</span> is extremely sparse.</p>
 <p><strong>Constraint Jacobian <span class="math inline">\(\nabla_z g(z)\)</span>.</strong> We stack constraints as
@@ -2456,6 +2457,177 @@ Figure 4.11: Trajectory optimization for unicyle using IPOPT (random initializat
 </div>
 <div id="mpc" class="section level2 hasAnchor" number="4.4">
 <h2><span class="header-section-number">4.4</span> Model Predictive Control<a href="model-based-plan-optimize.html#mpc" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>Trajectory optimization (TO) computes (locally or globally) optimal trajectories that are dynamically feasible with respect to a chosen discrete-time transcription and satisfy system constraints at the discretization grid. As a consequence, the resulting plan is open loop: it neither accounts for disturbances nor provides feedback. A common remedy is LQR trajectory tracking (Section <a href="model-based-plan-optimize.html#lqr-tracking">4.2</a>), which linearizes the dynamics along the nominal trajectory to synthesize a local feedback controller. While effective near the nominal path, this approach can struggle in the presence of obstacles or whenever the reference trajectory itself must change over time.</p>
+<p>Model predictive control (MPC) addresses these limitations by turning TO into a receding-horizon feedback policy. At each control step, MPC resolves a finite-horizon optimal control problem with the current measured state as the initial condition, applies only the first control action, and then repeats the procedure at the next step. This closes the loop, providing robustness to model mismatch and disturbances while naturally adapting the trajectory as the environment or task evolves. In this section we introduce the core ideas behind MPC; for a comprehensive treatment, see <span class="citation">(<a href="#ref-rawlings2020model">Rawlings, Mayne, and Diehl 2020</a>)</span>.</p>
+<p><strong>Dynamics.</strong> Let us consider a discrete-time dynamical system
+<span class="math display" id="eq:mpc-dynamics">\[\begin{equation}
+s_{t+1} = f(s_t, a_t, w_t),
+\tag{4.87}
+\end{equation}\]</span>
+where <span class="math inline">\(s_t \in \mathbb{R}^n\)</span> represents the state, <span class="math inline">\(a_t \in \mathbb{R}^m\)</span> represents the control/action, and <span class="math inline">\(w_t \in \mathbb{R}^d\)</span> represents a stochastic disturbance. With slight abuse of notation, let us use
+<span class="math display">\[
+s_{t+1} = f (s_t, a_t) \equiv f (s_t, a_t, 0)
+\]</span>
+to denote the system dynamics without the disturbance.</p>
+<blockquote>
+<p>Here we have used <span class="math inline">\((s_t, a_t)\)</span> to represent the state and control. This departs from the notation <a href="model-based-plan-optimize.html#eq:planning-discrete-dynamics">(4.1)</a> used in the beginning. The reason for doing so will become clear soon.</p>
+</blockquote>
+<p><strong>Trajectory Optimization.</strong> At time step <span class="math inline">\(t\)</span>, let the system’s state be <span class="math inline">\(s_t\)</span> as given (e.g., measured from sensor data). MPC solves the following open-loop TO problem, adapted from <a href="model-based-plan-optimize.html#eq:to-general">(4.29)</a>:
+<span class="math display" id="eq:to-general-mpc">\[\begin{equation}
+\begin{split}
+\min_{\{x_k,u_k\}} \quad &amp;
+\Phi(x_N) + \sum_{k=0}^{N-1} \ell_k(x_k,u_k) \\[2mm]
+\text{s.t.}\quad &amp;
+x_{k+1} = f (x_k,u_k), \qquad t=0,\dots,N-1,\\
+&amp; \boxed{x_0 = s_t} \ \ \text{(given)},\\
+&amp; x_k \in \mathcal X_k,\quad u_k \in \mathcal U_k \quad \text{(bounds)},\\
+&amp; g_k(x_k,u_k) \le 0,\quad h_k(x_k,u_k)=0 \quad \text{(path/terminal constraints).}
+\end{split}
+\tag{4.88}
+\end{equation}\]</span>
+Notice that in <a href="model-based-plan-optimize.html#eq:to-general-mpc">(4.88)</a>:</p>
+<ul>
+<li><p>We used <span class="math inline">\(k\)</span> to denote the time step in the TO problem, in contrast to <span class="math inline">\(t\)</span> in the system dynamics.</p></li>
+<li><p>We used <span class="math inline">\((x_k,u_k)\)</span> to denote the state and control in the TO problem, as opposed to <span class="math inline">\((s_t, a_t)\)</span> in the system dynamics.</p></li>
+<li><p>We enforce the TO problem starts at <span class="math inline">\(x_0 = s_t\)</span>, i.e., the initial state in trajectory planning aligns with the current system state at time <span class="math inline">\(t\)</span>.</p></li>
+</ul>
+<p><strong>Receding Horizon Control.</strong> Let
+<span class="math display" id="eq:mpc-solution-t">\[\begin{equation}
+(x_0^\star, u_0^\star, x_1^\star, u_1^\star, \dots, x_{N-1}^\star, u_{N-1}^\star, x_N^\star)
+\tag{4.89}
+\end{equation}\]</span>
+be an optimal solution of the TO problem <a href="model-based-plan-optimize.html#eq:to-general-mpc">(4.88)</a> (e.g., obtained from IPOPT). Instead of executing the entire sequence of optimal controls <span class="math inline">\((u_0^\star, u_1^\star, \dots,  u_{N-1}^\star)\)</span>, MPC will only execute the first element. Formally, the actual control action applied to the system, denoted as <span class="math inline">\(a_t\)</span>, is
+<span class="math display" id="eq:mpc-receding">\[\begin{equation}
+a_t = u_0^\star.
+\tag{4.90}
+\end{equation}\]</span>
+Applying <span class="math inline">\(a_t = u_0^\star\)</span> to the real dynamics <a href="model-based-plan-optimize.html#eq:mpc-dynamics">(4.87)</a>, the system will step into a new state <span class="math inline">\(s_{t+1}\)</span> at time <span class="math inline">\(t+1\)</span>:
+<span class="math display">\[
+s_{t+1} = f(s_t, u_0^\star, w_t).
+\]</span>
+Then, MPC solves a new TO problem that is exactly the same as the problem <a href="model-based-plan-optimize.html#eq:to-general-mpc">(4.88)</a> at time <span class="math inline">\(t\)</span>, except that the initial state is changed to <span class="math inline">\(s_{t+1}\)</span>:
+<span class="math display" id="eq:to-general-mpc-t-1">\[\begin{equation}
+\begin{split}
+\min_{\{x_k,u_k\}} \quad &amp;
+\Phi(x_N) + \sum_{k=0}^{N-1} \ell_k(x_k,u_k) \\[2mm]
+\text{s.t.}\quad &amp;
+x_{k+1} = f (x_k,u_k), \qquad t=0,\dots,N-1,\\
+&amp; \boxed{x_0 = s_{t+1}} \ \ \text{(given)},\\
+&amp; x_k \in \mathcal X_k,\quad u_k \in \mathcal U_k \quad \text{(bounds)},\\
+&amp; g_k(x_k,u_k) \le 0,\quad h_k(x_k,u_k)=0 \quad \text{(path/terminal constraints).}
+\end{split}
+\tag{4.91}
+\end{equation}\]</span>
+Problems <a href="model-based-plan-optimize.html#eq:to-general-mpc">(4.88)</a> and <a href="model-based-plan-optimize.html#eq:to-general-mpc-t-1">(4.91)</a> are called <em>parametric optimization problems</em>, in the sense that the form of the optimization problem remains the same, but the value of the parameter <span class="math inline">\(s_t\)</span> that defines the equality constraint has changed.</p>
+<p>For this reason, we should restate the solution in <a href="model-based-plan-optimize.html#eq:mpc-solution-t">(4.89)</a> as
+<span class="math display" id="eq:mpc-solution-t-implicit">\[\begin{equation}
+(x_0^\star(s_t), u_0^\star(s_t), x_1^\star(s_t), u_1^\star(s_t), \dots, x_{N-1}^\star(s_t), u_{N-1}^\star(s_t), x_N^\star(s_t))
+\tag{4.92}
+\end{equation}\]</span>
+because they are all implicit functions of the parameter <span class="math inline">\(s_t\)</span>.</p>
+<p>Similarly, the solution to the TO problem <a href="model-based-plan-optimize.html#eq:to-general-mpc-t-1">(4.91)</a> at time <span class="math inline">\(t+1\)</span> should be denoted as
+<span class="math display" id="eq:mpc-solution-t-1-implicit">\[\begin{equation}
+(x_0^\star(s_{t+1}), u_0^\star(s_{t+1}), x_1^\star(s_{t+1}), u_1^\star(s_{t+1}), \dots, x_{N-1}^\star(s_{t+1}), u_{N-1}^\star(s_{t+1}), x_N^\star(s_{t+1}))
+\tag{4.93}
+\end{equation}\]</span>
+to indicate that they are functions of <span class="math inline">\(s_{t+1}\)</span>.</p>
+<p>After solving the TO problem at time <span class="math inline">\(t+1\)</span>, MPC executes the first element:
+<span class="math display">\[
+a_{t+1} = u_0^\star (s_{t+1}),
+\]</span>
+and the system steps into a new state <span class="math inline">\(s_{t+2}\)</span>, from which MPC solves a new TO problem with parameter <span class="math inline">\(s_{t+2}\)</span>, and the process continues.</p>
+<p><strong>Implicit Feedback.</strong> Through receding horizon control, MPC creates an implicit feedback control policy. Let the system’s state at time <span class="math inline">\(t\)</span> be <span class="math inline">\(s_t\)</span>, the feedback policy is:
+<span class="math display" id="eq:mpc-feedback-policy">\[\begin{equation}
+a_t = u^\star_0 (s_t) := \mu (s_t) = \arg\min \text{ (the TO problem with parameter } s_t).
+\tag{4.94}
+\end{equation}\]</span>
+Unlike the policy in the case of RL, which is an explicit neural network, the policy of MPC is implicit and comes from the optimal solution of the parametric TO problem.</p>
+<p><strong>Closed-Loop System.</strong> The closed-loop system under the MPC policy is therefore
+<span class="math display" id="eq:mpc-closed-loop">\[\begin{equation}
+s_{t+1} = f(s_t, \mu(s_t), w_t) := f_{\text{CL}}(s_t, w_t),
+\tag{4.95}
+\end{equation}\]</span>
+which becomes an uncontrolled system with disturbance <span class="math inline">\(w_t\)</span>. Lots of research have studied properties of the closed-loop system, such as stability and robustness to disturbance. One of the most important results states that, as long as the terminal loss function <span class="math inline">\(\Phi(\cdot)\)</span> satisfies a technical condition (being a control Lyapunov function), then the closed-loop system is stable. We do not go deep into these results for MPC analysis and refer the reader to <span class="citation">(<a href="#ref-rawlings2020model">Rawlings, Mayne, and Diehl 2020</a>)</span>.</p>
+<p><strong>Warmstart for Parametric Optimization.</strong> The requirement that an MPC feedback policy solve an optimization problem online makes it computationally expensive. In some domains, e.g., chemical process control, control updates are infrequent (for example, every 10 minutes) and MPC is practical. In other domains such as robotics, control rates are much higher (e.g., 10,Hz), so reducing MPC’s computational cost is critical. A common strategy is <em>warm-starting</em>: when solving the optimization for the new parameter <span class="math inline">\(s_{t+1}\)</span> at time <span class="math inline">\(t+1\)</span>, initialize the numerical solver with the previous solution <a href="model-based-plan-optimize.html#eq:mpc-solution-t-implicit">(4.92)</a> computed for <span class="math inline">\(s_t\)</span> at time <span class="math inline">\(t\)</span>. If the change from <span class="math inline">\(s_t\)</span> to <span class="math inline">\(s_{t+1}\)</span> is small, the optimal solution at <span class="math inline">\(t+1\)</span> is likely close to that at <span class="math inline">\(t\)</span>, and warm-starting typically reduces the solver’s required iterations.</p>
+<p>We now apply MPC to the stabilization of a double integrator with control constraints.</p>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:mpc-double-integrator" class="example"><strong>Example 4.6  (MPC for Double Integrator) </strong></span>This example implements Model Predictive Control (MPC) for a 1D double-integrator (position–velocity) system using a quadratic program (QP).</p>
+<p><strong>Dynamics of the System.</strong> We model the kinematics of a point mass with (discrete-time) constant-acceleration physics. Let the state be
+<span class="math display">\[
+x_k = \begin{bmatrix} p_k \\ v_k \end{bmatrix} \in \mathbb{R}^2,
+\quad
+u_k \in \mathbb{R}
+\]</span>
+where <span class="math inline">\(p_k\)</span> is position, <span class="math inline">\(v_k\)</span> is velocity, and <span class="math inline">\(u_k\)</span> is the commanded acceleration. With sampling time <span class="math inline">\(\Delta t\)</span>, the discrete-time, <em>nominal</em> dynamics are
+<span class="math display">\[
+x_{k+1} = A x_k + B u_k,
+\quad
+A = \begin{bmatrix} 1 &amp; \Delta t \\ 0 &amp; 1 \end{bmatrix},
+\quad
+B = \begin{bmatrix} \tfrac{1}{2}\Delta t^2 \\ \Delta t \end{bmatrix}.
+\]</span></p>
+<p><strong>Control Goal.</strong> We consider <em>regulation to a fixed target</em> <span class="math inline">\(x_{\text{goal}}\in\mathbb{R}^2\)</span>, typically the origin:
+<span class="math display">\[
+x_{\text{goal}}=\begin{bmatrix}0\\0\end{bmatrix}.
+\]</span>
+(Tracking a moving reference is immediate by updating <span class="math inline">\(x_{\text{goal}}\)</span> online.)</p>
+<p><strong>Finite-Horizon Trajectory Optimization (QP).</strong> At each control time <span class="math inline">\(t\)</span>, with measured state <span class="math inline">\(s_t\)</span>, MPC solves a length-<span class="math inline">\(N\)</span> open-loop trajectory optimization (TO) problem with decision variables <span class="math inline">\(\{x_k,u_k\}_{k=0}^{N}\)</span> (with <span class="math inline">\(u_N\)</span> unused):
+<span class="math display" id="eq:di-mpc-to">\[
+\begin{aligned}
+\hspace{-16mm} \min_{\{x_k,u_k\}} \quad &amp;
+\underbrace{(x_N - x_{\text{goal}})^\top Q_f (x_N - x_{\text{goal}})}_{\text{terminal cost}}
+\;+\;
+\sum_{k=0}^{N-1}\Big[
+\underbrace{(x_k - x_{\text{goal}})^\top Q (x_k - x_{\text{goal}})}_{\text{state cost}}
++
+\underbrace{u_k^\top R u_k}_{\text{effort}}
+\Big] \\[1.0ex]
+\hspace{-16mm}  \text{s.t.}\quad &amp;
+x_{k+1} = A x_k + B u_k,\quad k=0,\dots,N-1, \\[0.3ex]
+&amp; \boxed{x_0 = s_t}\quad\text{(enforces the current initial condition)}, \\[0.3ex]
+&amp; x_{\min} \le x_k \le x_{\max},\quad k=0,\dots,N, \\[0.3ex]
+&amp; u_{\min} \le u_k \le u_{\max},\quad k=0,\dots,N-1.
+\end{aligned}
+\tag{4.96}
+\]</span></p>
+<p>The problem in <a href="model-based-plan-optimize.html#eq:di-mpc-to">(4.96)</a> is a convex QP (quadratic cost; linear dynamics and box constraints). We will write a Python code that builds this QP once with CVXPY and then only updates the Parameter for the measured state <span class="math inline">\(s_t\)</span> and (optionally) <span class="math inline">\(x_{\text{goal}}\)</span> at each MPC step.</p>
+<p><strong>Receding Horizon (Implicit Feedback).</strong> Let <span class="math inline">\(\{x_k^\star,u_k^\star\}\)</span> be the optimizer of <a href="model-based-plan-optimize.html#eq:di-mpc-to">(4.96)</a>. MPC applies only the first input
+<span class="math display">\[
+a_t = u_0^\star,
+\]</span>
+then measures the new state, shifts/warm-starts the QP, and resolves. This closes the loop and yields an implicit feedback policy <span class="math inline">\(a_t=\mu(s_t)=u_0^\star(s_t)\)</span>.</p>
+<p><strong>True Dynamics with Disturbance.</strong> To test robustness, the closed-loop plant advances with additive disturbance:
+<span class="math display">\[
+s_{t+1} = A\,s_t + B\,a_t + w_t,
+\]</span>
+where <span class="math inline">\(w_t\)</span> is zero-mean noise. In the code, <span class="math inline">\(w_t\)</span> is a small Gaussian perturbation added to both position and velocity updates. This models sensor/actuator errors or unmodeled effects and illustrates how MPC corrects by re-solving at every step.</p>
+<p><strong>Experiment Setup.</strong></p>
+<ul>
+<li><p><strong>Initialization.</strong> Start from <span class="math inline">\(x_0=[4,0]^\top\)</span> (far from the goal). Fix <span class="math inline">\(x_{\text{goal}}=[0,0]^\top\)</span>.</p></li>
+<li><p><strong>Horizon and sampling.</strong> <span class="math inline">\(N=20\)</span>, <span class="math inline">\(\Delta t=0.1\)</span> s; run for <span class="math inline">\(T=120\)</span> MPC steps (12 s).</p></li>
+<li><p><strong>QP solver and structure.</strong> We solve with OSQP via CVXPY. The problem is constructed once; at each step we update the parameter <span class="math inline">\(x_0=s_t\)</span>. This preserves the QP structure (matrices <span class="math inline">\(P\)</span> and <span class="math inline">\(A\)</span>), enabling factorization reuse and faster solves.</p></li>
+<li><p><strong>Warm-start.</strong> Shift the previous optimal sequence <span class="math inline">\(u^\star\)</span> left by one step and hold the last value, then roll out the dynamics from the new <span class="math inline">\(s_t\)</span> to seed a feasible <span class="math inline">\(x\)</span>-trajectory guess. These are passed to the solver via <code>warm_start=True</code>.</p></li>
+</ul>
+<p>Fig. <a href="model-based-plan-optimize.html#fig:mpc-double-integrator-small-noise">4.12</a> shows the closed-loop position and velocity under the MPC controller in the case of small disturbancen (the standard deviations of the two elements of <span class="math inline">\(w_t\)</span> are <span class="math inline">\(0.002\)</span> and <span class="math inline">\(0.005\)</span>).</p>
+<p>Fig. <a href="model-based-plan-optimize.html#fig:mpc-double-integrator-large-noise">4.13</a> shows the closed-loop position and velocity under the MPC controller in the case of large disturbancen (the standard deviations of the two elements of <span class="math inline">\(w_t\)</span> are <span class="math inline">\(0.02\)</span> and <span class="math inline">\(0.05\)</span>).</p>
+<p>In both cases, the MPC policy successfully regulates the system around the origin, illustrating robustness of the MPC policy to disturbances.</p>
+<p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mpc_double_integrator.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mpc-double-integrator-small-noise"></span>
+<img src="images/Model-based-optimization/mpc_double_integrator-1.png" alt="MPC for double integrator (small disturbance)." width="80%" />
+<p class="caption">
+Figure 4.12: MPC for double integrator (small disturbance).
+</p>
+</div>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:mpc-double-integrator-large-noise"></span>
+<img src="images/Model-based-optimization/mpc_double_integrator-2.png" alt="MPC for double integrator (large disturbance)." width="80%" />
+<p class="caption">
+Figure 4.13: MPC for double integrator (large disturbance).
+</p>
+</div>
+</div>
+</div>
+<!-- This immediately creates closed-loop feedback. To see this, note that $u_0^\star$ is an optimal solution of \@ref(eq:to-general-mpc), and $x_t$ appears in the problem  -->
 
 </div>
 </div>
@@ -2472,6 +2644,9 @@ Liu, Dong C, and Jorge Nocedal. 1989. <span>“On the Limited Memory BFGS Method
 </div>
 <div id="ref-nocedal99book-numerical" class="csl-entry">
 Nocedal, Jorge, and Stephen J Wright. 1999. <em>Numerical Optimization</em>. Springer.
+</div>
+<div id="ref-rawlings2020model" class="csl-entry">
+Rawlings, James Blake, David Q Mayne, and Moritz Diehl. 2020. <em>Model Predictive Control: Theory, Computation, and Design</em>. Vol. 2. Nob Hill Publishing Madison, WI.
 </div>
 <div id="ref-wachter2006implementation" class="csl-entry">
 Wächter, Andreas, and Lorenz T Biegler. 2006. <span>“On the Implementation of an Interior-Point Filter Line-Search Algorithm for Large-Scale Nonlinear Programming.”</span> <em>Mathematical Programming</em> 106 (1): 25–57.
