@@ -15,9 +15,10 @@ We proceed in three steps:
 3. **Model predictive control (MPC).** MPC converts open-loop plans into a feedback controller by repeatedly solving a short-horizon TO problem at each time step, applying only the first action, and receding the horizon. This receding-horizon strategy brings robustness to disturbances and model mismatch while retaining the constraint-handling benefits of TO.
 
 We adopt the standard discrete-time dynamical system notation 
-\[
+\begin{equation}
 x_{t+1} = f_t(x_t, u_t, w_t),
-\]
+(\#eq:planning-discrete-dynamics)
+\end{equation}
 where \(x_t \in \mathbb{R}^n\) is the state, \(u_t \in \mathbb{R}^m\) is the control/action, \(w_t \in \mathbb{R}^d\) is a (possibly stochastic) disturbance, and \(f_t\) is a known transition function, potentially nonlinear or nonsmooth. The goal is to find a policy that maximizes a sum of stage rewards \(r(x_t,u_t)\) and optional terminal reward \(r_T(x_T)\). We will often use the cost-minimization form \(c = -r\).
 State and action constraints are written as
 \[
@@ -2308,10 +2309,214 @@ knitr::include_graphics('images/Model-based-optimization/to_unicycle_ipopt_rando
 :::
 :::
 
-
-
-
 ## Model Predictive Control {#mpc}
+
+Trajectory optimization (TO) computes (locally or globally) optimal trajectories that are dynamically feasible with respect to a chosen discrete-time transcription and satisfy system constraints at the discretization grid. As a consequence, the resulting plan is open loop: it neither accounts for disturbances nor provides feedback. A common remedy is LQR trajectory tracking (Section \@ref(lqr-tracking)), which linearizes the dynamics along the nominal trajectory to synthesize a local feedback controller. While effective near the nominal path, this approach can struggle in the presence of obstacles or whenever the reference trajectory itself must change over time.
+
+Model predictive control (MPC) addresses these limitations by turning TO into a receding-horizon feedback policy. At each control step, MPC resolves a finite-horizon optimal control problem with the current measured state as the initial condition, applies only the first control action, and then repeats the procedure at the next step. This closes the loop, providing robustness to model mismatch and disturbances while naturally adapting the trajectory as the environment or task evolves. In this section we introduce the core ideas behind MPC; for a comprehensive treatment, see [@rawlings2020model].
+
+**Dynamics.** Let us consider a discrete-time dynamical system
+\begin{equation}
+s_{t+1} = f(s_t, a_t, w_t),
+(\#eq:mpc-dynamics)
+\end{equation}
+where $s_t \in \mathbb{R}^n$ represents the state, $a_t \in \mathbb{R}^m$ represents the control/action, and $w_t \in \mathbb{R}^d$ represents a stochastic disturbance. With slight abuse of notation, let us use
+$$
+s_{t+1} = f (s_t, a_t) \equiv f (s_t, a_t, 0)
+$$
+to denote the system dynamics without the disturbance.
+
+> Here we have used $(s_t, a_t)$ to represent the state and control. This departs from the notation \@ref(eq:planning-discrete-dynamics) used in the beginning. The reason for doing so will become clear soon.
+
+**Trajectory Optimization.** At time step $t$, let the system's state be $s_t$ as given (e.g., measured from sensor data). MPC solves the following open-loop TO problem, adapted from \@ref(eq:to-general):
+\begin{equation}
+\begin{split}
+\min_{\{x_k,u_k\}} \quad &
+\Phi(x_N) + \sum_{k=0}^{N-1} \ell_k(x_k,u_k) \\[2mm]
+\text{s.t.}\quad &
+x_{k+1} = f (x_k,u_k), \qquad t=0,\dots,N-1,\\
+& \boxed{x_0 = s_t} \ \ \text{(given)},\\
+& x_k \in \mathcal X_k,\quad u_k \in \mathcal U_k \quad \text{(bounds)},\\
+& g_k(x_k,u_k) \le 0,\quad h_k(x_k,u_k)=0 \quad \text{(path/terminal constraints).}
+\end{split}
+(\#eq:to-general-mpc)
+\end{equation}
+Notice that in \@ref(eq:to-general-mpc):
+
+- We used $k$ to denote the time step in the TO problem, in contrast to $t$ in the system dynamics.
+
+- We used $(x_k,u_k)$ to denote the state and control in the TO problem, as opposed to $(s_t, a_t)$ in the system dynamics.
+
+- We enforce the TO problem starts at $x_0 = s_t$, i.e., the initial state in trajectory planning aligns with the current system state at time $t$.
+
+**Receding Horizon Control.** Let
+\begin{equation}
+(x_0^\star, u_0^\star, x_1^\star, u_1^\star, \dots, x_{N-1}^\star, u_{N-1}^\star, x_N^\star)
+(\#eq:mpc-solution-t)
+\end{equation}
+be an optimal solution of the TO problem \@ref(eq:to-general-mpc) (e.g., obtained from IPOPT). Instead of executing the entire sequence of optimal controls $(u_0^\star, u_1^\star, \dots,  u_{N-1}^\star)$, MPC will only execute the first element. Formally, the actual control action applied to the system, denoted as $a_t$, is 
+\begin{equation}
+a_t = u_0^\star.
+(\#eq:mpc-receding)
+\end{equation}
+Applying $a_t = u_0^\star$ to the real dynamics \@ref(eq:mpc-dynamics), the system will step into a new state $s_{t+1}$ at time $t+1$:
+$$
+s_{t+1} = f(s_t, u_0^\star, w_t).
+$$
+Then, MPC solves a new TO problem that is exactly the same as the problem \@ref(eq:to-general-mpc) at time $t$, except that the initial state is changed to $s_{t+1}$:
+\begin{equation}
+\begin{split}
+\min_{\{x_k,u_k\}} \quad &
+\Phi(x_N) + \sum_{k=0}^{N-1} \ell_k(x_k,u_k) \\[2mm]
+\text{s.t.}\quad &
+x_{k+1} = f (x_k,u_k), \qquad t=0,\dots,N-1,\\
+& \boxed{x_0 = s_{t+1}} \ \ \text{(given)},\\
+& x_k \in \mathcal X_k,\quad u_k \in \mathcal U_k \quad \text{(bounds)},\\
+& g_k(x_k,u_k) \le 0,\quad h_k(x_k,u_k)=0 \quad \text{(path/terminal constraints).}
+\end{split}
+(\#eq:to-general-mpc-t-1)
+\end{equation}
+Problems \@ref(eq:to-general-mpc) and \@ref(eq:to-general-mpc-t-1) are called *parametric optimization problems*, in the sense that the form of the optimization problem remains the same, but the value of the parameter $s_t$ that defines the equality constraint has changed.  
+
+For this reason, we should restate the solution in \@ref(eq:mpc-solution-t) as
+\begin{equation}
+(x_0^\star(s_t), u_0^\star(s_t), x_1^\star(s_t), u_1^\star(s_t), \dots, x_{N-1}^\star(s_t), u_{N-1}^\star(s_t), x_N^\star(s_t))
+(\#eq:mpc-solution-t-implicit)
+\end{equation}
+because they are all implicit functions of the parameter $s_t$.
+
+Similarly, the solution to the TO problem \@ref(eq:to-general-mpc-t-1) at time $t+1$ should be denoted as 
+\begin{equation}
+(x_0^\star(s_{t+1}), u_0^\star(s_{t+1}), x_1^\star(s_{t+1}), u_1^\star(s_{t+1}), \dots, x_{N-1}^\star(s_{t+1}), u_{N-1}^\star(s_{t+1}), x_N^\star(s_{t+1}))
+(\#eq:mpc-solution-t-1-implicit)
+\end{equation}
+to indicate that they are functions of $s_{t+1}$.
+
+After solving the TO problem at time $t+1$, MPC executes the first element:
+$$
+a_{t+1} = u_0^\star (s_{t+1}),
+$$
+and the system steps into a new state $s_{t+2}$, from which MPC solves a new TO problem with parameter $s_{t+2}$, and the process continues.
+
+**Implicit Feedback.** Through receding horizon control, MPC creates an implicit feedback control policy. Let the system's state at time $t$ be $s_t$, the feedback policy is:
+\begin{equation}
+a_t = u^\star_0 (s_t) := \mu (s_t) = \arg\min \text{ (the TO problem with parameter } s_t).
+(\#eq:mpc-feedback-policy)
+\end{equation}
+Unlike the policy in the case of RL, which is an explicit neural network, the policy of MPC is implicit and comes from the optimal solution of the parametric TO problem. 
+
+**Closed-Loop System.** The closed-loop system under the MPC policy is therefore
+\begin{equation}
+s_{t+1} = f(s_t, \mu(s_t), w_t) := f_{\text{CL}}(s_t, w_t),
+(\#eq:mpc-closed-loop)
+\end{equation}
+which becomes an uncontrolled system with disturbance $w_t$. Lots of research have studied properties of the closed-loop system, such as stability and robustness to disturbance. One of the most important results states that, as long as the terminal loss function $\Phi(\cdot)$ satisfies a technical condition (being a control Lyapunov function), then the closed-loop system is stable. We do not go deep into these results for MPC analysis and refer the reader to [@rawlings2020model].
+
+**Warmstart for Parametric Optimization.** The requirement that an MPC feedback policy solve an optimization problem online makes it computationally expensive. In some domains, e.g., chemical process control, control updates are infrequent (for example, every 10 minutes) and MPC is practical. In other domains such as robotics, control rates are much higher (e.g., 10\,Hz), so reducing MPC's computational cost is critical.  A common strategy is *warm-starting*: when solving the optimization for the new parameter $s_{t+1}$ at time $t+1$, initialize the numerical solver with the previous solution \@ref(eq:mpc-solution-t-implicit) computed for $s_t$ at time $t$.  If the change from $s_t$ to $s_{t+1}$ is small, the optimal solution at $t+1$ is likely close to that at $t$, and warm-starting typically reduces the solver's required iterations.
+
+We now apply MPC to the stabilization of a double integrator with control constraints.
+
+::: {.examplebox}
+::: {.example #mpc-double-integrator name="MPC for Double Integrator"}
+
+This example implements Model Predictive Control (MPC) for a 1D double-integrator (position–velocity) system using a quadratic program (QP).
+
+**Dynamics of the System.** We model the kinematics of a point mass with (discrete-time) constant-acceleration physics. Let the state be
+\[
+x_k = \begin{bmatrix} p_k \\ v_k \end{bmatrix} \in \mathbb{R}^2,
+\quad
+u_k \in \mathbb{R}
+\]
+where \(p_k\) is position, \(v_k\) is velocity, and \(u_k\) is the commanded acceleration. With sampling time \(\Delta t\), the discrete-time, *nominal* dynamics are
+\[
+x_{k+1} = A x_k + B u_k,
+\quad
+A = \begin{bmatrix} 1 & \Delta t \\ 0 & 1 \end{bmatrix},
+\quad
+B = \begin{bmatrix} \tfrac{1}{2}\Delta t^2 \\ \Delta t \end{bmatrix}.
+\]
+
+**Control Goal.** We consider *regulation to a fixed target* \(x_{\text{goal}}\in\mathbb{R}^2\), typically the origin:
+\[
+x_{\text{goal}}=\begin{bmatrix}0\\0\end{bmatrix}.
+\]
+(Tracking a moving reference is immediate by updating \(x_{\text{goal}}\) online.)
+
+**Finite-Horizon Trajectory Optimization (QP).** At each control time \(t\), with measured state \(s_t\), MPC solves a length-\(N\) open-loop trajectory optimization (TO) problem with decision variables \(\{x_k,u_k\}_{k=0}^{N}\) (with \(u_N\) unused):
+\[
+\begin{aligned}
+\hspace{-16mm} \min_{\{x_k,u_k\}} \quad & 
+\underbrace{(x_N - x_{\text{goal}})^\top Q_f (x_N - x_{\text{goal}})}_{\text{terminal cost}}
+\;+\;
+\sum_{k=0}^{N-1}\Big[
+\underbrace{(x_k - x_{\text{goal}})^\top Q (x_k - x_{\text{goal}})}_{\text{state cost}}
++
+\underbrace{u_k^\top R u_k}_{\text{effort}}
+\Big] \\[1.0ex]
+\hspace{-16mm}  \text{s.t.}\quad &
+x_{k+1} = A x_k + B u_k,\quad k=0,\dots,N-1, \\[0.3ex]
+& \boxed{x_0 = s_t}\quad\text{(enforces the current initial condition)}, \\[0.3ex]
+& x_{\min} \le x_k \le x_{\max},\quad k=0,\dots,N, \\[0.3ex]
+& u_{\min} \le u_k \le u_{\max},\quad k=0,\dots,N-1.
+\end{aligned}
+(\#eq:di-mpc-to)
+\]
+
+The problem in \@ref(eq:di-mpc-to) is a convex QP (quadratic cost; linear dynamics and box constraints). We will write a Python code that builds this QP once with CVXPY and then only updates the Parameter for the measured state \(s_t\) and (optionally) \(x_{\text{goal}}\) at each MPC step.
+
+**Receding Horizon (Implicit Feedback).** Let \(\{x_k^\star,u_k^\star\}\) be the optimizer of \@ref(eq:di-mpc-to). MPC applies only the first input
+\[
+a_t = u_0^\star,
+\]
+then measures the new state, shifts/warm-starts the QP, and resolves. This closes the loop and yields an implicit feedback policy \(a_t=\mu(s_t)=u_0^\star(s_t)\).
+
+**True Dynamics with Disturbance.** To test robustness, the closed-loop plant advances with additive disturbance:
+\[
+s_{t+1} = A\,s_t + B\,a_t + w_t,
+\]
+where \(w_t\) is zero-mean noise. In the code, \(w_t\) is a small Gaussian perturbation added to both position and velocity updates. This models sensor/actuator errors or unmodeled effects and illustrates how MPC corrects by re-solving at every step.
+
+**Experiment Setup.**
+
+- **Initialization.** Start from \(x_0=[4,0]^\top\) (far from the goal). Fix \(x_{\text{goal}}=[0,0]^\top\).
+
+- **Horizon and sampling.** \(N=20\), \(\Delta t=0.1\) s; run for \(T=120\) MPC steps (12 s).
+
+- **QP solver and structure.** We solve with OSQP via CVXPY. The problem is constructed once; at each step we update the parameter \(x_0=s_t\). This preserves the QP structure (matrices \(P\) and \(A\)), enabling factorization reuse and faster solves.
+
+- **Warm-start.** Shift the previous optimal sequence \(u^\star\) left by one step and hold the last value, then roll out the dynamics from the new \(s_t\) to seed a feasible \(x\)-trajectory guess. These are passed to the solver via `warm_start=True`.
+
+Fig. \@ref(fig:mpc-double-integrator-small-noise) shows the closed-loop position and velocity under the MPC controller in the case of small disturbancen (the standard deviations of the two elements of $w_t$ are $0.002$ and $0.005$).
+
+Fig. \@ref(fig:mpc-double-integrator-large-noise) shows the closed-loop position and velocity under the MPC controller in the case of large disturbancen (the standard deviations of the two elements of $w_t$ are $0.02$ and $0.05$).
+
+In both cases, the MPC policy successfully regulates the system around the origin, illustrating robustness of the MPC policy to disturbances.
+
+You can play with the code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mpc_double_integrator.py).
+
+```{r mpc-double-integrator-small-noise, out.width='80%', fig.show='hold', fig.cap='MPC for double integrator (small disturbance).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/mpc_double_integrator-1.png')
+```
+
+
+```{r mpc-double-integrator-large-noise, out.width='80%', fig.show='hold', fig.cap='MPC for double integrator (large disturbance).', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/mpc_double_integrator-2.png')
+```
+
+:::
+:::
+
+
+
+
+
+
+<!-- This immediately creates closed-loop feedback. To see this, note that $u_0^\star$ is an optimal solution of \@ref(eq:to-general-mpc), and $x_t$ appears in the problem  -->
+
+
+
+
+
 
 
 
