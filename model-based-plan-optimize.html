@@ -23,7 +23,7 @@
 <meta name="author" content="Heng Yang" />
 
 
-<meta name="date" content="2025-11-12" />
+<meta name="date" content="2025-11-19" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -259,6 +259,10 @@ div.csl-indent {
 <li class="chapter" data-level="4.3.5" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#ipm-nlp"><i class="fa fa-check"></i><b>4.3.5</b> Interior-Point Methods</a></li>
 </ul></li>
 <li class="chapter" data-level="4.4" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#mpc"><i class="fa fa-check"></i><b>4.4</b> Model Predictive Control</a></li>
+<li class="chapter" data-level="4.5" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#mppi"><i class="fa fa-check"></i><b>4.5</b> Model Predictive Path Integral Control</a>
+<ul>
+<li class="chapter" data-level="4.5.1" data-path="model-based-plan-optimize.html"><a href="model-based-plan-optimize.html#sec:mppi-it"><i class="fa fa-check"></i><b>4.5.1</b> Information-Theoretic Derivation of MPPI</a></li>
+</ul></li>
 </ul></li>
 <li class="chapter" data-level="5" data-path="advanced-materials.html"><a href="advanced-materials.html"><i class="fa fa-check"></i><b>5</b> Advanced Materials</a></li>
 <li class="appendix"><span><b>Appendix</b></span></li>
@@ -2633,8 +2637,193 @@ Figure 4.14: MPC for double integrator (large disturbance).
 </div>
 </div>
 </div>
-<!-- This immediately creates closed-loop feedback. To see this, note that $u_0^\star$ is an optimal solution of \@ref(eq:to-general-mpc), and $x_t$ appears in the problem  -->
+</div>
+<div id="mppi" class="section level2 hasAnchor" number="4.5">
+<h2><span class="header-section-number">4.5</span> Model Predictive Path Integral Control<a href="model-based-plan-optimize.html#mppi" class="anchor-section" aria-label="Anchor link to header"></a></h2>
+<p>We have seen that numerical techniques–particularly gradient-based nonlinear programming methods–can be employed to solve trajectory optimization (TO) problems. Furthermore, solving TO problems repeatedly in an online fashion yields an implicit feedback policy, as in model predictive control (MPC).</p>
+<p>The numerical methods discussed so far for TO rely on access to at least first-order derivatives of the objective and constraint functions. In this section, we introduce a different class of methods, known as model predictive path integral (MPPI) control <span class="citation">(<a href="#ref-williams2016aggressive">Williams et al. 2016</a>)</span>. These methods do not require derivative information; instead, they rely solely on evaluating the objective and constraints through forward simulations of the system dynamics.</p>
+<p><strong>Problem Formulation.</strong> We consider a general nonlinear discrete-time dynamical system
+<span class="math display">\[
+x_{t+1} = f_t(x_t, u_t), \qquad t = 0,\dots, N-1,
+\]</span>
+with state <span class="math inline">\(x_t \in \mathbb{R}^n\)</span> and control <span class="math inline">\(u_t \in \mathbb{R}^m\)</span>. Given an initial condition <span class="math inline">\(x_0 = \hat x_0\)</span> (known), the finite-horizon trajectory optimization problem is
+<span class="math display">\[
+\begin{aligned}
+\min_{\{x_t,u_t\}_{t=0}^{N-1}} \quad &amp; \Phi(x_N) \;+\; \sum_{t=0}^{N-1} \ell_t(x_t, u_t) \\
+\text{s.t.} \quad &amp; x_{t+1} = f_t(x_t, u_t), \quad t=0,\dots,N-1, \\
+&amp; x_0 = \hat x_0 \;\; (\text{given}).
+\end{aligned}
+\]</span>
+Here, <span class="math inline">\(\ell_t\)</span> is the stage (running) cost and <span class="math inline">\(\Phi\)</span> is the terminal cost. A <em>dynamically feasible trajectory</em> <span class="math inline">\(\{x_t,u_t\}_{t=0}^{N-1}\)</span> satisfies the dynamics constraints for all <span class="math inline">\(t\)</span>.</p>
+<p><strong>High-Level Idea of MPPI.</strong> MPPI is a <em>sampling-based</em>, <em>derivative-free</em>, receding-horizon controller derived from path-integral / information-theoretic control. Instead of solving the constrained optimization problem via gradients or linearizations, MPPI:</p>
+<ol style="list-style-type: decimal">
+<li><p>Maintains a nominal open-loop control sequence <span class="math inline">\(U = \{u_0,\dots,u_{N-1}\}\)</span>.</p></li>
+<li><p>At the current state <span class="math inline">\(x_0\)</span>, it samples many noisy control sequences <span class="math inline">\(u_t + \epsilon_t^{(k)}\)</span> for rollouts <span class="math inline">\(k=1,\dots,K\)</span>.</p></li>
+<li><p>For each rollout, it propagates the dynamics forward and scores the trajectory with the same task cost <span class="math inline">\(\Phi + \sum \ell_t\)</span>.</p></li>
+<li><p>It <em>soft-min aggregates</em> the sampled control perturbations with weights
+<span class="math display">\[
+w_k \; \propto \; \exp\!\Big(-\tfrac{1}{\lambda}\big(S^{(k)} - \min_j S^{(j)}\big)\Big),
+\]</span>
+where <span class="math inline">\(S^{(k)}\)</span> is the total cost of the <span class="math inline">\(k\)</span>-th trajectory and <span class="math inline">\(\lambda&gt;0\)</span> is a temperature parameter.</p></li>
+<li><p>It updates the nominal sequence by adding the weighted average of the sampled perturbations:
+<span class="math display">\[
+u_t \;\leftarrow\; u_t \;+\; \sum_{k=1}^K \bar w_k\, \epsilon_t^{(k)},
+\qquad \bar w_k = \frac{w_k}{\sum_j w_j}.
+\]</span>
+Optionally, if computational budget permits, one can repeat steps 1 to 5 for multiple iterations. If the control actions need to satisfy hard bounds, we can project <span class="math inline">\(u_t\)</span> to the feasible set.</p></li>
+<li><p>It applies only the <em>first</em> control <span class="math inline">\(u_0\)</span> to the real system, shifts the sequence forward, and repeats at the next time step (receding horizon).</p></li>
+</ol>
+<p><strong>Key properties.</strong></p>
+<ul>
+<li><p>Works with general nonlinear dynamics and arbitrary costs; no gradients, no linearization required.</p></li>
+<li><p>Robustness arises from the soft-min over many trajectories.</p></li>
+<li><p>Parallelizable (GPU-friendly) because rollouts are independent.</p></li>
+</ul>
+<p>Computational details of the MPPI algorithm are given as follows.</p>
+<p><strong>Rollouts and total cost.</strong> Given current state <span class="math inline">\(x_0\)</span> and nominal controls <span class="math inline">\(U=\{u_t\}_{t=0}^{N-1}\)</span>, draw <span class="math inline">\(K\)</span> noise sequences
+<span class="math display">\[
+\epsilon^{(k)} = \{\epsilon_0^{(k)},\ldots,\epsilon_{N-1}^{(k)}\}, \qquad
+\epsilon_t^{(k)} \sim \mathcal{N}(0, \Sigma_t)
+\]</span>
+(possibly time-correlated for smoothness). For each <span class="math inline">\(k \in [1,K]\)</span>:</p>
+<ol style="list-style-type: decimal">
+<li>Simulate
+<span class="math display">\[
+\tilde u_t^{(k)} = u_t + \epsilon_t^{(k)}, \qquad
+x_{t+1}^{(k)} = f_t \big(x_t^{(k)}, \tilde u_t^{(k)}\big), \quad x_0^{(k)} = x_0.
+\]</span></li>
+<li>Accumulate the total trajectory cost
+<span class="math display">\[
+S^{(k)} \;=\; \Phi \big(x_N^{(k)}\big)\;+\; \sum_{t=0}^{N-1} \ell_t \big(x_t^{(k)}, \tilde u_t^{(k)}\big).
+\]</span></li>
+</ol>
+<p><strong>Exponential weights (soft-min).</strong> Stabilize by subtracting the minimum cost:
+<span class="math display">\[
+w_k \;=\; \exp\!\Big(-\tfrac{1}{\lambda}\big(S^{(k)} - S_{\min}\big)\Big),
+\quad S_{\min} := \min_j S^{(j)}.
+\]</span>
+Normalize <span class="math inline">\(\bar w_k = w_k / \sum_j w_j\)</span>.</p>
+<p><strong>Control update.</strong> For each time <span class="math inline">\(t=0,\dots,N-1\)</span>, update
+<span class="math display">\[
+u_t \;\leftarrow\; u_t \;+\; \sum_{k=1}^K \bar w_k\, \epsilon_t^{(k)}.
+\]</span>
+If control is bounded, project the controls onto the feasible sets.</p>
+<p><strong>Practical knobs.</strong></p>
+<ul>
+<li><p><span class="math inline">\(K\)</span>: number of rollouts (compute–performance tradeoff).</p></li>
+<li><p><span class="math inline">\(\lambda\)</span>: temperature (smaller <span class="math inline">\(\Rightarrow\)</span> greedier toward the best rollouts).</p></li>
+<li><p><span class="math inline">\(\Sigma_t\)</span>: exploration covariance; can use AR(1) temporal correlation for smooth controls.</p></li>
+</ul>
+<div class="examplebox">
+<div class="example">
+<p><span id="exm:mppi-pendulum" class="example"><strong>Example 4.7  (MPPI for Pendulum Swing Up) </strong></span>We apply the MPPI controller, in an MPC receding-horizon control fashion to the pendulum swing-up problem.</p>
+<p>We use <span class="math inline">\(K=16\)</span> rollouts and set <span class="math inline">\(\lambda=1\)</span>.</p>
+<p>When <span class="math inline">\(\Sigma_t\)</span> is large enough, for example, when we set the standard deviation of the noise to be <span class="math inline">\(2\)</span>, the MPPI controller can successfully swing up the pendulum, demonstrating a highly sophisticated motion plan as shown in Fig. <a href="model-based-plan-optimize.html#fig:pendulum-mppi-success">4.15</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-mppi-success"></span>
+<img src="images/Model-based-optimization/mppi_pendulum-success.gif" alt="Pendulum swing-up using MPPI (large exploration)." width="50%" />
+<p class="caption">
+Figure 4.15: Pendulum swing-up using MPPI (large exploration).
+</p>
+</div>
+<p>However, when <span class="math inline">\(\Sigma_t\)</span> is too small, when we set the standard deviation of the noise to be <span class="math inline">\(0.1\)</span>, the MPPI controller fails at the task, as shown in Fig. <a href="model-based-plan-optimize.html#fig:pendulum-mppi-failure">4.16</a>.</p>
+<p>You can play with the code <a href="https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mppi-pendulum.py">here</a>.</p>
+<div class="figure" style="text-align: center"><span style="display:block;" id="fig:pendulum-mppi-failure"></span>
+<img src="images/Model-based-optimization/mppi_pendulum-failure.gif" alt="Pendulum swing-up using MPPI (small exploration)." width="50%" />
+<p class="caption">
+Figure 4.16: Pendulum swing-up using MPPI (small exploration).
+</p>
+</div>
+</div>
+</div>
+<div id="sec:mppi-it" class="section level3 hasAnchor" number="4.5.1">
+<h3><span class="header-section-number">4.5.1</span> Information-Theoretic Derivation of MPPI<a href="model-based-plan-optimize.html#sec:mppi-it" class="anchor-section" aria-label="Anchor link to header"></a></h3>
+<p>We now derive Model Predictive Path Integral (MPPI) control from an information-theoretic (KL-control / control-as-inference) viewpoint. We proceed from a variational free-energy objective to the Gibbs (Boltzmann) optimal trajectory law, then obtain the practical MPPI update via moment projection and importance sampling.</p>
+<p>Let a finite-horizon trajectory be <span class="math inline">\(\tau=(x_0,u_0,\dots,u_{H-1},x_H)\)</span> generated by discrete-time dynamics
+<span class="math display">\[
+x_{t+1} = f_t(x_t,u_t), \quad t=0,\dots,H-1.
+\]</span>
+Let <span class="math inline">\(S(\tau)\)</span> denote the total trajectory cost (e.g., terminal <span class="math inline">\(+\)</span> running <span class="math inline">\(+\)</span> control effort). Let <span class="math inline">\(p(\tau)\)</span> be a baseline (prior) trajectory distribution (e.g., nominal/uncontrolled dynamics plus a prior over control sequences).</p>
+<p>We seek a controlled trajectory distribution <span class="math inline">\(q(\tau)\)</span> that trades performance against deviation from the prior via:
+<span class="math display" id="eq:free-energy">\[
+\mathcal{F}(q)\;=\;\mathbb{E}_{q}\big[S(\tau)\big]\;+\;\lambda\,\mathrm{KL} \big(q(\tau)\,\|\,p(\tau)\big),\qquad \lambda&gt;0.
+\tag{4.97}
+\]</span>
+This is convex in <span class="math inline">\(q\)</span> (the first term is linear in <span class="math inline">\(q\)</span> while the second term is convex in <span class="math inline">\(q\)</span>). The scalar <span class="math inline">\(\lambda\)</span> plays the role of a temperature (risk-sensitivity / exploration level).</p>
+<p><strong>Gibbs–Boltzmann Optimum.</strong> Our goal is now to minimize <span class="math inline">\(\mathcal{F}(q)\)</span> over all normalized densities <span class="math inline">\(q(\tau)\)</span>. This is a constrained convex optimization in <span class="math inline">\(q\)</span>. Therefore, we can formulate the Lagrangian and derive the KKT optimality conditions.</p>
+<div class="exercisebox">
+<div class="exercise">
+<p><span id="exr:unlabeled-div-24" class="exercise"><strong>Exercise 4.2  </strong></span>Formulate the Lagrangian for problem <a href="model-based-plan-optimize.html#eq:free-energy">(4.97)</a> and find its KKT optimality conditions.</p>
+</div>
+</div>
+<p>Solving the KKT optimality conditions, one can find the optimal solution
+<span class="math display">\[
+q^\star(\tau)\ \propto\ p(\tau)\,\exp\!\big(-S(\tau)/\lambda\big).
+\]</span>
+Thus, with proper normalization, we have
+<span class="math display" id="eq:boltzmann-law">\[
+q^\star (\tau)\;=\;\frac{1}{Z}\;p(\tau)\,\exp\!\big(-S(\tau)/\lambda\big),
+\qquad
+Z \;=\; \int p(\tau)\,e^{-S(\tau)/\lambda}\,d\tau
+\;=\;\mathbb{E}_{p}\!\big[e^{-S/\lambda}\big].
+\tag{4.98}
+\]</span>
+Plugging <span class="math inline">\(q^\star\)</span> back into <span class="math inline">\(\mathcal{F}\)</span> gives the free-energy identity:
+<span class="math display" id="eq:free-energy-identity">\[
+\min_{q}\Big\{\mathbb{E}_{q}[S]+\lambda\,\mathrm{KL}(q\|p)\Big\}
+\;=\;
+-\lambda \log \mathbb{E}_{p} \left[e^{-S/\lambda}\right].
+\tag{4.99}
+\]</span></p>
+<p><strong>From Gibbs–Boltzmann Optimum to MPPI Updates.</strong> Let a trajectory be <span class="math inline">\(\tau=(x_0,u_0,\dots,u_{H-1},x_H)\)</span> with dynamics <span class="math inline">\(x_{t+1}=f_t(x_t,u_t)\)</span>.
+We introduce a baseline (prior) trajectory distribution <span class="math inline">\(p(\tau)\)</span> as the law induced by:
+<span class="math display">\[
+\mathbf v=(v_0,\dots,v_{H-1}) \sim \mathcal N(\mathbf U,\Sigma),
+\qquad v_t = u_t + \epsilon_t,\quad \epsilon_t\sim\mathcal N(0,\Sigma_t),
+\]</span>
+and rolling out the dynamics with controls <span class="math inline">\(u_t=v_t\)</span>. Here <span class="math inline">\(\mathbf U = (u_0,\dots,u_{H-1})\)</span> is the current nominal control sequence.</p>
+<p>Given a trajectory cost <span class="math inline">\(S(\tau)\)</span> and temperature <span class="math inline">\(\lambda&gt;0\)</span>, the optimal controlled trajectory law is
+<span class="math display">\[
+q^\star(\tau)\;=\;\frac{1}{Z}\,p(\tau)\,\exp\!\big(-S(\tau)/\lambda\big),
+\qquad
+Z=\mathbb{E}_{p}\!\left[e^{-S/\lambda}\right].
+\]</span>
+Because of nonlinear dynamics and the exponential tilt by <span class="math inline">\(S\)</span>, <strong><span class="math inline">\(q^\star\)</span> is generally not Gaussian</strong>, even if <span class="math inline">\(p\)</span> is.</p>
+<p>MPPI <em>approximates</em> <span class="math inline">\(q^\star\)</span> by maintaining a <em>Gaussian over the control sequence</em> with the <em>same covariance</em> <span class="math inline">\(\Sigma\)</span> and a tunable mean <span class="math inline">\(\mathbf U=(u_0,\dots,u_{H-1})\)</span>:
+<span class="math display">\[
+\pi_{\mathbf U}(\mathbf v)\;=\;\mathcal N(\mathbf v;\mathbf U,\Sigma).
+\]</span>
+MPPI projects <span class="math inline">\(q^\star\)</span> onto this family by minimizing <span class="math inline">\(\mathrm{KL}\big(\pi_{\mathbf U}\,\|\,q^\star\big)\)</span> while <em>holding <span class="math inline">\(\Sigma\)</span> fixed</em>. For Gaussians with fixed covariance, this yields <strong>moment matching of the mean</strong>:
+<span class="math display">\[
+\mathbf U_{\text{new}} \;=\; \mathbb{E}_{q^\star}[\mathbf v].
+\]</span></p>
+<p>To perform this moment matching, we write <span class="math inline">\(v_t=u_t+\epsilon_t\)</span>. Then
+<span class="math display">\[
+u_{t,\text{new}} \;=\; \mathbb{E}_{q^\star}[v_t]
+= u_t + \mathbb{E}_{q^\star}[\epsilon_t].
+\]</span>
+We cannot sample <span class="math inline">\(q^\star\)</span> directly, but by the Gibbs–Boltzmann form and importance sampling:
+<span class="math display">\[
+\mathbb{E}_{q^\star}[g(\tau)]
+= \frac{\mathbb{E}_{p}[\,g(\tau)\,e^{-S(\tau)/\lambda}\,]}{\mathbb{E}_{p}[\,e^{-S(\tau)/\lambda}\,]}.
+\]</span>
+Choosing <span class="math inline">\(g(\tau)=\epsilon_t\)</span> and using rollouts <span class="math inline">\(\{\tau^{(k)}\}_{k=1}^K\sim p\)</span> with costs <span class="math inline">\(S^{(k)}\)</span> and noises <span class="math inline">\(\epsilon_t^{(k)}\)</span> gives the MPPI update:
+<span class="math display">\[
+\boxed{
+u_t \;\leftarrow\; u_t \;+\; \sum_{k=1}^K \bar w_k\,\epsilon_t^{(k)},
+\qquad
+\bar w_k = \frac{\exp\!\big(-\tfrac{1}{\lambda}(S^{(k)}-S_{\min})\big)}
+{\sum_j \exp\!\big(-\tfrac{1}{\lambda}(S^{(j)}-S_{\min})\big)}.
+}
+\]</span>
+Here <span class="math inline">\(S_{\min}=\min_k S^{(k)}\)</span> is a numerical stabilizer that cancels in the ratio.</p>
+<p><strong>Takeaway.</strong></p>
+<ul>
+<li><p><span class="math inline">\(p(\tau)\)</span>: baseline trajectory law induced by Gaussian exploratory controls and the dynamics.</p></li>
+<li><p><span class="math inline">\(q^\star(\tau)\)</span>: Gibbs–Boltzmann tilt of <span class="math inline">\(p\)</span>, <strong>not</strong> Gaussian in general.</p></li>
+<li><p>MPPI <strong>approximates <span class="math inline">\(q^\star\)</span></strong> by a <strong>Gaussian over controls with fixed covariance</strong> <span class="math inline">\(\Sigma\)</span> and updates the mean by <strong>importance-weighted averaging of sampled noise</strong>, yielding the standard MPPI updates used in practice.</p></li>
+</ul>
 
+</div>
 </div>
 </div>
 <h3>References<a href="references.html#references" class="anchor-section" aria-label="Anchor link to header"></a></h3>
@@ -2656,6 +2845,9 @@ Rawlings, James Blake, David Q Mayne, and Moritz Diehl. 2020. <em>Model Predicti
 </div>
 <div id="ref-wachter2006implementation" class="csl-entry">
 Wächter, Andreas, and Lorenz T Biegler. 2006. <span>“On the Implementation of an Interior-Point Filter Line-Search Algorithm for Large-Scale Nonlinear Programming.”</span> <em>Mathematical Programming</em> 106 (1): 25–57.
+</div>
+<div id="ref-williams2016aggressive" class="csl-entry">
+Williams, Grady, Paul Drews, Brian Goldfain, James M Rehg, and Evangelos A Theodorou. 2016. <span>“Aggressive Driving with Model Predictive Path Integral Control.”</span> In <em>2016 IEEE International Conference on Robotics and Automation (ICRA)</em>, 1433–40. IEEE.
 </div>
 </div>
             </section>

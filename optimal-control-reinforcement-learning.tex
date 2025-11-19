@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-11-12}
+\date{2025-11-19}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -9404,6 +9404,246 @@ You can play with the code \href{https://github.com/ComputationalRobotics/2025-E
 \end{figure}
 
 \end{example}
+
+\section{Model Predictive Path Integral Control}\label{mppi}
+
+We have seen that numerical techniques--particularly gradient-based nonlinear programming methods--can be employed to solve trajectory optimization (TO) problems. Furthermore, solving TO problems repeatedly in an online fashion yields an implicit feedback policy, as in model predictive control (MPC).
+
+The numerical methods discussed so far for TO rely on access to at least first-order derivatives of the objective and constraint functions. In this section, we introduce a different class of methods, known as model predictive path integral (MPPI) control \citep{williams2016aggressive}. These methods do not require derivative information; instead, they rely solely on evaluating the objective and constraints through forward simulations of the system dynamics.
+
+\textbf{Problem Formulation.} We consider a general nonlinear discrete-time dynamical system
+\[
+x_{t+1} = f_t(x_t, u_t), \qquad t = 0,\dots, N-1,
+\]
+with state \(x_t \in \mathbb{R}^n\) and control \(u_t \in \mathbb{R}^m\). Given an initial condition \(x_0 = \hat x_0\) (known), the finite-horizon trajectory optimization problem is
+\[
+\begin{aligned}
+\min_{\{x_t,u_t\}_{t=0}^{N-1}} \quad & \Phi(x_N) \;+\; \sum_{t=0}^{N-1} \ell_t(x_t, u_t) \\
+\text{s.t.} \quad & x_{t+1} = f_t(x_t, u_t), \quad t=0,\dots,N-1, \\
+& x_0 = \hat x_0 \;\; (\text{given}). 
+\end{aligned}
+\]
+Here, \(\ell_t\) is the stage (running) cost and \(\Phi\) is the terminal cost. A \emph{dynamically feasible trajectory} \(\{x_t,u_t\}_{t=0}^{N-1}\) satisfies the dynamics constraints for all \(t\).
+
+\textbf{High-Level Idea of MPPI.} MPPI is a \emph{sampling-based}, \emph{derivative-free}, receding-horizon controller derived from path-integral / information-theoretic control. Instead of solving the constrained optimization problem via gradients or linearizations, MPPI:
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  Maintains a nominal open-loop control sequence \(U = \{u_0,\dots,u_{N-1}\}\).
+\item
+  At the current state \(x_0\), it samples many noisy control sequences \(u_t + \epsilon_t^{(k)}\) for rollouts \(k=1,\dots,K\).
+\item
+  For each rollout, it propagates the dynamics forward and scores the trajectory with the same task cost \(\Phi + \sum \ell_t\).
+\item
+  It \emph{soft-min aggregates} the sampled control perturbations with weights
+  \[
+  w_k \; \propto \; \exp\!\Big(-\tfrac{1}{\lambda}\big(S^{(k)} - \min_j S^{(j)}\big)\Big),
+  \]
+  where \(S^{(k)}\) is the total cost of the \(k\)-th trajectory and \(\lambda>0\) is a temperature parameter.
+\item
+  It updates the nominal sequence by adding the weighted average of the sampled perturbations:
+  \[
+  u_t \;\leftarrow\; u_t \;+\; \sum_{k=1}^K \bar w_k\, \epsilon_t^{(k)}, 
+  \qquad \bar w_k = \frac{w_k}{\sum_j w_j}.
+  \]
+  Optionally, if computational budget permits, one can repeat steps 1 to 5 for multiple iterations. If the control actions need to satisfy hard bounds, we can project \(u_t\) to the feasible set.
+\item
+  It applies only the \emph{first} control \(u_0\) to the real system, shifts the sequence forward, and repeats at the next time step (receding horizon).
+\end{enumerate}
+
+\textbf{Key properties.}
+
+\begin{itemize}
+\item
+  Works with general nonlinear dynamics and arbitrary costs; no gradients, no linearization required.
+\item
+  Robustness arises from the soft-min over many trajectories.
+\item
+  Parallelizable (GPU-friendly) because rollouts are independent.
+\end{itemize}
+
+Computational details of the MPPI algorithm are given as follows.
+
+\textbf{Rollouts and total cost.} Given current state \(x_0\) and nominal controls \(U=\{u_t\}_{t=0}^{N-1}\), draw \(K\) noise sequences
+\[
+\epsilon^{(k)} = \{\epsilon_0^{(k)},\ldots,\epsilon_{N-1}^{(k)}\}, \qquad
+\epsilon_t^{(k)} \sim \mathcal{N}(0, \Sigma_t)
+\]
+(possibly time-correlated for smoothness). For each \(k \in [1,K]\):
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\tightlist
+\item
+  Simulate
+  \[
+  \tilde u_t^{(k)} = u_t + \epsilon_t^{(k)}, \qquad 
+  x_{t+1}^{(k)} = f_t \big(x_t^{(k)}, \tilde u_t^{(k)}\big), \quad x_0^{(k)} = x_0.
+  \]
+\item
+  Accumulate the total trajectory cost
+  \[
+  S^{(k)} \;=\; \Phi \big(x_N^{(k)}\big)\;+\; \sum_{t=0}^{N-1} \ell_t \big(x_t^{(k)}, \tilde u_t^{(k)}\big).
+  \]
+\end{enumerate}
+
+\textbf{Exponential weights (soft-min).} Stabilize by subtracting the minimum cost:
+\[
+w_k \;=\; \exp\!\Big(-\tfrac{1}{\lambda}\big(S^{(k)} - S_{\min}\big)\Big), 
+\quad S_{\min} := \min_j S^{(j)}.
+\]
+Normalize \(\bar w_k = w_k / \sum_j w_j\).
+
+\textbf{Control update.} For each time \(t=0,\dots,N-1\), update
+\[
+u_t \;\leftarrow\; u_t \;+\; \sum_{k=1}^K \bar w_k\, \epsilon_t^{(k)}.
+\]
+If control is bounded, project the controls onto the feasible sets.
+
+\textbf{Practical knobs.}
+
+\begin{itemize}
+\item
+  \(K\): number of rollouts (compute--performance tradeoff).
+\item
+  \(\lambda\): temperature (smaller \(\Rightarrow\) greedier toward the best rollouts).
+\item
+  \(\Sigma_t\): exploration covariance; can use AR(1) temporal correlation for smooth controls.
+\end{itemize}
+
+\begin{example}[MPPI for Pendulum Swing Up]
+\protect\hypertarget{exm:mppi-pendulum}{}\label{exm:mppi-pendulum}
+
+We apply the MPPI controller, in an MPC receding-horizon control fashion to the pendulum swing-up problem.
+
+We use \(K=16\) rollouts and set \(\lambda=1\).
+
+When \(\Sigma_t\) is large enough, for example, when we set the standard deviation of the noise to be \(2\), the MPPI controller can successfully swing up the pendulum, demonstrating a highly sophisticated motion plan as shown in Fig. \ref{fig:pendulum-mppi-success}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.5\linewidth]{images/Model-based-optimization/mppi_pendulum-success} 
+
+}
+
+\caption{Pendulum swing-up using MPPI (large exploration).}\label{fig:pendulum-mppi-success}
+\end{figure}
+
+However, when \(\Sigma_t\) is too small, when we set the standard deviation of the noise to be \(0.1\), the MPPI controller fails at the task, as shown in Fig. \ref{fig:pendulum-mppi-failure}.
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/mppi-pendulum.py}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.5\linewidth]{images/Model-based-optimization/mppi_pendulum-failure} 
+
+}
+
+\caption{Pendulum swing-up using MPPI (small exploration).}\label{fig:pendulum-mppi-failure}
+\end{figure}
+
+\end{example}
+
+\subsection{Information-Theoretic Derivation of MPPI}\label{sec:mppi-it}
+
+We now derive Model Predictive Path Integral (MPPI) control from an information-theoretic (KL-control / control-as-inference) viewpoint. We proceed from a variational free-energy objective to the Gibbs (Boltzmann) optimal trajectory law, then obtain the practical MPPI update via moment projection and importance sampling.
+
+Let a finite-horizon trajectory be \(\tau=(x_0,u_0,\dots,u_{H-1},x_H)\) generated by discrete-time dynamics
+\[
+x_{t+1} = f_t(x_t,u_t), \quad t=0,\dots,H-1.
+\]
+Let \(S(\tau)\) denote the total trajectory cost (e.g., terminal \(+\) running \(+\) control effort). Let \(p(\tau)\) be a baseline (prior) trajectory distribution (e.g., nominal/uncontrolled dynamics plus a prior over control sequences).
+
+We seek a controlled trajectory distribution \(q(\tau)\) that trades performance against deviation from the prior via:
+\[
+\mathcal{F}(q)\;=\;\mathbb{E}_{q}\big[S(\tau)\big]\;+\;\lambda\,\mathrm{KL} \big(q(\tau)\,\|\,p(\tau)\big),\qquad \lambda>0.
+\label{eq:free-energy}
+\]
+This is convex in \(q\) (the first term is linear in \(q\) while the second term is convex in \(q\)). The scalar \(\lambda\) plays the role of a temperature (risk-sensitivity / exploration level).
+
+\textbf{Gibbs--Boltzmann Optimum.} Our goal is now to minimize \(\mathcal{F}(q)\) over all normalized densities \(q(\tau)\). This is a constrained convex optimization in \(q\). Therefore, we can formulate the Lagrangian and derive the KKT optimality conditions.
+
+\begin{exercise}
+Formulate the Lagrangian for problem \eqref{eq:free-energy} and find its KKT optimality conditions.
+\end{exercise}
+
+Solving the KKT optimality conditions, one can find the optimal solution
+\[
+q^\star(\tau)\ \propto\ p(\tau)\,\exp\!\big(-S(\tau)/\lambda\big).
+\]
+Thus, with proper normalization, we have
+\[
+q^\star (\tau)\;=\;\frac{1}{Z}\;p(\tau)\,\exp\!\big(-S(\tau)/\lambda\big),
+\qquad
+Z \;=\; \int p(\tau)\,e^{-S(\tau)/\lambda}\,d\tau
+\;=\;\mathbb{E}_{p}\!\big[e^{-S/\lambda}\big].
+\label{eq:boltzmann-law}
+\]
+Plugging \(q^\star\) back into \(\mathcal{F}\) gives the free-energy identity:
+\[
+\min_{q}\Big\{\mathbb{E}_{q}[S]+\lambda\,\mathrm{KL}(q\|p)\Big\}
+\;=\;
+-\lambda \log \mathbb{E}_{p} \left[e^{-S/\lambda}\right].
+\label{eq:free-energy-identity}
+\]
+
+\textbf{From Gibbs--Boltzmann Optimum to MPPI Updates.} Let a trajectory be \(\tau=(x_0,u_0,\dots,u_{H-1},x_H)\) with dynamics \(x_{t+1}=f_t(x_t,u_t)\).
+We introduce a baseline (prior) trajectory distribution \(p(\tau)\) as the law induced by:
+\[
+\mathbf v=(v_0,\dots,v_{H-1}) \sim \mathcal N(\mathbf U,\Sigma), 
+\qquad v_t = u_t + \epsilon_t,\quad \epsilon_t\sim\mathcal N(0,\Sigma_t),
+\]
+and rolling out the dynamics with controls \(u_t=v_t\). Here \(\mathbf U = (u_0,\dots,u_{H-1})\) is the current nominal control sequence.
+
+Given a trajectory cost \(S(\tau)\) and temperature \(\lambda>0\), the optimal controlled trajectory law is
+\[
+q^\star(\tau)\;=\;\frac{1}{Z}\,p(\tau)\,\exp\!\big(-S(\tau)/\lambda\big),
+\qquad 
+Z=\mathbb{E}_{p}\!\left[e^{-S/\lambda}\right].
+\]
+Because of nonlinear dynamics and the exponential tilt by \(S\), \textbf{\(q^\star\) is generally not Gaussian}, even if \(p\) is.
+
+MPPI \emph{approximates} \(q^\star\) by maintaining a \emph{Gaussian over the control sequence} with the \emph{same covariance} \(\Sigma\) and a tunable mean \(\mathbf U=(u_0,\dots,u_{H-1})\):
+\[
+\pi_{\mathbf U}(\mathbf v)\;=\;\mathcal N(\mathbf v;\mathbf U,\Sigma).
+\]
+MPPI projects \(q^\star\) onto this family by minimizing \(\mathrm{KL}\big(\pi_{\mathbf U}\,\|\,q^\star\big)\) while \emph{holding \(\Sigma\) fixed}. For Gaussians with fixed covariance, this yields \textbf{moment matching of the mean}:
+\[
+\mathbf U_{\text{new}} \;=\; \mathbb{E}_{q^\star}[\mathbf v].
+\]
+
+To perform this moment matching, we write \(v_t=u_t+\epsilon_t\). Then
+\[
+u_{t,\text{new}} \;=\; \mathbb{E}_{q^\star}[v_t] 
+= u_t + \mathbb{E}_{q^\star}[\epsilon_t].
+\]
+We cannot sample \(q^\star\) directly, but by the Gibbs--Boltzmann form and importance sampling:
+\[
+\mathbb{E}_{q^\star}[g(\tau)]
+= \frac{\mathbb{E}_{p}[\,g(\tau)\,e^{-S(\tau)/\lambda}\,]}{\mathbb{E}_{p}[\,e^{-S(\tau)/\lambda}\,]}.
+\]
+Choosing \(g(\tau)=\epsilon_t\) and using rollouts \(\{\tau^{(k)}\}_{k=1}^K\sim p\) with costs \(S^{(k)}\) and noises \(\epsilon_t^{(k)}\) gives the MPPI update:
+\[
+\boxed{
+u_t \;\leftarrow\; u_t \;+\; \sum_{k=1}^K \bar w_k\,\epsilon_t^{(k)}, 
+\qquad
+\bar w_k = \frac{\exp\!\big(-\tfrac{1}{\lambda}(S^{(k)}-S_{\min})\big)}
+{\sum_j \exp\!\big(-\tfrac{1}{\lambda}(S^{(j)}-S_{\min})\big)}.
+}
+\]
+Here \(S_{\min}=\min_k S^{(k)}\) is a numerical stabilizer that cancels in the ratio.
+
+\textbf{Takeaway.}
+
+\begin{itemize}
+\item
+  \(p(\tau)\): baseline trajectory law induced by Gaussian exploratory controls and the dynamics.
+\item
+  \(q^\star(\tau)\): Gibbs--Boltzmann tilt of \(p\), \textbf{not} Gaussian in general.
+\item
+  MPPI \textbf{approximates \(q^\star\)} by a \textbf{Gaussian over controls with fixed covariance} \(\Sigma\) and updates the mean by \textbf{importance-weighted averaging of sampled noise}, yielding the standard MPPI updates used in practice.
+\end{itemize}
 
 \chapter{Advanced Materials}\label{advanced-materials}
 
