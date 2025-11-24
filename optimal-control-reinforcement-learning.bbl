@@ -30,6 +30,13 @@ Chen, C.-T. (1984).
 \newblock {\em Linear system theory and design}.
 \newblock Saunders college publishing.
 
+\bibitem[Choset et~al., 2005]{choset2005principles}
+Choset, H., Lynch, K.~M., Hutchinson, S., Kantor, G.~A., and Burgard, W.
+  (2005).
+\newblock {\em Principles of robot motion: theory, algorithms, and
+  implementations}.
+\newblock MIT press.
+
 \bibitem[Davison and Wonham, 1968]{davison1968tac-poleassign}
 Davison, E. and Wonham, W. (1968).
 \newblock On pole assignment in multivariable linear systems.
@@ -72,6 +79,11 @@ Kang, S., Xu, X., Sarva, J., Liang, L., and Yang, H. (2024).
 Kearns, M.~J. and Singh, S. (2000).
 \newblock Bias-variance error bounds for temporal difference updates.
 \newblock In {\em COLT}, pages 142--147.
+
+\bibitem[LaValle, 2006]{lavalle2006planning}
+LaValle, S.~M. (2006).
+\newblock {\em Planning algorithms}.
+\newblock Cambridge university press.
 
 \bibitem[Lillicrap et~al., 2015]{lillicrap2015continuous}
 Lillicrap, T.~P., Hunt, J.~J., Pritzel, A., Heess, N., Erez, T., Tassa, Y.,

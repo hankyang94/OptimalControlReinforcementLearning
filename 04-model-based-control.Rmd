@@ -2731,6 +2731,288 @@ Here \(S_{\min}=\min_k S^{(k)}\) is a numerical stabilizer that cancels in the r
 - MPPI **approximates \(q^\star\)** by a **Gaussian over controls with fixed covariance** \(\Sigma\) and updates the mean by **importance-weighted averaging of sampled noise**, yielding the standard MPPI updates used in practice.
 
 
+## Rapidly Exploring Random Tree
+
+In Section \@ref(mppi), we examined the effectiveness of one particular sampling-based planning method—MPPI—for solving trajectory-planning problems, noting that it is often less susceptible to local minima than nonlinear-programming-based approaches. More broadly, sampling-based motion planning encompasses a wide family of algorithms, extensive enough to merit an entire semester for a comprehensive treatment. For readers interested in exploring this area further, the textbooks [@lavalle2006planning] and [@choset2005principles] provide excellent overviews.
+
+In this section, we introduce one of the most widely used sampling-based algorithms: the rapidly exploring random tree (RRT). 
+We will begin with the case of *kinematic* motion planning, in which the system or robot is modeled as a point mass without dynamics, and then extend the discussion to *kinodynamic* motion planning, where the system's dynamics must be taken into account.
+
+
+### Kinematic Motion Planning
+
+**Problem Setup.** We consider a robot with configuration space \(\mathcal{C} \subset \mathbb{R}^d \). Obstacles occupy \(\mathcal{C}_\mathrm{obs}\), and the *free space* is
+\[
+\mathcal{C}_\mathrm{free} = \mathcal{C} \setminus \mathcal{C}_\mathrm{obs}.
+\]
+Given a start configuration \(q_\mathrm{start} \in \mathcal{C}_\mathrm{free}\) and a *goal region* \(\mathcal{C}_\mathrm{goal} \subset \mathcal{C}_\mathrm{free}\), the objective is to find a *collision-free path*
+\[
+\sigma : [0,1] \to \mathcal{C}_\mathrm{free}, \qquad \sigma(0) = q_\mathrm{start}, \ \sigma(1) \in \mathcal{C}_\mathrm{goal}.
+\]
+Here, \(\sigma(\cdot)\) is a continuous curve in the configuration space \(\mathcal{C}\) that connects the start position to the goal region. A path can be represented in several ways (e.g., piecewise-polynomial splines); in this section we adopt a **piecewise-linear** representation: the path is a sequence of waypoints \((q_0, q_1, \dots, q_M)\) joined by straight-line segments in \(\mathcal{C}\), i.e.,
+\[
+\sigma(s)= (1-s)\,q_i + s\,q_{i+1}, \quad s\in[0,1], \ \ i=0,\dots,M-1.
+\]
+
+The RRT algorithm requires the following components.
+
+**Sampler.** We require a mechanism to draw random configurations in free space. The simplest choice is uniform sampling:
+\[
+q_{\mathrm{rand}} \sim \mathcal{U}\!\left(\mathcal{C}_{\mathrm{free}}\right),
+\]
+optionally with *goal bias*: introduce \(B \sim \mathrm{Bernoulli}(p_{\mathrm{goal}})\) and set
+\[
+q_{\mathrm{rand}} =
+\begin{cases}
+\text{a sample from } \mathcal{C}_{\mathrm{goal}}, & \text{if } B=1,\\
+\text{a sample from } \mathcal{C}_{\mathrm{free}}, & \text{if } B=0.
+\end{cases}
+\]
+To perform such sampling, we require that, given any configuration $q \in \mathcal{C}$, we can check its membership in $\mathcal{C}_{\mathrm{free}}$, $\mathcal{C}_{\mathrm{obs}}$, and $\mathcal{C}_{\mathrm{goal}}$.
+
+**Metric (Distance Function).** We need a distance \(d:\mathcal{C}\times\mathcal{C}\to \mathbb{R}_{\ge 0}\) to compare configurations. Common choices:
+\[
+d(q_i,q_j) = \|W(q_i-q_j)\|_2,
+\]
+where \(W\) is a positive-definite weighting (e.g., to account for different joint ranges). 
+
+For \(\text{SE}(2)\) or \(\text{SE}(3)\) manifolds,
+
+- handle angular wrap-around (e.g., modulo \(2\pi\)),
+- optionally combine translational and rotational parts with different weights,
+- use a *geodesic* or a local chart; for rotations, a distance induced by the Lie group metric.
+
+Sometimes \(d\) is defined in task space via forward kinematics \(x=\Phi(q)\) (here $q$ represents the joint angles of a robot arm and $\Phi(q)$ returns the position of the robot's end-effector):
+\[
+d(q_i,q_j)=\|\Phi(q_i)-\Phi(q_j)\|,
+\]
+useful when end-effector placement matters more than joint motion.
+
+**Nearest-Neighbor Query.** Given the current tree \(T\) with vertex set \(V(T)\), select the closest existing node to the new sample:
+\[
+q_{\mathrm{near}} \in \arg\min_{q\in V(T)} d\big(q,\,q_{\mathrm{rand}}\big).
+\]
+
+*Implementation notes.*
+
+- Use spatial indices (kd-trees, ball trees, cover trees) for sublinear searches.
+- Approximate nearest neighbor methods often suffice and substantially accelerate growth in higher dimensions.
+
+**Steering / Step Map.** Move from \(q_{\mathrm{near}}\) *toward* \(q_{\mathrm{rand}}\) by at most a step size \(\eta>0\). In Euclidean \(\mathcal{C}\),
+\[
+\Delta = q_{\mathrm{rand}} - q_{\mathrm{near}}, \qquad
+q_{\mathrm{new}} = q_{\mathrm{near}} + \alpha\,\Delta,\quad
+\alpha = \min\!\left\{1,\ \frac{\eta}{\|\Delta\|_2}\right\}.
+\]
+On manifolds (e.g., \(SE(3)\)), interpolate along a feasible local geodesic; for rotations, use group operations (e.g., \(q_{\mathrm{new}} = q_{\mathrm{near}}\exp(\alpha\,\log(q_{\mathrm{near}}^{-1}q_{\mathrm{rand}}))\)).
+
+*Tuning \(\eta\).*
+
+- Smaller \(\eta\) improves collision fidelity and resolution in narrow passages but slows exploration.
+- Larger \(\eta\) accelerates coverage but can skip through feasible corridors.
+
+**Collision Checking (Local Planner Validity).**
+Validate the entire segment between \(q_{\mathrm{near}}\) and \(q_{\mathrm{new}}\):
+\[
+\text{ensure } \sigma(s)\in \mathcal{C}_{\mathrm{free}} \ \ \forall s\in[0,1], \quad \sigma(s)=(1-s)q_{\mathrm{near}}+s q_{\mathrm{new}}.
+\]
+
+*Resolution and robustness.*
+
+- Use a discretization step \(\delta\) small enough relative to obstacle feature size and robot footprint.
+- For articulated robots, perform swept-volume or continuous collision detection where possible; otherwise sample sufficiently along the edge (in joint and time parameter \(s\)).
+- Inflate obstacles or deflate the robot model slightly to build clearance margins.
+
+**Stopping / Success Criteria.** Let the goal be a set \(\mathcal{C}_{\mathrm{goal}}\) (e.g., a ball of radius \(\varepsilon\) around a target pose). Declare success when
+\[
+q_{\mathrm{new}} \in \mathcal{C}_{\mathrm{goal}}.
+\]
+
+*Common termination rules.*
+
+- Maximum number of iterations or samples.
+- Time budget exhausted (anytime behavior).
+- Early stop after first solution (RRT) or continue to refine with rewiring (RRT\*).
+
+**Post-processing (optional).**
+
+- **Shortcutting:** repeatedly replace subpaths by direct segments if collision-free.
+- **Smoothing:** fit splines to waypoints while maintaining clearance, or re-optimize locally.
+
+We are ready to present the RRT algorithm.
+
+::: {.highlightbox}
+**Algorithm: Rapidly-Exploring Random Tree (RRT) — Kinematic Case**
+
+**Inputs:** start configuration \(q_{\mathrm{start}} \in \mathcal{C}_{\mathrm{free}}\); goal region \(\mathcal{C}_{\mathrm{goal}} \subset \mathcal{C}_{\mathrm{free}}\); step size \(\eta>0\); goal-bias \(p_{\mathrm{goal}} \in [0,1]\); iteration budget \(N\); metric \(d:\mathcal{C}\times\mathcal{C}\to\mathbb{R}_{\ge 0}\); collision checker for segments in \(\mathcal{C}\); nearest-neighbor data structure over the current vertex set.
+
+Initialize the tree \(T\) with vertex set \(V(T)\gets\{q_{\mathrm{start}}\}\) and no edges.
+
+For \(i=0,1,2,\dots,N-1\)
+
+1. **Goal-biased sampling.** Draw \(B\sim\mathrm{Bernoulli}(p_{\mathrm{goal}})\) and set
+   \[
+   q_{\mathrm{rand}} \sim
+   \begin{cases}
+   \mathcal{U}(\mathcal{C}_{\mathrm{goal}}), & \text{if } B=1,\\[2pt]
+   \mathcal{U}(\mathcal{C}_{\mathrm{free}}), & \text{if } B=0.
+   \end{cases}
+   \]
+
+2. **Nearest neighbor.** Select
+   \[
+   q_{\mathrm{near}} \in \arg\min_{q\in V(T)} d\!\left(q,\,q_{\mathrm{rand}}\right).
+   \]
+
+3. **Steering (bounded step).** Let \(\Delta := q_{\mathrm{rand}}-q_{\mathrm{near}}\) in a local chart of \(\mathcal{C}\) (with appropriate handling of angles/manifold coordinates). Define
+   \[
+   \alpha := \min\!\left\{1,\ \frac{\eta}{\|\Delta\|}\right\},\qquad
+   q_{\mathrm{new}} := q_{\mathrm{near}} + \alpha\,\Delta.
+   \]
+   (On manifolds, replace the affine step with interpolation along a local geodesic.)
+
+4. **Collision checking.** Verify the straight segment
+   \[
+   \sigma(s) = (1-s)\,q_{\mathrm{near}} + s\,q_{\mathrm{new}},\quad s\in[0,1],
+   \]
+   satisfies \(\sigma(s)\in\mathcal{C}_{\mathrm{free}}\) for all sampled \(s\) (or via continuous collision detection).
+
+5. **Tree update.** If the segment is collision-free, append the vertex and edge:
+   \[
+   V(T)\gets V(T)\cup\{q_{\mathrm{new}}\},\qquad
+   E(T)\gets E(T)\cup\{(q_{\mathrm{near}}\rightarrow q_{\mathrm{new}})\}.
+   \]
+
+6. **Success test.** If \(q_{\mathrm{new}}\in \mathcal{C}_{\mathrm{goal}}\), **terminate** and return the path formed by the unique tree route from \(q_{\mathrm{start}}\) to \(q_{\mathrm{new}}\).
+
+**Stopping:** If no success after \(N\) iterations (or upon time-budget exhaustion), **return failure** (or the best partial progress if maintained).
+:::
+
+
+*Properties.*
+
+- **Probabilistic completeness:** If a solution exists, the probability that RRT finds one approaches 1 as \(N \to \infty\).
+
+- **Not optimal:** The first-found solution can be far from shortest; RRT does not asymptotically improve path quality.
+
+#### Make RRT Optimal: RRT\*
+
+The classical RRT is probabilistically complete but not optimal. To obtain asymptotic optimality (i.e., the best-path cost converges to the global optimum as the number of samples \(N\to\infty\)), we use **RRT\***: a cost-aware variant that (i) selects parents by minimizing cost-to-come and (ii) rewires nearby nodes to improve their costs when possible.
+
+Key Ideas Behind RRT\*:
+
+**Cost functional.** Let \(c(\cdot)\) denote path cost (e.g., length or any additive, nonnegative, Lipschitz continuous cost). For an edge between two configurations \(q\) and \(q'\), write \(c(q\to q')\) and define
+   \[
+   c(q') \;=\; \min_{(q \to q') \in E(T)} \big\{c(q) + c(q\to q')\big\},
+   \]
+   where \(E(T)\) is the set of tree edges.
+
+**Near set.** Rather than connecting to only the nearest node, examine a **ball of neighbors** around the new sample \(q_{\mathrm{new}}\) whose radius shrinks with \(n\):
+   \[
+   r_n \;=\; \gamma \left(\frac{\log n}{n}\right)^{1/d},
+   \]
+   where \(d\) is the dimension of \(\mathcal{C}\) and \(\gamma>\gamma^\ast\) is a constant depending on the measure of \(\mathcal{C}_{\mathrm{free}}\). (Alternative: \(k\)-nearest with \(k_n \ge k_0 \log n\).)
+
+**Choose parent by cost.** Among the near nodes that can connect to \(q_{\mathrm{new}}\) collision-free, pick the parent that minimizes total cost-to-come.
+
+**Rewire.** Attempt to improve each neighbor \(q\) by re-connecting it through \(q_{\mathrm{new}}\) if this reduces \(c(q)\) while preserving feasibility.
+
+**Asymptotic optimality.** Under standard assumptions (e.g., \(\delta\)-robustly feasible problem, absolutely continuous sampling over \(\mathcal{C}_{\mathrm{free}}\), consistent local planner, and the \(r_n\) or \(k_n\) schedules above), the best path cost in the tree converges almost surely to the global optimum.
+
+The RRT\* Algorithm is presented below.
+
+::: {.highlightbox}
+**Algorithm: RRT\* (Asymptotically Optimal RRT)**
+
+**Inputs:** \(q_{\mathrm{start}}\in\mathcal{C}_{\mathrm{free}}\), goal region \(\mathcal{C}_{\mathrm{goal}}\subset\mathcal{C}_{\mathrm{free}}\); metric \(d\); step size \(\eta>0\); goal-bias \(p_{\mathrm{goal}}\in[0,1]\); iteration budget \(N\); neighbor schedule \(r_n=\gamma(\tfrac{\log n}{n})^{1/d}\) (or \(k_n\ge k_0\log n\)).
+
+Initialize \(T\) with \(V(T)\gets\{q_{\mathrm{start}}\}\), \(E(T)\gets\emptyset\), \(c(q_{\mathrm{start}})=0\).
+
+For \(i=0,1,2,\dots,N-1\)
+
+1. **Goal-biased sampling.** Draw \(B\sim\mathrm{Bernoulli}(p_{\mathrm{goal}})\) and set
+   \[
+   q_{\mathrm{rand}} \sim
+   \begin{cases}
+   \mathcal{U}(\mathcal{C}_{\mathrm{goal}}), & B=1,\\
+   \mathcal{U}(\mathcal{C}_{\mathrm{free}}), & B=0.
+   \end{cases}
+   \]
+
+2. **Nearest and steer.** Choose
+   \[
+   q_{\mathrm{near}}\in\arg\min_{q\in V(T)} d\big(q,\,q_{\mathrm{rand}}\big),\quad
+   q_{\mathrm{new}} := q_{\mathrm{near}} + \alpha\big(q_{\mathrm{rand}}-q_{\mathrm{near}}\big),
+   \]
+   with \(\alpha=\min\{1,\eta/\|q_{\mathrm{rand}}-q_{\mathrm{near}}\|\}\). If the segment \([q_{\mathrm{near}},q_{\mathrm{new}}]\) is not collision-free, **continue**.
+
+3. **Near set.** Denote $n = |V(T)|$ as the number of nodes in the current tree, let
+   \[
+   \mathcal{N}_n(q_{\mathrm{new}}) \;=\; \big\{q\in V(T): d(q,q_{\mathrm{new}})\le r_n\big\}.
+   \]
+
+4. **Choose parent by cost.** Set provisional parent \(\bar{q}\gets q_{\mathrm{near}}\) with provisional cost
+   \[
+   \bar{c} \;=\; c(q_{\mathrm{near}}) + c\!\left(q_{\mathrm{near}}\to q_{\mathrm{new}}\right).
+   \]
+   For each \(q\in \mathcal{N}_n(q_{\mathrm{new}})\) such that the segment \([q,q_{\mathrm{new}}]\) is collision-free, if
+   \[
+   c(q) + c(q\to q_{\mathrm{new}}) < \bar{c},
+   \]
+   then update \(\bar{q}\gets q\), \(\bar{c}\gets c(q)+c(q\to q_{\mathrm{new}})\).
+
+5. **Insert.** Add \(q_{\mathrm{new}}\) to \(V(T)\), add edge \((\bar{q}\rightarrow q_{\mathrm{new}})\) to \(E(T)\), and set \(c(q_{\mathrm{new}})\gets \bar{c}\).
+
+6. **Rewire.** For each \(q\in\mathcal{N}_n(q_{\mathrm{new}})\) such that segment \([q_{\mathrm{new}},q]\) is collision-free, if
+   \[
+   c(q_{\mathrm{new}}) + c(q_{\mathrm{new}}\to q) < c(q),
+   \]
+   then **change \(q\)’s parent to \(q_{\mathrm{new}}\)** and update \(c(q)\) (and, if maintained, the costs of its descendants).
+
+7. **Goal check.** If \(q_{\mathrm{new}}\in\mathcal{C}_{\mathrm{goal}}\), record/update the current best path.
+
+**Stopping:** Terminate upon time/iteration budget; return the best path found (its cost decreases and converges to the optimal value almost surely).
+:::
+
+Intuition of why RRT\* is optimal:
+
+- The shrinking neighbor radius \(r_n\propto(\log n/n)^{1/d}\) ensures that, as \(n\) grows, the graph locally approximates the geometry of \(\mathcal{C}_{\mathrm{free}}\) with just enough connectivity to avoid fragmentation.
+
+- Parent selection and rewiring implement **dynamic programming** over this increasingly dense graph, continually lowering costs.
+
+- Under regularity and \(\delta\)-clearance, any optimal path can be covered by a sequence of balls of radius \(r_n\); with high probability the tree includes nodes in each ball, enabling a piecewise improvement that converges to the optimal path cost.
+
+Common Enhancements (Keep Optimality, Speed It Up):
+
+- **Informed RRT\***: after the first solution of cost \(C^\star\), sample within the informed subset that can still achieve cost \(<C^\star\).
+- **Batch variants (BIT\*)**: combine sampling with incremental graph search for faster convergence.
+- **Pruning**: discard nodes whose best possible heuristic cannot beat the current best cost.
+
+
+::: {.examplebox}
+::: {.example #rrt-star-2d name="RRT\* for 2D Kinematic Motion Planning"}
+
+We can apply RRT\* to find collision-free paths from a start position to a goal region.
+
+You can play with the code [here](https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/rrt_star_2d.py).
+
+The code provides an implementation of RRT\* from scratch. For an off-the-shelf implementation of RRT\* and other motion planning algorithms, we recommend the [Open Motion Planning Library (OMPL)](https://ompl.kavrakilab.org).
+
+```{r rrt-star-2d-kinematic, out.width='80%', fig.show='hold', fig.cap='RRT* finding collision-free paths.', fig.align='center', echo=FALSE}
+knitr::include_graphics('images/Model-based-optimization/rrt_star_kinematic_1.gif')
+knitr::include_graphics('images/Model-based-optimization/rrt_star_kinematic_2.gif')
+```
+
+
+:::
+:::
+
+
+
+### Kinodynamic Motion Planning
+
+
+
 
 
 
