@@ -156,7 +156,7 @@ arc=4pt}
 
 \title{Optimal Control and Reinforcement Learning}
 \author{Heng Yang}
-\date{2025-11-24}
+\date{2025-11-25}
 
 \usepackage{amsthm}
 \newtheorem{theorem}{Theorem}[chapter]
@@ -9970,6 +9970,254 @@ The code provides an implementation of RRT* from scratch. For an off-the-shelf i
 \end{example}
 
 \subsection{Kinodynamic Motion Planning}\label{kinodynamic-motion-planning}
+
+\textbf{Problem Setup.} Let the \emph{state space} be \(\mathcal{X}\subset\mathbb{R}^{d}\) and the \emph{control space} be \(\mathcal{U}\subset\mathbb{R}^{m}\). The robot obeys differential constraints
+\[
+\dot{x}(t)=f\big(x(t),u(t)\big), \qquad u(t)\in\mathcal{U},
+\]
+with \(f\) locally Lipschitz in \(x\) and measurable in \(u\). Obstacles occupy \(\mathcal{X}_\mathrm{obs}\subset\mathcal{X}\); the free space is
+\[
+\mathcal{X}_\mathrm{free}=\mathcal{X}\setminus \mathcal{X}_\mathrm{obs}.
+\]
+Given \(x_\mathrm{start}\in\mathcal{X}_\mathrm{free}\) and a goal region \(\mathcal{X}_\mathrm{goal}\subset\mathcal{X}_\mathrm{free}\), we seek a \emph{feasible trajectory}
+\[
+x:[0,T]\to\mathcal{X}_\mathrm{free},\quad u:[0,T]\to\mathcal{U},\quad
+\dot{x}=f(x,u),\ x(0)=x_\mathrm{start},\ x(T)\in\mathcal{X}_\mathrm{goal}.
+\]
+For optimal kinodynamic planning, we seek to minimize the additive cost
+\[
+J[x,u] \;=\; \phi\big(x(T)\big) \;+\; \int_{0}^{T} \ell\big(x(t),u(t)\big)\,dt,
+\]
+e.g., minimum time (\(\ell\equiv 1\)), energy, or path-length surrogates.
+
+As in the kinematic case, we grow a tree---now in \emph{state space}---whose edges are \emph{dynamically feasible rollouts}.
+
+The RRT* algorithm for kinodynamic planning requires the following components.
+
+\textbf{State sampler.} Draw states in free space with optional goal bias:
+\[
+x_{\mathrm{rand}} \sim \text{Uniform}\big(\mathcal{X}_{\mathrm{goal}}\big)\ \text{w.p. }p_\mathrm{goal},\quad
+x_{\mathrm{rand}} \sim \text{Uniform} \big(\mathcal{X}_{\mathrm{free}}\big)\ \text{otherwise}.
+\]
+Must support membership tests \(x\in\mathcal{X}_\mathrm{free}\) and \(x\in\mathcal{X}_\mathrm{goal}\).
+
+\textbf{Metric / heuristic.} A distance \(d:\mathcal{X}\times\mathcal{X}\to\mathbb{R}_{\ge 0}\) guides nearest-neighbor queries and ``move-toward'' decisions.
+
+\begin{itemize}
+\tightlist
+\item
+  Weighted Euclidean in a local chart (with angle wrap-around) is common:
+  \[
+  d(x_i,x_j)=\|W(x_i-x_j)\|_2.
+  \]
+\item
+  Prefer system-aware local distances when available (e.g., Dubins/Reeds--Shepp, double integrator, LQR).
+\end{itemize}
+
+\begin{example}[Distance Metric for Dubins Car]
+\protect\hypertarget{exm:dubins-distance}{}\label{exm:dubins-distance}In kinodynamic planning, two states that are close in Euclidean norm can still be far in terms of \emph{actual time/effort to move between them under the robot's dynamics}. A system-aware local distance replaces a geometric norm
+\[
+\|x_i-x_j\|
+\]
+with a \emph{control distance}
+\[
+d_f(x_i,x_j)\ :=\ \inf_{u(\cdot),\,T}\;\Big\{ \int_0^T \ell\big(x(t),u(t)\big)\,dt\ \Big|\ 
+\dot x=f(x,u),\ x(0)=x_i,\ x(T)=x_j \Big\},
+\]
+i.e., the \textbf{optimal local connection cost} (time, path length, energy) for your specific system \(f\). This distance respects:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{Nonholonomy} (e.g., car cannot sidestep).
+\item
+  \textbf{Bounds} (e.g., max turn rate, min turning radius, velocity limits).
+\item
+  \textbf{Asymmetry} (forward-only systems: going from \(x_i\) to \(x_j\) may cost more than reverse).
+\end{itemize}
+
+In practice we use closed-form local connectors when they exist or fast approximations (e.g., LQR quadratic form near an operating point). When nothing closed-form exists, we keep Euclidean for indexing but score candidates with a rollout-based cost.
+
+For example, we consider the Dubins car system.
+
+\textbf{Model \& constraints.}
+
+\begin{itemize}
+\tightlist
+\item
+  State \(q=(x,y,\theta)\in \mathbb{R}^2\times \mathbb{S}^1\).
+\item
+  Controls: constant forward speed \(v>0\); turn rate \(\omega\) with \(|\omega|\le \omega_{\max}\).
+\item
+  Min turning radius \(R = v/\omega_{\max}\).
+\item
+  Kinematics:
+  \[
+  \dot x = v\cos\theta,\quad \dot y = v\sin\theta,\quad \dot\theta = \omega,\quad |\omega|\le \omega_{\max},\quad v\ge 0.
+  \]
+\item
+  \textbf{No reverse gear} (nonnegative speed).
+\end{itemize}
+
+\textbf{Shortest feasible paths.} Between two poses \(q_s,q_g\) (with no obstacles), the shortest path with curvature bound \(1/R\) is a sequence of at most \textbf{three primitives}:
+
+\begin{itemize}
+\tightlist
+\item
+  \textbf{C}: constant-curvature arc (left \(L\) or right \(R\)) of radius \(R\),
+\item
+  \textbf{S}: straight segment.
+\end{itemize}
+
+Only six \textbf{word types} can be optimal:\\
+\[
+\mathcal{W} = \{ \mathbf{LSL}, \mathbf{RSR}, \mathbf{LSR}, \mathbf{RSL}, \mathbf{RLR}, \mathbf{LRL} \}.
+\]
+
+\textbf{Normalization.} Translate/rotate so \(q_s\) is at the origin with heading \(0\). Scale coordinates by \(R\) (so the min radius becomes 1). Let the normalized goal be \((\bar{x},\bar{y},\bar{\theta})\).
+
+\textbf{Closed-form lengths.} Each word has analytic formulas for the three segment lengths \((t,p,q)\) (two arc angles and a straight length) derived from the circle tangency geometry; e.g., for \textbf{LSL}:
+\[
+\begin{aligned}
+\text{Let }&d=\sqrt{\bar{x}^2+\bar{y}^2},\ \phi=\mathrm{atan2}(\bar{y},\bar{x}),\\
+t&=\mathrm{mod}_{2\pi}\big(-\phi\big),\\
+p&=\sqrt{\max(0,\,d^2-2+2\cos(\bar{\theta}-\phi))}\ \ \text{(straight length)},\\
+q&=\mathrm{mod}_{2\pi}\big(\bar{\theta}-\phi\big),
+\end{aligned}
+\]
+
+The \textbf{Dubins length} is the minimum total length over all valid words:
+\[
+L_\text{Dubins}(q_s,q_g) \;=\; R\,\min_{\text{word}\in\mathcal{W}}\ \big(t+p+q\big),
+\]
+and with constant \(v\), minimum time is \(T_\text{Dubins}=L_\text{Dubins}/v\).
+
+The Reeds--Shepp car model extends the Dubins car model to allow reverse gear.
+\end{example}
+
+\textbf{Nearest neighbor.} Given vertices \(V(T)\subset\mathcal{X}\),
+\[
+x_{\mathrm{near}} \in \arg\min_{x\in V(T)} d\big(x,\,x_{\mathrm{rand}}\big).
+\]
+Use kd/ball trees or Approximate Nearest Neighbor (ANN) structures in a consistent local chart.
+
+\textbf{Forward ``steering'' (local planner).} When no closed-form two-point connector exists, \emph{forward propagate} from \(x_{\mathrm{near}}\) by sampling controls and durations and integrating:
+\[
+u \sim \mathcal{D}_u,\ \ \tau\sim\mathcal{D}_\tau,\ \ 
+x^+(t) = \Phi \big(x_{\mathrm{near}},u,t\big),\ t\in[0,\tau],
+\]
+where \(\Phi\) is the numerical flow (e.g., RK4 with step \(h\)). Here \(\mathcal{D}_u\) is the probability distribution over controls used to sample a candidate open-loop input (e.g., uniform over a bounded box, Gaussian around a heuristic, a discrete set of motion primitives, or biased by a policy); and \(\mathcal{D}_\tau\) is the distribution over rollout durations (e.g., uniform on \([0,\tau_{\max}]\), a fixed shortlist of durations, or a geometric/exponential prior favoring short motions). Keep a rollout only if the \emph{entire} trajectory stays in \(\mathcal{X}_\mathrm{free}\). The edge cost is
+\[
+c\!\left(x_{\mathrm{near}}\!\to\!x_{\mathrm{new}}\right)=\int_{0}^{\tau}\ell\big(x^+(t),u\big)\,dt.
+\]
+If a steering function exists for your system (e.g., Dubins, LQR-QR), use it in place of random propagation.
+
+\textbf{Collision checking (trajectory validity).} Validate the continuous rollout (time-discretized sufficiently for geometry and dynamics).
+
+\textbf{Neighbor set for rewiring.} With \(n=|V(T)|\), use the RRT* radius schedule in \textbf{state dimension} \(d\):
+\[
+r_n=\gamma \Big(\tfrac{\log n}{n}\Big)^{1/d}
+\quad\text{or}\quad
+k\text{-nearest with }k_n \ge k_0 \log n.
+\]
+Only neighbors reachable by a feasible local planner are considered connectable.
+
+\textbf{Costs.} Each node stores cost-to-come \(c(x)\) (integral of \(\ell\) along the tree path). Parent selection and rewiring compare \emph{integrated} edge costs from actual feasible rollouts (or optimal local connectors).
+
+\textbf{Stopping / success.} Success when a node lies in \(\mathcal{X}_\mathrm{goal}\). As an anytime method, continue to improve cost by rewiring until time/iteration budget is exhausted.
+
+The following pseudocode presents RRT* for kinodynamic motion planning.
+
+\textbf{Algorithm: RRT* --- Kinodynamic Case}
+
+\textbf{Inputs:} initial state \(x_{\mathrm{start}}\in\mathcal{X}_\mathrm{free}\); goal region \(\mathcal{X}_\mathrm{goal}\subset\mathcal{X}_\mathrm{free}\); dynamics \(f\); metric \(d\); running cost \(\ell\), terminal cost \(\phi\); goal-bias \(p_{\mathrm{goal}}\in[0,1]\); budget \(N\); neighbor schedule \(r_n=\gamma(\tfrac{\log n}{n})^{1/d}\) (or \(k_n\ge k_0\log n\)); forward-propagation integrator and control/duration samplers (or a system-specific steering method).
+
+Initialize \(T\): \(V(T)\gets\{x_{\mathrm{start}}\}\), \(E(T)\gets\emptyset\), \(c(x_{\mathrm{start}})=0\).
+
+For \(i=0,1,2,\dots,N-1\)
+
+\begin{enumerate}
+\def\labelenumi{\arabic{enumi}.}
+\item
+  \textbf{Goal-biased sampling.} Draw \(x_{\mathrm{rand}}\) from \(\mathcal{X}_\mathrm{goal}\) with probability \(p_{\mathrm{goal}}\), else from \(\mathcal{X}_\mathrm{free}\).
+\item
+  \textbf{Nearest.} Select \(x_{\mathrm{near}}\in\arg\min_{x\in V(T)} d(x,\,x_{\mathrm{rand}})\).
+\item
+  \textbf{Forward ``steer''.} Generate a batch \(\{(u_k,\tau_k)\}_{k=1}^{K}\), integrate \(\dot{x}=f(x,u_k)\) from \(x_{\mathrm{near}}\) up to \(\tau_k\), discard infeasible rollouts, and pick a candidate terminal \(x_{\mathrm{new}}\) (e.g., closest to \(x_{\mathrm{rand}}\) or lowest edge cost). If none feasible, \textbf{continue}.
+\item
+  \textbf{Near set.} With \(n=|V(T)|\),
+  \[
+  \mathcal{N}_n(x_{\mathrm{new}})=\{x\in V(T): d(x,x_{\mathrm{new}})\le r_n\}.
+  \]
+\item
+  \textbf{Choose parent by cost (feasible-only).} Provisional parent \(\bar{x}\gets x_{\mathrm{near}}\) with provisional cost
+  \[
+  \bar{c}=c(x_{\mathrm{near}})+c\big(x_{\mathrm{near}}\!\to\!x_{\mathrm{new}}\big).
+  \]
+  For each \(x\in\mathcal{N}_n(x_{\mathrm{new}})\), attempt a feasible local connection \(x\to x_{\mathrm{new}}\). If feasible and
+  \[
+  c(x) + c\big(x\!\to\!x_{\mathrm{new}}\big) < \bar{c},
+  \]
+  set \(\bar{x}\gets x\) and \(\bar{c}\) accordingly.
+\item
+  \textbf{Insert.} Add \(x_{\mathrm{new}}\) to \(V(T)\); add edge \((\bar{x}\to x_{\mathrm{new}})\) (storing its control/duration); set \(c(x_{\mathrm{new}})=\bar{c}\).
+\item
+  \textbf{Rewire (forward-only).} For each \(x\in\mathcal{N}_n(x_{\mathrm{new}})\), attempt a feasible connection \(x_{\mathrm{new}}\to x\). If
+  \[
+  c(x_{\mathrm{new}}) + c\big(x_{\mathrm{new}}\!\to\!x\big) < c(x),
+  \]
+  then \textbf{change \(x\)'s parent to \(x_{\mathrm{new}}\)} and update costs (and, if maintained, descendants).
+\item
+  \textbf{Goal check.} If \(x_{\mathrm{new}}\in\mathcal{X}_\mathrm{goal}\), record/update the current best trajectory.
+\end{enumerate}
+
+\textbf{Stopping:} On budget exhaustion, return the best feasible trajectory \((x(\cdot),u(\cdot))\) found.
+
+Practical Notes.
+
+\begin{itemize}
+\item
+  \emph{Local planner.} Replace random forward propagation with \textbf{analytic/local-optimal connectors} when available (Dubins/Reeds--Shepp, LQR for linearized systems, double integrator), which dramatically accelerates convergence.
+\item
+  \emph{Hyperparameters.} Batch size \(K\), duration bounds \(\tau_{\max}\), and integrator step \(h\) balance exploration vs.~fidelity; smaller \(h\) and moderate \(\tau\) help in tight dynamics/geometry.
+\item
+  \emph{Heuristics.} Informed sampling (admissible lower bounds on remaining cost), pruning by lower-bound estimates, and \(k\)-nearest neighborhoods can maintain optimality while improving speed.
+\end{itemize}
+
+\textbf{Asymptotic Optimality.} Under standard assumptions---\(\delta\)-robust feasibility, absolutely continuous sampling over \(\mathcal{X}_\mathrm{free}\), locally Lipschitz dynamics, nonnegative Lipschitz running cost, and a \emph{consistent} local planner (feasible connections that approximate short motions)---the best trajectory cost produced by kinodynamic RRT* converges almost surely to the global optimum as \(N\to\infty\). Intuitively, the shrinking neighborhood \(r_n\propto(\log n/n)^{1/d}\) yields a graph that becomes dense in the reachable set, and parent selection plus rewiring implement dynamic programming over this increasingly rich local-connectivity structure.
+
+Common Enhancements (keep optimality).
+
+\begin{itemize}
+\item
+  \textbf{Informed RRT*} with kinodynamic admissible heuristics (e.g., minimum-time or minimum-energy lower bounds).
+\item
+  \textbf{Batch planners (e.g., BIT*)} that merge sampling and search with system-aware heuristics.
+\item
+  \textbf{Reachability and cost-based pruning} to focus computation where improvements are still possible.
+\end{itemize}
+
+\begin{example}[RRT* for Dubins Car]
+\protect\hypertarget{exm:rrtstar-dubins}{}\label{exm:rrtstar-dubins}
+
+Continuning Example \ref{exm:dubins-distance}, we apply RRT* to collision-free kinodynamic path planning for the Dubins car model.
+
+Fig. \ref{fig:rrtstar-dubins} shows the RRT* algorithm's running process.
+
+You can play with the code \href{https://github.com/ComputationalRobotics/2025-ES-AM-158-LECTURE-CODE/blob/main/rrt_star_dubins_v2.py}{here}.
+
+A similar YouTube demonstration video can be found \href{https://youtu.be/ZH6NHrALBAg?si=F5nCbuO_d_qsLcJx}{here}.
+
+\begin{figure}
+
+{\centering \includegraphics[width=0.7\linewidth]{images/Model-based-optimization/rrtstar_dubins} 
+
+}
+
+\caption{RRT* for Dubins Car.}\label{fig:rrtstar-dubins}
+\end{figure}
+
+\end{example}
 
 \chapter{Advanced Materials}\label{advanced-materials}
 
